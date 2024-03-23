@@ -14,7 +14,7 @@ def add(*args):
     """From AWIPS. Perform scalar or vector addition
     """
     def scalarAddition(args):
-        return reduce(np.add, args)
+        return np.reduce(np.add, args)
 
     def vectorAddition(args):
         uResult = np.zeros_like(args[0][0])
@@ -36,7 +36,7 @@ def multiply(*args):
     scalar.
     """
     def scalarMultiply(args):
-        return reduce(multiply, args)
+        return np.reduce(multiply, args)
 
     def vectorMultiply(args):
         return componentsTo(scalarMultiply((args[0][0],  args[1])),
