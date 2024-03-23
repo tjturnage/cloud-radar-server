@@ -104,4 +104,3 @@ dependencies:
       - pytz==2024.1
       - tzdata==2024.1
       - xarray==2024.2.0
-prefix: /Users/leecarlaw/mambaforge/envs/cloud-radar
