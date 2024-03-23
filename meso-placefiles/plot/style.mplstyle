@@ -1,0 +1,27 @@
+### Text
+text.color : fafafa
+font.size : 10
+font.family : sans-serif
+
+### Ticks
+xtick.color : D9D9D9
+ytick.color : D9D9D9
+
+### Axes
+axes.labelcolor : dcdcdc
+axes.edgecolor : dcdcdc
+axes.facecolor : 191919
+axes.grid : True
+
+### Grid
+grid.color : D9D9D9
+
+### Lines
+lines.linewidth : 2.0
+
+### Legends
+legend.fancybox : False
+legend.frameon : False
+
+### Saving figures
+savefig.facecolor : 191919
