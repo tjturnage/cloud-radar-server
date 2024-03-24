@@ -181,7 +181,7 @@ See the [open issues](https://github.com/tjturnage/cloud-radar-server/issues) fo
 <!-- LICENSE -->
 ## License
 
-Distributed under the MIT License. See `LICENSE.txt` for more information.
+Distributed under the MIT License. See <a href="https://github.com/tjturnage/cloud-radar-server/blob/main/LICENSE.txt">LICENSE.txt</a> for more information.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
