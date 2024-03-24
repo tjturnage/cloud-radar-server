@@ -1,0 +1,68 @@
+
+##########################
+To install:
+
+1) place the COBRAS folder on a webserver with Apache
+2) Be sure the cobras/data directory has write permissions for apache and that the cobras/py/monitor.py file is an executable for apache (chmod 755 monitor.py)
+
+
+
+##########################
+Description of Files: 
+
+index.html
+
+js/
+
+jquery.js - need for ajax calls
+
+leaflet.ajax.min.js - needed for map
+
+ 
+
+static/
+
+radar_sites.csv - csv of radar locations (lat/lon)
+
+ 
+
+data/
+
+[simulation date]_[random number]/ - user simulation dir
+
+timectl.py – configure file unique to user (list startdate, enddate, currentdate of simulation, and speed of simulation)
+
+download/ - where actively downloading files will be
+
+            status ­– file to tell the front end the download progress
+
+ready/ - where files go after they are done downloading and not requested by user
+
+polling/ – where files go when they are being requested (polled) by user
+
+ 
+
+
+php/
+
+getdirs.php – used to get the directories and files form amazon s3. 
+
+orderstatus.php – used to get the users order status (for progress bar on front )
+
+ping.php – used to update the file time on timectl.py (see data/ section).  If this file hasn’t been updated in over 60 seconds, the user must have closed the browser window, time for montor.py (see py/ section) to take over.  Just realized this may be clearing the file and not just updating the file time.  Possibly needs fixing
+
+startsim.php – calls startsim.py
+
+movedata.py – calls movedata.py
+
+ 
+
+py/
+
+folders.py – config file for variables
+
+startsim.py – downloads data for the user (currently just makes dummy files, need to add download command) in the download/ folder (see data/ section).  When the file is done downloading, it goes into the ready/ folder (see data/ section).  Also updates the download/status file (see data/ section).  
+
+movedata.py – moves data back and forth from the ready/ and polling/ folders (see data/ section) based off simulation time
+
+monitor.py – needs to be written. I envision this file monitoring the timectl.py file (see data/ section). When that file hasn’t been updated in more than 60 second (realtime seconds, not user simulated seconds) it means the bowser window has been closed (see php/ping.php).  If the simulation has not been finished (you can tell by looking at timectl.py) the monitor file should take control of the simulation and finish it out.  This would be as simple as updating the “currenttime” in timectl.py then running movedata.py.  Once the simulation is finished, it could wait, say 20 minutes, then delete the entire user directory (data/[simulation data]_[random number]).  Monitor.py could be triggered from a chon or from the front end when startsim.py is activated. However, given the fact that we may have very little control of crons, updating them, etc (a headache we have with WAVE) I would vote that this gets triggered when startsim.py starts. 

@@ -1,0 +1,66 @@
+#!/usr/bin/python3.6
+
+#python script that monitors the users ping file
+#the ping file is written to every minute
+#if the user does not write to the file, it means the brower has been closed
+#this is when the monitor file takes control of the simulation
+
+import os,datetime,shutil
+from time import sleep
+from datetime import datetime, timedelta
+from folders import *
+sys.path.insert(0,userfolder)
+#now that userfolder is in our path, can load the timectl file
+import timectl
+import sys
+folder_org=sys.argv[1]
+transposeradar=sys.argv[2]
+
+timefile=userfolder+'/timectl.py'
+print (timefile)
+while os.path.exists(userfolder):
+    (mode, ino, dev, nlink, uid, gid, size, atime, mtime, ctime) = os.stat(timefile)
+    currenttime=datetime.now()
+    filetime=datetime.fromtimestamp(mtime)
+    #has user pingged timefile in last 60 seconds? if not execute this code
+    print (currenttime,filetime,folder_org,transposeradar)
+    if (currenttime-filetime).seconds > 60:
+    #if (currenttime-filetime).seconds > 1:
+        print ("MONITOR FILE TAKING CONTROL")
+        reload(timectl)
+        from timectl import *
+
+        while currentdate<enddate:
+            reload(timectl)
+            from timectl import *
+            new_currentdate=datetime(int(str(currentdate)[0:4]),int(str(currentdate)[4:6]),int(str(currentdate)[6:8]),int(str(currentdate)[8:10]),int(str(currentdate)[10:12]),int(str(currentdate)[12:14]))
+            new_currentdate=new_currentdate+timedelta(minutes=1)
+            new_currentdate=new_currentdate.strftime('%Y%m%d%H%M%S')
+            texttofind   ='currentdate='+ str(currentdate)
+            texttoreplace='currentdate='+ str(new_currentdate)
+
+            #find and replace currentdate with new currentdate
+            # Read in the file
+            with open(timefile, 'r') as file :
+                filedata = file.read()
+            file.close()
+            # Replace the target string
+            filedata = filedata.replace(texttofind,texttoreplace)
+            # Write the file out again
+            with open(timefile, 'w') as file:
+                file.write(filedata)
+            file.close()
+
+            print (texttofind,texttoreplace,speed,float(60.0/speed))
+            print (folder_org,transposeradar)
+            sys.argv=["nothing",folder_org,transposeradar]
+            execfile('movedata.py')
+            sleep(60.0/speed)
+            #sleep(1.0/speed)
+        #once everything is done, sleep for 10 minutes, then delete files
+        sleep(60)
+        #sleep(600)
+        shutil.rmtree(userfolder)
+        #remove directory here
+    sleep(60)
+    #sleep(1)
