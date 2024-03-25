@@ -1,4 +1,8 @@
 
+This has been updated to accommodate python3 and the latest version of php found in RHEL 8.
+
+You will need to ensure php-xml and php-json are installed on the server side and selinux permits the actions.
+
 ##########################
 To install:
 
@@ -12,23 +16,18 @@ Description of Files:
 
 index.html
 
-js/
-
-jquery.js - need for ajax calls
-
-leaflet.ajax.min.js - needed for map
+js/  
+jquery.js - need for ajax calls  
+leaflet.ajax.min.js - needed for map  
 
  
 
 static/
-
-radar_sites.csv - csv of radar locations (lat/lon)
+radar_sites.csv - csv of radar locations (lat/lon)  
 
  
-
-data/
-
-[simulation date]_[random number]/ - user simulation dir
+data/  
+[simulation date]_[random number]/ - user simulation dir  
 
 timectl.py – configure file unique to user (list startdate, enddate, currentdate of simulation, and speed of simulation)
 
