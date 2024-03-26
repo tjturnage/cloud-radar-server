@@ -164,4 +164,4 @@ Thumbs.db
 .vscode/
 /logs
 /junk
-/download_status.txt
+download_status.txt
