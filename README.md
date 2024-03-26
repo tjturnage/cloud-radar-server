@@ -122,15 +122,53 @@ Run the following to create an Anaconda environment called meso with the require
   conda env create -f environment.yaml
   ```
 
+#### Python environment
+
+Run the following to create an Anaconda/Mamba environment called `cloud-radar` with the required libraries (you should be able to use either conda or mamba).  We built our environment with [miniforg3](https://github.com/conda-forge/miniforge).
+
+  ```sh
+  mamba env create -f environment.yaml
+  ```
+#### WGRIB2
+
+Wgrib2 [version 3.0.2](https://www.ftp.cpc.ncep.noaa.gov/wd51we/wgrib2) or higher is necessary for time interpolations, grid upscaling, and decoding older versions of the RAP model. Installing this software can be tricky, and the steps needed to do so can be different on each machine. On a RHEL machine:
+
+```
+wget https://www.ftp.cpc.ncep.noaa.gov/wd51we/wgrib2/wgrib2.tgz.v3.0.2
+tar -xvzf wgrib2.tgz.v3.0.2
+cd grib2
+```
+
+Edit `makefile` and set `USE_NETCDF3=0` as we don't need to export netCDF files and this simplifies the build. Then, if `which gfortran` doesn't return an executable, do:
+
+```
+dnf -y install make gcc gcc-gfortran.x86_64
+````
+
+Followed by:
+
+```
+export CC=gcc
+export FC=gfortran
+make -j4
+```
+
+If this is successful, a folder called `wgrib2` should have been created with a `wgrib2` binary/executable file within it. Either move this of softlink it into /usr/local/bin or somewhere similar in your `$PATH`. 
+
+#### WGET
+A working version of WGET is needed to download model data. 
+
 ### Installation
 
-Clone the repo
+#### Clone the repo
    ```sh
    git clone https://github.com/tjturnage/cloud-radar-server.git
    ```
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
+#### Edit Config Files
+Within the `meso-placefiles` sub-directory, open `configs.py`.  The first six variables must be changed to specify the locations of the Python, WGRIB2, and WGET executables on your system, as well as where you'd like output and log files to be stored. `NUM_THREADS` controls how many threads are utilized during the computationally-expensive parcel lifting steps during the NSE placefile creation and should be set to a number less than the total number of threads available.  
 
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 
 <!-- USAGE EXAMPLES -->
