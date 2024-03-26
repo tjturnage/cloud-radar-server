@@ -117,11 +117,6 @@ This requires an apache server.
 
 ### Prerequisites
 
-Run the following to create an Anaconda environment called meso with the required libraries:
-  ```sh
-  conda env create -f environment.yaml
-  ```
-
 #### Python environment
 
 Run the following to create an Anaconda/Mamba environment called `cloud-radar` with the required libraries (you should be able to use either conda or mamba).  We built our environment with [miniforg3](https://github.com/conda-forge/miniforge).
