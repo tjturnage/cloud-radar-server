@@ -113,7 +113,7 @@ References:
 <!-- GETTING STARTED -->
 ## Getting Started
 
-This requires an apache server.
+This requires a server instance that with apache http service. In this case we are using a RHEL 8 instance.
 
 ### Prerequisites
 
@@ -179,8 +179,10 @@ Within the `meso-placefiles` sub-directory, open `configs.py`.  The first six va
 ## Roadmap
 
 - [x] Add Changelog
-- [x] Add arguments for location and times in surface-obs-placefile.py
-- [ ] Convert anaconda to mamba
+- [x] Convert anaconda to mamba
+- [ ] confirm users are permissioned to access cloud-radar environment
+- [ ] Add arguments for location and times in surface-obs-placefile.py
+- [ ] test web access of COBRAS installation
 - [ ] Develop front end to take date/time/location arguments
 
 
