@@ -54,8 +54,8 @@ def fake(filename, new_stid, downloadfolder):
         output = gzip.open(newfn, 'wb')
     else:
         output = open(newfn, 'wb')
-    output.write(struct.pack('9s', version.encode('utf-8')))
-    output.write(struct.pack('3s', vol_num.encode('utf-8')))
+    output.write(struct.pack('9s', version))
+    output.write(struct.pack('3s', vol_num))
     output.write(struct.pack('>L', date))
     output.write(struct.pack('>L', time_ms))
     output.write(struct.pack('4s', new_stid.encode('utf-8')))
