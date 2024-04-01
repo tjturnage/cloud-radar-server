@@ -20,7 +20,7 @@ enddate=sys.argv[4]
 transposeradar=sys.argv[5]
 
 from folders import *
-
+ 
 #sort radar files in order
 radarfiles.sort()
 

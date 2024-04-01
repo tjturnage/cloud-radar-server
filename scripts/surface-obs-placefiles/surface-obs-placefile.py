@@ -16,11 +16,12 @@ import math
 from datetime import datetime, timedelta
 import requests
 
+DEST_HOME = '/var/www/html'
+
 try:
-    os.listdir('/home/tjturnage')
-    DEST_HOME = '/home/tjturnage/multipage/assets'
+    os.listdir(DEST_HOME)
 except FileNotFoundError:
-    DEST_HOME = 'C:/data'
+    print(f'Placefile destination {DEST_HOME} not found!')
 
 #from api_tokens import mesowest_API_TOKEN as API_TOKEN
 API_TOKEN = "292d36a692d74badb6ca011f4413ae1b"

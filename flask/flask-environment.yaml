@@ -1,0 +1,11 @@
+name: radar-server
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - botocore
+  - dash
+  - dash-bootstrap-components
+  - geopandas 
+  - cartopy
+  - metpy
