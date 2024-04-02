@@ -6,22 +6,25 @@
 """
 
 import os
-import re
-import sys
-import time
+#import re
+#import sys
+#import time
+from datetime import date
+from datetime import datetime
 import pytz
 import json
-from datetime import datetime
+import numpy as np
+
 import dash_leaflet as dl
 import dash_leaflet.express as dlx
-from dash_extensions import EventListener
+from dash_extensions.javascript import assign
 import dash
 # bootstrap is what helps styling for a better presentation
 import dash_bootstrap_components as dbc
 # dcc = dash core components
-from dash import dcc, html
+from dash import Dash, html, dcc, Input, Output, State
 # State allows the user to enter input before proceeding
-from dash.dependencies import Input, Output, State
+import subprocess
 
 # ----------------------------------------
 #        Attempt to set up environment
@@ -40,7 +43,6 @@ except Exception:
 # ----------------------------------------
 
 now = datetime.now(pytz.utc)
-next_year = now.year + 1
 
 class RadarSimulator:
     """
@@ -54,11 +56,14 @@ class RadarSimulator:
 
     """
 
-    def __init__(self, start_time, duration, radars):
-        self.start_time = start_time
-        self.duration = duration
-        self.radars = radars
-        self.geojson = self.populate_map()
+    def __init__(self):
+        self.start_year = 2024
+        self.start_month = 6
+        self.start_day = 15
+        self.start_hour = 18
+        self.start_minute = 30
+        self.duration = 180
+        #self.geojson = self.populate_map()
 
 
     def populate_map(self):
@@ -72,14 +77,18 @@ class RadarSimulator:
                     elements = line.split("|")
                     radar_list.append(dict(radar=elements[0][-3:].upper(),lat=float(elements[2]),lon=float(elements[3])))
         geojson = dlx.dicts_to_geojson([{**r, **dict(tooltip=r['radar'])} for r in radar_list])
-        return geojson
+        #with open('radars.json','w') as fout:
+        #    fout.write(json.dumps(geojson))
+            
+        #return geojson
+    
 # ----------------------------------------
 #        Initiate Dash app
 # ----------------------------------------
 
-sa = RadarSimulator(2000,1000,'radar')
+sa = RadarSimulator()
 
-app = dash.Dash(__name__, external_stylesheets= [dbc.themes.DARKLY])
+app = dash.Dash(__name__,external_stylesheets=[dbc.themes.CYBORG])
 app.title = "Radar Simulator"
 
 # ----------------------------------------
@@ -88,15 +97,18 @@ app.title = "Radar Simulator"
 
 bold = {'font-weight': 'bold'}
 
-feedback = {'border': '2px gray solid', 'padding':'0.5em', 'font-weight': 'bold', 'font-size':'1.5em', 'text-align':'center'}
+feedback = {'border': '2px gray solid', 'padding':'0.5em', 'font-weight': 'bold',
+            'font-size':'1.5em', 'text-align':'center'}
 
 weekdaynames= ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
-monthnames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December" ]
+monthnames = ["January", "February", "March", "April", "May", "June", "July", "August",
+              "September", "October", "November", "December" ]
 
 top_content = [
-            dbc.CardBody([html.H1("Radar Simulator", className="card-title",style={'font-weight': 'bold', 'font-style': 'italic'}),
+            dbc.CardBody([html.H1("Cloud Radar Simulation Server", className="card-title",
+                                  style={'font-weight': 'bold', 'font-style': 'italic'}),
                 html.H4(
-                    "An application to provide Displaced Real Time radar simulations for National Weather Service training",
+                    "Providing radar simulations for National Weather Service training ...",
                     className="card-text", style={'color':'rgb(52,152,219)', 'font-weight': 'bold', 'font-style': 'italic'}
                 ),
                 html.H5(
@@ -104,27 +116,38 @@ top_content = [
                     className="card-text",
                 ),
                 html.Div([
-                dbc.CardLink("GitHub", href="https://github.com/allenea/Forecast_Search_Wizard")]),
+                dbc.CardLink("GitHub", href="https://github.com/tjturnage/cloud-radar-server")]),
                 ])
             ]
+
+step_instructions = [
+            dbc.CardBody([html.H4("Select Simulation Start Date and Time ... Duration is in Minutes", 
+            className="card-text"),])]
 
 step_radar = [
             dbc.CardBody([html.H5("Select up to three radars for your simulation.", 
             className="card-text"),])]
 
 step_year = [
-            dbc.CardBody([html.H3("Year", 
+            dbc.CardBody([html.H5("Year",
             className="card-text"),])]
 
 step_month = [
-            dbc.CardBody([html.H3("Month",
+            dbc.CardBody([html.H5("Month",
             className="card-text"),])]
 
-step_date = [
-            dbc.CardBody([html.H3("Date", className="card-text"),])]
+step_day = [
+            dbc.CardBody([html.H5("Day", className="card-text"),])]
+
+step_hour = [
+            dbc.CardBody([html.H5("Hour", className="card-text"),])]
+
+step_minute = [
+            dbc.CardBody([html.H5("Minute", className="card-text"),])]
 
 step_duration = [
-            dbc.CardBody([html.H5("Choose the duration of your simulation", className="card-text"),])]
+            dbc.CardBody([html.H5("Duration",
+                                  className="card-text"),])]
 
 view_output = [
             dbc.CardBody([html.H5("Output", className="card-title", style=bold),
@@ -138,96 +161,200 @@ view_output = [
 #      Build Webpage Layout
 ################################################################################
 
-app.layout = dbc.Container([
-                dbc.Row(dbc.Card(top_content, color="secondary", inverse=True)),
+with open("assets/radars.json") as f:
+    data = json.load(f)
 
-                dbc.Row([
-                    html.Div([
+markers = [dl.CircleMarker(center=[feature["geometry"]["coordinates"][1], feature["geometry"]["coordinates"][0]], radius=10) for feature in data["features"]]
 
-                        dbc.Row(dbc.Card(step_year, color="secondary", inverse=True),style={'padding':'2.2em', 'text-align': 'center'}),                  
+style_handle = assign("""function(feature, context){
+    const {selected} = context.hideout;
+    if(selected.includes(feature.properties.name)){
+        return {fillColor: 'red', color: 'grey'}
+    }
+    return {fillColor: 'grey', color: 'grey'}
+}""")
+
+def run_script(args):
+    subprocess.run(["python", "your_script.py"] + args)
+    return
+
+app.layout = dbc.Container(
+    html.Div([
+        dbc.Row(dbc.Card(top_content, color="secondary", inverse=True)),
+        dbc.Row([
+            dbc.Col(
+                html.Div([
+                    dbc.Card(step_instructions, color="secondary", inverse=True)
+                    ],style={"padding":"1.2em", "text-align":"center"})
+            )
+        ]),
+        dbc.Row([
+            dbc.Col(
+                html.Div([
+                    html.Div(id="sim_year"),
+                    dbc.Card(step_year, color="secondary", inverse=True),
+                    html.Div(id='year-picker'),
+                    dcc.Dropdown(np.arange(1992,now.year + 1),now.year,id='start_year')
                     ])
-                ]),
-                dbc.Row([
-                    html.Div([
-                            dbc.Col(
-                            dcc.Slider(1992,now.year,1,
-                                value=next_year-1,
-                                id="year_value",
-                                #marks={i: str(i) for i in range(1992,next_year)},
-                                marks=None,
-                                tooltip={"always_visible": True,
-                                "style": {"color": "LightSteelBlue", "fontSize": "20px"}},
-                                ),style={'padding':'2.2em'},
-                            ),
-                    ]),
-                ]),
-                dbc.Row(dbc.Card(step_month, color="secondary", inverse=True),style={'padding':'2.2em', 'text-align': 'center'}),
-                dbc.Row([
-                    html.Div([
-                            dbc.Col(
-                            dcc.Slider(1,12,1,
-                                value=6,
-                                id="month_value",
-                                marks=None,
-                                tooltip={"always_visible": True,
-                                "style": {"color": "LightSteelBlue", "fontSize": "20px"}},
-                            ),style={'padding':'2.2em'},
-                        ),
-                    ]),
-                ]),
-                dbc.Row(dbc.Card(step_date, color="secondary", inverse=True),style={'padding':'1.5em', 'text-align': 'center'}),
+                ),
+            dbc.Col(
+                html.Div([
+                    html.Div(id='sim_month'),
+                    dbc.Card(step_month, color="secondary", inverse=True),                    
+                    dcc.Dropdown(np.arange(1,13),6,id='start_month')
+                    ])
+                ),
+            dbc.Col(
+                html.Div([
+                    html.Div(id='sim_day'),
+                    dbc.Card(step_day, color="secondary", inverse=True),                    
+                    dcc.Dropdown(np.arange(1,32),15,id='start_day'
+                    ), 
+                    ])
+                ),
+            dbc.Col(
+                html.Div([
+                    html.Div(id='sim_hour'),
+                    dbc.Card(step_hour, color="secondary", inverse=True),                    
+                    dcc.Dropdown(np.arange(0,24),18,id='start_hour'
+                    ),
+                    ])
+                ),
+            dbc.Col(
+                html.Div([
+                    html.Div(id='sim_minute'),
+                    dbc.Card(step_minute, color="secondary", inverse=True),                    
+                    dcc.Dropdown([0,15,30,45],30,id='start_minute'
+                    ),
+                    ])
+                ),
+            dbc.Col(
+                html.Div([
+                    html.Div(id='sim_duration'),                    
+                    dbc.Card(step_duration, color="secondary", inverse=True), 
+                    dcc.Dropdown(np.arange(0,240,30),120,id='duration'
+                    ),
+                    ])
+                ),
+        dbc.Row([
+            dbc.Col(
+                html.Div([
+                dbc.Button("Click Here to Check Selections",id='check_sim_vars', n_clicks=0, style={'padding':'1em','width':'100%'}),
+                html.Div(id="show_sim_vars",style=feedback)
+                ],
+                style={'padding':'1em'},
 
-                dbc.Row([
-                    html.Div([
-                            dbc.Col(
-                            dcc.Slider(1,31,1,
-                                value=15,
-                                id="date_value",
-                                marks=None,
-                                tooltip={"always_visible": True,
-                                "style": {"color": "LightSteelBlue", "fontSize": "20px"}},
-                                ),style={'padding':'2.2em'},
-                            ),
-                    ]),
-                ]),
+                )
+            ),]),
+            ]),
+        dbc.Row([
+            dbc.Col(
+                html.Div([
+                    dl.Map(id='radar_map', style={'height': '75vh'},
+                    center = [40, -95],zoom=4.6,scrollWheelZoom=False,
+                    children=[dl.TileLayer(),
+                              dl.GeoJSON(url="/assets/radars.json", zoomToBounds=True, id="geojson",
+               hideout=dict(selected=[]), style=style_handle)]),
+                            ],
+                    ),
+        )])
+            
+            ,
+        dbc.Row([
+            dbc.Col(
+                html.Div([
+                dbc.Button("Click to run scripts",id='run_scripts', n_clicks=0, style={'padding':'1em','width':'100%'}),
+                html.Div(id="show_script_progress",style=feedback)
+                ])
+            )
+        ])
+    ])
+)
 
-                dbc.Row(dbc.Card(step_radar, color="secondary", inverse=True),style={'padding':'1.5em'}),
-                dbc.Row(dl.Map(id='radar_map', style={'height': '75vh'},center = [40, -95],zoom=5,
-                    children=[dl.TileLayer(), dl.GeoJSON(data=sa.geojson)])),
-              
 
-
-])
-
-"""
-@app.callback(Output('COORDINATE_CLICK_ID', 'children'),
-              [Input('radar_map', 'click_lat_lng')])
-def click_coord(e):
-    if e is not None:
-        print(json.dumps(e))
-        return json.dumps(e)
+@app.callback(
+    Output("geojson", "hideout"),
+    Input("geojson", "n_clicks"),
+    State("geojson", "clickData"),
+    State("geojson", "hideout"),
+    prevent_initial_call=True)
+def toggle_select(_, feature, hideout):
+    selected = hideout["selected"]
+    name = feature["properties"]["radar"]
+    if name in selected:
+        selected.remove(name)
     else:
-        return "-"
+        selected.append(name)
+    return hideout
 
-@app.callback(Output('year_value-out', 'children'),
-              [Input('year_value', 'value')])
-def show_year(input_value):
-    return input_value
+@app.callback(
+    Output('output', 'children'),
+    [Input('button', 'n_clicks')]
+)
+def update_output(n_clicks):
+    if n_clicks > 0:
+        run_script(["arg1", "arg2"])
+        return "Script has been run"
+    else:
+        return ""
 
-@app.callback(Output('month_value-out', 'children'),
-              [Input('month_value', 'value')])
-def show_month(input_value):
-    index = input_value -1
-    return monthnames[index]
 
+@app.callback(
+    Output('click-data', 'children'),
+    [Input('radar_map', 'click_lat_lng')]
+)
+def map_click(lat_lng):
+    if lat_lng is not None:
+        print(lat_lng)
+        return lat_lng
 
-@app.callback(Output('date_value-out', 'children'),
-              [Input('date_value', 'value')])
-def show_date(input_value):
+@app.callback(Output('click_data', 'children'),
+              [Input('radar_map', 'click_feature')])
+
+@app.callback(
+Output('sim_year', 'children'),
+Input('start_year', 'value'))
+def get_year(start_year):
+    sa.start_year = start_year
+    return
+
+@app.callback(
+Output('sim_month', 'children'),
+Input('start_month', 'value'))
+def get_month(start_month):
+    sa.start_month = start_month
+    return
+
+@app.callback(
+Output('sim_day', 'children'),
+Input('start_day', 'value'))
+def get_day(start_day):
+    sa.start_day = start_day
+    return
+
+@app.callback(
+Output('show_sim_vars', 'children'),
+Input('check_sim_vars', 'n_clicks'))
+def get_sim(n_clicks):
+    sim_datetime = datetime(sa.start_year,sa.start_month,sa.start_day,sa.start_hour,sa.start_minute,second=0)
+    sim_datestring = datetime.strftime(sim_datetime,"%Y-%m-%d %H:%M UTC")
     
-    return input_value
-"""
+    return f'Sim Start _____ {sim_datestring} _____ Duration: {sa.duration} minutes'
+
+
+@app.callback(
+Output('sim_minute', 'children'),
+Input('start_minute', 'value'))
+def get_minute(start_minute):
+    sa.start_minute = start_minute
+    return
+
+@app.callback(
+Output('sim_duration', 'children'),
+Input('duration', 'value'))
+def get_duration(duration):
+    sa.duration = duration
+    return
 
 if __name__ == '__main__':
     app.run_server(debug=True)
-

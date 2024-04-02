@@ -9,3 +9,6 @@ dependencies:
   - geopandas 
   - cartopy
   - metpy
+  - pip:
+    - dash-leaflet
+    - dash-extensions
