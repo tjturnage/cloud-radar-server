@@ -165,4 +165,4 @@ Thumbs.db
 /logs
 /junk
 download_status.txt
-assets/placefiles/
+flask/assets/placefiles/
