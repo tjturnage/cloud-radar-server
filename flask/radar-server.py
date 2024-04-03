@@ -44,6 +44,15 @@ except Exception:
 
 now = datetime.now(pytz.utc)
 
+radar_list = []
+rdas = []
+with open('radars.gis','r', encoding='utf-8') as fin:
+    for line in fin.readlines():
+        if line[0][0] == 'k':
+            elements = line.split("|")
+            radar_list.append(dict(radar=elements[0][-3:].upper(),lat=float(elements[2]),lon=float(elements[3])))
+            rdas.append(elements[0][-3:].upper())
+
 class RadarSimulator:
     """
     A class representing a radar simulator.
@@ -64,6 +73,11 @@ class RadarSimulator:
         self.start_minute = 30
         self.duration = 180
         #self.geojson = self.populate_map()
+        self.timestring = None
+        self.sim_datetime = None
+        self.radar = None
+        self.lat = None
+        self.lon = None
 
 
     def populate_map(self):
@@ -71,11 +85,13 @@ class RadarSimulator:
         generates all the radar sites
         """
         radar_list = []
+        rdas = []
         with open('radars.gis','r', encoding='utf-8') as fin:
             for line in fin.readlines():
                 if line[0][0] == 'k':
                     elements = line.split("|")
                     radar_list.append(dict(radar=elements[0][-3:].upper(),lat=float(elements[2]),lon=float(elements[3])))
+                    rdas.append(elements[0][-3:].upper())
         geojson = dlx.dicts_to_geojson([{**r, **dict(tooltip=r['radar'])} for r in radar_list])
         #with open('radars.json','w') as fout:
         #    fout.write(json.dumps(geojson))
@@ -125,7 +141,7 @@ step_instructions = [
             className="card-text"),])]
 
 step_radar = [
-            dbc.CardBody([html.H5("Select up to three radars for your simulation.", 
+            dbc.CardBody([html.H5("Select Radar", 
             className="card-text"),])]
 
 step_year = [
@@ -175,7 +191,7 @@ style_handle = assign("""function(feature, context){
 }""")
 
 def run_script(args):
-    subprocess.run(["python", "your_script.py"] + args)
+    subprocess.run(["python", "surface_obs_placefile.py"] + args)
     return
 
 app.layout = dbc.Container(
@@ -250,16 +266,24 @@ app.layout = dbc.Container(
         dbc.Row([
             dbc.Col(
                 html.Div([
-                    dl.Map(id='radar_map', style={'height': '75vh'},
+                    dl.Map(id='radar_map', style={'height': '7vh'},
                     center = [40, -95],zoom=4.6,scrollWheelZoom=False,
                     children=[dl.TileLayer(),
                               dl.GeoJSON(url="/assets/radars.json", zoomToBounds=True, id="geojson",
                hideout=dict(selected=[]), style=style_handle)]),
                             ],
                     ),
-        )])
-            
-            ,
+        )]),
+
+        dbc.Row([
+                    dbc.Col(
+                html.Div([
+                    dbc.Card(step_radar, color="secondary", inverse=True),
+                    dcc.Dropdown(rdas,rdas[0],id='sim_radar'),
+                    html.Div(id='show_radar')                    
+                    ])
+                ),
+        ]),
         dbc.Row([
             dbc.Col(
                 html.Div([
@@ -288,28 +312,15 @@ def toggle_select(_, feature, hideout):
     return hideout
 
 @app.callback(
-    Output('output', 'children'),
-    [Input('button', 'n_clicks')]
+    Output('show_script_progress', 'children'),
+    [Input('run_scripts', 'n_clicks')]
 )
 def update_output(n_clicks):
     if n_clicks > 0:
-        run_script(["arg1", "arg2"])
+        run_script([sa.radar,str(sa.lat),str(sa.lon),sa.timestring,str(sa.duration)])
         return "Script has been run"
     else:
         return ""
-
-
-@app.callback(
-    Output('click-data', 'children'),
-    [Input('radar_map', 'click_lat_lng')]
-)
-def map_click(lat_lng):
-    if lat_lng is not None:
-        print(lat_lng)
-        return lat_lng
-
-@app.callback(Output('click_data', 'children'),
-              [Input('radar_map', 'click_feature')])
 
 @app.callback(
 Output('sim_year', 'children'),
@@ -333,13 +344,22 @@ def get_day(start_day):
     return
 
 @app.callback(
+Output('show_radar', 'children'),
+Input('sim_radar', 'value'))
+def get_radar(sim_radar):
+    sa.radar = sim_radar
+    sa.lat = [item['lat'] for item in radar_list if item['radar'] == sim_radar][0]
+    sa.lon = [item['lon'] for item in radar_list if item['radar'] == sim_radar][0]
+    return
+
+@app.callback(
 Output('show_sim_vars', 'children'),
 Input('check_sim_vars', 'n_clicks'))
 def get_sim(n_clicks):
-    sim_datetime = datetime(sa.start_year,sa.start_month,sa.start_day,sa.start_hour,sa.start_minute,second=0)
-    sim_datestring = datetime.strftime(sim_datetime,"%Y-%m-%d %H:%M UTC")
+    sa.sim_datetime = datetime(sa.start_year,sa.start_month,sa.start_day,sa.start_hour,sa.start_minute,second=0)
+    sa.timestring = datetime.strftime(sa.sim_datetime,"%Y-%m-%d %H:%M UTC")
     
-    return f'Sim Start _____ {sim_datestring} _____ Duration: {sa.duration} minutes'
+    return f'Sim Start _____ {sa.timestring} _____ Duration: {sa.duration} minutes'
 
 
 @app.callback(
