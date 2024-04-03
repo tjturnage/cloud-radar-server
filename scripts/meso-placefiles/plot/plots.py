@@ -1,3 +1,5 @@
+import matplotlib 
+matplotlib.use('Agg')       # Avoids Qt platform errors
 import matplotlib.pyplot as plt
 import numpy as np
 import geojsoncontour

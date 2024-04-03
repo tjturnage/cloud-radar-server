@@ -163,5 +163,7 @@ Thumbs.db
 .DS_Store
 .vscode/
 /logs
-/junk
+junk
 download_status.txt
+data/
+output/
