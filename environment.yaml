@@ -20,6 +20,7 @@ dependencies:
   - aws-checksums=0.1.18
   - aws-crt-cpp=0.26.4
   - aws-sdk-cpp=1.11.267
+  - blinker=1.7.0
   - blosc=1.21.5
   - bokeh=3.4.0
   - botocore=1.10.58
@@ -31,6 +32,7 @@ dependencies:
   - ca-certificates=2024.2.2
   - cached-property=1.5.2
   - cached_property=1.5.2
+  - cachelib=0.9.0
   - cartopy=0.22.0
   - certifi=2024.2.2
   - cftime=1.6.3
@@ -41,15 +43,24 @@ dependencies:
   - contourpy=1.2.0
   - cycler=0.12.1
   - cytoolz=0.12.3
+  - dash=2.16.1
+  - dash-bootstrap-components=1.5.0
+  - dash-extensions=1.0.14
+  - dash-leaflet=1.0.15
   - dask=2023.4.0
   - dask-core=2023.4.0
+  - dataclass-wizard=0.22.3
   - distributed=2023.4.0
   - docutils=0.20.1
   - eccodes=2.34.1
+  - editorconfig=0.12.3
+  - flask=2.3.3
+  - flask-caching=2.0.2
   - fonttools=4.50.0
   - freetype=2.12.1
   - frozenlist=1.4.1
   - fsspec=2021.7.0
+  - geobuf=1.1.1
   - geos=3.12.1
   - gflags=2.2.2
   - glog=0.7.0
@@ -61,9 +72,11 @@ dependencies:
   - idna=3.6
   - importlib-metadata=7.1.0
   - importlib_metadata=7.1.0
+  - itsdangerous=2.1.2
   - jasper=4.2.2
   - jinja2=3.1.3
   - jmespath=0.10.0
+  - jsbeautifier=1.14.9
   - kiwisolver=1.4.5
   - krb5=1.21.2
   - lat_lon_parser=1.3.0
@@ -128,10 +141,12 @@ dependencies:
   - matplotlib-base=3.8.3
   - mda-xdrlib=0.2.0
   - metpy=1.6.1
+  - more-itertools=9.1.0
   - msgpack-python=1.0.7
   - multidict=6.0.5
   - munkres=1.1.4
   - ncurses=6.4.20240210
+  - nest-asyncio=1.6.0
   - netcdf4=1.6.5
   - numba=0.59.0
   - numpy=1.26.4
@@ -146,8 +161,10 @@ dependencies:
   - pint=0.23
   - pip=24.0
   - platformdirs=4.2.0
+  - plotly=5.19.0
   - pooch=1.8.1
   - proj=9.3.1
+  - protobuf=4.25.3
   - psutil=5.9.8
   - pthread-stubs=0.4
   - pyarrow=15.0.2
@@ -165,6 +182,7 @@ dependencies:
   - re2=2023.09.01
   - readline=8.2
   - requests=2.31.0
+  - retrying=1.3.3
   - s3fs=2021.7.0
   - scipy=1.12.0
   - setuptools=69.2.0
@@ -176,6 +194,7 @@ dependencies:
   - sortedcontainers=2.4.0
   - sqlite=3.45.2
   - tblib=3.0.0
+  - tenacity=8.2.3
   - timeout-decorator=0.5.0
   - tk=8.6.13
   - tomli=2.0.1
@@ -187,6 +206,7 @@ dependencies:
   - tzdata=2024a
   - urllib3=2.2.1
   - versioneer=0.29
+  - werkzeug=3.0.2
   - wheel=0.43.0
   - wrapt=1.16.0
   - xarray=2024.2.0
@@ -204,5 +224,11 @@ dependencies:
   - zlib=1.2.13
   - zstd=1.5.5
   - pip:
+      - dash-core-components==2.0.0
+      - dash-html-components==2.0.0
+      - dash-table==5.0.0
+      - dill==0.3.8
+      - diskcache==5.6.3
       - geojson==3.1.0
       - geojsoncontour==0.4.0
+      - multiprocess==0.70.16
