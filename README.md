@@ -178,15 +178,6 @@ Within the `meso-placefiles` sub-directory, open `configs.py`.  The first six va
 <!-- ROADMAP -->
 ## Roadmap
 
-- [x] Add Changelog
-- [x] Convert anaconda to mamba
-- [ ] confirm users are permissioned to access cloud-radar environment
-- [ ] Add arguments for location and times in surface-obs-placefile.py
-- [ ] test web access of COBRAS installation
-- [ ] Develop front end to take date/time/location arguments
-
-
-
 See the [open issues](https://github.com/tjturnage/cloud-radar-server/issues) for a full list of proposed features (and known issues).
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
