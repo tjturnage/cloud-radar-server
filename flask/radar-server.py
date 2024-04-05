@@ -6,31 +6,20 @@
 """
 
 import os
-#import re
-#import sys
-#import time
-from datetime import date
+
+import subprocess
 from datetime import datetime
-import pytz
-import json
+import calendar
 import numpy as np
 import pandas as pd
+import plotly.graph_objs as go
+import pytz
 
-import dash_leaflet as dl
-import dash_leaflet.express as dlx
-from dash_extensions.javascript import assign
 import dash
+# State allows the user to enter input before proceeding
+from dash import Input, Output, State, dcc, html
 # bootstrap is what helps styling for a better presentation
 import dash_bootstrap_components as dbc
-# dcc = dash core components
-from dash import Dash, html, dcc, Input, Output, State
-# State allows the user to enter input before proceeding
-import subprocess
-import plotly.express as px
-#import plotly.offline as py     #(version 4.4.1)
-import plotly.graph_objs as go
-
-
 
 # ----------------------------------------
 #        Attempt to set up environment
@@ -47,7 +36,6 @@ except Exception:
 # ----------------------------------------
 #        Set up class then instantiate
 # ----------------------------------------
-radar_code = {1:'blue',3:'green'}
 
 now = datetime.now(pytz.utc)
 df = pd.read_csv('radars.gis', sep='|', header=None, names=['radar','wfo','lat','lon', 'elevation','code','state', 'full_name'], dtype={'lat': float, 'lon': float})
@@ -58,9 +46,9 @@ fig = go.Figure(go.Scattermapbox(
     mode='markers',
     lon = df['lon'],
     lat = df['lat'],
-    marker={'size': 20, 'color' : df['color']},
-    unselected={'marker' : {'opacity':0.75}},
-    selected={'marker' : {'opacity':0.9, 'size':30}},
+    marker={'size': 25, 'color' : 'rgb(50,130,245)', 'opacity': 0.6},
+    unselected={'marker' : {'opacity':0.4}},
+    selected={'marker' : {'opacity':0.6, 'size':40, 'color': 'rgb(255,255,0)'}},
     hoverinfo='text',
     hovertext=df['radar'],
     customdata=df['radar'],
@@ -108,7 +96,8 @@ class RadarSimulator:
         self.start_hour = 18
         self.start_minute = 30
         self.duration = 180
-        #self.geojson = self.populate_map()
+        self.days_in_month = 30
+        self.leap_year = False
         self.timestring = None
         self.sim_datetime = None
         self.radar = None
@@ -223,7 +212,7 @@ app.layout = dbc.Container(
                 html.Div([
                     html.Div(id='sim_day'),
                     dbc.Card(step_day, color="secondary", inverse=True),                    
-                    dcc.Dropdown(np.arange(1,32),15,id='start_day'
+                    dcc.Dropdown(np.arange(1,sa.days_in_month+1),15,id='start_day'
                     ), 
                     ])
                 ),
@@ -287,48 +276,6 @@ app.layout = dbc.Container(
         ])
     ])
 )
-# Output of Graph
-@app.callback(Output('graph', 'figure'),
-              [Input('start_year', 'value')])
-
-def update_figure(start_year):
-    return
-
-    # # Create figure
-    # locations=[go.Scattermapbox(
-    #                 lon = df_sub['lon'],
-    #                 lat = df_sub['lat'],
-    #                 mode='markers',
-    #                 #marker={'color' : df_sub['color']},
-    #                 unselected={'marker' : {'opacity':1}},
-    #                 selected={'marker' : {'opacity':0.5, 'size':25}},
-    #                 hoverinfo='text',
-    #                 hovertext=df_sub['radar'],
-    #                 customdata=df_sub['radar']
-    # )]
-
-    # # Return figure
-    # return {
-    #     'data': locations,
-    #     'layout': go.Layout(
-    #         uirevision= 'foo', #preserves state of figure/map after callback activated
-    #         clickmode= 'event+select',
-    #         hovermode='closest',
-    #         hoverdistance=2,
-    #         mapbox=dict(
-    #             accesstoken=TOKEN,
-    #             bearing=25,
-    #             style='dark',
-    #             center=dict(
-    #                 lat=40.80105,
-    #                 lon=-73.945155
-    #             ),
-    #             pitch=40,
-    #             zoom=11.5
-    #         ),
-    #     )
-    # }
-
 
 @app.callback(
     Output('show_radar', 'children'),
@@ -351,7 +298,7 @@ def display_click_data(clickData):
     [Input('run_scripts', 'n_clicks')],
     prevent_initial_call=True
 )
-def update_output(n_clicks):
+def execute_script(n_clicks):
     if n_clicks > 0:
         run_script([sa.radar,str(sa.lat),str(sa.lon),sa.timestring,str(sa.duration)])
         return "Script has been run"
@@ -365,12 +312,17 @@ def get_year(start_year):
     sa.start_year = start_year
     return
 
+
+
 @app.callback(
-Output('sim_month', 'children'),
-Input('start_month', 'value'))
-def get_month(start_month):
-    sa.start_month = start_month
-    return
+    [Output('start_day', 'options'), Output('start_day', 'value')],
+    [Input('start_year', 'value'), Input('start_month', 'value')]
+)
+def update_day_dropdown(selected_year, selected_month):
+    _, num_days = calendar.monthrange(selected_year, selected_month)
+    day_options = [{'label': str(day), 'value': day} for day in range(1, num_days+1)]
+    return day_options, 15
+
 
 @app.callback(
 Output('sim_day', 'children'),
@@ -378,15 +330,6 @@ Input('start_day', 'value'))
 def get_day(start_day):
     sa.start_day = start_day
     return
-
-# @app.callback(
-# Output('show_radar', 'children'),
-# Input('sim_radar', 'value'))
-# def get_radar(sim_radar):
-#     sa.radar = sim_radar
-#     sa.lat = [item['lat'] for item in radar_list if item['radar'] == sim_radar][0]
-#     sa.lon = [item['lon'] for item in radar_list if item['radar'] == sim_radar][0]
-#     return
 
 @app.callback(
 Output('show_sim_vars', 'children'),

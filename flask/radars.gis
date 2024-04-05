@@ -80,7 +80,8 @@ kpah|kpah|37.06848| -88.77232| 153|1|KY|Paducah
 tsdf|klmk|38.04590| -85.61061| 222|3|KY|TDWR Louisville
 kpoe|klch|31.15574| -92.97607| 143|1|LA|Fort Polk
 klch|klch|30.12532| -93.21586|  41|1|LA|Lake Charles
-klix|klix|30.33677| -89.82545|  54|1|LA|New Orleans
+klix|klix|30.33677| -89.82545|  54|0|LA|New Orleans
+khdc|klix|30.51900| -90.40700|  13|1|LA|New Orleans
 kshv|kshv|32.45079| -93.84132| 117|1|LA|Shreveport
 tmsy|klix|30.02163| -90.40331|  30|3|LA|TDWR New Orleans
 kbox|kbox|41.95585| -71.13699|  70|1|MA|Boston
