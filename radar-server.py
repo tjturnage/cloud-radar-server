@@ -175,7 +175,7 @@ view_output = [
 
 
 def run_script(args):
-    subprocess.run(["python", "./scripts/surface-obs-placefiles/surface_obs_placefile.py"] + args)
+    subprocess.run(["python", "./scripts/sfc-obs/surface_obs_placefile.py"] + args)
     return
 
 app.layout = dbc.Container(
