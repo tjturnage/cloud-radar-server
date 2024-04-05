@@ -26,6 +26,8 @@ import dash_bootstrap_components as dbc
 # ----------------------------------------
 TOKEN = 'pk.eyJ1IjoidGp0dXJuYWdlIiwiYSI6ImNsaXoydWQ1OTAyZmYzZmxsM21waWU2N3kifQ.MDNAdaS61MNNmHimdrV7Kg'
 
+SFC_OBS_SCRIPTS_PATH = './scripts/surface_'    # pyany
+
 RADAR_DIR = '.'      # pyany
 
 try:
@@ -46,9 +48,9 @@ fig = go.Figure(go.Scattermapbox(
     mode='markers',
     lon = df['lon'],
     lat = df['lat'],
-    marker={'size': 25, 'color' : 'rgb(50,130,245)', 'opacity': 0.6},
+    marker={'size': 26, 'color' : 'rgb(50,130,245)', 'opacity': 0.6},
     unselected={'marker' : {'opacity':0.4}},
-    selected={'marker' : {'opacity':0.6, 'size':40, 'color': 'rgb(255,255,0)'}},
+    selected={'marker' : {'opacity':0.6, 'size':30, 'color': 'rgb(255,255,0)'}},
     hoverinfo='text',
     hovertext=df['radar'],
     customdata=df['radar'],
@@ -173,7 +175,7 @@ view_output = [
 
 
 def run_script(args):
-    subprocess.run(["python", "surface_obs_placefile.py"] + args)
+    subprocess.run(["python", "./scripts/surface-obs-placefiles/surface_obs_placefile.py"] + args)
     return
 
 app.layout = dbc.Container(
