@@ -175,6 +175,7 @@ class Mesowest():
 
         for _t,this_time in enumerate(self.times):
             time_str = this_time[0]
+            print(time_str)
             jas = self.mesowest_get_nearest_time_data(time_str)
             now = this_time[1]
             future = this_time[2]
