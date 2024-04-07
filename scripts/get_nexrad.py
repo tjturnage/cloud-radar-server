@@ -1,9 +1,14 @@
+"""
+Leverages AWS to download NEXRAD radar data from the NOAA NEXRAD Level 2 or TDWR bucket.
+- downloads all available data (volume scans) for a specific radar station, for a specific time period.
+- target data is saved in the data/radar folder in the project directory.
+"""
 import os
+from datetime import datetime, timedelta
+from pathlib import Path
 import boto3
 import botocore
 from botocore.client import Config
-from pathlib import Path
-from datetime import datetime, timedelta
 
 p = Path('.')
 RAW_RADAR_DIR = p.parent / 'data' / 'radar'
@@ -11,9 +16,10 @@ os.makedirs(RAW_RADAR_DIR, exist_ok=True)
 
 
 class NexradDownloader:
-    def __init__(self, radar_id, start_time, duration):
+    def __init__(self, radar_id, start_tstr, duration):
         self.radar_id = radar_id
-        self.start_time = start_time
+        self.start_tstr = start_tstr
+        self.start_time = datetime.strptime(self.start_tstr,'%Y-%m-%d %H:%M UTC')
         self.duration = duration
         self.end_time = self.start_time + timedelta(minutes=duration)
         self.bucket = boto3.resource('s3', config=Config(signature_version=botocore.UNSIGNED,
@@ -55,7 +61,7 @@ class NexradDownloader:
             for obj in self.bucket.objects.filter(Prefix=self.prefix_day_two):
                 file_dt = datetime.strptime(obj.key[20:35], '%Y%m%d_%H%M%S')
                 if file_dt >= self.start_time and file_dt <= self.end_time:
-                    if obj.key.endswith('V06'):
+                    if obj.key.endswith('V06') or obj.key.endswith('V08'):
                         print(obj.key)
                         self.bucket.download_file(obj.key, str(self.destination_folder / Path(obj.key).name))
 
@@ -63,5 +69,5 @@ class NexradDownloader:
 
 
 if __name__ == "__main__":
-    # need to changes time to string format since the datetime object is not shared in Dash
-    NexradDownloader('KGRR', datetime(2023, 8, 24, 23, 30, 0), 60)
+
+    NexradDownloader('KGRR', '2023-08-24 23:30 UTC', 60)
