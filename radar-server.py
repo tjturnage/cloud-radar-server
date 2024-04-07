@@ -17,7 +17,8 @@ import pytz
 
 import dash
 # State allows the user to enter input before proceeding
-from dash import Input, Output, State, dcc, html
+from dash import html, dcc, Input, Output, State, callback
+from dash.exceptions import PreventUpdate
 # bootstrap is what helps styling for a better presentation
 import dash_bootstrap_components as dbc
 
@@ -149,7 +150,9 @@ step_instructions = [
             dbc.CardBody([html.H5("Select Simulation Start Date and Time ... Duration is in Minutes", 
             className="card-text"),])]
 
-step_radar = [dbc.CardBody([html.H5("Select Radar", className="card-text")])]
+step_radar = [dbc.CardBody([html.H5("Use map below to select radar(s)", className="card-text")])]
+
+list_radars = [dbc.CardBody([html.H5("Selected Radar(s)", className="card-text")])]
 
 step_year = [dbc.CardBody([html.P("Year",className="card-text")])]
 
@@ -178,23 +181,28 @@ def run_script(args):
     subprocess.run(["python", "./scripts/sfc-obs/surface_obs_placefile.py"] + args)
     return
 
-app.layout = dbc.Container(
-    html.Div([dbc.Container([
+app.layout = dbc.Container([
+    html.Div([ ], style={'height': '5px'}),
+    html.Div([
+        dbc.Container([
             dbc.Row([
                 dbc.Col(html.Div(dbc.Card(top_content, color="secondary", inverse=True)), width=9),
                 dbc.Col(html.Div(html.Img(src="/assets/radar-web.svg",
                                       style={'display': 'block', 'margin-left': 'auto',
                                              'margin-right': 'auto', 'margin-top': '10px',
                                             'verticalAlign': 'middle', 'width':'70%'})), width=3),
-            ],id='test',style={'border':'3px gray solid'})]),
-            dbc.Row([
-                dbc.Col(
-                    html.Div([
-                    dbc.Card(step_instructions, color="secondary", inverse=True)
-                    ],style={"padding":"0.4em", "text-align":"center"})
-                    )
-                ]),
-            dbc.Row([
+            ],id='test',style={"padding":"1em",'border':'3px gray solid'})],style={"padding":"1.7em", "text-align":"center"}),
+    ]),
+    # html.Div([   
+    #         dbc.Row([
+    #             dbc.Col(
+    #                 html.Div([
+    #                 dbc.Card(step_instructions, color="secondary", inverse=True)
+    #                 ],style={"padding":"0.5em", "text-align":"center"}))
+    #             ]),
+    #         ]),
+    html.Div([
+        dbc.Row([                  
                 dbc.Col(
                     html.Div([
                     html.Div(id="sim_year"),
@@ -203,88 +211,118 @@ app.layout = dbc.Container(
                     dcc.Dropdown(np.arange(1992,now.year + 1),now.year-1,id='start_year')
                     ])
                 ),
-            dbc.Col(
-                html.Div([
-                    html.Div(id='sim_month'),
-                    dbc.Card(step_month, color="secondary", inverse=True),                    
-                    dcc.Dropdown(np.arange(1,13),6,id='start_month')
-                    ])
-                ),
-            dbc.Col(
-                html.Div([
-                    html.Div(id='sim_day'),
-                    dbc.Card(step_day, color="secondary", inverse=True),                    
-                    dcc.Dropdown(np.arange(1,sa.days_in_month+1),15,id='start_day'
-                    ), 
-                    ])
-                ),
-            dbc.Col(
-                html.Div([
-                    html.Div(id='sim_hour'),
-                    dbc.Card(step_hour, color="secondary", inverse=True),                    
-                    dcc.Dropdown(np.arange(0,24),18,id='start_hour'
+                dbc.Col(
+                    html.Div([
+                        html.Div(id='sim_month'),
+                        dbc.Card(step_month, color="secondary", inverse=True),                    
+                        dcc.Dropdown(np.arange(1,13),6,id='start_month')
+                        ])
                     ),
-                    ])
-                ),
-            dbc.Col(
-                html.Div([
-                    html.Div(id='sim_minute'),
-                    dbc.Card(step_minute, color="secondary", inverse=True),                    
-                    dcc.Dropdown([0,15,30,45],30,id='start_minute'
+                dbc.Col(
+                    html.Div([
+                        html.Div(id='sim_day'),
+                        dbc.Card(step_day, color="secondary", inverse=True),                    
+                        dcc.Dropdown(np.arange(1,sa.days_in_month+1),15,id='start_day'
+                        ), 
+                        ])
                     ),
-                    ])
-                ),
-            dbc.Col(
-                html.Div([
-                    html.Div(id='sim_duration'),                    
-                    dbc.Card(step_duration, color="secondary", inverse=True), 
-                    dcc.Dropdown(np.arange(0,240,30),120,id='duration'
+                dbc.Col(
+                    html.Div([
+                        html.Div(id='sim_hour'),
+                        dbc.Card(step_hour, color="secondary", inverse=True),         
+                        dcc.Dropdown(np.arange(0,24),18,id='start_hour'),
+                        ])
                     ),
-                    ])
-                )
-        ]),
-        dbc.Row([
-            dbc.Col(
-                html.Div([
-                    dbc.Button("Click Here to Check Selections",id='check_sim_vars', n_clicks=0, style={'padding':'1em','width':'100%'}),
-                    html.Div(id="show_sim_vars",style=feedback)
-                        ], style={'padding':'0.4em'}
-                        )
+                dbc.Col(
+                    html.Div([
+                        html.Div(id='sim_minute'),
+                        dbc.Card(step_minute, color="secondary", inverse=True),
+                        dcc.Dropdown([0,15,30,45],30,id='start_minute'),
+                        ])
+                    ),
+                dbc.Col(
+                    html.Div([
+                        html.Div(id='sim_duration'),                    
+                        dbc.Card(step_duration, color="secondary", inverse=True),
+                        dcc.Dropdown(np.arange(0,240,30),120,id='duration'),
+                        ])
                     )
-            ]),
+        ])
+    ],style={'padding':'1em'}),
+    
+    
     html.Div([
-        dbc.Card(step_radar, color="secondary", inverse=True)],style={"text-align":"center"}),
-    html.Div([
-        dcc.Graph(
-            id='graph',
-            config={'displayModeBar': False,'scrollZoom': True},
-            style={'padding-bottom': '2px', 'padding-left': '2px','height': '80vh', 'width': '100%'},
-            figure=fig
-            )
-        ]),
-           
-       dbc.Row([
-            dbc.Col(
-                html.Div(id='show_radar',style=feedback)
-                ),
-        ]),
         dbc.Row([
             dbc.Col(
                 html.Div([
-                dbc.Button("Click to run scripts",id='run_scripts', n_clicks=0, style={'padding':'1em','width':'100%'}),
+                            dbc.Button('Toggle map on/off', size="lg", id='map_btn', n_clicks=0),
+                        ], className="d-grid gap-2"), style={'vertical-align':'middle'}),
+        ])
+        ], style={'padding':'1em', 'vertical-align':'middle'}),
+    
+    html.Div([
+        html.Div([
+                dbc.Card(step_radar, color="secondary", inverse=True)],
+                style={'text-align':'center'},),
+        html.Div([dcc.Graph(
+                id='graph',
+                config={'displayModeBar': False,'scrollZoom': True},
+                style={'padding-bottom': '2px', 'padding-left': '2px','height': '80vh', 'width': '100%'},
+                figure=fig
+                )
+                ]),
+    ], id='graph-container', style={'display': 'none'}),    
+    # html.Div([
+    #     dbc.Card(step_instructions, color="secondary", inverse=True)
+    #             ], style={"padding":"1em", "text-align":"center"}
+    #          ),
+
+    html.Div([
+       dbc.Row([
+            dbc.Col(html.Div(id='show_radar',style=feedback)),
+        ]),
+    ]),
+    html.Div([
+        dbc.Row([
+            dbc.Col(
+                html.Div([
+                dbc.Button("Click to check values",id='check_values', n_clicks=0, style={'padding':'1em','width':'100%'}),
+                html.Div(id="show_values",style=feedback)
+                ])
+            )
+        ])
+    ]),
+    html.Div([
+        dbc.Row([
+            dbc.Col(
+                html.Div([
+                dbc.Button("Click to check values scripts",id='run_scripts', n_clicks=0, style={'padding':'1em','width':'100%'}),
                 html.Div(id="show_script_progress",style=feedback)
                 ])
             )
         ])
-    ])
+    ]),
+    html.Div([dcc.Store(id='memory'),]),
+
+    html.Div([ ], style={'height': '500px'}),
+])  # end of app.layout
+
+@app.callback(
+    Output('graph-container', 'style'),
+    Input('map_btn', 'n_clicks')
 )
+def show_hide_graph(n):
+    if n % 2 == 1:
+        return {'display': 'none'}
+    else:
+        return {'padding-bottom': '2px', 'padding-left': '2px','height': '80vh', 'width': '100%'}
 
 @app.callback(
     Output('show_radar', 'children'),
     [Input('graph', 'clickData')])
 def display_click_data(clickData):
     if clickData is None:
-        return 'Click on any bubble'
+        return 'No radars selected ...'
     else:
         print (clickData)
         the_link=clickData['points'][0]['customdata']
@@ -325,6 +363,12 @@ def update_day_dropdown(selected_year, selected_month):
     day_options = [{'label': str(day), 'value': day} for day in range(1, num_days+1)]
     return day_options, 15
 
+@app.callback(
+Output('sim_month', 'children'),
+Input('start_month', 'value'))
+def get_month(start_month):
+    sa.start_month = start_month
+    return
 
 @app.callback(
 Output('sim_day', 'children'),
@@ -333,15 +377,13 @@ def get_day(start_day):
     sa.start_day = start_day
     return
 
-@app.callback(
-Output('show_sim_vars', 'children'),
-Input('check_sim_vars', 'n_clicks'))
-def get_sim(n_clicks):
-    sa.sim_datetime = datetime(sa.start_year,sa.start_month,sa.start_day,sa.start_hour,sa.start_minute,second=0)
-    sa.timestring = datetime.strftime(sa.sim_datetime,"%Y-%m-%d %H:%M UTC")
-    
-    return f'Sim Start _____ {sa.timestring} _____ Duration: {sa.duration} minutes'
 
+@app.callback(
+Output('sim_hour', 'children'),
+Input('start_hour', 'value'))
+def get_hour(start_hour):
+    sa.start_hour = start_hour
+    return
 
 @app.callback(
 Output('sim_minute', 'children'),
@@ -357,5 +399,15 @@ def get_duration(duration):
     sa.duration = duration
     return
 
+@app.callback(
+Output('show_values', 'children'),
+Input('check_values', 'n_clicks'))
+def get_sim(n_clicks):
+    sa.sim_datetime = datetime(sa.start_year,sa.start_month,sa.start_day,sa.start_hour,sa.start_minute,second=0)
+    sa.timestring = datetime.strftime(sa.sim_datetime,"%Y-%m-%d %H:%M UTC")
+    
+    return f'Sim Start _____ {sa.timestring} _____ Duration: {sa.duration} minutes'
+
+
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    app.run_server(debug=True, port=8050, threaded=True)

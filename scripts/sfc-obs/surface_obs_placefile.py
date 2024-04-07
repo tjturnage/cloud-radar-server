@@ -18,7 +18,7 @@ from datetime import datetime, timedelta
 import pytz
 import requests
 
-from resources import short_dict, station_dict
+from obs_resources import short_dict, station_dict
 #from resources import public_wind_zoom, rwis_wind_zoom, public_t_zoom, rwis_t_zoom, gray, white
 
 DEST_HOME = './assets/placefiles/'

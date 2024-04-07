@@ -1,3 +1,8 @@
+"""_summary_
+
+Returns:
+    _type_: _description_
+"""
 import os
 import math
 from datetime import datetime, timedelta

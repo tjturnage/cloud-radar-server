@@ -16,9 +16,11 @@ import os
 import pandas as pd
 import warnings
 import glob
-
+from pathlib import Path
 #Get Needed Parameters
-
+from hodo_resources import calc_components, calc_vector, calc_shear, calc_meanwind, calc_bulk_shear
+from hodo_resources import calc_srh_from_rm, calc_storm_relative_wind, calc_streamwise_vorticity
+from hodo_resources import calc_bunkers, calc_corfidi, conv_angle_param, conv_angle_enter, calc_dtm
 #Time and Time Zone
 timezone = 'UTC'
 #Radar
@@ -39,28 +41,35 @@ radar_id = 'KGRR' #Make Uppercase
 data_ceiling = 8000 #Max Data Height in Feet AGL
 range_type = 'Static' #Enter Dynamic For Changing Range From Values or Static for Constant Range Value
 static_value = 70 # Enter Static Hodo Range or 999 To Not Use
+BASE_DIR = Path(__file__).parents[2]
+ROOT_DIR = Path(__file__).parents[1]
+CSV_FILE = Path.cwd() / 'scripts' / 'vwp-hodos' / 'RadarInfo.csv'
+
+RAW_RADAR_DATA = BASE_DIR / 'data' / 'radar' / radar_id
+os.makedirs(RAW_RADAR_DATA, exist_ok=True)
+
+HODO_IMAGES = BASE_DIR / 'data' / 'hodographs' / radar_id
+os.makedirs(HODO_IMAGES, exist_ok=True)
+
+CF_DIR = BASE_DIR / 'data' / 'cf_radial' / radar_id
+os.makedirs(CF_DIR, exist_ok=True)
+
+# presumes you have the radar files downloaded already
+radar_files = [f.name for f in RAW_RADAR_DATA.iterdir()]
+radar_filepaths = [p for p in RAW_RADAR_DATA.iterdir()]
 
 #Surface Winds
 sfc_status = 'Preset'
-#Run To Loop Radar Files
-filecount=0
-dir = '/home/scott.r.thomas/Downloads/TDTW'
-for file in os.listdir(dir):
+
+
+for p in radar_filepaths:
+  file = p.name
+  fout = CF_DIR / f'{file}.nc'  
+  radar_time = datetime.strptime(file[4:19], '%Y%m%d_%H%M%S')
+  api_tstr = datetime.strftime(radar_time, '%Y%m%d%H%M')
   if radar_id.startswith('K') or radar_id.startswith('P'):
-    date = file.split('_')[3]
-    time = file.split('_')[4]
 
-    n = 2
-
-    datearr = []
-    for i in range(0, len(date), n):
-        datearr.append(date[i:i+n])
-
-    timearr = []
-    for i in range(0, len(time), n):
-        timearr.append(time[i:i+n])
-
-    radar = pyart.io.read(f"/content/radar_data/{file}")
+    radar = pyart.io.read(p)
     radar
 
     # create a gate filter which specifies gates to exclude from dealiasing
@@ -74,29 +83,16 @@ for file in os.listdir(dir):
     dealias_data = pyart.correct.dealias_region_based(radar, gatefilter=gatefilter)
     radar.add_field("corrected_velocity", dealias_data)
 
-    pyart.io.write_cfradial(f'/content/cf_radial/{file}.nc', radar, format='NETCDF4')
+    pyart.io.write_cfradial(fout, radar, format='NETCDF4')
 
   if radar_id.startswith('T'):
-    date = file.split('_')[3]
-    time = file.split('_')[4]
-
-    n = 2
-
-    datearr = []
-    for i in range(0, len(date), n):
-        datearr.append(date[i:i+n])
-
-    timearr = []
-    for i in range(0, len(time), n):
-        timearr.append(time[i:i+n])
-
-    radar = pyart.io.read(f"/content/radar_data/{file}")
+    radar = pyart.io.read(p)
     radar
 
-    pyart.io.write_cfradial(f'/content/cf_radial/{file}.nc', radar, format='NETCDF4')
+    pyart.io.write_cfradial(fout, radar, format='NETCDF4')
 
   if radar_id.startswith('K') or radar_id.startswith('P'):
-    ncrad = pyart.io.read_cfradial(f'/content/cf_radial/{file}.nc')
+    ncrad = pyart.io.read_cfradial(fout)
 
     # Loop on all sweeps and compute VAD
     zlevels = np.arange(0, data_ceiling+100, 100)  # height above radar
@@ -120,7 +116,7 @@ for file in os.listdir(dir):
     v_avg *= 1.944
 
   if radar_id.startswith('T'):
-    ncrad = pyart.io.read_cfradial(f'/content/cf_radial/{file}.nc')
+    ncrad = pyart.io.read_cfradial(fout)
 
     # Loop on all sweeps and compute VAD
     zlevels = np.arange(0, 8100, 100)  # height above radar
@@ -197,151 +193,25 @@ for file in os.listdir(dir):
               pass
       return wnspd, wndir
   if sfc_status == 'Preset':
-    radar_list = pd.read_csv('https://raw.githubusercontent.com/scottthomaswx/RadarHodographs/main/RadarInfo.csv')
+    radar_list = pd.read_csv(CSV_FILE)
     track = np.where(radar_list['Site ID'] == radar_id)
     nearest_asos = radar_list['Primary ASOS'][track[0]].item()
-    api_args = {"token":API_TOKEN, "stid": f"{nearest_asos}", "attime": f"{date}{timearr[0]}{timearr[1]}", "within": 60,"status":"active", "units":"speed|kts",  "hfmetars":'1'}
+    api_args = {"token":API_TOKEN, "stid": "kgrr", "attime":api_tstr, "within": 60,"status":"active", "units":"speed|kts",  "hfmetars":'1'}
     wnspd, wndir = mesowest_get_sfcwind(api_args)
     if wndir == ''or wnspd  == '':
       nearest_asos = radar_list['Secondary ASOS'][track[0]].item()
-      newapi_args = {"token":API_TOKEN, "stid": f"{nearest_asos}", "attime": f"{date}{timearr[0]}{timearr[1]}", "within": 60,"status":"active", "units":"speed|kts",  "hfmetars":'1'}
+      newapi_args = {"token":API_TOKEN, "stid": f"{nearest_asos}", "attime": api_tstr, "within": 60,"status":"active", "units":"speed|kts",  "hfmetars":'1'}
       wnspd, wndir = mesowest_get_sfcwind(newapi_args)
     sfc_dir = wndir
     sfc_spd = wnspd
 
-  def calc_components(speed, direction):
-    u_comp = speed * np.cos(np.deg2rad(direction))
-    v_comp = speed * np.sin(np.deg2rad(direction))
-    return u_comp, v_comp
 
-  def calc_vector(u_comp, v_comp):
-    mag = np.sqrt(u_comp**2 + v_comp**2)
-    dir = np.rad2deg(np.arctan2(u_comp, v_comp)) % 360
-    return mag, dir
 
-  def calc_shear(u_layer, v_layer, height, zlevels):
-    layer_top = np.where(zlevels == (height*1000))[0][0]
-    u_shr = u_layer[layer_top] - u_layer[0]
-    v_shr = v_layer[layer_top] - v_layer[0]
-    shrmag = np.hypot(u_shr, v_shr)
-    return shrmag
-
-  def calc_meanwind(u_layer, v_layer, zlevels, layertop):
-    layer_top = np.where(zlevels == (layertop))[0][0]
-    mean_u = np.mean(u_layer[:layer_top])
-    mean_v = np.mean(v_layer[:layer_top])
-    return mean_u, mean_v
-
-  def calc_bunkers(u_layer, v_layer, zlevels):
-    layer_top = np.where(zlevels == (6000))[0][0]
-    mean_u = np.mean(u_layer[:layer_top])
-    mean_v = np.mean(v_layer[:layer_top])
-
-    layer_top = np.where(zlevels == (6000))[0][0]
-    u_shr = u_layer[layer_top] - u_layer[0]
-    v_shr = v_layer[layer_top] - v_layer[0]
-
-    dev = 7.5 * 1.94
-
-    dev_amnt = dev / np.hypot(u_shr, v_shr)
-    rstu = mean_u + (dev_amnt * v_shr)
-    rstv = mean_v - (dev_amnt * u_shr)
-    lstu = mean_u - (dev_amnt * v_shr)
-    lstv = mean_v + (dev_amnt * u_shr)
-    rmag, rdir = calc_vector(rstu, rstv)
-    lmag, ldir = calc_vector(lstu, lstv)
-
-    return rstu, rstv, lstu, lstv, rmag, rdir, lmag, ldir
-
-  def calc_corfidi(u_layer, v_layer, zlevels, u_mean, v_mean):
-    llj_top = np.where(zlevels == (1500))[0][0]
-    llj_u = u_layer[:llj_top]
-    llj_v = v_layer[:llj_top]
-
-    mag, dir = calc_vector(llj_u, llj_v)
-    max=0
-    i=0
-    for a in mag:
-      if mag[i] >= mag[i-1]:
-        max = i
-
-    u_max = llj_u[i]
-    v_max = llj_v[i]
-
-    corfidi_up_u = u_mean - u_max
-    corfidi_up_v =  v_mean - v_max
-
-    corfidi_down_u = u_mean + corfidi_up_u
-    corfidi_down_v = v_mean + corfidi_up_v
-
-    return corfidi_up_u, corfidi_up_v, corfidi_down_u, corfidi_down_v
-
-  def conv_angle_param(ang):
-    ang +=180
-    if ang < 0:
-      ang += 360
-    if ang > 360:
-      ang -= 360
-    return ang
-
-  def conv_angle_enter(ang):
-    ang = 270 - ang
-    if ang < 0:
-      ang += 360
-    if ang > 360:
-      ang -= 360
-    return ang
-
-  def calc_dtm(u_300, v_300, rmu, rmv):
-    dtm_u = rmu + u_300 /2
-    dtm_v = rmv + v_300 /2
-    return dtm_u, dtm_v
-
-  #Calculate Bulk Shear
-  if data_ceiling >= 500:
-    shr005 = calc_shear(u_avg, v_avg, 0.5, zlevels)
-    if np.isnan(shr005) == True:
-      shr005 = '--'
-    else:
-      shr005 = round(shr005)
-  else:
-    shr005 = '--'
-
-  if data_ceiling >= 1000:
-    shr01 = calc_shear(u_avg, v_avg, 1, zlevels)
-    if np.isnan(shr01):
-      shr01= '--'
-    else:
-      shr01 = round(shr01)
-  else:
-    shr01 = '--'
-
-  if data_ceiling >= 3000:
-    shr03 = calc_shear(u_avg, v_avg, 3, zlevels)
-    if np.isnan(shr03):
-      shr03 = '--'
-    else:
-      shr03 = round(shr03)
-  else:
-    shr03 = '--'
-
-  if data_ceiling >= 6000:
-    shr06 = calc_shear(u_avg, v_avg, 6, zlevels)
-    if np.isnan(shr06):
-      shr06 = '--'
-    else:
-      shr06 = round(shr06)
-  else:
-    shr06 = '--'
-
-  if data_ceiling >= 8000:
-    shr08 = calc_shear(u_avg, v_avg, 8, zlevels)
-    if np.isnan(shr08):
-      shr08 = '--'
-    else:
-      shr08 = round(shr08)
-  else:
-    shr08 = '--'
+  shr005 = calc_bulk_shear(data_ceiling, 500, u_avg, v_avg, zlevels)
+  shr01 = calc_bulk_shear(data_ceiling, 1000, u_avg, v_avg, zlevels)
+  shr03 = calc_bulk_shear(data_ceiling, 3000, u_avg, v_avg, zlevels)
+  shr06 = calc_bulk_shear(data_ceiling, 6000, u_avg, v_avg, zlevels)
+  shr08 = calc_bulk_shear(data_ceiling, 8000, u_avg, v_avg, zlevels)
 
   #Calculate Storm Motions
   if data_ceiling >= 6000:
@@ -609,123 +479,32 @@ for file in os.listdir(dir):
     except:
       warnings.warn('ERROR: Data Missing For Storm Relative calculations with this method: For data missing under 6000m AGL User Selected Storm Motion Required')
 
-  #Calculate SRH from RM Motion
-  if data_ceiling >= 500:
-      SRH05 = (mpcalc.storm_relative_helicity(height = zlevels * units.m, u = u_avg * units.kts, v = v_avg*units.kts, depth = 0.5*units.km, storm_u=rmu*units.kts, storm_v=rmv*units.kts))[0]
-      if np.isnan(SRH05):
-        SRH05 = '---'
-      else:
-        SRH05 = round(SRH05)
-  else:
-    SRH05 = '---'
 
-  if data_ceiling >= 1000:
-    SRH1 = (mpcalc.storm_relative_helicity(height = zlevels * units.m, u = u_avg * units.kts, v = v_avg*units.kts, depth = 1*units.km, storm_u=rmu*units.kts, storm_v=rmv*units.kts))[0]
-    if np.isnan(SRH1):
-      SRH1 = '---'
-    else:
-      SRH1 = round(SRH1)
-  else:
-    SRH1 = '---'
+  SRH05 = calc_srh_from_rm(data_ceiling, 500, u_avg, v_avg, rmu, rmv, zlevels)
+  SRH1 = calc_srh_from_rm(data_ceiling, 1000, u_avg, v_avg, rmu, rmv, zlevels)
+  SRH3 = calc_srh_from_rm(data_ceiling, 3000, u_avg, v_avg, rmu, rmv, zlevels)
+  SRH6 = calc_srh_from_rm(data_ceiling, 6000, u_avg, v_avg, rmu, rmv, zlevels)
+  SRH8 = calc_srh_from_rm(data_ceiling, 8000, u_avg, v_avg, rmu, rmv, zlevels)
 
-  if data_ceiling >= 3000:
-    SRH3 = (mpcalc.storm_relative_helicity(height = zlevels * units.m, u = u_avg * units.kts, v = v_avg*units.kts, depth = 3*units.km, storm_u=rmu*units.kts, storm_v=rmv*units.kts))[0]
-    if np.isnan(SRH3):
-      SRH3 = '---'
-    else:
-      SRH3 = round(SRH3)
-  else:
-    SRH3 = '---'
 
-  if data_ceiling >= 6000:
-    SRH6 = (mpcalc.storm_relative_helicity(height = zlevels * units.m, u = u_avg * units.kts, v = v_avg*units.kts, depth = 6*units.km, storm_u=rmu*units.kts, storm_v=rmv*units.kts))[0]
-    if np.isnan(SRH6):
-      SRH6 = '---'
-    else:
-      SRH6 = round(SRH6)
-  else:
-    SRH6 = '---'
-
-  if data_ceiling >= 8000:
-    SRH8 = (mpcalc.storm_relative_helicity(height = zlevels * units.m, u = u_avg * units.kts, v = v_avg*units.kts, depth = 8*units.km, storm_u=rmu*units.kts, storm_v=rmv*units.kts))[0]
-    if np.isnan(SRH8):
-      SRH8 = '---'
-    else:
-      SRH8 = round(SRH8)
-  else:
-    SRH8 = '---'
   SRH_units = (units.m*units.m)/(units.s*units.s)
+
   ureg=UnitRegistry()
-  try:
-    SRH05=ureg(str(SRH05)).m
-  except:
-    pass
-  try:
-    SRH1=ureg(str(SRH1)).m
-  except:
-    pass
-  try:
-    SRH3=ureg(str(SRH3)).m
-  except:
-    pass
-  try:
-    SRH6=ureg(str(SRH6)).m
-  except:
-    pass
-  try:
-    SRH8=ureg(str(SRH8)).m
-  except:
-    pass
+  for u in (SRH05, SRH1, SRH3, SRH6, SRH8):
+    try:
+      u=ureg(str(u)).m
+    except:
+      pass
+
 
   #Calculate SR Wind
-  if data_ceiling >= 500:
-    SR_05U, SR_05V = calc_meanwind(sr_u, sr_v, zlevels, 500)
-    SR05 = calc_vector(SR_05U, SR_05V)[0]
-    if np.isnan(SR05):
-      SR05 = '--'
-    else:
-      SR05 = round(SR05)
-  else:
-    SR05 = '--'
+  SR05 = calc_storm_relative_wind(data_ceiling, 500, sr_u, sr_v, zlevels)
+  SR1 = calc_storm_relative_wind(data_ceiling, 1000, sr_u, sr_v, zlevels)
+  SR3 = calc_storm_relative_wind(data_ceiling, 3000, sr_u, sr_v, zlevels)
+  SR6 = calc_storm_relative_wind(data_ceiling, 6000, sr_u, sr_v, zlevels)
+  SR8 = calc_storm_relative_wind(data_ceiling, 8000, sr_u, sr_v, zlevels)
 
-  if data_ceiling >= 1000:
-    SR_1U, SR_1V = calc_meanwind(sr_u, sr_v, zlevels, 1000)
-    SR1 = calc_vector(SR_1U, SR_1V)[0]
-    if np.isnan(SR1):
-      SR1 = '--'
-    else:
-      SR1 = round(SR1)
-  else:
-    SR1 = '--'
-  if data_ceiling >= 3000:
-    SR_3U, SR_3V = calc_meanwind(sr_u, sr_v, zlevels, 3000)
-    SR3 = calc_vector(SR_3U, SR_3V)[0]
-    if np.isnan(SR3):
-      SR3 = '--'
-    else:
-      SR3 = round(SR3)
-  else:
-    SR3 = '--'
-
-  if data_ceiling >= 6000:
-    SR_6U, SR_6V = calc_meanwind(sr_u, sr_v, zlevels, 6000)
-    SR6 = calc_vector(SR_6U, SR_6V)[0]
-    if np.isnan(SR6):
-      SR6 = '--'
-    else:
-      SR6 = round(SR6)
-  else:
-    SR6 = '--'
-
-  if data_ceiling >= 8000:
-    SR_8U, SR_8V = calc_meanwind(sr_u, sr_v, zlevels, 8000)
-    SR8 = calc_vector(SR_8U, SR_8V)[0]
-    if np.isnan(SR8):
-      SR8 = '--'
-    else:
-      SR8 = round(SR8)
-  else:
-    SR8 = '--'
+  
 
   #Calculate Streamwise Vorticity
 
@@ -761,80 +540,11 @@ for file in os.listdir(dir):
   swvper = (total_swvort/shear)*100
 
   # layer average streamwiseness and total streamwise vorticity
-  if data_ceiling >= 500:
-    swper05  = np.mean(swvper[0:5])
-    swvort05       = np.mean(total_swvort[0:5])
-    if np.isnan(swper05):
-      swper05 = '--'
-    else:
-      swper05 = round(swper05)
-    if np.isnan(swvort05):
-      swvort05 = '---'
-    else:
-      swvort05 = round(swvort05, 3)
-  else:
-    swper05 = '--'
-    swvort05 = '---'
-
-  if data_ceiling >= 1000:
-    swper1 = np.mean(swvper[0:10])
-    swvort1      = np.mean(total_swvort[0:10])
-    if np.isnan(swper1):
-      swper1 = '--'
-    else:
-      swper1 = round(swper1)
-    if np.isnan(swvort1):
-      swvort1 = '---'
-    else:
-      swvort1 = round(swvort1, 3)
-  else:
-    swper1 = '--'
-    swvort1 = '---'
-
-  if data_ceiling >= 3000:
-    swper3 = np.mean(swvper[0:30])
-    swvort3      = np.mean(total_swvort[0:30])
-    if np.isnan(swper3):
-      swper3 = '--'
-    else:
-      swper3 = round(swper3)
-    if np.isnan(swvort3):
-      swvort3 = '---'
-    else:
-      swvort3 = round(swvort3, 3)
-  else:
-    swper3 = '--'
-    swvort3 = '---'
-
-  if data_ceiling >= 6000:
-    swper6 = np.mean(swvper[0:60])
-    swvort6      = np.mean(total_swvort[0:60])
-    if np.isnan(swper6):
-      swper6 = '--'
-    else:
-      swper6 = round(swper6)
-    if np.isnan(swvort6):
-      swvort6 = '---'
-    else:
-      swvort6 =round(swvort6, 3)
-  else:
-    swper6 = '--'
-    swvort6 = '---'
-
-  if data_ceiling >= 8000:
-    swper8 = np.mean(swvper[0:80])
-    swvort8      = np.mean(total_swvort[0:80])
-    if np.isnan(swper8):
-      swper8 = '--'
-    else:
-      swper8 = round(swper8)
-    if np.isnan(swvort8):
-      swvort8 = '---'
-    else:
-      swvort8 = round(swvort8, 3)
-  else:
-    swper8 = '--'
-    swvort8 = '---'
+  swper05, swvort05 = calc_streamwise_vorticity(data_ceiling, 500, swvper, total_swvort)
+  swper1, swvort1 = calc_streamwise_vorticity(data_ceiling, 1000, swvper, total_swvort)
+  swper3, swvort3 = calc_streamwise_vorticity(data_ceiling, 3000, swvper, total_swvort)
+  swper6, swvort6 = calc_streamwise_vorticity(data_ceiling, 6000, swvper, total_swvort)
+  swper8, swvort8 = calc_streamwise_vorticity(data_ceiling, 8000, swvper, total_swvort)
 
   swvort_units = units.s**-1
 
@@ -1040,8 +750,9 @@ for file in os.listdir(dir):
   plt.legend(loc = 'right', bbox_to_anchor=(1.885, 0.55),
             ncol=2, fancybox=True, shadow=True, fontsize=11, facecolor='white', framealpha=1.0,
               labelcolor='k', borderpad=0.7)
-  plt.title(f'Hodograph from {radar_id} Valid {datearr[2]}-{datearr[3]}-{datearr[0]}{datearr[1]} {timearr[0]}:{timearr[1]}:{timearr[2]} {timezone}', fontsize = 16, weight = 'bold')
-
+  rts = datetime.strftime(radar_time, "%Y-%m-%d %H:%M:%S")
+  hodo_title = f'Hodograph from {radar_id} Valid {rts} UTC'
+  plt.title(hodo_title, fontsize = 16, weight = 'bold')
   try:
     #Plot SRW wrt Hgt
     sr_plot = plt.axes((0.895, 0.10, 0.095, 0.32))
@@ -1071,7 +782,11 @@ for file in os.listdir(dir):
     pass
   #Add Title and Legend and Save Figure
 
-  plt.savefig(f'/content/hodos/Hodograph_{radar_id}_{date}_{time}.png', bbox_inches='tight')
+  r_date = radar_time.strftime("%Y%m%d")
+  r_time = radar_time.strftime("%H%M%S")
+  hodo_fname = f'Hodograph_{radar_id}_{r_date}_{r_time}.png'
+  hodo_fp = HODO_IMAGES / hodo_fname
+  plt.savefig(hodo_fp, bbox_inches='tight')
 
   #Create Figure
   fig = plt.figure(figsize=(16,9), facecolor='white', edgecolor="black", linewidth = 6)
@@ -1270,7 +985,8 @@ for file in os.listdir(dir):
   plt.legend(loc = 'right', bbox_to_anchor=(1.885, 0.55),
             ncol=2, fancybox=True, shadow=True, fontsize=11, facecolor='white', framealpha=1.0,
               labelcolor='k', borderpad=0.7)
-  plt.title(f'SR Hodograph from {radar_id} Valid {datearr[2]}-{datearr[3]}-{datearr[0]}{datearr[1]} {timearr[0]}:{timearr[1]}:{timearr[2]} {timezone}', fontsize = 16, weight = 'bold')
+  rts = datetime.strftime(radar_time, "%Y-%m-%d %H:%M:%S")
+  plt.title(f'SR Hodograph from {radar_id} Valid: {rts}', fontsize = 16, weight = 'bold')
 
   try:
   #Plot SRW wrt Hgt
@@ -1301,8 +1017,7 @@ for file in os.listdir(dir):
     pass
   #Add Title and Legend and Save Figure
   del sfc_angle, sfc_u, sfc_v
-  plt.savefig(f'/content/sr_hodos/SR_Hodograph_{radar_id}_{date}_{time}.png', bbox_inches='tight')
-  filecount+=1
-  if filecount == len(os.listdir(dir)):
-    print("Files Complete")
-    break
+  sr_hodo_fp = HODO_IMAGES / f'SR_Hodograph_{radar_id}_{r_date}_{r_time}.png'
+  plt.savefig(sr_hodo_fp, bbox_inches='tight')
+
+
