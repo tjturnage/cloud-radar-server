@@ -1,4 +1,4 @@
-Title: Mesowest Dewpoint Temperature 2023-06-24-1830
+Title: Mesowest Dewpoint Temperature 2023-06-15-1430
 
 Refresh: 1        
 Color: 255 200 255        
@@ -9,941 +9,881 @@ IconFile: 4, 13, 24, 2, 23, "https://www.turnageweather.us/assets/windbarbs-smal
 Font: 1, 11, 1, "Arial"        
 Font: 2, 14, 1, "Arial"
 
-TimeRange: 2023-06-24T18:30:00Z 2023-06-24T18:40:00Z
+TimeRange: 2023-06-15T14:30:00Z 2023-06-15T14:40:00Z
 
-Object: 42.88083,-85.52278
+Object: 46.69869,-92.50340
 Threshold: 600
   Color: 0 255 0
-  Text: -17,-13, 2, " 54 "
+  Text: -17,-13, 2, " 39 "
  End:
 
-Object: 42.663080,-85.646960
+Object: 46.84347,-92.18660
 Threshold: 600
   Color: 0 255 0
-  Text: -17,-13, 2, " 59 "
+  Text: -17,-13, 2, " 39 "
  End:
 
-Object: 42.93800,-85.06050
+Object: 46.72452,-92.04448
 Threshold: 600
   Color: 0 255 0
-  Text: -17,-13, 2, " 51 "
+  Text: -17,-13, 2, " 45 "
  End:
 
-Object: 42.62936,-85.66264
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 60 "
- End:
-
-Object: 42.61000,-85.26352
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 58 "
- End:
-
-Object: 43.05335,-85.90804
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 59 "
- End:
-
-Object: 42.87900,-85.37154
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 57 "
- End:
-
-Object: 43.08864,-85.63225
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 58 "
- End:
-
-Object: 42.88868,-85.49475
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 52 "
- End:
-
-Object: 42.85090,-85.58463
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 53 "
- End:
-
-Object: 42.81316,-85.98119
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 57 "
- End:
-
-Object: 42.84836,-85.85974
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 57 "
- End:
-
-TimeRange: 2023-06-24T18:40:00Z 2023-06-24T18:50:00Z
-
-Object: 42.88083,-85.52278
+Object: 46.68335,-92.09254
 Threshold: 600
   Color: 0 255 0
-  Text: -17,-13, 2, " 54 "
+  Text: -17,-13, 2, " 44 "
  End:
 
-Object: 42.663080,-85.646960
+Object: 47.05,-91.75
 Threshold: 600
   Color: 0 255 0
-  Text: -17,-13, 2, " 59 "
+  Text: -17,-13, 2, " 44 "
  End:
 
-Object: 42.93800,-85.06050
+Object: 46.843610,-92.461670
 Threshold: 600
   Color: 0 255 0
-  Text: -17,-13, 2, " 53 "
+  Text: -17,-13, 2, " 44 "
  End:
 
-Object: 42.62936,-85.66264
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 60 "
- End:
+TimeRange: 2023-06-15T14:40:00Z 2023-06-15T14:50:00Z
 
-Object: 42.61000,-85.26352
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 60 "
- End:
-
-Object: 43.05335,-85.90804
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 58 "
- End:
-
-Object: 42.87900,-85.37154
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 57 "
- End:
-
-Object: 43.08864,-85.63225
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 58 "
- End:
-
-Object: 42.88868,-85.49475
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 53 "
- End:
-
-Object: 42.85090,-85.58463
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 51 "
- End:
-
-Object: 42.81316,-85.98119
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 57 "
- End:
-
-Object: 42.84836,-85.85974
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 57 "
- End:
-
-TimeRange: 2023-06-24T18:50:00Z 2023-06-24T19:00:00Z
-
-Object: 42.88083,-85.52278
+Object: 46.69869,-92.50340
 Threshold: 600
   Color: 0 255 0
-  Text: -17,-13, 2, " 56 "
+  Text: -17,-13, 2, " 41 "
  End:
 
-Object: 42.93800,-85.06050
+Object: 46.84347,-92.18660
 Threshold: 600
   Color: 0 255 0
-  Text: -17,-13, 2, " 53 "
+  Text: -17,-13, 2, " 39 "
  End:
 
-Object: 42.62936,-85.66264
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 62 "
- End:
-
-Object: 42.61000,-85.26352
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 58 "
- End:
-
-Object: 43.05335,-85.90804
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 58 "
- End:
-
-Object: 42.87900,-85.37154
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 55 "
- End:
-
-Object: 43.08864,-85.63225
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 57 "
- End:
-
-Object: 42.88868,-85.49475
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 55 "
- End:
-
-Object: 42.85090,-85.58463
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 52 "
- End:
-
-Object: 42.81316,-85.98119
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 57 "
- End:
-
-Object: 42.84836,-85.85974
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 58 "
- End:
-
-TimeRange: 2023-06-24T19:00:00Z 2023-06-24T19:10:00Z
-
-Object: 42.88083,-85.52278
+Object: 46.72452,-92.04448
 Threshold: 600
   Color: 0 255 0
-  Text: -17,-13, 2, " 56 "
+  Text: -17,-13, 2, " 44 "
  End:
 
-Object: 42.93800,-85.06050
+Object: 46.68335,-92.09254
 Threshold: 600
   Color: 0 255 0
-  Text: -17,-13, 2, " 52 "
+  Text: -17,-13, 2, " 42 "
  End:
 
-Object: 42.62936,-85.66264
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 60 "
- End:
-
-Object: 42.61000,-85.26352
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 59 "
- End:
-
-Object: 43.05335,-85.90804
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 58 "
- End:
-
-Object: 42.87900,-85.37154
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 58 "
- End:
-
-Object: 43.08864,-85.63225
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 57 "
- End:
-
-Object: 42.88868,-85.49475
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 54 "
- End:
-
-Object: 42.85090,-85.58463
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 51 "
- End:
-
-Object: 42.81316,-85.98119
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 58 "
- End:
-
-Object: 42.84836,-85.85974
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 57 "
- End:
-
-TimeRange: 2023-06-24T19:10:00Z 2023-06-24T19:20:00Z
-
-Object: 42.88083,-85.52278
+Object: 47.05,-91.75
 Threshold: 600
   Color: 0 255 0
-  Text: -17,-13, 2, " 56 "
+  Text: -17,-13, 2, " 44 "
  End:
 
-Object: 42.663080,-85.646960
+TimeRange: 2023-06-15T14:50:00Z 2023-06-15T15:00:00Z
+
+Object: 46.69869,-92.50340
 Threshold: 600
   Color: 0 255 0
-  Text: -17,-13, 2, " 56 "
+  Text: -17,-13, 2, " 41 "
  End:
 
-Object: 42.93800,-85.06050
+Object: 46.84347,-92.18660
 Threshold: 600
   Color: 0 255 0
-  Text: -17,-13, 2, " 52 "
+  Text: -17,-13, 2, " 43 "
  End:
 
-Object: 42.62936,-85.66264
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 60 "
- End:
-
-Object: 42.61000,-85.26352
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 58 "
- End:
-
-Object: 43.05335,-85.90804
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 58 "
- End:
-
-Object: 42.87900,-85.37154
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 57 "
- End:
-
-Object: 43.08864,-85.63225
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 56 "
- End:
-
-Object: 42.88868,-85.49475
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 54 "
- End:
-
-Object: 42.85090,-85.58463
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 52 "
- End:
-
-Object: 42.81316,-85.98119
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 57 "
- End:
-
-Object: 42.84836,-85.85974
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 57 "
- End:
-
-TimeRange: 2023-06-24T19:20:00Z 2023-06-24T19:30:00Z
-
-Object: 42.88083,-85.52278
+Object: 46.72452,-92.04448
 Threshold: 600
   Color: 0 255 0
-  Text: -17,-13, 2, " 54 "
+  Text: -17,-13, 2, " 44 "
  End:
 
-Object: 42.663080,-85.646960
+Object: 46.68335,-92.09254
 Threshold: 600
   Color: 0 255 0
-  Text: -17,-13, 2, " 56 "
+  Text: -17,-13, 2, " 42 "
  End:
 
-Object: 42.93800,-85.06050
+Object: 47.05,-91.75
 Threshold: 600
   Color: 0 255 0
-  Text: -17,-13, 2, " 54 "
+  Text: -17,-13, 2, " 44 "
  End:
 
-Object: 42.62936,-85.66264
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 61 "
- End:
+TimeRange: 2023-06-15T15:00:00Z 2023-06-15T15:10:00Z
 
-Object: 42.61000,-85.26352
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 60 "
- End:
-
-Object: 43.05335,-85.90804
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 58 "
- End:
-
-Object: 42.87900,-85.37154
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 55 "
- End:
-
-Object: 43.08864,-85.63225
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 57 "
- End:
-
-Object: 42.88868,-85.49475
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 53 "
- End:
-
-Object: 42.85090,-85.58463
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 53 "
- End:
-
-Object: 42.81316,-85.98119
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 57 "
- End:
-
-Object: 42.84836,-85.85974
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 56 "
- End:
-
-TimeRange: 2023-06-24T19:30:00Z 2023-06-24T19:40:00Z
-
-Object: 42.88083,-85.52278
+Object: 46.69869,-92.50340
 Threshold: 600
   Color: 0 255 0
-  Text: -17,-13, 2, " 56 "
+  Text: -17,-13, 2, " 39 "
  End:
 
-Object: 42.663080,-85.646960
+Object: 46.84347,-92.18660
 Threshold: 600
   Color: 0 255 0
-  Text: -17,-13, 2, " 56 "
+  Text: -17,-13, 2, " 41 "
  End:
 
-Object: 42.93800,-85.06050
+Object: 46.72452,-92.04448
 Threshold: 600
   Color: 0 255 0
-  Text: -17,-13, 2, " 54 "
+  Text: -17,-13, 2, " 44 "
  End:
 
-Object: 42.62936,-85.66264
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 61 "
- End:
-
-Object: 42.61000,-85.26352
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 58 "
- End:
-
-Object: 43.05335,-85.90804
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 59 "
- End:
-
-Object: 42.87900,-85.37154
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 54 "
- End:
-
-Object: 43.08864,-85.63225
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 57 "
- End:
-
-Object: 42.88868,-85.49475
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 55 "
- End:
-
-Object: 42.85090,-85.58463
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 57 "
- End:
-
-Object: 42.81316,-85.98119
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 57 "
- End:
-
-Object: 42.84836,-85.85974
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 56 "
- End:
-
-TimeRange: 2023-06-24T19:40:00Z 2023-06-24T19:50:00Z
-
-Object: 42.88083,-85.52278
+Object: 46.68335,-92.09254
 Threshold: 600
   Color: 0 255 0
-  Text: -17,-13, 2, " 56 "
+  Text: -17,-13, 2, " 40 "
  End:
 
-Object: 42.663080,-85.646960
+Object: 47.05,-91.75
 Threshold: 600
   Color: 0 255 0
-  Text: -17,-13, 2, " 56 "
+  Text: -17,-13, 2, " 44 "
  End:
 
-Object: 42.93800,-85.06050
+TimeRange: 2023-06-15T15:10:00Z 2023-06-15T15:20:00Z
+
+Object: 46.69869,-92.50340
 Threshold: 600
   Color: 0 255 0
-  Text: -17,-13, 2, " 54 "
+  Text: -17,-13, 2, " 39 "
  End:
 
-Object: 42.62936,-85.66264
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 61 "
- End:
-
-Object: 42.61000,-85.26352
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 58 "
- End:
-
-Object: 43.05335,-85.90804
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 59 "
- End:
-
-Object: 42.87900,-85.37154
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 55 "
- End:
-
-Object: 43.08864,-85.63225
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 57 "
- End:
-
-Object: 42.88868,-85.49475
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 55 "
- End:
-
-Object: 42.85090,-85.58463
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 57 "
- End:
-
-Object: 42.81316,-85.98119
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 57 "
- End:
-
-Object: 42.84836,-85.85974
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 57 "
- End:
-
-TimeRange: 2023-06-24T19:50:00Z 2023-06-24T20:00:00Z
-
-Object: 42.88083,-85.52278
+Object: 46.84347,-92.18660
 Threshold: 600
   Color: 0 255 0
-  Text: -17,-13, 2, " 56 "
+  Text: -17,-13, 2, " 43 "
  End:
 
-Object: 42.93800,-85.06050
+Object: 46.72452,-92.04448
 Threshold: 600
   Color: 0 255 0
-  Text: -17,-13, 2, " 54 "
+  Text: -17,-13, 2, " 44 "
  End:
 
-Object: 42.62936,-85.66264
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 61 "
- End:
-
-Object: 42.61000,-85.26352
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 58 "
- End:
-
-Object: 43.05335,-85.90804
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 58 "
- End:
-
-Object: 42.87900,-85.37154
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 54 "
- End:
-
-Object: 43.08864,-85.63225
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 57 "
- End:
-
-Object: 42.88868,-85.49475
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 55 "
- End:
-
-Object: 42.85090,-85.58463
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 57 "
- End:
-
-Object: 42.81316,-85.98119
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 57 "
- End:
-
-Object: 42.84836,-85.85974
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 56 "
- End:
-
-TimeRange: 2023-06-24T20:00:00Z 2023-06-24T20:10:00Z
-
-Object: 42.88083,-85.52278
+Object: 46.68335,-92.09254
 Threshold: 600
   Color: 0 255 0
-  Text: -17,-13, 2, " 57 "
+  Text: -17,-13, 2, " 40 "
  End:
 
-Object: 42.93800,-85.06050
+Object: 47.05,-91.75
 Threshold: 600
   Color: 0 255 0
-  Text: -17,-13, 2, " 53 "
+  Text: -17,-13, 2, " 44 "
  End:
 
-Object: 42.62936,-85.66264
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 60 "
- End:
-
-Object: 42.61000,-85.26352
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 58 "
- End:
-
-Object: 43.05335,-85.90804
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 59 "
- End:
-
-Object: 42.87900,-85.37154
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 57 "
- End:
-
-Object: 43.08864,-85.63225
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 58 "
- End:
-
-Object: 42.88868,-85.49475
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 55 "
- End:
-
-Object: 42.85090,-85.58463
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 57 "
- End:
-
-Object: 42.81316,-85.98119
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 57 "
- End:
-
-Object: 42.84836,-85.85974
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 57 "
- End:
-
-TimeRange: 2023-06-24T20:10:00Z 2023-06-24T20:20:00Z
-
-Object: 42.88083,-85.52278
+Object: 46.843610,-92.461670
 Threshold: 600
   Color: 0 255 0
-  Text: -17,-13, 2, " 57 "
+  Text: -17,-13, 2, " 42 "
  End:
 
-Object: 42.663080,-85.646960
+TimeRange: 2023-06-15T15:20:00Z 2023-06-15T15:30:00Z
+
+Object: 46.69869,-92.50340
 Threshold: 600
   Color: 0 255 0
-  Text: -17,-13, 2, " 56 "
+  Text: -17,-13, 2, " 39 "
  End:
 
-Object: 42.93800,-85.06050
+Object: 46.84347,-92.18660
 Threshold: 600
   Color: 0 255 0
-  Text: -17,-13, 2, " 53 "
+  Text: -17,-13, 2, " 43 "
  End:
 
-Object: 42.62936,-85.66264
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 62 "
- End:
-
-Object: 42.61000,-85.26352
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 59 "
- End:
-
-Object: 43.05335,-85.90804
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 59 "
- End:
-
-Object: 42.87900,-85.37154
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 56 "
- End:
-
-Object: 43.08864,-85.63225
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 58 "
- End:
-
-Object: 42.88868,-85.49475
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 56 "
- End:
-
-Object: 42.85090,-85.58463
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 57 "
- End:
-
-Object: 42.81316,-85.98119
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 57 "
- End:
-
-Object: 42.84836,-85.85974
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 57 "
- End:
-
-TimeRange: 2023-06-24T20:20:00Z 2023-06-24T20:30:00Z
-
-Object: 42.88083,-85.52278
+Object: 46.72452,-92.04448
 Threshold: 600
   Color: 0 255 0
-  Text: -17,-13, 2, " 57 "
+  Text: -17,-13, 2, " 43 "
  End:
 
-Object: 42.663080,-85.646960
+Object: 46.68335,-92.09254
 Threshold: 600
   Color: 0 255 0
-  Text: -17,-13, 2, " 56 "
+  Text: -17,-13, 2, " 41 "
  End:
 
-Object: 42.93800,-85.06050
+Object: 47.05,-91.75
 Threshold: 600
   Color: 0 255 0
-  Text: -17,-13, 2, " 53 "
+  Text: -17,-13, 2, " 43 "
  End:
 
-Object: 42.62936,-85.66264
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 60 "
- End:
-
-Object: 42.61000,-85.26352
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 58 "
- End:
-
-Object: 43.05335,-85.90804
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 58 "
- End:
-
-Object: 42.87900,-85.37154
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 56 "
- End:
-
-Object: 43.08864,-85.63225
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 59 "
- End:
-
-Object: 42.88868,-85.49475
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 55 "
- End:
-
-Object: 42.85090,-85.58463
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 58 "
- End:
-
-Object: 42.81316,-85.98119
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 57 "
- End:
-
-Object: 42.84836,-85.85974
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 57 "
- End:
-
-TimeRange: 2023-06-24T20:30:00Z 2023-06-24T20:40:00Z
-
-Object: 42.88083,-85.52278
+Object: 46.843610,-92.461670
 Threshold: 600
   Color: 0 255 0
-  Text: -17,-13, 2, " 59 "
+  Text: -17,-13, 2, " 42 "
  End:
 
-Object: 42.663080,-85.646960
+TimeRange: 2023-06-15T15:30:00Z 2023-06-15T15:40:00Z
+
+Object: 46.69869,-92.50340
 Threshold: 600
   Color: 0 255 0
-  Text: -17,-13, 2, " 56 "
+  Text: -17,-13, 2, " 39 "
  End:
 
-Object: 42.93800,-85.06050
+Object: 46.84347,-92.18660
 Threshold: 600
   Color: 0 255 0
-  Text: -17,-13, 2, " 53 "
+  Text: -17,-13, 2, " 43 "
  End:
 
-Object: 42.62936,-85.66264
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 60 "
+Object: 46.72452,-92.04448
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 43 "
  End:
 
-Object: 42.61000,-85.26352
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 60 "
+Object: 46.68335,-92.09254
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 41 "
  End:
 
-Object: 43.05335,-85.90804
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 59 "
+Object: 47.05,-91.75
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 43 "
  End:
 
-Object: 42.87900,-85.37154
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 56 "
+Object: 46.843610,-92.461670
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 42 "
  End:
 
-Object: 43.08864,-85.63225
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 58 "
+TimeRange: 2023-06-15T15:40:00Z 2023-06-15T15:50:00Z
+
+Object: 46.69869,-92.50340
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 39 "
  End:
 
-Object: 42.88868,-85.49475
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 57 "
+Object: 46.84347,-92.18660
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 43 "
  End:
 
-Object: 42.85090,-85.58463
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 58 "
+Object: 46.72452,-92.04448
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 44 "
  End:
 
-Object: 42.81316,-85.98119
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 58 "
+Object: 46.68335,-92.09254
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 42 "
  End:
 
-Object: 42.84836,-85.85974
-Threshold: 75
-  Color: 25 225 25
-  Text: -16,-12, 1, " 57 "
+Object: 47.05,-91.75
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 43 "
+ End:
+
+TimeRange: 2023-06-15T15:50:00Z 2023-06-15T16:00:00Z
+
+Object: 46.69869,-92.50340
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 39 "
+ End:
+
+Object: 46.84347,-92.18660
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 41 "
+ End:
+
+Object: 46.72452,-92.04448
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 44 "
+ End:
+
+Object: 46.68335,-92.09254
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 42 "
+ End:
+
+Object: 47.05,-91.75
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 43 "
+ End:
+
+TimeRange: 2023-06-15T16:00:00Z 2023-06-15T16:10:00Z
+
+Object: 46.69869,-92.50340
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 39 "
+ End:
+
+Object: 46.84347,-92.18660
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 41 "
+ End:
+
+Object: 46.72452,-92.04448
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 43 "
+ End:
+
+Object: 46.68335,-92.09254
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 41 "
+ End:
+
+Object: 47.05,-91.75
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 43 "
+ End:
+
+TimeRange: 2023-06-15T16:10:00Z 2023-06-15T16:20:00Z
+
+Object: 46.69869,-92.50340
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 39 "
+ End:
+
+Object: 46.84347,-92.18660
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 43 "
+ End:
+
+Object: 46.72452,-92.04448
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 43 "
+ End:
+
+Object: 46.68335,-92.09254
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 41 "
+ End:
+
+Object: 47.05,-91.75
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 43 "
+ End:
+
+Object: 46.843610,-92.461670
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 42 "
+ End:
+
+TimeRange: 2023-06-15T16:20:00Z 2023-06-15T16:30:00Z
+
+Object: 46.69869,-92.50340
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 39 "
+ End:
+
+Object: 46.84347,-92.18660
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 43 "
+ End:
+
+Object: 46.72452,-92.04448
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 44 "
+ End:
+
+Object: 46.68335,-92.09254
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 41 "
+ End:
+
+Object: 47.05,-91.75
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 43 "
+ End:
+
+Object: 46.843610,-92.461670
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 42 "
+ End:
+
+TimeRange: 2023-06-15T16:30:00Z 2023-06-15T16:40:00Z
+
+Object: 46.69869,-92.50340
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 39 "
+ End:
+
+Object: 46.84347,-92.18660
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 41 "
+ End:
+
+Object: 46.72452,-92.04448
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 44 "
+ End:
+
+Object: 46.68335,-92.09254
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 41 "
+ End:
+
+Object: 47.05,-91.75
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 43 "
+ End:
+
+Object: 46.843610,-92.461670
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 42 "
+ End:
+
+TimeRange: 2023-06-15T16:40:00Z 2023-06-15T16:50:00Z
+
+Object: 46.69869,-92.50340
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 41 "
+ End:
+
+Object: 46.84347,-92.18660
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 41 "
+ End:
+
+Object: 46.72452,-92.04448
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 44 "
+ End:
+
+Object: 46.68335,-92.09254
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 41 "
+ End:
+
+Object: 47.05,-91.75
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 43 "
+ End:
+
+TimeRange: 2023-06-15T16:50:00Z 2023-06-15T17:00:00Z
+
+Object: 46.69869,-92.50340
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 41 "
+ End:
+
+Object: 46.84347,-92.18660
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 39 "
+ End:
+
+Object: 46.72452,-92.04448
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 44 "
+ End:
+
+Object: 46.68335,-92.09254
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 41 "
+ End:
+
+Object: 47.05,-91.75
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 43 "
+ End:
+
+TimeRange: 2023-06-15T17:00:00Z 2023-06-15T17:10:00Z
+
+Object: 46.69869,-92.50340
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 41 "
+ End:
+
+Object: 46.84347,-92.18660
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 39 "
+ End:
+
+Object: 46.72452,-92.04448
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 43 "
+ End:
+
+Object: 46.68335,-92.09254
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 40 "
+ End:
+
+Object: 47.05,-91.75
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 43 "
+ End:
+
+TimeRange: 2023-06-15T17:10:00Z 2023-06-15T17:20:00Z
+
+Object: 46.69869,-92.50340
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 41 "
+ End:
+
+Object: 46.84347,-92.18660
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 39 "
+ End:
+
+Object: 46.72452,-92.04448
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 43 "
+ End:
+
+Object: 46.68335,-92.09254
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 40 "
+ End:
+
+Object: 47.05,-91.75
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 43 "
+ End:
+
+Object: 46.843610,-92.461670
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 45 "
+ End:
+
+TimeRange: 2023-06-15T17:20:00Z 2023-06-15T17:30:00Z
+
+Object: 46.69869,-92.50340
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 41 "
+ End:
+
+Object: 46.84347,-92.18660
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 39 "
+ End:
+
+Object: 46.72452,-92.04448
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 44 "
+ End:
+
+Object: 46.68335,-92.09254
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 40 "
+ End:
+
+Object: 47.05,-91.75
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 43 "
+ End:
+
+Object: 46.843610,-92.461670
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 45 "
+ End:
+
+TimeRange: 2023-06-15T17:30:00Z 2023-06-15T17:40:00Z
+
+Object: 46.69869,-92.50340
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 41 "
+ End:
+
+Object: 46.84347,-92.18660
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 39 "
+ End:
+
+Object: 46.72452,-92.04448
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 44 "
+ End:
+
+Object: 46.68335,-92.09254
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 40 "
+ End:
+
+Object: 47.05,-91.75
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 43 "
+ End:
+
+Object: 46.843610,-92.461670
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 45 "
+ End:
+
+TimeRange: 2023-06-15T17:40:00Z 2023-06-15T17:50:00Z
+
+Object: 46.69869,-92.50340
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 39 "
+ End:
+
+Object: 46.84347,-92.18660
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 39 "
+ End:
+
+Object: 46.72452,-92.04448
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 43 "
+ End:
+
+Object: 46.68335,-92.09254
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 42 "
+ End:
+
+Object: 47.05,-91.75
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 43 "
+ End:
+
+TimeRange: 2023-06-15T17:50:00Z 2023-06-15T18:00:00Z
+
+Object: 46.69869,-92.50340
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 39 "
+ End:
+
+Object: 46.84347,-92.18660
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 39 "
+ End:
+
+Object: 46.72452,-92.04448
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 43 "
+ End:
+
+Object: 46.68335,-92.09254
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 42 "
+ End:
+
+Object: 47.05,-91.75
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 43 "
+ End:
+
+TimeRange: 2023-06-15T18:00:00Z 2023-06-15T18:10:00Z
+
+Object: 46.69869,-92.50340
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 41 "
+ End:
+
+Object: 46.84347,-92.18660
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 39 "
+ End:
+
+Object: 46.72452,-92.04448
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 43 "
+ End:
+
+Object: 46.68335,-92.09254
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 42 "
+ End:
+
+Object: 47.05,-91.75
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 43 "
+ End:
+
+TimeRange: 2023-06-15T18:10:00Z 2023-06-15T18:20:00Z
+
+Object: 46.69869,-92.50340
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 41 "
+ End:
+
+Object: 46.84347,-92.18660
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 39 "
+ End:
+
+Object: 46.72452,-92.04448
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 43 "
+ End:
+
+Object: 46.68335,-92.09254
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 42 "
+ End:
+
+Object: 47.05,-91.75
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 43 "
+ End:
+
+Object: 46.843610,-92.461670
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 43 "
+ End:
+
+TimeRange: 2023-06-15T18:20:00Z 2023-06-15T18:30:00Z
+
+Object: 46.69869,-92.50340
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 39 "
+ End:
+
+Object: 46.84347,-92.18660
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 39 "
+ End:
+
+Object: 46.72452,-92.04448
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 44 "
+ End:
+
+Object: 46.68335,-92.09254
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 42 "
+ End:
+
+Object: 47.05,-91.75
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 43 "
+ End:
+
+Object: 46.843610,-92.461670
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 43 "
+ End:
+
+TimeRange: 2023-06-15T18:30:00Z 2023-06-15T18:40:00Z
+
+Object: 46.69869,-92.50340
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 39 "
+ End:
+
+Object: 46.84347,-92.18660
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 39 "
+ End:
+
+Object: 46.72452,-92.04448
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 44 "
+ End:
+
+Object: 46.68335,-92.09254
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 42 "
+ End:
+
+Object: 47.05,-91.75
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 43 "
+ End:
+
+Object: 46.843610,-92.461670
+Threshold: 600
+  Color: 0 255 0
+  Text: -17,-13, 2, " 43 "
  End:
 

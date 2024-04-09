@@ -8,7 +8,7 @@
 import os
 
 import subprocess
-from datetime import datetime
+from datetime import datetime, timedelta
 import calendar
 import numpy as np
 import pandas as pd
@@ -41,9 +41,11 @@ except Exception:
 # ----------------------------------------
 
 now = datetime.now(pytz.utc)
-df = pd.read_csv('radars.gis', sep='|', header=None, names=['radar','wfo','lat','lon', 'elevation','code','state', 'full_name'], dtype={'lat': float, 'lon': float})
-df['color'] = np.where(df['code']== 1, 'blue', 'green')
-df['caps'] = [r.upper() for r in df['radar']]
+
+df = pd.read_csv('radars.csv', dtype={'lat': float, 'lon': float})
+df['radar_id'] = df['radar']
+df.set_index('radar_id', inplace=True)
+
 
 fig = go.Figure(go.Scattermapbox(
     mode='markers',
@@ -102,7 +104,8 @@ class RadarSimulator:
         self.days_in_month = 30
         self.leap_year = False
         self.timestring = None
-        self.sim_datetime = None
+        self.sim_datetime = datetime(self.start_year,self.start_month,self.start_day,self.start_hour,self.start_minute,second=0)
+        self.sim_clock = None
         self.radar = None
         self.lat = None
         self.lon = None
@@ -166,6 +169,8 @@ step_minute = [dbc.CardBody([html.P("Minute", className="card-text")])]
 
 step_duration = [dbc.CardBody([html.P("Duration", className="card-text")])]
 
+step_sim_clock = [dbc.CardBody([html.H5("Simulation Clock", className="card-text")])]
+
 view_output = [
             dbc.CardBody([html.P("Output", className="card-title", style=bold),
                 html.P("Results",className="card-text")])
@@ -176,10 +181,6 @@ view_output = [
 #      Build Webpage Layout
 ################################################################################
 
-
-def run_script(args):
-    subprocess.run(["python", "./scripts/sfc-obs/surface_obs_placefile.py"] + args)
-    return
 
 app.layout = dbc.Container([
     html.Div([ ], style={'height': '5px'}),
@@ -193,19 +194,12 @@ app.layout = dbc.Container([
                                             'verticalAlign': 'middle', 'width':'70%'})), width=3),
             ],id='test',style={"padding":"1em",'border':'3px gray solid'})],style={"padding":"1.7em", "text-align":"center"}),
     ]),
-    # html.Div([   
-    #         dbc.Row([
-    #             dbc.Col(
-    #                 html.Div([
-    #                 dbc.Card(step_instructions, color="secondary", inverse=True)
-    #                 ],style={"padding":"0.5em", "text-align":"center"}))
-    #             ]),
-    #         ]),
     html.Div([
         dbc.Row([                  
                 dbc.Col(
+                    
                     html.Div([
-                    html.Div(id="sim_year"),
+                    html.Div(id='sim_year'),
                     dbc.Card(step_year, color="secondary", inverse=True),
                     html.Div(id='year-picker'),
                     dcc.Dropdown(np.arange(1992,now.year + 1),now.year-1,id='start_year')
@@ -223,7 +217,7 @@ app.layout = dbc.Container([
                         html.Div(id='sim_day'),
                         dbc.Card(step_day, color="secondary", inverse=True),                    
                         dcc.Dropdown(np.arange(1,sa.days_in_month+1),15,id='start_day'
-                        ), 
+                        ) 
                         ])
                     ),
                 dbc.Col(
@@ -241,8 +235,8 @@ app.layout = dbc.Container([
                         ])
                     ),
                 dbc.Col(
-                    html.Div([
-                        html.Div(id='sim_duration'),                    
+                    html.Div([ 
+                        html.Div(id='sim_duration'),  
                         dbc.Card(step_duration, color="secondary", inverse=True),
                         dcc.Dropdown(np.arange(0,240,30),120,id='duration'),
                         ])
@@ -250,7 +244,21 @@ app.layout = dbc.Container([
         ])
     ],style={'padding':'1em'}),
     
-    
+    html.Div([
+        dbc.Row([
+            dbc.Col(
+                html.Div([
+                dbc.Button("Click to check values",id='check_values', n_clicks=0, style={'padding':'1em','width':'100%'}),
+                html.Div(id="show_values",style=feedback)
+                ])
+            )
+        ])
+    ]),
+        html.Div([
+       dbc.Row([
+            dbc.Col(html.Div(id='show_radar',style=feedback)),
+        ]),
+    ]),    
     html.Div([
         dbc.Row([
             dbc.Col(
@@ -267,55 +275,99 @@ app.layout = dbc.Container([
         html.Div([dcc.Graph(
                 id='graph',
                 config={'displayModeBar': False,'scrollZoom': True},
-                style={'padding-bottom': '2px', 'padding-left': '2px','height': '80vh', 'width': '100%'},
+                style={'padding-bottom': '2px', 'padding-left': '2px','height': '73vh', 'width': '100%'},
                 figure=fig
                 )
                 ]),
-    ], id='graph-container', style={'display': 'none'}),    
-    # html.Div([
-    #     dbc.Card(step_instructions, color="secondary", inverse=True)
-    #             ], style={"padding":"1em", "text-align":"center"}
-    #          ),
-
-    html.Div([
-       dbc.Row([
-            dbc.Col(html.Div(id='show_radar',style=feedback)),
-        ]),
-    ]),
+    ], id='graph-container', style={'display': 'none'}),
     html.Div([
         dbc.Row([
             dbc.Col(
                 html.Div([
-                dbc.Button("Click to check values",id='check_values', n_clicks=0, style={'padding':'1em','width':'100%'}),
-                html.Div(id="show_values",style=feedback)
-                ])
-            )
+                    dbc.Button('Run Obs Placefile', size="lg", id='run_scripts', n_clicks=0),
+                    ], className="d-grid gap-2"), style={'vertical-align':'middle'}),
+                    html.Div(id='show_script_progress',style=feedback)
         ])
-    ]),
+            ], style={'padding':'1em', 'vertical-align':'middle'}),
     html.Div([
         dbc.Row([
             dbc.Col(
                 html.Div([
-                dbc.Button("Click to check values scripts",id='run_scripts', n_clicks=0, style={'padding':'1em','width':'100%'}),
-                html.Div(id="show_script_progress",style=feedback)
-                ])
-            )
+                    dbc.Button('Toggle Simulation Clock', size="lg", id='start_sim', n_clicks=0),
+                    ], className="d-grid gap-2"), style={'vertical-align':'middle'}
+                ),
         ])
+            ], style={'padding':'1em', 'vertical-align':'middle'}),
+    
+    html.Div([
+        html.Div([
+        html.Div([
+                dbc.Card(step_sim_clock, color="secondary", inverse=True)],
+                style={'text-align':'center'},),
+            dcc.Interval(
+                id='interval-component',
+                interval=5*1000, # in milliseconds
+                n_intervals=0
+                ),
+        html.Div(id='clock-output', style=feedback)
+        ], id='clock-container', style={'display': 'none'}), 
     ]),
-    html.Div([dcc.Store(id='memory'),]),
 
     html.Div([ ], style={'height': '500px'}),
 ])  # end of app.layout
 
+# ---------------------------------------- Run Scripts ---------------------
+################################################################################
+
+def run_obs_script(args):
+    subprocess.run(["python", "./scripts/sfc-obs/surface_obs_placefile.py"] + args)
+    return
+
+@app.callback(
+    Output('show_script_progress', 'children'),
+    [Input('run_scripts', 'n_clicks')],
+    prevent_initial_call=True
+)
+def launch_obs_script(n_clicks):
+    if n_clicks > 0:
+        run_obs_script([sa.radar,str(sa.lat),str(sa.lon),sa.timestring,str(sa.duration)])
+        return "Script has been run"
+    else:
+        return ""
+
+
+# ---------------------------------------- Clock Callbacks ---------------------
+################################################################################
+
+@app.callback(
+    Output('clock-output', 'children'),
+    Input('interval-component', 'n_intervals')
+)
+def update_time(n):
+    sa.sim_datetime = sa.sim_datetime + timedelta(seconds=5)
+    # create datetime object from timestamp
+    return sa.sim_datetime.strftime("%Y-%m-%d %H:%M:%S UTC")
+
+# ---------------------------------------- Graph Callbacks ----------------------------------------
+
+@app.callback(
+    Output('clock-container', 'style'),
+    Input('start_sim', 'n_clicks'))
+def toggle_simulation_clock(n):
+    if n % 2 == 0:
+        return {'display': 'none'}
+    else:
+        return {'padding-bottom': '2px', 'padding-left': '2px','height': '80vh', 'width': '100%'}
+
 @app.callback(
     Output('graph-container', 'style'),
-    Input('map_btn', 'n_clicks')
-)
-def show_hide_graph(n):
+    Input('map_btn', 'n_clicks'))
+def toggle_map_display(n):
     if n % 2 == 1:
         return {'display': 'none'}
     else:
         return {'padding-bottom': '2px', 'padding-left': '2px','height': '80vh', 'width': '100%'}
+
 
 @app.callback(
     Output('show_radar', 'children'),
@@ -332,81 +384,64 @@ def display_click_data(clickData):
             sa.radar = the_link
             sa.lat = df[df['radar'] == sa.radar]['lat'].values[0]
             sa.lon = df[df['radar'] == sa.radar]['lon'].values[0]
-            return the_link.upper()
-@app.callback(
-    Output('show_script_progress', 'children'),
-    [Input('run_scripts', 'n_clicks')],
-    prevent_initial_call=True
-)
-def execute_script(n_clicks):
-    if n_clicks > 0:
-        run_script([sa.radar,str(sa.lat),str(sa.lon),sa.timestring,str(sa.duration)])
-        return "Script has been run"
-    else:
-        return ""
-
-@app.callback(
-Output('sim_year', 'children'),
-Input('start_year', 'value'))
-def get_year(start_year):
-    sa.start_year = start_year
-    return
+            return f'Selected Radar -- {the_link.upper()}'
 
 
 
-@app.callback(
-    [Output('start_day', 'options'), Output('start_day', 'value')],
-    [Input('start_year', 'value'), Input('start_month', 'value')]
-)
-def update_day_dropdown(selected_year, selected_month):
-    _, num_days = calendar.monthrange(selected_year, selected_month)
-    day_options = [{'label': str(day), 'value': day} for day in range(1, num_days+1)]
-    return day_options, 15
-
-@app.callback(
-Output('sim_month', 'children'),
-Input('start_month', 'value'))
-def get_month(start_month):
-    sa.start_month = start_month
-    return
-
-@app.callback(
-Output('sim_day', 'children'),
-Input('start_day', 'value'))
-def get_day(start_day):
-    sa.start_day = start_day
-    return
-
-
-@app.callback(
-Output('sim_hour', 'children'),
-Input('start_hour', 'value'))
-def get_hour(start_hour):
-    sa.start_hour = start_hour
-    return
-
-@app.callback(
-Output('sim_minute', 'children'),
-Input('start_minute', 'value'))
-def get_minute(start_minute):
-    sa.start_minute = start_minute
-    return
-
-@app.callback(
-Output('sim_duration', 'children'),
-Input('duration', 'value'))
-def get_duration(duration):
-    sa.duration = duration
-    return
+################################################################################
+# ---------------------------------------- Time Callbacks ----------------------
+################################################################################
 
 @app.callback(
 Output('show_values', 'children'),
 Input('check_values', 'n_clicks'))
 def get_sim(n_clicks):
     sa.sim_datetime = datetime(sa.start_year,sa.start_month,sa.start_day,sa.start_hour,sa.start_minute,second=0)
+    #sa.sim_timestamp = sa.sim_datetime.strftime('%Y-%m-%d %H:%M:%S').timestamp()
     sa.timestring = datetime.strftime(sa.sim_datetime,"%Y-%m-%d %H:%M UTC")
-    
     return f'Sim Start _____ {sa.timestring} _____ Duration: {sa.duration} minutes'
+
+@app.callback(Output('sim_year', 'children'),Input('start_year', 'value'), suppress_callback_exceptions=True)
+def get_year(start_year):
+    sa.start_year = start_year
+    return
+
+@app.callback(
+    Output('start_day', 'options'),
+    [Input('start_year', 'value'), Input('start_month', 'value')])
+def update_day_dropdown(selected_year, selected_month):
+    _, num_days = calendar.monthrange(selected_year, selected_month)
+    day_options = [{'label': str(day), 'value': day} for day in range(1, num_days+1)]
+    return day_options
+
+
+@app.callback(Output('sim_month', 'children'),Input('start_month', 'value'), suppress_callback_exceptions=True)
+def get_month(start_month):
+    sa.start_month = start_month
+    return
+
+@app.callback(Output('sim_day', 'children'),Input('start_day', 'value'), suppress_callback_exceptions=True)
+def get_day(start_day):
+    sa.start_day = start_day
+    return
+
+
+@app.callback(Output('sim_hour', 'children'),Input('start_hour', 'value'), suppress_callback_exceptions=True)
+def get_hour(start_hour):
+    sa.start_hour = start_hour
+    return
+
+@app.callback(Output('sim_minute', 'children'),Input('start_minute', 'value'), suppress_callback_exceptions=True)
+def get_minute(start_minute):
+    sa.start_minute = start_minute
+    return
+
+@app.callback(Output('sim_duration', 'children'),Input('duration', 'value'), suppress_callback_exceptions=True)
+def get_duration(duration):
+    sa.duration = duration
+    return
+
+
 
 
 if __name__ == '__main__':

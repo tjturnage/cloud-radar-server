@@ -19,7 +19,7 @@ class NexradDownloader:
     def __init__(self, radar_id, start_tstr, duration):
         self.radar_id = radar_id
         self.start_tstr = start_tstr
-        self.start_time = datetime.strptime(self.start_tstr,'%Y-%m-%d %H:%M UTC')
+        self.start_time = datetime.strptime(self.start_tstr,'%Y-%m-%d %H:%M:%S UTC')
         self.duration = duration
         self.end_time = self.start_time + timedelta(minutes=duration)
         self.bucket = boto3.resource('s3', config=Config(signature_version=botocore.UNSIGNED,
@@ -70,4 +70,4 @@ class NexradDownloader:
 
 if __name__ == "__main__":
 
-    NexradDownloader('KGRR', '2023-08-24 23:30 UTC', 60)
+    NexradDownloader('KGRR', '2023-08-24 23:45:00 UTC', 30)

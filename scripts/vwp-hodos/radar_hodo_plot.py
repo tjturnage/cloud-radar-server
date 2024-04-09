@@ -21,10 +21,23 @@ from pathlib import Path
 from hodo_resources import calc_components, calc_vector, calc_shear, calc_meanwind, calc_bulk_shear
 from hodo_resources import calc_srh_from_rm, calc_storm_relative_wind, calc_streamwise_vorticity
 from hodo_resources import calc_bunkers, calc_corfidi, conv_angle_param, conv_angle_enter, calc_dtm
+
 #Time and Time Zone
 timezone = 'UTC'
-#Radar
+
 radar_id = 'KGRR' #Make Uppercase
+
+BASE_DIR = Path.cwd()
+CSV_FILE = BASE_DIR / 'radars.csv'
+
+RAW_RADAR_DATA = BASE_DIR / 'data' / 'radar' / radar_id
+os.makedirs(RAW_RADAR_DATA, exist_ok=True)
+
+HODO_IMAGES = BASE_DIR / 'data' / 'hodographs' / radar_id
+os.makedirs(HODO_IMAGES, exist_ok=True)
+
+CF_DIR = BASE_DIR / 'data' / 'cf_radial' / radar_id
+os.makedirs(CF_DIR, exist_ok=True)
 
 #Note: For events in which radar may terminate under 6000 ft AGL:
 #You must use User Selected Storm Motion and enter a storm motion below.
@@ -41,18 +54,11 @@ radar_id = 'KGRR' #Make Uppercase
 data_ceiling = 8000 #Max Data Height in Feet AGL
 range_type = 'Static' #Enter Dynamic For Changing Range From Values or Static for Constant Range Value
 static_value = 70 # Enter Static Hodo Range or 999 To Not Use
-BASE_DIR = Path(__file__).parents[2]
-ROOT_DIR = Path(__file__).parents[1]
-CSV_FILE = Path.cwd() / 'scripts' / 'vwp-hodos' / 'RadarInfo.csv'
 
-RAW_RADAR_DATA = BASE_DIR / 'data' / 'radar' / radar_id
-os.makedirs(RAW_RADAR_DATA, exist_ok=True)
 
-HODO_IMAGES = BASE_DIR / 'data' / 'hodographs' / radar_id
-os.makedirs(HODO_IMAGES, exist_ok=True)
 
-CF_DIR = BASE_DIR / 'data' / 'cf_radial' / radar_id
-os.makedirs(CF_DIR, exist_ok=True)
+df = pd.read_csv(CSV_FILE, dtype={'lat': float, 'lon': float})
+df.set_index('radar_id', inplace=True)
 
 # presumes you have the radar files downloaded already
 radar_files = [f.name for f in RAW_RADAR_DATA.iterdir()]
@@ -60,7 +66,6 @@ radar_filepaths = [p for p in RAW_RADAR_DATA.iterdir()]
 
 #Surface Winds
 sfc_status = 'Preset'
-
 
 for p in radar_filepaths:
   file = p.name
@@ -195,11 +200,11 @@ for p in radar_filepaths:
   if sfc_status == 'Preset':
     radar_list = pd.read_csv(CSV_FILE)
     track = np.where(radar_list['Site ID'] == radar_id)
-    nearest_asos = radar_list['Primary ASOS'][track[0]].item()
+    nearest_asos = df.loc[radar_id]['asos_one']
     api_args = {"token":API_TOKEN, "stid": "kgrr", "attime":api_tstr, "within": 60,"status":"active", "units":"speed|kts",  "hfmetars":'1'}
     wnspd, wndir = mesowest_get_sfcwind(api_args)
     if wndir == ''or wnspd  == '':
-      nearest_asos = radar_list['Secondary ASOS'][track[0]].item()
+      nearest_asos = df.loc[radar_id]['asos_two']
       newapi_args = {"token":API_TOKEN, "stid": f"{nearest_asos}", "attime": api_tstr, "within": 60,"status":"active", "units":"speed|kts",  "hfmetars":'1'}
       wnspd, wndir = mesowest_get_sfcwind(newapi_args)
     sfc_dir = wndir
