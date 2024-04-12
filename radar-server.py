@@ -30,7 +30,7 @@ TOKEN = 'pk.eyJ1IjoidGp0dXJuYWdlIiwiYSI6ImNsaXoydWQ1OTAyZmYzZmxsM21waWU2N3kifQ.M
 
     # pyany
 
-SFC_OBS_SCRIPTS_PATH = Path.cwd() / 'obs_placefile.py'
+SFC_OBS_SCRIPTS_PATH = Path.cwd() / 'scripts' / 'obs_placefile.py'
 CSV_PATH = Path.cwd() / 'radars.csv'
 
 # ----------------------------------------
