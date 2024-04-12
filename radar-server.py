@@ -26,12 +26,14 @@ import dash_bootstrap_components as dbc
 # ----------------------------------------
 #        Attempt to set up environment
 # ----------------------------------------
-TOKEN = 'pk.eyJ1IjoidGp0dXJuYWdlIiwiYSI6ImNsaXoydWQ1OTAyZmYzZmxsM21waWU2N3kifQ.MDNAdaS61MNNmHimdrV7Kg'
+TOKEN = 'INSERT YOUR MAPBOX TOKEN HERE'
 
-    # pyany
-
-SFC_OBS_SCRIPTS_PATH = Path.cwd() / 'scripts' / 'obs_placefile.py'
 CSV_PATH = Path.cwd() / 'radars.csv'
+SCRIPTS_PATH = Path.cwd() / 'scripts'
+OBS_SCRIPT_PATH = SCRIPTS_PATH / 'obs_placefile.py'
+HODO_SCRIPT_PATH = SCRIPTS_PATH / 'hodo_plot.py'
+NEXRAD_SCRIPT_PATH = SCRIPTS_PATH / 'get_nexrad.py'
+
 
 # ----------------------------------------
 #        Set up class then instantiate
@@ -57,8 +59,8 @@ fig = go.Figure(go.Scattermapbox(
     text=df['radar']))
 
 fig.update_layout(
-    mapbox = {'accesstoken': TOKEN,
-                'style': "dark",
+    mapbox = {#'accesstoken': TOKEN,
+                'style': "carto-darkmatter",
                 'center': {'lon': -93.945155, 'lat': 38.80105},
                 'zoom': 3.5})
 
@@ -283,7 +285,7 @@ app.layout = dbc.Container([
         dbc.Row([
             dbc.Col(
                 html.Div([
-                    dbc.Button('Run Obs Placefile', size="lg", id='run_scripts', n_clicks=0),
+                    dbc.Button('Make Obs Placefile ... Download radar data ... Make hodo plots', size="lg", id='run_scripts', n_clicks=0),
                     ], className="d-grid gap-2"), style={'vertical-align':'middle'}),
                     html.Div(id='show_script_progress',style=feedback)
         ])
@@ -293,7 +295,7 @@ app.layout = dbc.Container([
         dbc.Row([
             dbc.Col(
                 html.Div([
-                    dbc.Button('Store settings and begin data processing', size="lg", id='sim_data_store_btn', n_clicks=0),
+                    dbc.Button('Store settings and begin data processing', size="lg", id='sim_data_store_btn', n_clicks=0, disabled=True),
                     ], className="d-grid gap-2"), style={'vertical-align':'middle'}),
                     html.Div(id='sim_data_store_status',style=feedback)
         ])
@@ -329,9 +331,16 @@ app.layout = dbc.Container([
 ################################################################################
 
 def run_obs_script(args):
-    subprocess.run(["python", SFC_OBS_SCRIPTS_PATH] + args)
+    subprocess.run(["python", OBS_SCRIPT_PATH] + args)
     return
 
+def run_hodo_script(args):
+    subprocess.run(["python", HODO_SCRIPT_PATH] + args)
+    return
+
+def run_nexrad_script(args):
+    subprocess.run(["python", NEXRAD_SCRIPT_PATH] + args)
+    return
 
 @app.callback(
     Output('sim_data_store_status', 'children'),
@@ -356,29 +365,24 @@ def store_sim_properties(n_clicks):
     prevent_initial_call=True)
 def launch_obs_script(n_clicks):
     if n_clicks > 0:
-        run_obs_script([sa.radar,str(sa.lat),str(sa.lon),sa.timestring,str(sa.duration)])
-        return "Script has been run"
+        print("Running obs script...")
+        try:
+            run_obs_script([sa.radar,str(sa.lat),str(sa.lon),sa.timestring,str(sa.duration)])
+            print("Obs script completed ... Now downloading radar data ...")
+        except Exception as e:
+            print("Error running obs script: ", e)
+        try:
+            run_nexrad_script([sa.radar.upper(),sa.timestring,str(sa.duration)])
+            print("Nexrad script completed ... Now creating hodographs ...")
+        except Exception as e:
+            print("Error running nexrad script: ", e)
+        try:
+            run_hodo_script([sa.radar.upper()])
+            print("Hodograph script completed ...")
+        except Exception as e:
+            print("Error running hodo script: ", e)
     else:
         return ""
-
-# @callback(Output('{}-clicks'.format(store), 'children'),
-#                 # Since we use the data prop in an output,
-#                 # we cannot get the initial data on load with the data prop.
-#                 # To counter this, you can use the modified_timestamp
-#                 # as Input and the data as State.
-#                 # This limitation is due to the initial None callbacks
-#                 # https://github.com/plotly/dash-renderer/pull/81
-#                 Input(store, 'modified_timestamp'),
-#                 State(store, 'data'))
-# def on_data(ts, data):
-#     if ts is None:
-#         raise PreventUpdate
-
-#     data = data or {}
-
-#     return data.get('clicks', 0)
-
-
 
 # ---------------------------------------- Clock Callbacks ---------------------
 ################################################################################
@@ -442,7 +446,7 @@ Input('check_values', 'n_clicks'))
 def get_sim(n_clicks):
     sa.sim_datetime = datetime(sa.start_year,sa.start_month,sa.start_day,sa.start_hour,sa.start_minute,second=0)
     #sa.sim_timestamp = sa.sim_datetime.strftime('%Y-%m-%d %H:%M:%S').timestamp()
-    sa.timestring = datetime.strftime(sa.sim_datetime,"%Y-%m-%d %H:%M UTC")
+    sa.timestring = datetime.strftime(sa.sim_datetime,"%Y-%m-%d %H:%M:%S UTC")
     if sa.radar is None:
         sa.radar = 'RADAR SELECTION REQUIRED!'
     line1 = f'Sim Start: {sa.timestring} ____ Duration: {sa.duration} minutes ____ Radar: {sa.radar.upper()}'
@@ -472,7 +476,6 @@ def get_day(start_day):
     sa.start_day = start_day
     return
 
-
 @app.callback(Output('sim_hour', 'children'),Input('start_hour', 'value'))
 def get_hour(start_hour):
     sa.start_hour = start_hour
@@ -487,7 +490,6 @@ def get_minute(start_minute):
 def get_duration(duration):
     sa.duration = duration
     return
-
 
 
 

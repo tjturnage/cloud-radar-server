@@ -3,6 +3,7 @@ Leverages AWS to download NEXRAD radar data from the NOAA NEXRAD Level 2 or TDWR
 - downloads all available data (volume scans) for a specific radar station, for a specific time period.
 - target data is saved in the data/radar folder in the project directory.
 """
+import sys
 import os
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -10,17 +11,17 @@ import boto3
 import botocore
 from botocore.client import Config
 
-RAW_RADAR_DIR = Path.cwd().parents[1] / 'data' / 'radar'
-os.makedirs(RAW_RADAR_DIR, exist_ok=True)
-
+RADAR_DIR = Path.cwd() / 'data' / 'radar'
+os.makedirs(RADAR_DIR, exist_ok=True)
 
 class NexradDownloader:
     def __init__(self, radar_id, start_tstr, duration):
         self.radar_id = radar_id
+        self.destination_folder = RADAR_DIR / self.radar_id / 'downloads'
         self.start_tstr = start_tstr
         self.start_time = datetime.strptime(self.start_tstr,'%Y-%m-%d %H:%M:%S UTC')
-        self.duration = duration
-        self.end_time = self.start_time + timedelta(minutes=duration)
+        self.duration = int(duration)
+        self.end_time = self.start_time + timedelta(minutes=int(duration))
         self.bucket = boto3.resource('s3', config=Config(signature_version=botocore.UNSIGNED,
                                                          user_agent_extra='Resource')).Bucket('noaa-nexrad-level2')
      
@@ -43,8 +44,8 @@ class NexradDownloader:
         return prefix_one, prefix_two
 
     def make_destination_folder(self):
-            self.destination_folder = RAW_RADAR_DIR / self.radar_id
             os.makedirs(self.destination_folder, exist_ok=True)
+            return
 
     def download_files(self):
         for obj in self.bucket.objects.filter(Prefix=self.prefix_day_one):
@@ -69,4 +70,7 @@ class NexradDownloader:
 
 if __name__ == "__main__":
 
-    NexradDownloader('KGRR', '2023-08-24 23:45:00 UTC', 30)
+    #NexradDownloader('KGRR', '2023-08-24 23:45:00 UTC', 30)
+    NexradDownloader(sys.argv[1], sys.argv[2], sys.argv[3])
+    #run_obs_script([sa.radar,str(sa.lat),str(sa.lon),sa.timestring,str(sa.duration)]) 
+    #test = NexradDownloader(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5])

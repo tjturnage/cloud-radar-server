@@ -13,6 +13,7 @@ from pint import UnitRegistry
 import math
 import requests
 import os
+import sys
 import pandas as pd
 import warnings
 import glob
@@ -25,18 +26,21 @@ from hodo_resources import calc_bunkers, calc_corfidi, conv_angle_param, conv_an
 #Time and Time Zone
 timezone = 'UTC'
 
-radar_id = 'KGRR' #Make Uppercase
+radar_id = sys.argv[1] #Make Uppercase
 
-BASE_DIR = Path.cwd().parents[2]
-CSV_FILE = BASE_DIR / 'radars.csv'
-RAW_RADAR_DATA = BASE_DIR / 'data' / 'radar' / radar_id
-os.makedirs(RAW_RADAR_DATA, exist_ok=True)
+CSV_FILE = Path.cwd() / 'radars.csv'
+RADAR_DIR = Path.cwd() / 'data' / 'radar'
+os.makedirs(RADAR_DIR, exist_ok=True)
 
-HODO_IMAGES = BASE_DIR = Path.cwd().parents[1] / 'data' / 'hodographs' / radar_id
-os.makedirs(HODO_IMAGES, exist_ok=True)
-
-CF_DIR = BASE_DIR / 'data' / 'cf_radial' / radar_id
+THIS_RADAR = RADAR_DIR / radar_id 
+os.makedirs(THIS_RADAR, exist_ok=True)
+DOWNLOADS = THIS_RADAR / 'downloads'
+os.makedirs(DOWNLOADS, exist_ok=True)
+CF_DIR = THIS_RADAR / 'cf_radial'
 os.makedirs(CF_DIR, exist_ok=True)
+
+HODO_IMAGES = Path.cwd() / 'assets' / 'hodographs' / radar_id
+os.makedirs(HODO_IMAGES, exist_ok=True)
 
 #Note: For events in which radar may terminate under 6000 ft AGL:
 #You must use User Selected Storm Motion and enter a storm motion below.
@@ -59,8 +63,8 @@ df = pd.read_csv(CSV_FILE, dtype={'lat': float, 'lon': float})
 df.set_index('radar_id', inplace=True)
 
 # presumes you have the radar files downloaded already
-radar_files = [f.name for f in RAW_RADAR_DATA.iterdir()]
-radar_filepaths = [p for p in RAW_RADAR_DATA.iterdir()]
+radar_files = [f.name for f in DOWNLOADS.iterdir()]
+radar_filepaths = [p for p in DOWNLOADS.iterdir()]
 
 #Surface Winds
 sfc_status = 'Preset'

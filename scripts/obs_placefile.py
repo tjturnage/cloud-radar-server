@@ -67,7 +67,7 @@ class Mesowest():
             self.base_time = now + timedelta(minutes=round_up)
             self.place_time = now - timedelta(minutes=round_down)
         else:
-            self.base_time = datetime.strptime(self.event_timestr,'%Y-%m-%d %H:%M UTC')
+            self.base_time = datetime.strptime(self.event_timestr,'%Y-%m-%d %H:%M:%S UTC')
             self.place_time = self.base_time
 
         self.base_ts = datetime.strftime(self.base_time,'%Y%m%d%H%M')
@@ -475,7 +475,7 @@ class Mesowest():
 
 if __name__ == "__main__":
     test = Mesowest(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5])
-    #test = 
+
 """    
 import subprocess
 
