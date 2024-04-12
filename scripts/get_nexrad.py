@@ -10,8 +10,7 @@ import boto3
 import botocore
 from botocore.client import Config
 
-p = Path('.')
-RAW_RADAR_DIR = p.parent / 'data' / 'radar'
+RAW_RADAR_DIR = Path.cwd().parents[1] / 'data' / 'radar'
 os.makedirs(RAW_RADAR_DIR, exist_ok=True)
 
 

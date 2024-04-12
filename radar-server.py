@@ -14,6 +14,7 @@ import numpy as np
 import pandas as pd
 import plotly.graph_objs as go
 import pytz
+from pathlib import Path
 
 import dash
 # State allows the user to enter input before proceeding
@@ -27,14 +28,10 @@ import dash_bootstrap_components as dbc
 # ----------------------------------------
 TOKEN = 'pk.eyJ1IjoidGp0dXJuYWdlIiwiYSI6ImNsaXoydWQ1OTAyZmYzZmxsM21waWU2N3kifQ.MDNAdaS61MNNmHimdrV7Kg'
 
-SFC_OBS_SCRIPTS_PATH = './scripts/surface_'    # pyany
+    # pyany
 
-RADAR_DIR = '.'      # pyany
-
-try:
-    os.chdir(RADAR_DIR)
-except Exception:
-    print("Cant import!")
+SFC_OBS_SCRIPTS_PATH = Path.cwd() / 'obs_placefile.py'
+CSV_PATH = Path.cwd() / 'radars.csv'
 
 # ----------------------------------------
 #        Set up class then instantiate
@@ -42,7 +39,7 @@ except Exception:
 
 now = datetime.now(pytz.utc)
 
-df = pd.read_csv('radars.csv', dtype={'lat': float, 'lon': float})
+df = pd.read_csv(CSV_PATH, dtype={'lat': float, 'lon': float})
 df['radar_id'] = df['radar']
 df.set_index('radar_id', inplace=True)
 
@@ -119,6 +116,7 @@ sa = RadarSimulator()
 
 app = dash.Dash(__name__,external_stylesheets=[dbc.themes.CYBORG])
 app.title = "Radar Simulator"
+# Add this line where you define your app's layout
 
 # ----------------------------------------
 #        Define some webpage layout variables
@@ -183,6 +181,7 @@ view_output = [
 
 
 app.layout = dbc.Container([
+    dcc.Store(id='sim_store'),
     html.Div([ ], style={'height': '5px'}),
     html.Div([
         dbc.Container([
@@ -248,7 +247,7 @@ app.layout = dbc.Container([
         dbc.Row([
             dbc.Col(
                 html.Div([
-                dbc.Button("Click to check values",id='check_values', n_clicks=0, style={'padding':'1em','width':'100%'}),
+                dbc.Button("Click to check values", size="lg", id='check_values', n_clicks=0, style={'padding':'1em','width':'100%'}),
                 html.Div(id="show_values",style=feedback)
                 ])
             )
@@ -289,6 +288,16 @@ app.layout = dbc.Container([
                     html.Div(id='show_script_progress',style=feedback)
         ])
             ], style={'padding':'1em', 'vertical-align':'middle'}),
+
+    html.Div([
+        dbc.Row([
+            dbc.Col(
+                html.Div([
+                    dbc.Button('Store settings and begin data processing', size="lg", id='sim_data_store_btn', n_clicks=0),
+                    ], className="d-grid gap-2"), style={'vertical-align':'middle'}),
+                    html.Div(id='sim_data_store_status',style=feedback)
+        ])
+            ], style={'padding':'1em', 'vertical-align':'middle'}),
     html.Div([
         dbc.Row([
             dbc.Col(
@@ -306,7 +315,7 @@ app.layout = dbc.Container([
                 style={'text-align':'center'},),
             dcc.Interval(
                 id='interval-component',
-                interval=5*1000, # in milliseconds
+                interval=15*1000, # in milliseconds
                 n_intervals=0
                 ),
         html.Div(id='clock-output', style=feedback)
@@ -320,20 +329,55 @@ app.layout = dbc.Container([
 ################################################################################
 
 def run_obs_script(args):
-    subprocess.run(["python", "./scripts/sfc-obs/surface_obs_placefile.py"] + args)
+    subprocess.run(["python", SFC_OBS_SCRIPTS_PATH] + args)
     return
+
+
+@app.callback(
+    Output('sim_data_store_status', 'children'),
+    Input('sim_data_store_btn', 'n_clicks'),
+    #State('sim_store', 'data'))
+)
+def store_sim_properties(n_clicks):
+    if n_clicks is None:
+        raise PreventUpdate
+    # Store data in a dictionary
+    data = {
+        'sim_datetime': sa.sim_datetime,
+        'timestring': sa.timestring,
+        'duration': sa.duration,
+        'radar': sa.radar,
+    }
+    return str(data)
 
 @app.callback(
     Output('show_script_progress', 'children'),
     [Input('run_scripts', 'n_clicks')],
-    prevent_initial_call=True
-)
+    prevent_initial_call=True)
 def launch_obs_script(n_clicks):
     if n_clicks > 0:
         run_obs_script([sa.radar,str(sa.lat),str(sa.lon),sa.timestring,str(sa.duration)])
         return "Script has been run"
     else:
         return ""
+
+# @callback(Output('{}-clicks'.format(store), 'children'),
+#                 # Since we use the data prop in an output,
+#                 # we cannot get the initial data on load with the data prop.
+#                 # To counter this, you can use the modified_timestamp
+#                 # as Input and the data as State.
+#                 # This limitation is due to the initial None callbacks
+#                 # https://github.com/plotly/dash-renderer/pull/81
+#                 Input(store, 'modified_timestamp'),
+#                 State(store, 'data'))
+# def on_data(ts, data):
+#     if ts is None:
+#         raise PreventUpdate
+
+#     data = data or {}
+
+#     return data.get('clicks', 0)
+
 
 
 # ---------------------------------------- Clock Callbacks ---------------------
@@ -344,7 +388,7 @@ def launch_obs_script(n_clicks):
     Input('interval-component', 'n_intervals')
 )
 def update_time(n):
-    sa.sim_datetime = sa.sim_datetime + timedelta(seconds=5)
+    sa.sim_datetime = sa.sim_datetime + timedelta(seconds=15)
     # create datetime object from timestamp
     return sa.sim_datetime.strftime("%Y-%m-%d %H:%M:%S UTC")
 
@@ -399,7 +443,10 @@ def get_sim(n_clicks):
     sa.sim_datetime = datetime(sa.start_year,sa.start_month,sa.start_day,sa.start_hour,sa.start_minute,second=0)
     #sa.sim_timestamp = sa.sim_datetime.strftime('%Y-%m-%d %H:%M:%S').timestamp()
     sa.timestring = datetime.strftime(sa.sim_datetime,"%Y-%m-%d %H:%M UTC")
-    return f'Sim Start _____ {sa.timestring} _____ Duration: {sa.duration} minutes'
+    if sa.radar is None:
+        sa.radar = 'RADAR SELECTION REQUIRED!'
+    line1 = f'Sim Start: {sa.timestring} ____ Duration: {sa.duration} minutes ____ Radar: {sa.radar.upper()}'
+    return line1
 
 @app.callback(Output('sim_year', 'children'),Input('start_year', 'value'), suppress_callback_exceptions=True)
 def get_year(start_year):
@@ -415,18 +462,18 @@ def update_day_dropdown(selected_year, selected_month):
     return day_options
 
 
-@app.callback(Output('sim_month', 'children'),Input('start_month', 'value'), suppress_callback_exceptions=True)
+@app.callback(Output('sim_month', 'children'),Input('start_month', 'value'))
 def get_month(start_month):
     sa.start_month = start_month
     return
 
-@app.callback(Output('sim_day', 'children'),Input('start_day', 'value'), suppress_callback_exceptions=True)
+@app.callback(Output('sim_day', 'children'),Input('start_day', 'value'))
 def get_day(start_day):
     sa.start_day = start_day
     return
 
 
-@app.callback(Output('sim_hour', 'children'),Input('start_hour', 'value'), suppress_callback_exceptions=True)
+@app.callback(Output('sim_hour', 'children'),Input('start_hour', 'value'))
 def get_hour(start_hour):
     sa.start_hour = start_hour
     return

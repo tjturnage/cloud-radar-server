@@ -27,13 +27,12 @@ timezone = 'UTC'
 
 radar_id = 'KGRR' #Make Uppercase
 
-BASE_DIR = Path.cwd()
+BASE_DIR = Path.cwd().parents[2]
 CSV_FILE = BASE_DIR / 'radars.csv'
-
 RAW_RADAR_DATA = BASE_DIR / 'data' / 'radar' / radar_id
 os.makedirs(RAW_RADAR_DATA, exist_ok=True)
 
-HODO_IMAGES = BASE_DIR / 'data' / 'hodographs' / radar_id
+HODO_IMAGES = BASE_DIR = Path.cwd().parents[1] / 'data' / 'hodographs' / radar_id
 os.makedirs(HODO_IMAGES, exist_ok=True)
 
 CF_DIR = BASE_DIR / 'data' / 'cf_radial' / radar_id
@@ -54,7 +53,6 @@ os.makedirs(CF_DIR, exist_ok=True)
 data_ceiling = 8000 #Max Data Height in Feet AGL
 range_type = 'Static' #Enter Dynamic For Changing Range From Values or Static for Constant Range Value
 static_value = 70 # Enter Static Hodo Range or 999 To Not Use
-
 
 
 df = pd.read_csv(CSV_FILE, dtype={'lat': float, 'lon': float})
@@ -199,7 +197,7 @@ for p in radar_filepaths:
       return wnspd, wndir
   if sfc_status == 'Preset':
     radar_list = pd.read_csv(CSV_FILE)
-    track = np.where(radar_list['Site ID'] == radar_id)
+    track = np.where(radar_list['radar_id'] == radar_id)
     nearest_asos = df.loc[radar_id]['asos_one']
     api_args = {"token":API_TOKEN, "stid": "kgrr", "attime":api_tstr, "within": 60,"status":"active", "units":"speed|kts",  "hfmetars":'1'}
     wnspd, wndir = mesowest_get_sfcwind(api_args)
