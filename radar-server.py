@@ -54,7 +54,7 @@ class RadarSimulator(Config):
         self.leap_year = False
         self.timestring = None
         self.sim_clock = None
-        self.radar = 'KGRR'
+        self.radar = 'None Selected'
         self.lat = None
         self.lon = None
         self.current_dir = Path.cwd()
@@ -80,7 +80,6 @@ class RadarSimulator(Config):
         os.makedirs(self.placefiles_dir, exist_ok=True)
         return
     
-
     def make_bucket(self):
         self.bucket = boto3.resource('s3', config=Config(signature_version=botocore.UNSIGNED,
                                                          user_agent_extra='Resource')).Bucket('noaa-nexrad-level2')
@@ -144,7 +143,7 @@ class RadarSimulator(Config):
 # --------------------------------------------------------
 
 sa = RadarSimulator()
-app = dash.Dash(__name__,external_stylesheets=[dbc.themes.CYBORG])
+app = dash.Dash(__name__,external_stylesheets=[dbc.themes.CYBORG], suppress_callback_exceptions=True)
 app.title = "Radar Simulator"
 
 # --------------------------------------------------------
@@ -153,20 +152,21 @@ app.title = "Radar Simulator"
 
 app.layout = dbc.Container([
     dcc.Store(id='sim_store'),
-    lc.top_section, lc.first_content,
+    lc.top_section, lc.first_content, lc.check_values,
     html.Div([
         dbc.Row([
                 lc.sim_year_section,lc.sim_month_section,
                 dbc.Col(html.Div([
-                        html.Div(id='sim_day'),
                         dbc.Card(lc.step_day, color="secondary", inverse=True),           
                         dcc.Dropdown(np.arange(1,sa.days_in_month+1),15,id='start_day'
                         ) ])
                         ),
                 lc.sim_hour_section, lc.sim_minute_section, lc.sim_duration_section
         ])],style={'padding':'1em'}),
-    lc.check_values, lc.show_radar_section, lc.map_toggle, lc.graph_section, lc.scripts_button, lc.store_settings_section,
-    lc.toggle_simulation_clock, lc.simulation_clock, lc.bottom_section
+
+    #lc.show_radar_section,
+    lc.map_toggle, lc.graph_section, lc.scripts_button, #lc.store_settings_section,
+    lc.toggle_simulation_clock, lc.simulation_clock, lc.radar_id, lc.bottom_section
     ])  # end of app.layout
 
 # --------------------------------------------------------
@@ -190,28 +190,10 @@ def run_obs_nexrad_scripts():
 def script_progress(value):
     return value
        
-
-
 def run_hodo_script(args):
-    subprocess.run(["python", sa.hodo_script_path] + args)
+    subprocess.run(["python", sa.hodo_script_path] + args, check=True)
     return
 
-@app.callback(
-    Output('sim_data_store_status', 'children'),
-    Input('sim_data_store_btn', 'n_clicks'),
-    #State('sim_store', 'data'))
-)
-def store_sim_properties(n_clicks):
-    if n_clicks is None:
-        raise PreventUpdate
-    # Store data in a dictionary
-    data = {
-        'sim_datetime': sa.sim_start,
-        'timestring': sa.sim_start_str,
-        'duration': sa.duration,
-        'radar': sa.radar,
-    }
-    return str(data)
 
 @app.callback(
     Output('show_script_progress', 'children', allow_duplicate=True),
@@ -234,7 +216,6 @@ def launch_obs_script(n_clicks):
 )
 def update_time(n):
     sa.sim_clock = sa.sim_clock + timedelta(seconds=15)
-    # create datetime object from timestamp
     return sa.sim_clock.strftime("%Y-%m-%d %H:%M:%S UTC")
 
 # ---------------------------------------- Graph Callbacks ----------------------------------------
@@ -259,7 +240,7 @@ def toggle_map_display(n):
 
 
 @app.callback(
-    Output('show_radar', 'children'),
+    Output('radar', 'children'),
     [Input('graph', 'clickData')])
 def display_click_data(clickData):
     if clickData is None:
@@ -273,24 +254,34 @@ def display_click_data(clickData):
             sa.radar = the_link
             sa.lat = lc.df[lc.df['radar'] == sa.radar]['lat'].values[0]
             sa.lon = lc.df[lc.df['radar'] == sa.radar]['lon'].values[0]
-            return f'Selected Radar -- {the_link.upper()}'
+            return f'{the_link.upper()}'
 
-# ---------------------------------------- Time Callbacks ----------------------------------------
+# ---------------------------------------- Time Selection Summary --------------------------------
 
 @app.callback(
 Output('show_values', 'children'),
-Input('check_values', 'n_clicks'))
-def get_sim(n_clicks):
+Input('start_year', 'value'),
+Input('start_month', 'value'),
+Input('start_day', 'value'),
+Input('start_hour', 'value'),
+Input('start_minute', 'value'),
+Input('duration', 'value'),
+Input('radar', 'children'),
+#Input('check_values', 'n_clicks')
+)
+def get_sim(_yr, _mo, _dy, _hr, _mn, _dur, _radar):
     sa.make_times()
     if sa.radar is None:
         sa.radar = 'RADAR SELECTION REQUIRED!'
     line1 = f'Sim Start: {sa.sim_start_str} ____ Duration: {sa.duration} minutes ____ Radar: {sa.radar.upper()}'
     return line1
 
-@app.callback(Output('sim_year', 'children'),Input('start_year', 'value'))
+# ---------------------------------------- Time Callbacks ----------------------------------------
+
+@app.callback(Output('start_year', 'value'),Input('start_year', 'value'))
 def get_year(start_year):
     sa.start_year = start_year
-    return
+    return sa.start_year
 
 @app.callback(
     Output('start_day', 'options'),
@@ -301,31 +292,30 @@ def update_day_dropdown(selected_year, selected_month):
     return day_options
 
 
-@app.callback(Output('sim_month', 'children'),Input('start_month', 'value'))
+@app.callback(Output('start_month', 'value'),Input('start_month', 'value'))
 def get_month(start_month):
     sa.start_month = start_month
-    return
+    return sa.start_month
 
-@app.callback(Output('sim_day', 'children'),Input('start_day', 'value'))
+@app.callback(Output('start_day', 'value'),Input('start_day', 'value'))
 def get_day(start_day):
     sa.start_day = start_day
-    return
+    return sa.start_day
 
-@app.callback(Output('sim_hour', 'children'),Input('start_hour', 'value'))
+@app.callback(Output('start_hour', 'value'),Input('start_hour', 'value'))
 def get_hour(start_hour):
     sa.start_hour = start_hour
-    return
+    return sa.start_hour
 
-@app.callback(Output('sim_minute', 'children'),Input('start_minute', 'value'))
+@app.callback(Output('start_minute', 'value'),Input('start_minute', 'value'))
 def get_minute(start_minute):
     sa.start_minute = start_minute
-    return
+    return sa.start_minute
 
-@app.callback(Output('sim_duration', 'children'),Input('duration', 'value'))
+@app.callback(Output('duration', 'value'),Input('duration', 'value'))
 def get_duration(duration):
     sa.duration = duration
-    return
-
+    return sa.duration
 
 
 if __name__ == '__main__':

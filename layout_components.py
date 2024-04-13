@@ -132,7 +132,7 @@ check_values = html.Div([
         dbc.Row([
             dbc.Col(
                 html.Div([
-                dbc.Button("Click to check values", size="lg", id='check_values', n_clicks=0, style={'padding':'1em','width':'100%'}),
+                #dbc.Button("Click to check values", size="lg", id='check_values', n_clicks=0, style={'padding':'1em','width':'100%'}),
                 html.Div(id="show_values",style=feedback)
                 ])
             )
@@ -141,6 +141,9 @@ check_values = html.Div([
 
 show_radar_section = html.Div([dbc.Row([dbc.Col(html.Div(id='show_radar',style=feedback)),
         ]),])
+#show_radar_section = html.Div([dbc.Row([dbc.Col(html.Div(id='show_radar',style={'display': 'none'})),
+#        ]),])
+
 
 map_toggle = html.Div([
         dbc.Row([
@@ -190,7 +193,6 @@ simulation_clock = html.Div([
 
 sim_duration_section = dbc.Col(
                     html.Div([ 
-                        html.Div(id='sim_duration'),  
                         dbc.Card(step_duration, color="secondary", inverse=True),
                         dcc.Dropdown(np.arange(0,240,30),120,id='duration'),
                         ])
@@ -199,7 +201,6 @@ sim_duration_section = dbc.Col(
 sim_year_section = dbc.Col(
                     
                     html.Div([
-                    html.Div(id='sim_year'),
                     dbc.Card(step_year, color="secondary", inverse=True),
                     html.Div(id='year-picker'),
                     dcc.Dropdown(np.arange(1992,now.year + 1),now.year-1,id='start_year')
@@ -208,7 +209,6 @@ sim_year_section = dbc.Col(
 
 sim_month_section = dbc.Col(
                     html.Div([
-                        html.Div(id='sim_month'),
                         dbc.Card(step_month, color="secondary", inverse=True),                    
                         dcc.Dropdown(np.arange(1,13),6,id='start_month')
                         ])
@@ -217,7 +217,6 @@ sim_month_section = dbc.Col(
 
 sim_hour_section = dbc.Col(
                     html.Div([
-                        html.Div(id='sim_hour'),
                         dbc.Card(step_hour, color="secondary", inverse=True),         
                         dcc.Dropdown(np.arange(0,24),18,id='start_hour'),
                         ])
@@ -225,7 +224,6 @@ sim_hour_section = dbc.Col(
 
 sim_minute_section =  dbc.Col(
                     html.Div([
-                        html.Div(id='sim_minute'),
                         dbc.Card(step_minute, color="secondary", inverse=True),
                         dcc.Dropdown([0,15,30,45],30,id='start_minute'),
                         ])
@@ -240,6 +238,6 @@ store_settings_section = html.Div([
                     html.Div(id='sim_data_store_status',style=feedback)
         ])
             ], style={'padding':'1em', 'vertical-align':'middle'})
-
+radar_id = html.Div(id='radar',style={'display': 'none'})
 top_section = html.Div([ ], style={'height': '5px'})
 bottom_section = html.Div([ ], style={'height': '500px'})
