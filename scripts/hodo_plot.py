@@ -19,18 +19,17 @@ import warnings
 import glob
 from pathlib import Path
 #Get Needed Parameters
-from hodo_resources import calc_components, calc_vector, calc_shear, calc_meanwind, calc_bulk_shear
-from hodo_resources import calc_srh_from_rm, calc_storm_relative_wind, calc_streamwise_vorticity
-from hodo_resources import calc_bunkers, calc_corfidi, conv_angle_param, conv_angle_enter, calc_dtm
 
+import hodo_resources as hr
+
+
+CSV_FILE = Path.cwd() / 'radars.csv'
+RADAR_DIR = Path.cwd() / 'data' / 'radar'
+HODO_IMAGES = Path.cwd() / 'assets'/ 'hodographs'
 #Time and Time Zone
 timezone = 'UTC'
 
 radar_id = sys.argv[1] #Make Uppercase
-
-CSV_FILE = Path.cwd() / 'radars.csv'
-RADAR_DIR = Path.cwd() / 'data' / 'radar'
-os.makedirs(RADAR_DIR, exist_ok=True)
 
 THIS_RADAR = RADAR_DIR / radar_id 
 os.makedirs(THIS_RADAR, exist_ok=True)
@@ -39,8 +38,6 @@ os.makedirs(DOWNLOADS, exist_ok=True)
 CF_DIR = THIS_RADAR / 'cf_radial'
 os.makedirs(CF_DIR, exist_ok=True)
 
-HODO_IMAGES = Path.cwd() / 'assets' / 'hodographs' / radar_id
-os.makedirs(HODO_IMAGES, exist_ok=True)
 
 #Note: For events in which radar may terminate under 6000 ft AGL:
 #You must use User Selected Storm Motion and enter a storm motion below.
@@ -214,21 +211,21 @@ for p in radar_filepaths:
 
 
 
-  shr005 = calc_bulk_shear(data_ceiling, 500, u_avg, v_avg, zlevels)
-  shr01 = calc_bulk_shear(data_ceiling, 1000, u_avg, v_avg, zlevels)
-  shr03 = calc_bulk_shear(data_ceiling, 3000, u_avg, v_avg, zlevels)
-  shr06 = calc_bulk_shear(data_ceiling, 6000, u_avg, v_avg, zlevels)
-  shr08 = calc_bulk_shear(data_ceiling, 8000, u_avg, v_avg, zlevels)
+  shr005 = hr.calc_bulk_shear(data_ceiling, 500, u_avg, v_avg, zlevels)
+  shr01 = hr.calc_bulk_shear(data_ceiling, 1000, u_avg, v_avg, zlevels)
+  shr03 = hr.calc_bulk_shear(data_ceiling, 3000, u_avg, v_avg, zlevels)
+  shr06 = hr.calc_bulk_shear(data_ceiling, 6000, u_avg, v_avg, zlevels)
+  shr08 = hr.calc_bulk_shear(data_ceiling, 8000, u_avg, v_avg, zlevels)
 
   #Calculate Storm Motions
   if data_ceiling >= 6000:
-    u_mean, v_mean = calc_meanwind(u_avg, v_avg, zlevels, 6000)
-    mean_mag, mean_dir = calc_vector(u_mean, v_mean)
+    u_mean, v_mean = hr.calc_meanwind(u_avg, v_avg, zlevels, 6000)
+    mean_mag, mean_dir = hr.calc_vector(u_mean, v_mean)
     if np.isnan(mean_mag) == False:
       mean_mag = round(mean_mag)
     if np.isnan(mean_mag):
       mean_mag = '--'
-    rmu, rmv, lmu, lmv, rmag, rdir, lmag, ldir = calc_bunkers(u_avg, v_avg, zlevels)
+    rmu, rmv, lmu, lmv, rmag, rdir, lmag, ldir = hr.calc_bunkers(u_avg, v_avg, zlevels)
     if np.isnan(rmag) == False:
       rmag = round(rmag)
     if np.isnan == False:
@@ -237,13 +234,13 @@ for p in radar_filepaths:
       lmag = round(lmag)
     if np.isnan(lmag):
       lmag = '--'
-    cvu_u, cvu_v, cvd_u, cvd_v = calc_corfidi(u_avg, v_avg, zlevels, u_mean, v_mean)
-    cor_u_mag, cor_u_dir = calc_vector(cvu_u, cvu_v)
+    cvu_u, cvu_v, cvd_u, cvd_v = hr.calc_corfidi(u_avg, v_avg, zlevels, u_mean, v_mean)
+    cor_u_mag, cor_u_dir = hr.calc_vector(cvu_u, cvu_v)
     if np.isnan(cor_u_mag) == False:
       cor_u_mag = round(cor_u_mag)
     if np.isnan(cor_u_mag):
       cor_u_mag = '--'
-    cor_d_mag, cor_d_dir = calc_vector(cvd_u, cvd_v)
+    cor_d_mag, cor_d_dir = hr.calc_vector(cvd_u, cvd_v)
     if np.isnan(cor_d_mag) == False:
       cor_d_mag =  round(cor_d_mag)
     if np.isnan(cor_d_mag):
@@ -276,9 +273,9 @@ for p in radar_filepaths:
 
   #Calculate Deviant Tornado Motion
   if data_ceiling >= 6000:
-    u_300, v_300 = calc_meanwind(u_avg, v_avg, zlevels, 300)
-    dtm_u, dtm_v = calc_dtm(u_300, v_300, rmu, rmv)
-    dtm_mag, dtm_dir = calc_vector(dtm_u, dtm_v)
+    u_300, v_300 = hr.calc_meanwind(u_avg, v_avg, zlevels, 300)
+    dtm_u, dtm_v = hr.calc_dtm(u_300, v_300, rmu, rmv)
+    dtm_mag, dtm_dir = hr.calc_vector(dtm_u, dtm_v)
     if np.isnan(dtm_mag) == False:
       dtm_mag =  round(dtm_mag)
   else:
@@ -288,7 +285,7 @@ for p in radar_filepaths:
 
   #Calculate meteorological angles
   try:
-    mean_dirmet = conv_angle_param(mean_dir)
+    mean_dirmet = hr.conv_angle_param(mean_dir)
     if np.isnan(mean_dirmet) == False:
       mean_dirmet = round(mean_dirmet)
     if np.isnan(mean_dirmet):
@@ -296,7 +293,7 @@ for p in radar_filepaths:
   except:
     mean_dirmet = '---'
   try:
-    rang = conv_angle_param(rdir)
+    rang = hr.conv_angle_param(rdir)
     if np.isnan(rang) == False:
       rang =  round(rang)
     if np.isnan(rang):
@@ -304,7 +301,7 @@ for p in radar_filepaths:
   except:
     rang = '---'
   try:
-    lang = conv_angle_param(ldir)
+    lang = hr.conv_angle_param(ldir)
     if np.isnan(lang) == False:
       lang = round(lang)
     if np.isnan(lang):
@@ -312,7 +309,7 @@ for p in radar_filepaths:
   except:
     lang = '---'
   try:
-    down_adj = conv_angle_param(cor_d_dir)
+    down_adj = hr.conv_angle_param(cor_d_dir)
     if np.isnan(down_adj) == False:
       down_adj = round(down_adj)
     if np.isnan(down_adj):
@@ -320,7 +317,7 @@ for p in radar_filepaths:
   except:
     down_adj = '---'
   try:
-    up_adj = conv_angle_param(cor_u_dir)
+    up_adj = hr.conv_angle_param(cor_u_dir)
     if np.isnan(up_adj) == False:
       up_adj = round(up_adj)
     if np.isnan(up_adj):
@@ -328,7 +325,7 @@ for p in radar_filepaths:
   except:
     up_adj = '---'
   try:
-    dtm_dir_cor = conv_angle_param(dtm_dir)
+    dtm_dir_cor = hr.conv_angle_param(dtm_dir)
     if np.isnan(dtm_dir_cor) == False:
       dtm_dir_cor = round(dtm_dir_cor)
     if np.isnan(dtm_dir_cor):
@@ -339,10 +336,10 @@ for p in radar_filepaths:
   #Calculate Sfc Wind Components
   if sfc_dir != 'None':
     try:
-      sfc_angle = conv_angle_enter(sfc_dir)
+      sfc_angle = hr.conv_angle_enter(sfc_dir)
     except:
       sfc_angle = '---'
-    sfc_u, sfc_v = calc_components(sfc_spd, sfc_angle)
+    sfc_u, sfc_v = hr.calc_components(sfc_spd, sfc_angle)
     if np.isnan(sfc_angle) == False:
       sfc_angle = round(sfc_angle)
     if np.isnan(sfc_angle):
@@ -351,10 +348,10 @@ for p in radar_filepaths:
   #Calculate User Selected Motion Components
   if storm_motion_method == 'User Selected':
     try:
-      us_ang_cor = conv_angle_enter(sm_dir)
+      us_ang_cor = hr.conv_angle_enter(sm_dir)
     except:
      us_ang_cor = '---'
-    u_sm, v_sm = calc_components(sm_speed, us_ang_cor)
+    u_sm, v_sm = hr.calc_components(sm_speed, us_ang_cor)
     if np.isnan(us_ang_cor) == False:
       us_ang_cor = round(us_ang_cor)
     if np.isnan(us_ang_cor):
@@ -487,11 +484,11 @@ for p in radar_filepaths:
       warnings.warn('ERROR: Data Missing For Storm Relative calculations with this method: For data missing under 6000m AGL User Selected Storm Motion Required')
 
 
-  SRH05 = calc_srh_from_rm(data_ceiling, 500, u_avg, v_avg, rmu, rmv, zlevels)
-  SRH1 = calc_srh_from_rm(data_ceiling, 1000, u_avg, v_avg, rmu, rmv, zlevels)
-  SRH3 = calc_srh_from_rm(data_ceiling, 3000, u_avg, v_avg, rmu, rmv, zlevels)
-  SRH6 = calc_srh_from_rm(data_ceiling, 6000, u_avg, v_avg, rmu, rmv, zlevels)
-  SRH8 = calc_srh_from_rm(data_ceiling, 8000, u_avg, v_avg, rmu, rmv, zlevels)
+  SRH05 = hr.calc_srh_from_rm(data_ceiling, 500, u_avg, v_avg, rmu, rmv, zlevels)
+  SRH1 = hr.calc_srh_from_rm(data_ceiling, 1000, u_avg, v_avg, rmu, rmv, zlevels)
+  SRH3 = hr.calc_srh_from_rm(data_ceiling, 3000, u_avg, v_avg, rmu, rmv, zlevels)
+  SRH6 = hr.calc_srh_from_rm(data_ceiling, 6000, u_avg, v_avg, rmu, rmv, zlevels)
+  SRH8 = hr.calc_srh_from_rm(data_ceiling, 8000, u_avg, v_avg, rmu, rmv, zlevels)
 
 
   SRH_units = (units.m*units.m)/(units.s*units.s)
@@ -505,11 +502,11 @@ for p in radar_filepaths:
 
 
   #Calculate SR Wind
-  SR05 = calc_storm_relative_wind(data_ceiling, 500, sr_u, sr_v, zlevels)
-  SR1 = calc_storm_relative_wind(data_ceiling, 1000, sr_u, sr_v, zlevels)
-  SR3 = calc_storm_relative_wind(data_ceiling, 3000, sr_u, sr_v, zlevels)
-  SR6 = calc_storm_relative_wind(data_ceiling, 6000, sr_u, sr_v, zlevels)
-  SR8 = calc_storm_relative_wind(data_ceiling, 8000, sr_u, sr_v, zlevels)
+  SR05 = hr.calc_storm_relative_wind(data_ceiling, 500, sr_u, sr_v, zlevels)
+  SR1 = hr.calc_storm_relative_wind(data_ceiling, 1000, sr_u, sr_v, zlevels)
+  SR3 = hr.calc_storm_relative_wind(data_ceiling, 3000, sr_u, sr_v, zlevels)
+  SR6 = hr.calc_storm_relative_wind(data_ceiling, 6000, sr_u, sr_v, zlevels)
+  SR8 = hr.calc_storm_relative_wind(data_ceiling, 8000, sr_u, sr_v, zlevels)
 
   
 
@@ -547,15 +544,15 @@ for p in radar_filepaths:
   swvper = (total_swvort/shear)*100
 
   # layer average streamwiseness and total streamwise vorticity
-  swper05, swvort05 = calc_streamwise_vorticity(data_ceiling, 500, swvper, total_swvort)
-  swper1, swvort1 = calc_streamwise_vorticity(data_ceiling, 1000, swvper, total_swvort)
-  swper3, swvort3 = calc_streamwise_vorticity(data_ceiling, 3000, swvper, total_swvort)
-  swper6, swvort6 = calc_streamwise_vorticity(data_ceiling, 6000, swvper, total_swvort)
-  swper8, swvort8 = calc_streamwise_vorticity(data_ceiling, 8000, swvper, total_swvort)
+  swper05, swvort05 = hr.calc_streamwise_vorticity(data_ceiling, 500, swvper, total_swvort)
+  swper1, swvort1 = hr.calc_streamwise_vorticity(data_ceiling, 1000, swvper, total_swvort)
+  swper3, swvort3 = hr.calc_streamwise_vorticity(data_ceiling, 3000, swvper, total_swvort)
+  swper6, swvort6 = hr.calc_streamwise_vorticity(data_ceiling, 6000, swvper, total_swvort)
+  swper8, swvort8 = hr.calc_streamwise_vorticity(data_ceiling, 8000, swvper, total_swvort)
 
   swvort_units = units.s**-1
 
-  sr_spd = calc_vector(sr_u, sr_v)[0]
+  sr_spd = hr.calc_vector(sr_u, sr_v)[0]
 
   def round_up_nearest(n):
       return 5 * math.ceil(n / 5)

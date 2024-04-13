@@ -32,7 +32,6 @@ def calc_meanwind(u_layer, v_layer, zlevels, layertop):
     return mean_u, mean_v
 
 
-
 def calc_bunkers(u_layer, v_layer, zlevels):
     layer_top = np.where(zlevels == (6000))[0][0]
     mean_u = np.mean(u_layer[:layer_top])
