@@ -180,9 +180,9 @@ def display_page(pathname):
     if pathname == '/':
         return html.Div([
             #html.H1('Home Page'),
-            html.A('Go to Analytics', href='/RSiC')
+            html.A('Go to Analytics', href='/RSSiC')
         ])
-    elif pathname != '/RSiC':
+    elif pathname != '/RSSiC':
         return html.Div([
             #html.H1('Home Page'),
             html.A('404: Not found')
