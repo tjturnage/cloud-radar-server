@@ -65,18 +65,17 @@ class RadarSimulator(Config):
 
     def make_directories(self):
         self.csv_file = self.current_dir / 'radars.csv'
-        self.data_dir = self.current_dir / 'radar_server_data'
-        self.radar_dir = self.data_dir / 'radar'
+        #self.data_dir = self.current_dir / 'radar_server_data'
+        self.data_dir = self.current_dir / 'data'
+        os.makedirs(self.data_dir, exist_ok=True)
         self.scripts_path = self.current_dir / 'scripts'
         self.obs_script_path = self.current_dir / 'obs_placefile.py'
         self.hodo_script_path = self.scripts_path / 'hodo_plot.py'
         self.nexrad_script_path = self.scripts_path / 'get_nexrad.py'
         self.assets_dir = self.current_dir / 'assets'
         self.hodo_images = self.assets_dir / 'hodographs'
-        self.placefiles_dir = self.assets_dir / 'placefiles'
-        os.makedirs(self.data_dir, exist_ok=True)
-        os.makedirs(self.radar_dir, exist_ok=True)
         os.makedirs(self.hodo_images, exist_ok=True)
+        self.placefiles_dir = self.assets_dir / 'placefiles'
         os.makedirs(self.placefiles_dir, exist_ok=True)
         return
     

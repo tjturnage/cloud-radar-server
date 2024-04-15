@@ -24,8 +24,10 @@ class NexradDownloader:
                                                          user_agent_extra='Resource')).Bucket('noaa-nexrad-level2')
      
         self.prefix_day_one, self.prefix_day_two = self.make_prefix()
-        self.destination_folder = Path.cwd() / 'data' / 'radar' / self.radar_id / 'downloads'
-        self.make_destination_folder()
+        self.radar_directory = Path.cwd() / 'data' / 'radar' / self.radar_id
+        os.makedirs(self.radar_directory, exist_ok=True)
+        self.download_directory = self.radar_directory / 'downloads'
+        os.makedirs(self.download_directory, exist_ok=True)
         self.download_files()
 
 
@@ -42,18 +44,13 @@ class NexradDownloader:
         print(prefix_one, prefix_two)
         return prefix_one, prefix_two
 
-    def make_destination_folder(self):
-            os.makedirs(self.destination_folder, exist_ok=True)
-            return
 
     def download_files(self):
         for obj in self.bucket.objects.filter(Prefix=self.prefix_day_one):
             file_dt = datetime.strptime(obj.key[20:35], '%Y%m%d_%H%M%S')
             if file_dt >= self.start_time and file_dt <= self.end_time:
                 if obj.key.endswith('V06') or obj.key.endswith('V08'):
-                    print(obj.key)
-                    file_dt = datetime.strptime(obj.key[20:35], '%Y%m%d_%H%M%S')
-                    self.bucket.download_file(obj.key, str(self.destination_folder / Path(obj.key).name))
+                    self.bucket.download_file(obj.key, str(self.download_directory / Path(obj.key).name))
 
 
         if self.prefix_day_two is not None:
@@ -61,8 +58,7 @@ class NexradDownloader:
                 file_dt = datetime.strptime(obj.key[20:35], '%Y%m%d_%H%M%S')
                 if file_dt >= self.start_time and file_dt <= self.end_time:
                     if obj.key.endswith('V06') or obj.key.endswith('V08'):
-                        print(obj.key)
-                        self.bucket.download_file(obj.key, str(self.destination_folder / Path(obj.key).name))
+                        self.bucket.download_file(obj.key, str(self.download_directory / Path(obj.key).name))
 
         return
 
@@ -71,5 +67,4 @@ if __name__ == "__main__":
 
     #NexradDownloader('KGRR', '2023-08-24 23:45:00 UTC', 30)
     NexradDownloader(sys.argv[1], sys.argv[2], sys.argv[3])
-    #run_obs_script([sa.radar,str(sa.lat),str(sa.lon),sa.timestring,str(sa.duration)]) 
-    #test = NexradDownloader(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5])
+
