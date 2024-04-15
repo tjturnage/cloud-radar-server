@@ -182,7 +182,7 @@ def display_page(pathname):
             #html.H1('Home Page'),
             html.A('Go to Analytics', href='/RSiC')
         ])
-    elif pathname != '/RSSiC':
+    elif pathname != '/RSiC':
         return html.Div([
             #html.H1('Home Page'),
             html.A('404: Not found')
