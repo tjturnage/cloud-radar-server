@@ -96,7 +96,7 @@ class RadarSimulator(Config):
         return
 
     def make_radar_download_folders(self):
-        self.radar_site_dir = self.radar_dir / self.radar
+        self.radar_site_dir = self.data_dir / 'radar' / self.radar
         os.makedirs(self.radar_site_dir, exist_ok=True)
         self.radar_site_download_dir = self.radar_site_dir / 'downloads'
         os.makedirs(self.radar_site_download_dir, exist_ok=True)
