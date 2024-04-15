@@ -59,12 +59,12 @@ top_content = [
             dbc.CardBody([html.H2("Cloud Radar Simulation Server", className="card-title",
                                   style={'font-weight': 'bold', 'font-style': 'italic'}),
                 html.H5(
-                    "Providing radar simulations for National Weather Service training ...",
+                    "Providing radar simulations for NOAA/NWS training ...",
                     className="card-text", style={'color':'rgb(52,152,219)', 'font-weight': 'bold', 'font-style': 'italic'}
                 ),
                 html.H5(
-                    "Developed by many folks ...",
-                    className="card-text",
+                    "Project funded by FY2024 NOAA Cloud Compute Grant",
+                    className="card-text"
                 ),
                 html.Div([
                 dbc.CardLink("GitHub", href="https://github.com/tjturnage/cloud-radar-server")]),
