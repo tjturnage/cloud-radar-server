@@ -194,7 +194,7 @@ simulation_clock = html.Div([
 sim_duration_section = dbc.Col(
                     html.Div([ 
                         dbc.Card(step_duration, color="secondary", inverse=True),
-                        dcc.Dropdown(np.arange(0,240,30),120,id='duration'),
+                        dcc.Dropdown(np.arange(0,240,30),120,id='duration',clearable=False),
                         ])
                     )
 
@@ -203,14 +203,14 @@ sim_year_section = dbc.Col(
                     html.Div([
                     dbc.Card(step_year, color="secondary", inverse=True),
                     html.Div(id='year-picker'),
-                    dcc.Dropdown(np.arange(1992,now.year + 1),now.year-1,id='start_year')
+                    dcc.Dropdown(np.arange(1992,now.year + 1),now.year-1,id='start_year',clearable=False),
                     ])
                 )
 
 sim_month_section = dbc.Col(
                     html.Div([
-                        dbc.Card(step_month, color="secondary", inverse=True),                    
-                        dcc.Dropdown(np.arange(1,13),6,id='start_month')
+                        dbc.Card(step_month, color="secondary", inverse=True),      
+                        dcc.Dropdown(np.arange(1,13),6,id='start_month',clearable=False),
                         ])
                     )
 
@@ -218,14 +218,14 @@ sim_month_section = dbc.Col(
 sim_hour_section = dbc.Col(
                     html.Div([
                         dbc.Card(step_hour, color="secondary", inverse=True),         
-                        dcc.Dropdown(np.arange(0,24),18,id='start_hour'),
+                        dcc.Dropdown(np.arange(0,24),18,id='start_hour',clearable=False),
                         ])
                     )
 
 sim_minute_section =  dbc.Col(
                     html.Div([
                         dbc.Card(step_minute, color="secondary", inverse=True),
-                        dcc.Dropdown([0,15,30,45],30,id='start_minute'),
+                        dcc.Dropdown([0,15,30,45],30,id='start_minute',clearable=False),
                         ])
                     )
 

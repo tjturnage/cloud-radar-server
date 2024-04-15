@@ -157,7 +157,7 @@ app.layout = dbc.Container([
                 lc.sim_year_section,lc.sim_month_section,
                 dbc.Col(html.Div([
                         dbc.Card(lc.step_day, color="secondary", inverse=True),           
-                        dcc.Dropdown(np.arange(1,sa.days_in_month+1),15,id='start_day'
+                        dcc.Dropdown(np.arange(1,sa.days_in_month+1),15,id='start_day',clearable=False
                         ) ])
                         ),
                 lc.sim_hour_section, lc.sim_minute_section, lc.sim_duration_section
