@@ -46,6 +46,11 @@ bold = {'font-weight': 'bold'}
 feedback = {'border': '2px gray solid', 'padding':'0.5em', 'font-weight': 'bold',
             'font-size':'1.5em', 'text-align':'center'}
 
+url_rename = html.Div([
+    dcc.Location(id='url', refresh=False),
+    html.Div(id='page-content')
+])
+
 weekdaynames= ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
 monthnames = ["January", "February", "March", "April", "May", "June", "July", "August",
               "September", "October", "November", "December" ]
@@ -177,19 +182,26 @@ toggle_simulation_clock = html.Div([
         ])
             ], style={'padding':'1em', 'vertical-align':'middle'})
 
+simulation_clock_slider = dcc.Slider(id='sim_clock', min=0, max=1440, step=1, value=0, marks={0:'00:00', 240:'04:00', 480:'08:00', 720:'12:00', 960:'16:00', 1200:'20:00', 1440:'00:00'})
+
+
 simulation_clock = html.Div([
         html.Div([
         html.Div([
                 dbc.Card(step_sim_clock, color="secondary", inverse=True)],
                 style={'text-align':'center'},),
+                simulation_clock_slider,
             dcc.Interval(
                 id='interval-component',
                 interval=15*1000, # in milliseconds
                 n_intervals=0
                 ),
-        html.Div(id='clock-output', style=feedback)
+        html.Div(id='clock-output', style=feedback),
+
         ], id='clock-container', style={'display': 'none'}), 
     ])
+
+
 
 sim_duration_section = dbc.Col(
                     html.Div([ 

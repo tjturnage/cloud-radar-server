@@ -57,6 +57,7 @@ class RadarSimulator(Config):
         self.radar = 'None Selected'
         self.lat = None
         self.lon = None
+        self.simulation_running = False
         self.current_dir = Path.cwd()
         self.make_directories()
         self.make_radar_download_folders()
@@ -165,12 +166,33 @@ app.layout = dbc.Container([
 
     #lc.show_radar_section,
     lc.map_toggle, lc.graph_section, lc.scripts_button, #lc.store_settings_section,
-    lc.toggle_simulation_clock, lc.simulation_clock, lc.radar_id, lc.bottom_section
+    lc.toggle_simulation_clock,lc.simulation_clock, lc.radar_id, lc.bottom_section
     ])  # end of app.layout
 
 # --------------------------------------------------------
 #     Run the scripts
 # --------------------------------------------------------
+
+
+@app.callback(dash.dependencies.Output('page-content', 'children'),
+              [dash.dependencies.Input('url', 'pathname')])
+def display_page(pathname):
+    if pathname == '/':
+        return html.Div([
+            #html.H1('Home Page'),
+            html.A('Go to Analytics', href='/RSSiC')
+        ])
+    elif pathname != '/RSSiC':
+        return html.Div([
+            #html.H1('Home Page'),
+            html.A('404: Not found')
+        ])
+    else:
+        return html.Div([
+            html.H1('404: Not found')
+        ])
+
+
 
 def run_obs_nexrad_scripts():
     script_progress("Running obs script...")
