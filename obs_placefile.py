@@ -17,10 +17,11 @@ import math
 from datetime import datetime, timedelta
 import pytz
 import requests
+from dotenv import load_dotenv
+load_dotenv()
+API_TOKEN = os.getenv("SYNOPTIC_API_TOKEN")
 
 PLACEFILES_DIR = os.path.join(os.getcwd(),'assets','placefiles')
-
-API_TOKEN = "292d36a692d74badb6ca011f4413ae1b"
 API_ROOT = "https://api.synopticdata.com/v2/"
 
 public_wind_zoom = 400
