@@ -258,35 +258,36 @@ def download_data(dts, data_path, model='RAP', num_hours=1):
             log.info("Target file: %s" % (full_name))
             expected_files += 1
 
+    # Previou code using multiprocessing.pool
     # Download requested files via separate processes
-    if len(downloads.keys()) >= 1:
-        my_pool = Pool(np.clip(1, len(downloads), 4))
-        my_pool.starmap(execute_download, zip(downloads.keys(), downloads.values()))
-        my_pool.map(execute_regrid, downloads.keys())
-        my_pool.close()
-        my_pool.terminate()
-    else:
-        log.error("Some or all requested data was not found.")
+    #if len(downloads.keys()) >= 1:
+    #    my_pool = Pool(np.clip(1, len(downloads), 4))
+    #    my_pool.starmap(execute_download, zip(downloads.keys(), downloads.values()))
+    #    my_pool.map(execute_regrid, downloads.keys())
+    #    my_pool.close()
+    #    my_pool.terminate()
+    #else:
+    #    log.error("Some or all requested data was not found.")
 
-    # Make sure we've got all the expected files.
-    knt = 0
-    for f in downloads.keys():
+    # Download and regrid requested files. 
+    num_good_files = 0
+    for counter, f in enumerate(downloads):
+        execute_download(f, downloads[f])
+        execute_regrid(f)
+
+        # File status checks
         filename = f + '.reduced'
         if os.path.exists(filename):
             if os.stat(filename).st_size > MINSIZE/1024000.:
-                knt += 1
+                num_good_files += 1
             else:
                 log.error("%s is %s MB" % (filename, os.stat(filename).st_size/1024000.))
         else:
             log.error("%s doesn't exist" % (filename))
-
-    if knt == expected_files:
-        return_status = True
-        log.info("Success downloading files or already on the filesystem")
-    else:
-        log.error("Expected %s files but found %s" % (expected_files, knt))
-
-    return return_status, download_dir
+        
+        # good files, total expected, iteration number
+        with open("%s/download_status.txt" % (script_path), 'w') as status:
+            status.write(f"{num_good_files}, {len(downloads)}, {counter+1}\n")
 
 def check_configs():
     """
@@ -297,7 +298,6 @@ def check_configs():
     for item in [WGET, WGRIB2]:
         if not Path(item).is_file():
             error_message = "%s not found on filesystem. Check configs.py file." % (item)
-            print(error_message)
             log.error(error_message)
             sys.exit(1)
 
@@ -354,14 +354,14 @@ def parse_logic(args):
         args.num_hours=1
 
     log.info(f"Saving model data to: {MODEL_DIR}")
-    with open("%s/download_status.txt" % (script_path), 'w') as f: f.write(str(False))
-    status, download_dir = download_data(list(cycle_dt), data_path=args.data_path,
-                                         model=args.model, num_hours=args.num_hours)
-    with open("%s/download_status.txt" % (script_path), 'w') as f: f.write(str(status))
+    #with open("%s/download_status.txt" % (script_path), 'w') as f: f.write(str(False))
+    download_data(list(cycle_dt), data_path=args.data_path,
+                  model=args.model, num_hours=args.num_hours)
+    #with open("%s/download_status.txt" % (script_path), 'w') as f: f.write(str(status))
 
     # If this is realtime, interpolate the 1 and 2-hour forecasts in time
-    if not args.num_hours: args.num_hours = 0
-    if status and args.realtime: interpolate_in_time(download_dir)
+    #if not args.num_hours: args.num_hours = 0
+    #if status and args.realtime: interpolate_in_time(download_dir)
     log.info("===================================================================\n")
 
 def main():
