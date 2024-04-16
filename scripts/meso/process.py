@@ -99,14 +99,21 @@ def query_files(filepath):
     """
     Return the model file(s) in a particular directory. Probably need to add a check
     based on the model type if user has downloaded multiple into this directory.
+
+    4/15/24: Updated to allow cases with partial data availability to proceed. Fix is
+    NOT appropriate for realtime cases where time interpolations occur between 2 files.
+    For this use case, realtime runs will not be possible and the -rt flag will never
+    be passed to process.py. 
+     
     """
     files = glob(filepath + '/*.reduced')
     if len(files) >= 1:
         if len(files) > 1: log.warning("More than 1 model file in %s" % (filepath))
         return files[0]
     else:
-        log.error("No model data found in %s" % (filepath))
-        sys.exit(1)
+        log.warning("No model data found in %s" % (filepath))
+        #sys.exit(1)
+        return None
 
 def parse_logic(args):
     """
@@ -139,10 +146,9 @@ def parse_logic(args):
     if args.data_path is None:
         args.data_path = MODEL_DIR
 
-    # Logic for reading data. If this is a realtime run, look for the three data files
-    # at forecast hours 1, 1.5, and 2. These will only ever be for one model cycle. If
-    # this is an archived run, grab each 1-hour forecast (non-interpolated). Data is
-    # passed in the data list.
+    # Logic for reading data. Updated to allow for cases with partial data to proceed.
+    # Notification of partial downloads or failed downloads likley handled in get_data
+    # with download_status.txt file broadcasting to the frontend. 
     data = []
     if dt_end is None: dt_end = dt_start
     dt = dt_start
@@ -153,7 +159,7 @@ def parse_logic(args):
                 data.append(read.read_data("%s/%s.grib2" % (filepath, grb)))
         else:
             filename = query_files(filepath)
-            data.append(read.read_data(filename))
+            if filename is not None: data.append(read.read_data(filename))
         dt += timedelta(hours=1)
 
     # Direct us to the plotting/output functions.
