@@ -75,18 +75,6 @@ short_dict = {'air_temp_value_1':'t',
         'road_temp_value_1': 'rt'
         }
 
-
-#from api_tokens import mesowest_API_TOKEN as API_TOKEN
-API_TOKEN = "292d36a692d74badb6ca011f4413ae1b"
-API_ROOT = "https://api.synopticdata.com/v2/"
-
-
-
-#from api_tokens import mesowest_API_TOKEN as API_TOKEN
-API_TOKEN = "292d36a692d74badb6ca011f4413ae1b"
-API_ROOT = "https://api.synopticdata.com/v2/"
-
-
 class Mesowest():
     """
     Need to put something in here

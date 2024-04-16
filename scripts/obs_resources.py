@@ -4,12 +4,12 @@ Returns:
     _type_: _description_
 """
 import os
-import math
-from datetime import datetime, timedelta
 import requests
+from dotenv import load_dotenv
+load_dotenv()
+API_TOKEN = os.getenv("SYNOPTIC_API_TOKEN")
 
-
-API_TOKEN = "292d36a692d74badb6ca011f4413ae1b"
+PLACEFILES_DIR = os.path.join(os.getcwd(),'assets','placefiles')
 API_ROOT = "https://api.synopticdata.com/v2/"
 
 
