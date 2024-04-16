@@ -4,7 +4,7 @@ import os, sys
 from pathlib import Path
 from glob import glob
 import argparse
-from multiprocessing import Pool, freeze_support
+#from multiprocessing import Pool, freeze_support
 import numpy as np
 import timeout_decorator
 
@@ -146,7 +146,7 @@ def make_dir(run_time, data_path):
 
 # Catch hung download processes with this decorator function. TIMEOUT specified in config
 #@timeout_decorator.timeout(TIMEOUT, timeout_exception=StopIteration)
-def download_data(dts, data_path, model='RAP', num_hours=1):
+def download_data(dts, data_path, model='RAP', num_hours=1, status_path=None):
     """Function called by main() to control download of model data.
 
     Parameters
@@ -169,10 +169,7 @@ def download_data(dts, data_path, model='RAP', num_hours=1):
 
     """
 
-    return_status = False
-    #if data_path is None: data_path = '%s/data' % (script_path)
     sources = list(DATA_SOURCES.keys())
-
     fhrs = np.arange(1, int(num_hours)+1, 1)
     downloads = {}
     urls = {}
@@ -258,35 +255,36 @@ def download_data(dts, data_path, model='RAP', num_hours=1):
             log.info("Target file: %s" % (full_name))
             expected_files += 1
 
+    # Previous code using multiprocessing.pool
     # Download requested files via separate processes
-    if len(downloads.keys()) >= 1:
-        my_pool = Pool(np.clip(1, len(downloads), 4))
-        my_pool.starmap(execute_download, zip(downloads.keys(), downloads.values()))
-        my_pool.map(execute_regrid, downloads.keys())
-        my_pool.close()
-        my_pool.terminate()
-    else:
-        log.error("Some or all requested data was not found.")
+    #if len(downloads.keys()) >= 1:
+    #    my_pool = Pool(np.clip(1, len(downloads), 4))
+    #    my_pool.starmap(execute_download, zip(downloads.keys(), downloads.values()))
+    #    my_pool.map(execute_regrid, downloads.keys())
+    #    my_pool.close()
+    #    my_pool.terminate()
+    #else:
+    #    log.error("Some or all requested data was not found.")
 
-    # Make sure we've got all the expected files.
-    knt = 0
-    for f in downloads.keys():
+    # Download and regrid requested files. 
+    num_good_files = 0
+    for counter, f in enumerate(downloads):
+        execute_download(f, downloads[f])
+        execute_regrid(f)
+
+        # File status checks
         filename = f + '.reduced'
         if os.path.exists(filename):
             if os.stat(filename).st_size > MINSIZE/1024000.:
-                knt += 1
+                num_good_files += 1
             else:
                 log.error("%s is %s MB" % (filename, os.stat(filename).st_size/1024000.))
         else:
             log.error("%s doesn't exist" % (filename))
-
-    if knt == expected_files:
-        return_status = True
-        log.info("Success downloading files or already on the filesystem")
-    else:
-        log.error("Expected %s files but found %s" % (expected_files, knt))
-
-    return return_status, download_dir
+        
+        # good files, total expected, iteration number
+        with open(f"{status_path}/download_status.txt", 'w') as status:
+            status.write(f"{num_good_files}, {len(downloads)}, {counter+1}\n")
 
 def check_configs():
     """
@@ -297,7 +295,6 @@ def check_configs():
     for item in [WGET, WGRIB2]:
         if not Path(item).is_file():
             error_message = "%s not found on filesystem. Check configs.py file." % (item)
-            print(error_message)
             log.error(error_message)
             sys.exit(1)
 
@@ -354,14 +351,14 @@ def parse_logic(args):
         args.num_hours=1
 
     log.info(f"Saving model data to: {MODEL_DIR}")
-    with open("%s/download_status.txt" % (script_path), 'w') as f: f.write(str(False))
-    status, download_dir = download_data(list(cycle_dt), data_path=args.data_path,
-                                         model=args.model, num_hours=args.num_hours)
-    with open("%s/download_status.txt" % (script_path), 'w') as f: f.write(str(status))
+    #with open("%s/download_status.txt" % (script_path), 'w') as f: f.write(str(False))
+    download_data(list(cycle_dt), data_path=args.data_path, model=args.model, 
+                  num_hours=args.num_hours, status_path=args.status_path)
+    #with open("%s/download_status.txt" % (script_path), 'w') as f: f.write(str(status))
 
     # If this is realtime, interpolate the 1 and 2-hour forecasts in time
-    if not args.num_hours: args.num_hours = 0
-    if status and args.realtime: interpolate_in_time(download_dir)
+    #if not args.num_hours: args.num_hours = 0
+    #if status and args.realtime: interpolate_in_time(download_dir)
     log.info("===================================================================\n")
 
 def main():
@@ -380,10 +377,12 @@ def main():
     ap.add_argument('-e', dest='end_time', help='Last valid time for analysis')
     ap.add_argument('-p', '--data_path', dest='data_path', help='Directory to store data.\
                     Defaults to MODEL_DIR specified in the config file')
+    ap.add_argument('-statuspath', dest='status_path', help='Where to output status      \
+                    tracking files.')
     args = ap.parse_args()
     parse_logic(args)   # Set and QC user inputs. Pass for downloading
 
 if __name__ == '__main__':
-    freeze_support()    # Needed for multiprocessing.Pool
+    #freeze_support()    # Needed for multiprocessing.Pool
     check_configs()     # Test USER paths from config file
     main()              # Parse inputs

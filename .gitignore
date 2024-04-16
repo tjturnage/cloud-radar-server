@@ -163,7 +163,7 @@ Thumbs.db
 .DS_Store
 .vscode/
 /logs
-/junk
+junk
 download_status.txt
 flask/assets/placefiles/
 /flask/assets/placefiles/
