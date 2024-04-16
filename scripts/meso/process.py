@@ -197,6 +197,8 @@ def main():
                           the Bunkers left mover vector. The second is the form DDD/SS,  \
                           where DDD is the direction the storm is coming from, and SS is \
                           the speed in knots (e.g. 240/25).', default='right-mover')
+    ap.add_argument('-statuspath', dest='status_path', help='Where to output status      \
+                    tracking files.')
     args = ap.parse_args()
     parse_logic(args)   # Set and QC user inputs. Pass for downloading
 

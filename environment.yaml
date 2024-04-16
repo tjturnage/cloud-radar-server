@@ -259,6 +259,7 @@ dependencies:
       - kombu==5.3.7
       - multiprocess==0.70.16
       - prompt-toolkit==3.0.43
+      - python-dotenv==1.0.1
       - redis==5.0.3
       - vine==5.1.0
       - wcwidth==0.2.13
