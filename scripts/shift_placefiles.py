@@ -11,18 +11,18 @@ Usage: (shift from KLOT to KGRR, 2000 minutes ahead in time)
 python shift_placefiles.py -orig 41.60445/-88.08451 -target 42.8939/-85.54479 -timeshift 2000 -p 'path/to/placefiles'
 
 """
-import math 
+import math
 import argparse
-from glob import glob 
+from glob import glob
 import re
 from datetime import datetime, timedelta
 
 # Earth radius (km)
 R = 6_378_137
 
-# Regular expressions. First one finds lat/lon pairs, second finds the timestamps.  
-lat_lon_regex = "[0-9]{1,2}.[0-9]{1,100},[ ]{0,1}[|\\s-][0-9]{1,3}.[0-9]{1,100}"
-time_regex = "[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z"
+# Regular expressions. First one finds lat/lon pairs, second finds the timestamps.
+LAT_LON_REGEX = "[0-9]{1,2}.[0-9]{1,100},[ ]{0,1}[|\\s-][0-9]{1,3}.[0-9]{1,100}"
+TIME_REGEX = "[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z"
 
 def move_point(radar1_lat, radar1_lon, radar2_lat, radar2_lon, lat, lon):
     """
@@ -77,6 +77,7 @@ def move_point(radar1_lat, radar1_lon, radar2_lat, radar2_lon, lat, lon):
                  math.sin(phi_out))
     return math.degrees(phi_out), math.degrees(lambda_out)
 
+
 def shift_time(line, timeshift):
     new_line = line
     if 'Valid:' in line:
@@ -88,7 +89,7 @@ def shift_time(line, timeshift):
         new_line = line.replace(valid_timestring, new_validstring)
 
     if 'TimeRange' in line:
-        regex = re.findall(time_regex, line)
+        regex = re.findall(TIME_REGEX, line)
         dt = datetime.strptime(regex[0], '%Y-%m-%dT%H:%M:%SZ')
         new_datestring_1 = datetime.strftime(dt + timedelta(minutes=timeshift), 
                                             '%Y-%m-%dT%H:%M:%SZ')
@@ -103,9 +104,9 @@ def shift_placefiles(source, target, filepath, timeshift):
     filenames = glob(f"{filepath}/*.txt")
     for file_ in filenames:
         print(f"Shifting placefile: {file_}")
-        with open(file_, 'r') as f: data = f.readlines()
+        with open(file_, 'r', encoding='utf-8') as f: data = f.readlines()
         outfilename = f"{file_[0:file_.index('.txt')]}.shifted"
-        outfile = open(outfilename, 'w')
+        outfile = open(outfilename, 'w', encoding='utf-8')
 
         for line in data:
             new_line = line
@@ -115,7 +116,7 @@ def shift_placefiles(source, target, filepath, timeshift):
 
             # Shift this line in space
             # This regex search finds lines with valid latitude/longitude pairs
-            regex = re.findall(lat_lon_regex, line)
+            regex = re.findall(LAT_LON_REGEX, line)
             if len(regex) > 0:
                 idx = regex[0].index(',')
                 lat, lon = float(regex[0][0:idx]), float(regex[0][idx+1:])
@@ -129,7 +130,7 @@ def shift_placefiles(source, target, filepath, timeshift):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument('-orig',  dest='original_lat_lon', 
+    ap.add_argument('-orig',  dest='original_lat_lon',
                     help='The original radar lat/lon pair. Example: 41.60445/-88.08451')
     ap.add_argument('-target',  dest='target_lat_lon', 
                     help='The target radar lat/lon pair. Example: 42.8939/-85.54479')

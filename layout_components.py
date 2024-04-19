@@ -1,11 +1,10 @@
-import dash
 from datetime import datetime
 import pytz
 import pandas as pd
 import numpy as np
 import plotly.graph_objs as go
 import dash_bootstrap_components as dbc
-from dash import html, dcc, Input, Output, State
+from dash import html, dcc
 
 now = datetime.now(pytz.utc)
 
@@ -13,6 +12,23 @@ df = pd.read_csv('radars.csv', dtype={'lat': float, 'lon': float})
 df['radar_id'] = df['radar']
 df.set_index('radar_id', inplace=True)
 
+df['upper'] = [u.upper() for u in list(df.index)]
+
+#---------------------------------------------------------------
+# Transpose component
+#---------------------------------------------------------------
+
+transpose_list = sorted(list(df.index))
+transpose_list.insert(0, 'None')
+transpose_card = [dbc.CardBody([html.H5("Transpose Radar", className="card-text")])]
+transpose_radar = dbc.Col(
+                    
+                    html.Div([
+                    dbc.Card(transpose_card, color="secondary", inverse=True),
+                    html.Div(id='transpose-r'),
+                    dcc.Dropdown(transpose_list,'None',id='tradar',clearable=False),
+                    ])
+                )
 
 
 fig = go.Figure(go.Scattermapbox(
@@ -79,19 +95,7 @@ step_radar = [dbc.CardBody([html.H5("Use map below to select radar(s)", classNam
 
 list_radars = [dbc.CardBody([html.H5("Selected Radar(s)", className="card-text")])]
 
-step_year = [dbc.CardBody([html.P("Year",className="card-text")])]
 
-step_month = [dbc.CardBody([html.P("Month", className="card-text")])]
-
-step_day = [dbc.CardBody([html.P("Day", className="card-text")])]
-
-step_hour = [dbc.CardBody([html.P("Hour", className="card-text")])]
-
-step_minute = [dbc.CardBody([html.P("Minute", className="card-text")])]
-
-step_duration = [dbc.CardBody([html.P("Duration", className="card-text")])]
-
-step_sim_clock = [dbc.CardBody([html.H5("Simulation Clock", className="card-text")])]
 
 view_output = [
             dbc.CardBody([html.P("Output", className="card-title", style=bold),
@@ -107,7 +111,8 @@ first_content = html.Div([
                                       style={'display': 'block', 'margin-left': 'auto',
                                              'margin-right': 'auto', 'margin-top': '10px',
                                             'verticalAlign': 'middle', 'width':'70%'})), width=3),
-            ],id='test',style={"padding":"1em",'border':'3px gray solid'})],style={"padding":"1.7em", "text-align":"center"}),
+        ],id='test',style={"padding":"1em",'border':'3px gray solid'})],
+                      style={"padding":"1.7em", "text-align":"center"}),
     ])
 
 graph_section =  html.Div([
@@ -117,7 +122,8 @@ graph_section =  html.Div([
         html.Div([dcc.Graph(
                 id='graph',
                 config={'displayModeBar': False,'scrollZoom': True},
-                style={'padding-bottom': '2px', 'padding-left': '2px','height': '73vh', 'width': '100%'},
+                style={'padding-bottom': '2px', 'padding-left': '2px',
+                       'height': '73vh', 'width': '100%'},
                 figure=fig
                 )
                 ]),
@@ -127,7 +133,8 @@ scripts_button = html.Div([
         dbc.Row([
             dbc.Col(
                 html.Div([
-                    dbc.Button('Make Obs Placefile ... Download radar data ... Make hodo plots', size="lg", id='run_scripts', n_clicks=0),
+                    dbc.Button('Make Obs Placefile ... Download radar data ... Make hodo plots',
+                               size="lg", id='run_scripts', n_clicks=0),
                     ], className="d-grid gap-2"), style={'vertical-align':'middle'}),
                     html.Div(id='show_script_progress',style=feedback)
         ])
@@ -136,18 +143,13 @@ scripts_button = html.Div([
 check_values = html.Div([
         dbc.Row([
             dbc.Col(
-                html.Div([
-                #dbc.Button("Click to check values", size="lg", id='check_values', n_clicks=0, style={'padding':'1em','width':'100%'}),
-                html.Div(id="show_values",style=feedback)
-                ])
+                html.Div([html.Div(id="show_values",style=feedback)])
             )
         ])
     ])
 
 show_radar_section = html.Div([dbc.Row([dbc.Col(html.Div(id='show_radar',style=feedback)),
         ]),])
-#show_radar_section = html.Div([dbc.Row([dbc.Col(html.Div(id='show_radar',style={'display': 'none'})),
-#        ]),])
 
 
 map_toggle = html.Div([
@@ -166,11 +168,23 @@ graph_section = html.Div([
         html.Div([dcc.Graph(
                 id='graph',
                 config={'displayModeBar': False,'scrollZoom': True},
-                style={'padding-bottom': '2px', 'padding-left': '2px','height': '73vh', 'width': '100%'},
+                style={'padding-bottom': '2px', 'padding-left': '2px',
+                       'height': '73vh', 'width': '100%'},
                 figure=fig
                 )
                 ]),
     ], id='graph-container', style={'display': 'none'})
+
+
+#---------------------------------------------------------------
+# Clock components
+#---------------------------------------------------------------
+
+step_sim_clock = [dbc.CardBody([html.H5("Simulation Clock", className="card-text")])]
+
+simulation_clock_slider = dcc.Slider(id='sim_clock', min=0, max=1440, step=1, value=0,
+                                     marks={0:'00:00', 240:'04:00'})
+
 
 toggle_simulation_clock = html.Div([
         dbc.Row([
@@ -181,9 +195,6 @@ toggle_simulation_clock = html.Div([
                 ),
         ])
             ], style={'padding':'1em', 'vertical-align':'middle'})
-
-simulation_clock_slider = dcc.Slider(id='sim_clock', min=0, max=1440, step=1, value=0, marks={0:'00:00', 240:'04:00', 480:'08:00', 720:'12:00', 960:'16:00', 1200:'20:00', 1440:'00:00'})
-
 
 simulation_clock = html.Div([
         html.Div([
@@ -201,51 +212,58 @@ simulation_clock = html.Div([
         ], id='clock-container', style={'display': 'none'}), 
     ])
 
+#---------------------------------------------------------------
+# Time/duration components
+#---------------------------------------------------------------
 
+step_year = [dbc.CardBody([html.P("Year",className="card-text")])]
+step_month = [dbc.CardBody([html.P("Month", className="card-text")])]
+step_day = [dbc.CardBody([html.P("Day", className="card-text")])]
+step_hour = [dbc.CardBody([html.P("Hour", className="card-text")])]
+step_minute = [dbc.CardBody([html.P("Minute", className="card-text")])]
+step_duration = [dbc.CardBody([html.P("Duration", className="card-text")])]
 
-sim_duration_section = dbc.Col(
-                    html.Div([ 
-                        dbc.Card(step_duration, color="secondary", inverse=True),
-                        dcc.Dropdown(np.arange(0,240,30),120,id='duration',clearable=False),
-                        ])
-                    )
 
 sim_year_section = dbc.Col(
-                    
                     html.Div([
                     dbc.Card(step_year, color="secondary", inverse=True),
                     html.Div(id='year-picker'),
-                    dcc.Dropdown(np.arange(1992,now.year + 1),now.year-1,id='start_year',clearable=False),
-                    ])
-                )
+                    dcc.Dropdown(np.arange(1992,now.year + 1),now.year-1,
+                                 id='start_year',clearable=False),
+                    ]))
 
 sim_month_section = dbc.Col(
                     html.Div([
                         dbc.Card(step_month, color="secondary", inverse=True),      
                         dcc.Dropdown(np.arange(1,13),6,id='start_month',clearable=False),
-                        ])
-                    )
+                        ]))
 
 
 sim_hour_section = dbc.Col(
                     html.Div([
                         dbc.Card(step_hour, color="secondary", inverse=True),         
                         dcc.Dropdown(np.arange(0,24),18,id='start_hour',clearable=False),
-                        ])
-                    )
+                        ]))
 
 sim_minute_section =  dbc.Col(
                     html.Div([
                         dbc.Card(step_minute, color="secondary", inverse=True),
                         dcc.Dropdown([0,15,30,45],30,id='start_minute',clearable=False),
-                        ])
-                    )
+                        ]))
+
+sim_duration_section = dbc.Col(
+                    html.Div([ 
+                        dbc.Card(step_duration, color="secondary", inverse=True),
+                        dcc.Dropdown(np.arange(0,240,30),120,id='duration',clearable=False),
+                        ]))
+
 
 store_settings_section = html.Div([
         dbc.Row([
             dbc.Col(
                 html.Div([
-                    dbc.Button('Store settings and begin data processing', size="lg", id='sim_data_store_btn', n_clicks=0, disabled=True),
+                    dbc.Button('Store settings and begin data processing',
+                               size="lg", id='sim_data_store_btn', n_clicks=0, disabled=True),
                     ], className="d-grid gap-2"), style={'vertical-align':'middle'}),
                     html.Div(id='sim_data_store_status',style=feedback)
         ])

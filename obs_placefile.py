@@ -244,7 +244,7 @@ class Mesowest():
                 wind_zoom = this_dict['wind']['threshold']
                 other_zoom = this_dict['t']['threshold']
                 icon_number = this_dict['wind_icon_number']
-                font_code = this_dict['font_code']
+                #font_code = this_dict['font_code']
                 t_txt, dp_txt, vis_txt, rt_txt = '', '', '', ''
                 t_str, dp_str, wdir_str, wspd_str, wgst_str, vis_str, rt_str = 'NA', 'NA', 'NA', 'NA', 'NA', 'NA', 'NA'
                 if status == 'ACTIVE':
