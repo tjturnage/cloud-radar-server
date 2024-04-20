@@ -11,51 +11,7 @@ now = datetime.now(pytz.utc)
 df = pd.read_csv('radars.csv', dtype={'lat': float, 'lon': float})
 df['radar_id'] = df['radar']
 df.set_index('radar_id', inplace=True)
-
-df['upper'] = [u.upper() for u in list(df.index)]
-
-#---------------------------------------------------------------
-# Transpose component
-#---------------------------------------------------------------
-
-transpose_list = sorted(list(df.index))
-transpose_list.insert(0, 'None')
-transpose_card = [dbc.CardBody([html.H5("Transpose Radar", className="card-text")])]
-transpose_radar = dbc.Col(
-                    
-                    html.Div([
-                    dbc.Card(transpose_card, color="secondary", inverse=True),
-                    html.Div(id='transpose-r'),
-                    dcc.Dropdown(transpose_list,'None',id='tradar',clearable=False),
-                    ])
-                )
-
-
-fig = go.Figure(go.Scattermapbox(
-    mode='markers',
-    lon = df['lon'],
-    lat = df['lat'],
-    marker={'size': 26, 'color' : 'rgb(50,130,245)', 'opacity': 0.6},
-    unselected={'marker' : {'opacity':0.4}},
-    selected={'marker' : {'opacity':0.6, 'size':30, 'color': 'rgb(255,255,0)'}},
-    hoverinfo='text',
-    hovertext=df['radar'],
-    customdata=df['radar'],
-    text=df['radar']))
-
-fig.update_layout(
-    mapbox = {#'accesstoken': TOKEN,
-                'style': "carto-darkmatter",
-                'center': {'lon': -93.945155, 'lat': 38.80105},
-                'zoom': 3.5})
-
-
-fig.update_layout(uirevision= 'foo', clickmode= 'event+select', hovermode='closest', 
-                hoverdistance=2,
-                margin = {'r':0,'t':0,'l':0,'b':0},
-                
-                )
-
+#df['upper'] = [u.upper() for u in list(df.index)]
 
 bold = {'font-weight': 'bold'}
 
@@ -91,7 +47,7 @@ step_instructions = [
             dbc.CardBody([html.H5("Select Simulation Start Date and Time ... Duration is in Minutes", 
             className="card-text"),])]
 
-step_radar = [dbc.CardBody([html.H5("Use map below to select radar(s)", className="card-text")])]
+
 
 list_radars = [dbc.CardBody([html.H5("Selected Radar(s)", className="card-text")])]
 
@@ -115,30 +71,6 @@ first_content = html.Div([
                       style={"padding":"1.7em", "text-align":"center"}),
     ])
 
-graph_section =  html.Div([
-        html.Div([
-                dbc.Card(step_radar, color="secondary", inverse=True)],
-                style={'text-align':'center'},),
-        html.Div([dcc.Graph(
-                id='graph',
-                config={'displayModeBar': False,'scrollZoom': True},
-                style={'padding-bottom': '2px', 'padding-left': '2px',
-                       'height': '73vh', 'width': '100%'},
-                figure=fig
-                )
-                ]),
-    ], id='graph-container', style={'display': 'none'})
-
-scripts_button = html.Div([
-        dbc.Row([
-            dbc.Col(
-                html.Div([
-                    dbc.Button('Make Obs Placefile ... Download radar data ... Make hodo plots',
-                               size="lg", id='run_scripts', n_clicks=0),
-                    ], className="d-grid gap-2"), style={'vertical-align':'middle'}),
-                    html.Div(id='show_script_progress',style=feedback)
-        ])
-            ], style={'padding':'1em', 'vertical-align':'middle'})
 
 check_values = html.Div([
         dbc.Row([
@@ -146,70 +78,6 @@ check_values = html.Div([
                 html.Div([html.Div(id="show_values",style=feedback)])
             )
         ])
-    ])
-
-show_radar_section = html.Div([dbc.Row([dbc.Col(html.Div(id='show_radar',style=feedback)),
-        ]),])
-
-
-map_toggle = html.Div([
-        dbc.Row([
-            dbc.Col(
-                html.Div([
-                            dbc.Button('Toggle map on/off', size="lg", id='map_btn', n_clicks=0),
-                        ], className="d-grid gap-2"), style={'vertical-align':'middle'}),
-        ])
-        ], style={'padding':'1em', 'vertical-align':'middle'})
-
-graph_section = html.Div([
-        html.Div([
-                dbc.Card(step_radar, color="secondary", inverse=True)],
-                style={'text-align':'center'},),
-        html.Div([dcc.Graph(
-                id='graph',
-                config={'displayModeBar': False,'scrollZoom': True},
-                style={'padding-bottom': '2px', 'padding-left': '2px',
-                       'height': '73vh', 'width': '100%'},
-                figure=fig
-                )
-                ]),
-    ], id='graph-container', style={'display': 'none'})
-
-
-#---------------------------------------------------------------
-# Clock components
-#---------------------------------------------------------------
-
-step_sim_clock = [dbc.CardBody([html.H5("Simulation Clock", className="card-text")])]
-
-simulation_clock_slider = dcc.Slider(id='sim_clock', min=0, max=1440, step=1, value=0,
-                                     marks={0:'00:00', 240:'04:00'})
-
-
-toggle_simulation_clock = html.Div([
-        dbc.Row([
-            dbc.Col(
-                html.Div([
-                    dbc.Button('Toggle Simulation Clock', size="lg", id='start_sim', n_clicks=0),
-                    ], className="d-grid gap-2"), style={'vertical-align':'middle'}
-                ),
-        ])
-            ], style={'padding':'1em', 'vertical-align':'middle'})
-
-simulation_clock = html.Div([
-        html.Div([
-        html.Div([
-                dbc.Card(step_sim_clock, color="secondary", inverse=True)],
-                style={'text-align':'center'},),
-                simulation_clock_slider,
-            dcc.Interval(
-                id='interval-component',
-                interval=15*1000, # in milliseconds
-                n_intervals=0
-                ),
-        html.Div(id='clock-output', style=feedback),
-
-        ], id='clock-container', style={'display': 'none'}), 
     ])
 
 #---------------------------------------------------------------
@@ -254,7 +122,7 @@ sim_minute_section =  dbc.Col(
 sim_duration_section = dbc.Col(
                     html.Div([ 
                         dbc.Card(step_duration, color="secondary", inverse=True),
-                        dcc.Dropdown(np.arange(0,240,30),120,id='duration',clearable=False),
+                        dcc.Dropdown(np.arange(0,240,30),60,id='duration',clearable=False),
                         ]))
 
 
@@ -269,5 +137,158 @@ store_settings_section = html.Div([
         ])
             ], style={'padding':'1em', 'vertical-align':'middle'})
 radar_id = html.Div(id='radar',style={'display': 'none'})
+
+#---------------------------------------------------------------
+# Radar display components
+#---------------------------------------------------------------
+
+step_radar = [dbc.CardBody([html.H5("Use map below to select radar(s)", className="card-text")])]
+
+fig = go.Figure(go.Scattermapbox(
+    mode='markers',
+    lon = df['lon'],
+    lat = df['lat'],
+    marker={'size': 26, 'color' : 'rgb(50,130,245)', 'opacity': 0.6},
+    unselected={'marker' : {'opacity':0.4}},
+    selected={'marker' : {'opacity':0.6, 'size':30, 'color': 'rgb(255,255,0)'}},
+    hoverinfo='text',
+    hovertext=df['radar'],
+    customdata=df['radar'],
+    text=df['radar']))
+
+fig.update_layout(
+    mapbox = {#'accesstoken': TOKEN,
+                'style': "carto-darkmatter",
+                'center': {'lon': -93.945155, 'lat': 38.80105},
+                'zoom': 3.5})
+
+
+fig.update_layout(uirevision= 'foo', clickmode= 'event+select',
+                hovermode='closest', hoverdistance=2,
+                margin = {'r':0,'t':0,'l':0,'b':0},)
+
+graph_section = html.Div([
+        html.Div([
+                dbc.Card(step_radar, color="secondary", inverse=True)],
+                style={'text-align':'center'},),
+        html.Div([dcc.Graph(
+                id='graph',
+                config={'displayModeBar': False,'scrollZoom': True},
+                style={'padding-bottom': '2px', 'padding-left': '2px',
+                       'height': '73vh', 'width': '100%'},
+                figure=fig)]),
+    ], id='graph-container', style={'display': 'none'})
+
+
+show_radar_section = html.Div([dbc.Row([dbc.Col(html.Div(id='show_radar',style=feedback)),
+        ]),])
+
+map_toggle = html.Div([
+        dbc.Row([
+            dbc.Col(
+                html.Div([
+                        dbc.Button('Toggle map on/off', size="lg", id='map_btn', n_clicks=0),
+                        ], className="d-grid gap-2"), style={'vertical-align':'middle'}),
+        ])
+        ], style={'padding':'1em', 'vertical-align':'middle'})
+
+#---------------------------------------------------------------
+# Transpose component
+#---------------------------------------------------------------
+
+transpose_list = sorted(list(df.index))
+transpose_list.insert(0, 'None')
+transpose_card = [dbc.CardBody([html.H5("Transpose Radar", className="card-text")])]
+transpose_radar = dbc.Col(  
+                    html.Div([
+                    dbc.Card(transpose_card, color="secondary", inverse=True),
+                    html.Div(id='transpose-r'),
+                    dcc.Dropdown(transpose_list,'None',id='tradar',clearable=False),
+                    ]))
+
+#---------------------------------------------------------------
+# Run script button
+#---------------------------------------------------------------
+
+scripts_button = html.Div([
+        dbc.Row([
+            dbc.Col(
+                html.Div([
+                    dbc.Button('Run Scripts',
+                               size="lg", id='run_scripts', n_clicks=0),
+                    ], className="d-grid gap-2"), style={'vertical-align':'middle'}),
+        ])
+            ], style={'padding':'1em', 'vertical-align':'middle'})
+
+#---------------------------------------------------------------
+# Script status components
+#---------------------------------------------------------------
+placefile_status_card = [dbc.CardBody([html.P("Placefile status",className="card-text")])]
+placefile_status = dbc.Col(html.Div([
+                    dbc.Card(placefile_status_card, color="secondary", inverse=True),
+                    html.Div(id='placefile_status',style=feedback),
+                    ]))
+
+radar_status_card = [dbc.CardBody([html.P("Radar data status",className="card-text")])]
+radar_status = dbc.Col(html.Div([
+                    dbc.Card(radar_status_card, color="secondary", inverse=True),
+                    html.Div(id='radar_status',style=feedback),
+                    ]))
+
+hodograph_status_card = [dbc.CardBody([html.P("Hodograph status",className="card-text")])]
+hodograph_status = dbc.Col(html.Div([
+                    dbc.Card(hodograph_status_card, color="secondary", inverse=True),
+                    html.Div(id='hodo_status',style=feedback),
+                    ]))
+
+nse_status_card = [dbc.CardBody([html.P("NSE placefiles status",className="card-text")])]
+nse_status = dbc.Col(html.Div([
+                    dbc.Card(nse_status_card, color="secondary", inverse=True),
+                    html.Div(id='nse_status',style=feedback),
+                    ]))
+
+status_section = html.Div([dbc.Row([
+            placefile_status,
+            radar_status,
+            hodograph_status,
+            nse_status
+        ])])
+#---------------------------------------------------------------
+# Clock components
+#---------------------------------------------------------------
+
+step_sim_clock = [dbc.CardBody([html.H5("Simulation Clock", className="card-text")])]
+
+simulation_clock_slider = dcc.Slider(id='sim_clock', min=0, max=1440, step=1, value=0,
+                                     marks={0:'00:00', 240:'04:00'})
+
+
+toggle_simulation_clock = html.Div([
+        dbc.Row([
+            dbc.Col(
+                html.Div([
+                    dbc.Button('Toggle Simulation Clock', size="lg", id='start_sim', n_clicks=0),
+                    ], className="d-grid gap-2"), style={'vertical-align':'middle'}
+                ),
+        ])
+            ], style={'padding':'1em', 'vertical-align':'middle'})
+
+simulation_clock = html.Div([
+        html.Div([
+        html.Div([
+                dbc.Card(step_sim_clock, color="secondary", inverse=True)],
+                style={'text-align':'center'},),
+                simulation_clock_slider,
+            dcc.Interval(
+                id='interval-component',
+                interval=15*1000, # in milliseconds
+                n_intervals=0
+                ),
+        html.Div(id='clock-output', style=feedback),
+
+        ], id='clock-container', style={'display': 'none'}), 
+    ])
+
+
 top_section = html.Div([ ], style={'height': '5px'})
 bottom_section = html.Div([ ], style={'height': '500px'})

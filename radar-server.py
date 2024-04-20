@@ -63,7 +63,7 @@ class RadarSimulator(Config):
         self.timeshift = None
         self.timestring = None
         self.sim_clock = None
-        self.radar = 'None Selected'
+        self.radar = None
         self.lat = None
         self.lon = None
         self.t_radar = 'None'
@@ -75,7 +75,7 @@ class RadarSimulator(Config):
         self.make_radar_download_folders()
         self.make_times()
         self.make_prefix()
-        self.bucket = boto3.resource('s3', 
+        self.bucket = boto3.resource('s3',
                                     config=Config(signature_version=botocore.UNSIGNED,
                                     user_agent_extra='Resource')).Bucket('noaa-nexrad-level2')
 
@@ -107,12 +107,14 @@ class RadarSimulator(Config):
         return
 
     def make_radar_download_folders(self):
-        self.radar_site_dir = self.data_dir / 'radar' / self.radar
-        os.makedirs(self.radar_site_dir, exist_ok=True)
-        self.radar_site_download_dir = self.radar_site_dir / 'downloads'
-        os.makedirs(self.radar_site_download_dir, exist_ok=True)
-        self.cf_dir = self.radar_site_download_dir / 'cf_radial'
-        os.makedirs(self.cf_dir, exist_ok=True)
+        if self.radar is not None:
+            self.radar_site_dir = self.data_dir / 'radar' / self.radar
+            os.makedirs(self.radar_site_dir, exist_ok=True)
+            self.radar_site_download_dir = self.radar_site_dir / 'downloads'
+            os.makedirs(self.radar_site_download_dir, exist_ok=True)
+            self.cf_dir = self.radar_site_download_dir / 'cf_radial'
+            os.makedirs(self.cf_dir, exist_ok=True)
+            return
         return
 
     def make_prefix(self):
@@ -192,31 +194,6 @@ class RadarSimulator(Config):
         return math.degrees(phi_out), math.degrees(lambda_out)
 
 
-
-    def shift_time(self, line):
-        new_line = line
-        if 'Valid:' in line:
-            idx = line.find('Valid:')
-            valid_timestring = line[idx+len('Valid:')+1:-1] # Leave off \n character 
-            dt = datetime.strptime(valid_timestring, '%H:%MZ %a %b %d %Y')
-            new_validstring = datetime.strftime(dt + timedelta(minutes=self.timeshift),
-                                                '%H:%MZ %a %b %d %Y')
-            new_line = line.replace(valid_timestring, new_validstring)
-
-        if 'TimeRange' in line:
-            regex = re.findall(TIME_REGEX, line)
-            dt = datetime.strptime(regex[0], '%Y-%m-%dT%H:%M:%SZ')
-            new_datestring_1 = datetime.strftime(dt + timedelta(minutes=self.timeshift),
-                                                '%Y-%m-%dT%H:%M:%SZ')
-            dt = datetime.strptime(regex[1], '%Y-%m-%dT%H:%M:%SZ')
-            new_datestring_2 = datetime.strftime(dt + timedelta(minutes=self.timeshift),
-                                                '%Y-%m-%dT%H:%M:%SZ')
-            new_line = line.replace(f"{regex[0]} {regex[1]}",
-                                    f"{new_datestring_1} {new_datestring_2}") 
-        return new_line 
-
-
-
     def shift_placefiles(self, filepath):
         filenames = glob(f"{filepath}/*.txt")
         for file_ in filenames:
@@ -243,6 +220,31 @@ class RadarSimulator(Config):
             outfile.close()
         return
 
+    def shift_time(self, line):
+        new_line = line
+        if 'Valid:' in line:
+            idx = line.find('Valid:')
+            valid_timestring = line[idx+len('Valid:')+1:-1] # Leave off \n character 
+            dt = datetime.strptime(valid_timestring, '%H:%MZ %a %b %d %Y')
+            new_validstring = datetime.strftime(dt + timedelta(minutes=self.timeshift),
+                                                '%H:%MZ %a %b %d %Y')
+            new_line = line.replace(valid_timestring, new_validstring)
+
+        if 'TimeRange' in line:
+            regex = re.findall(TIME_REGEX, line)
+            dt = datetime.strptime(regex[0], '%Y-%m-%dT%H:%M:%SZ')
+            new_datestring_1 = datetime.strftime(dt + timedelta(minutes=self.timeshift),
+                                                '%Y-%m-%dT%H:%M:%SZ')
+            dt = datetime.strptime(regex[1], '%Y-%m-%dT%H:%M:%SZ')
+            new_datestring_2 = datetime.strftime(dt + timedelta(minutes=self.timeshift),
+                                                '%Y-%m-%dT%H:%M:%SZ')
+            new_line = line.replace(f"{regex[0]} {regex[1]}",
+                                    f"{new_datestring_1} {new_datestring_2}") 
+        return new_line 
+
+
+
+
 # --------------------------------------------------------
 #      Initialize RadarSimulator
 # --------------------------------------------------------
@@ -253,15 +255,14 @@ app = dash.Dash(__name__,external_stylesheets=[dbc.themes.CYBORG],
 app.title = "Radar Simulator"
 
 
+# --------------------------------------------------------
+#     Build the layout
+# --------------------------------------------------------
 
 sim_day_selection =  dbc.Col(html.Div([
                     dbc.Card(lc.step_day, color="secondary", inverse=True),           
                     dcc.Dropdown(np.arange(1,sa.days_in_month+1),15,id='start_day',clearable=False
                     ) ]))
-
-# --------------------------------------------------------
-#     Build the layout
-# --------------------------------------------------------
 
 app.layout = dbc.Container([
     dcc.Store(id='sim_store'),
@@ -272,6 +273,7 @@ app.layout = dbc.Container([
                 lc.sim_hour_section, lc.sim_minute_section, lc.sim_duration_section
         ])],style={'padding':'1em'}),
     lc.map_toggle, lc.graph_section, lc.transpose_radar, lc.scripts_button,
+    lc.status_section,
     lc.toggle_simulation_clock,lc.simulation_clock, lc.radar_id, lc.bottom_section
     ])  # end of app.layout
 
@@ -307,23 +309,16 @@ def display_page(pathname):
     return html.Div([html.H1('404: Not found')])
 
 
-
 def run_obs_nexrad_scripts():
-    script_progress("Running obs script...")
+    #script_progress("Running obs script...")
     Mesowest(sa.radar,str(sa.lat),str(sa.lon),sa.sim_start_str,str(sa.duration))
-    script_progress("Obs script completed ... Now downloading radar data ...")
+    #script_progress("Obs script completed ... Now downloading radar data ...")
     NexradDownloader(sa.radar, sa.sim_start_str, sa.duration)
-    script_progress("Radar download complete ... Now making hodographs ...")
+    #script_progress("Radar download complete ... Now making hodographs ...")
     run_hodo_script([sa.radar.upper()])
-    script_progress("Hodos complete!")
+    #script_progress("Hodos complete!")
     return
 
-@app.callback(
-    Output('show_script_progress', 'children'),
-    [Input('run_scripts', 'value')],
-    prevent_initial_call=True)
-def script_progress(value):
-    return value
 
 def run_hodo_script(args):
     subprocess.run(["python", sa.hodo_script_path] + args, check=True)
@@ -331,12 +326,13 @@ def run_hodo_script(args):
 
 
 @app.callback(
-    Output('show_script_progress', 'children', allow_duplicate=True),
+    Output('placefile_status', 'children', allow_duplicate=True),
     [Input('run_scripts', 'n_clicks')],
     prevent_initial_call=True)
 def launch_obs_script(n_clicks):
     if n_clicks > 0:
         try:
+            print('Scripts running!')
             run_obs_nexrad_scripts()
             return 'Scripts complete!'
         except (FileNotFoundError, PermissionError) as e:
@@ -408,7 +404,7 @@ def get_sim(_yr, _mo, _dy, _hr, _mn, _dur, _radar, _tradar):
     sa.make_times()
     if sa.radar is None:
         sa.radar = 'RADAR SELECTION REQUIRED!'
-    line1 = f'Sim Start: {sa.sim_start_str} ____ Duration: {sa.duration} minutes ____ Radar: {sa.radar.upper()}'
+    line1 = f'Sim Start: {sa.sim_start_str[:-7]}Z ____ Duration: {sa.duration} minutes ____ Radar: {sa.radar.upper()}'
     return line1
 
 # ---------------------------------------- Time Callbacks ----------------------------------------
