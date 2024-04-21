@@ -226,25 +226,25 @@ scripts_button = html.Div([
 placefile_status_card = [dbc.CardBody([html.P("Placefile status",className="card-text")])]
 placefile_status = dbc.Col(html.Div([
                     dbc.Card(placefile_status_card, color="secondary", inverse=True),
-                    html.Div(id='placefile_status',style=feedback),
+                    dbc.Progress(id='placefile_status',striped=True, value=0),
                     ]))
 
 radar_status_card = [dbc.CardBody([html.P("Radar data status",className="card-text")])]
 radar_status = dbc.Col(html.Div([
                     dbc.Card(radar_status_card, color="secondary", inverse=True),
-                    html.Div(id='radar_status',style=feedback),
+                    dbc.Progress(id='radar_status',striped=True, value=0),
                     ]))
 
 hodograph_status_card = [dbc.CardBody([html.P("Hodograph status",className="card-text")])]
 hodograph_status = dbc.Col(html.Div([
                     dbc.Card(hodograph_status_card, color="secondary", inverse=True),
-                    html.Div(id='hodo_status',style=feedback),
+                    dbc.Progress(id='hodo_status',striped=True, value=0),
                     ]))
 
 nse_status_card = [dbc.CardBody([html.P("NSE placefiles status",className="card-text")])]
 nse_status = dbc.Col(html.Div([
                     dbc.Card(nse_status_card, color="secondary", inverse=True),
-                    html.Div(id='nse_status',style=feedback),
+                    dbc.Progress(id='nse_status',striped=True, value=0),
                     ]))
 
 status_section = html.Div([dbc.Row([

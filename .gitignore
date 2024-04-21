@@ -167,3 +167,7 @@ junk
 download_status.txt
 flask/assets/placefiles/
 /flask/assets/placefiles/
+
+cache 
+file_system_backend
+cache_dir
