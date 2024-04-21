@@ -15,8 +15,8 @@ df.set_index('radar_id', inplace=True)
 
 bold = {'font-weight': 'bold'}
 
-feedback = {'border': '2px gray solid', 'padding':'0.5em', 'font-weight': 'bold',
-            'font-size':'1.5em', 'text-align':'center'}
+feedback = {'border': '2px gray solid', 'padding':'0.1em', 'font-weight': 'bold',
+            'font-size':'1.5em', 'text-align':'center', 'height':'5vh'}
 
 url_rename = html.Div([
     dcc.Location(id='url', refresh=False),
@@ -84,12 +84,12 @@ check_values = html.Div([
 # Time/duration components
 #---------------------------------------------------------------
 
-step_year = [dbc.CardBody([html.P("Year",className="card-text")])]
-step_month = [dbc.CardBody([html.P("Month", className="card-text")])]
-step_day = [dbc.CardBody([html.P("Day", className="card-text")])]
-step_hour = [dbc.CardBody([html.P("Hour", className="card-text")])]
-step_minute = [dbc.CardBody([html.P("Minute", className="card-text")])]
-step_duration = [dbc.CardBody([html.P("Duration", className="card-text")])]
+step_year = [dbc.CardBody([html.P("Year",className="card-text")],style={'height':'5vh'})]
+step_month = [dbc.CardBody([html.P("Month", className="card-text")],style={'height':'5vh'})]
+step_day = [dbc.CardBody([html.P("Day", className="card-text")],style={'height':'5vh'})]
+step_hour = [dbc.CardBody([html.P("Hour", className="card-text")],style={'height':'5vh'})]
+step_minute = [dbc.CardBody([html.P("Minute", className="card-text")],style={'height':'5vh'})]
+step_duration = [dbc.CardBody([html.P("Duration", className="card-text")],style={'height':'5vh'})]
 
 
 sim_year_section = dbc.Col(
@@ -223,25 +223,25 @@ scripts_button = html.Div([
 #---------------------------------------------------------------
 # Script status components
 #---------------------------------------------------------------
-placefile_status_card = [dbc.CardBody([html.P("Placefile status",className="card-text")])]
+placefile_status_card = [dbc.CardBody([html.P("Placefile status",className="card-text")],style={'height':'5vh'})]
 placefile_status = dbc.Col(html.Div([
                     dbc.Card(placefile_status_card, color="secondary", inverse=True),
                     html.Div(id='placefile_status',style=feedback),
                     ]))
 
-radar_status_card = [dbc.CardBody([html.P("Radar data status",className="card-text")])]
+radar_status_card = [dbc.CardBody([html.P("Radar data status",className="card-text")],style={'height':'5vh'})]
 radar_status = dbc.Col(html.Div([
                     dbc.Card(radar_status_card, color="secondary", inverse=True),
                     html.Div(id='radar_status',style=feedback),
                     ]))
 
-hodograph_status_card = [dbc.CardBody([html.P("Hodograph status",className="card-text")])]
+hodograph_status_card = [dbc.CardBody([html.P("Hodograph status",className="card-text")],style={'height':'5vh'})]
 hodograph_status = dbc.Col(html.Div([
                     dbc.Card(hodograph_status_card, color="secondary", inverse=True),
                     html.Div(id='hodo_status',style=feedback),
                     ]))
 
-nse_status_card = [dbc.CardBody([html.P("NSE placefiles status",className="card-text")])]
+nse_status_card = [dbc.CardBody([html.P("NSE placefiles status",className="card-text")],style={'height':'5vh'})]
 nse_status = dbc.Col(html.Div([
                     dbc.Card(nse_status_card, color="secondary", inverse=True),
                     html.Div(id='nse_status',style=feedback),
@@ -251,8 +251,7 @@ status_section = html.Div([dbc.Row([
             placefile_status,
             radar_status,
             hodograph_status,
-            nse_status
-        ])])
+            nse_status])])
 #---------------------------------------------------------------
 # Clock components
 #---------------------------------------------------------------
@@ -267,27 +266,12 @@ toggle_simulation_clock = html.Div([
         dbc.Row([
             dbc.Col(
                 html.Div([
-                    dbc.Button('Toggle Simulation Clock', size="lg", id='start_sim', n_clicks=0),
+                    dbc.Button('Enable Simulation Clock', size="lg", id='enable_sim_clock', n_clicks=0),
                     ], className="d-grid gap-2"), style={'vertical-align':'middle'}
                 ),
         ])
             ], style={'padding':'1em', 'vertical-align':'middle'})
 
-simulation_clock = html.Div([
-        html.Div([
-        html.Div([
-                dbc.Card(step_sim_clock, color="secondary", inverse=True)],
-                style={'text-align':'center'},),
-                simulation_clock_slider,
-            dcc.Interval(
-                id='interval-component',
-                interval=15*1000, # in milliseconds
-                n_intervals=0
-                ),
-        html.Div(id='clock-output', style=feedback),
-
-        ], id='clock-container', style={'display': 'none'}), 
-    ])
 
 
 top_section = html.Div([ ], style={'height': '5px'})

@@ -33,22 +33,37 @@ R = 6_378_137
 # Regular expressions. First one finds lat/lon pairs, second finds the timestamps.
 LAT_LON_REGEX = "[0-9]{1,2}.[0-9]{1,100},[ ]{0,1}[|\\s-][0-9]{1,3}.[0-9]{1,100}"
 TIME_REGEX = "[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z"
- 
- 
-# --------------------------------------------------------
+
+################################################################################################
 #       Define class RadarSimulator
-# --------------------------------------------------------
+################################################################################################
 
 class RadarSimulator(Config):
     """
-    A class representing a radar simulator.
+    A class to simulate radar operations, inheriting configurations from a base Config class.
+
+    This simulator is designed to mimic the behavior of a radar system over a specified period,
+    starting from a predefined date and time. It allows for the simulation of radar data generation,
+    including the handling of time shifts and geographical coordinates.
 
     Attributes:
-        start_time (datetime): The start time of the simulation.
-        duration (int): The duration of the simulation in seconds.
-        radars (list): A list of radar objects.
-        product_directory_list (list): A list of directories in the data directory.
-
+        start_year (int): The year when the simulation starts.
+        start_month (int): The month when the simulation starts.
+        days_in_month (int): The number of days in the starting month.
+        start_day (int): The day of the month when the simulation starts.
+        start_hour (int): The hour of the day when the simulation starts (24-hour format).
+        start_minute (int): The minute of the hour when the simulation starts.
+        duration (int): The total duration of the simulation in minutes.
+        timeshift (Optional[int]): The time shift in minutes to apply to the simulation clock. Default is None.
+        timestring (Optional[str]): A string representation of the current simulation time. Default is None.
+        sim_clock (Optional[datetime]): The current simulation time as a datetime object. Default is None.
+        radar (Optional[object]): An instance of a radar object used in the simulation. Default is None.
+        lat (Optional[float]): The latitude coordinate for the radar. Default is None.
+        lon (Optional[float]): The longitude coordinate for the radar. Default is None.
+        t_radar (str): A temporary variable for radar type. Default is 'None'.
+        tlat (Optional[float]): Temporary storage for latitude coordinate. Default is None.
+        tlon (Optional[float]): Temporary storage for longitude coordinate. Default is None.
+        simulation_running (bool): Flag to indicate if the simulation is currently running. Default is False.
     """
 
     def __init__(self):
@@ -245,24 +260,44 @@ class RadarSimulator(Config):
 
 
 
-# --------------------------------------------------------
-#      Initialize RadarSimulator
-# --------------------------------------------------------
+################################################################################################
+#      Initialize the app
+################################################################################################
 
 sa = RadarSimulator()
 app = dash.Dash(__name__,external_stylesheets=[dbc.themes.CYBORG],
                 suppress_callback_exceptions=True)
 app.title = "Radar Simulator"
 
-
-# --------------------------------------------------------
+################################################################################################
 #     Build the layout
-# --------------------------------------------------------
+################################################################################################
 
 sim_day_selection =  dbc.Col(html.Div([
                     dbc.Card(lc.step_day, color="secondary", inverse=True),           
                     dcc.Dropdown(np.arange(1,sa.days_in_month+1),15,id='start_day',clearable=False
                     ) ]))
+
+simulation_clock_slider = dcc.Slider(id='sim_clock', min=0, max=1440, step=1, value=0,
+                                     marks={0:'00:00', 240:'04:00'})
+
+
+simulation_clock = html.Div([
+        html.Div([
+        html.Div([
+                dbc.Card(lc.step_sim_clock, color="secondary", inverse=True)],
+                style={'text-align':'center'},),
+                simulation_clock_slider,
+            dcc.Interval(
+                id='interval-component',
+                interval=999*1000, # in milliseconds
+                n_intervals=0
+                ),
+        html.Div(id='clock-output', style=lc.feedback),
+
+        ], id='clock-container', style={'display': 'none'}), 
+    ])
+
 
 app.layout = dbc.Container([
     dcc.Store(id='sim_store'),
@@ -274,12 +309,12 @@ app.layout = dbc.Container([
         ])],style={'padding':'1em'}),
     lc.map_toggle, lc.graph_section, lc.transpose_radar, lc.scripts_button,
     lc.status_section,
-    lc.toggle_simulation_clock,lc.simulation_clock, lc.radar_id, lc.bottom_section
+    lc.toggle_simulation_clock,simulation_clock, lc.radar_id, lc.bottom_section
     ])  # end of app.layout
 
-# --------------------------------------------------------
+################################################################################################
 #     Run the scripts
-# --------------------------------------------------------
+################################################################################################
 
 @app.callback(
     Output('tradar', 'value'),
@@ -309,8 +344,15 @@ def display_page(pathname):
     return html.Div([html.H1('404: Not found')])
 
 
+
+@app.callback(
+    Output('run_obs_script', 'n_clicks'),
+    [Input('run_obs_script', 'n_clicks')],    prevent_initial_call=True)
 def run_obs_nexrad_scripts():
     #script_progress("Running obs script...")
+
+
+
     Mesowest(sa.radar,str(sa.lat),str(sa.lon),sa.sim_start_str,str(sa.duration))
     #script_progress("Obs script completed ... Now downloading radar data ...")
     NexradDownloader(sa.radar, sa.sim_start_str, sa.duration)
@@ -326,7 +368,7 @@ def run_hodo_script(args):
 
 
 @app.callback(
-    Output('placefile_status', 'children', allow_duplicate=True),
+    Output('run_obs_script', 'n_clicks'),
     [Input('run_scripts', 'n_clicks')],
     prevent_initial_call=True)
 def launch_obs_script(n_clicks):
@@ -338,7 +380,9 @@ def launch_obs_script(n_clicks):
         except (FileNotFoundError, PermissionError) as e:
             return f'Error: {e}'
 
-# ---------------------------------------- Clock Callbacks ----------------------------------------
+################################################################################################
+# ---------------------------------------- Clock Callbacks -------------------------------------
+################################################################################################
 
 @app.callback(
     Output('clock-output', 'children'),
@@ -348,12 +392,14 @@ def update_time(_n):
     sa.sim_clock = sa.sim_clock + timedelta(seconds=15)
     return sa.sim_clock.strftime("%Y-%m-%d %H:%M:%S UTC")
 
-# ---------------------------------------- Graph Callbacks ----------------------------------------
+################################################################################################
+# ---------------------------------------- Graph Callbacks -------------------------------------
+################################################################################################
 
 @app.callback(
     Output('clock-container', 'style'),
-    Input('start_sim', 'n_clicks'))
-def toggle_simulation_clock(n):
+    Input('enable_sim_clock', 'n_clicks'))
+def enable_simulation_clock(n):
     if n % 2 == 0:
         return {'display': 'none'}
     else:
@@ -386,7 +432,9 @@ def display_click_data(clickData):
             sa.lon = lc.df[lc.df['radar'] == sa.radar]['lon'].values[0]
             return f'{the_link.upper()}'
 
-# ---------------------------------------- Time Selection Summary --------------------------------
+################################################################################################
+# ---------------------------------------- Time Selection Summary and Callbacks ----------------
+################################################################################################
 
 @app.callback(
 Output('show_values', 'children'),
@@ -406,8 +454,6 @@ def get_sim(_yr, _mo, _dy, _hr, _mn, _dur, _radar, _tradar):
         sa.radar = 'RADAR SELECTION REQUIRED!'
     line1 = f'Sim Start: {sa.sim_start_str[:-7]}Z ____ Duration: {sa.duration} minutes ____ Radar: {sa.radar.upper()}'
     return line1
-
-# ---------------------------------------- Time Callbacks ----------------------------------------
 
 @app.callback(Output('start_year', 'value'),Input('start_year', 'value'))
 def get_year(start_year):

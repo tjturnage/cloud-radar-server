@@ -171,11 +171,13 @@ class Mesowest():
         else:
             orig_time = init_time
 
-        for step in range(0,self.steps):
+        for t, step in enumerate(self.steps):
             mins = step * self.d_t
             new_time = orig_time + timedelta(minutes=mins)
             next_time = new_time + timedelta(minutes=self.d_t)
             new_str = datetime.strftime(new_time, '%Y%m%d%H%M')
+            #yield_time = datetime.strftime(new_time, '%Y-%m-%d %H:%M')
+            #yield f'{t}: {yield_time}'
             if self.api == 'mesowest':
                 new = datetime.strftime(new_time, '%Y-%m-%dT%H:%M:%SZ')
                 next_time_str = datetime.strftime(next_time, '%Y-%m-%dT%H:%M:%SZ')
@@ -215,6 +217,7 @@ class Mesowest():
         self.all_placefile = 'Title: Mesowest ' + self.all_title + icon_font_text
 
         for _t,this_time in enumerate(self.times):
+            yield 
             time_str = this_time[0]
             print(time_str)
             jas = self.mesowest_get_nearest_time_data(time_str)
