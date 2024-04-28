@@ -8,19 +8,23 @@
 import os
 import re
 from glob import glob
-import subprocess
 from datetime import datetime, timedelta
 import calendar
 from pathlib import Path
 import math
+import subprocess
+from dash import Dash, html, Input, Output, dcc, ctx, callback
+#from dash import diskcache, DiskcacheManager, CeleryManager
+#from uuid import uuid4
+#import diskcache
+
+
+
 import numpy as np
 import boto3
 import botocore
 from botocore.client import Config
 
-import dash
-# State allows the user to enter input before proceeding
-from dash import html, dcc, Input, Output
 # bootstrap is what helps styling for a better presentation
 import dash_bootstrap_components as dbc
 from obs_placefile import Mesowest
@@ -183,7 +187,7 @@ class RadarSimulator(Config):
             return max(min(maximum, n), minimum)
 
         # Compute the initial distance from the original radar location
-        phi1, phi2 = math.radians(self.lat), math.radians(self.lat)
+        phi1, phi2 = math.radians(self.lat), math.radians(plat)
         d_phi = math.radians(plat - self.lat)
         d_lambda = math.radians(plon - self.lon)
 
@@ -265,8 +269,8 @@ class RadarSimulator(Config):
 ################################################################################################
 
 sa = RadarSimulator()
-app = dash.Dash(__name__,external_stylesheets=[dbc.themes.CYBORG],
-                suppress_callback_exceptions=True)
+app = Dash(__name__,external_stylesheets=[dbc.themes.CYBORG],
+                prevent_initial_callbacks=True, suppress_callback_exceptions=True)
 app.title = "Radar Simulator"
 
 ################################################################################################
@@ -316,6 +320,24 @@ app.layout = dbc.Container([
 #     Run the scripts
 ################################################################################################
 
+# @app.callback(
+#     Output('output_id', 'property'),  # Adjust 'output_id' and 'property' as needed
+#     [Input('run_hodo_script', 'n_clicks'), Input('tradar', 'value')],  # Example inputs
+#     allow_duplicate=True  # Use this only if necessary
+# )
+# def unified_callback(*args):
+#     script_running = ctx.triggered_id
+#     if script_running == 'run_hodo_script':
+#         # Logic for run_hodo_script.n_clicks
+#         return some_value_based_on_script_click
+#     elif triggered_id == 'another_input':
+#         # Logic for another input
+#         return some_value_based_on_other_input
+#     else:
+#         # Default case if needed
+#         return default_value
+
+
 @app.callback(
     Output('tradar', 'value'),
     Input('tradar', 'value'), prevent_initial_call=True)
@@ -329,56 +351,67 @@ def transpose_radar(tradar):
 
     return 'None'
 
-
-@app.callback(dash.dependencies.Output('page-content', 'children'),
-              [dash.dependencies.Input('url', 'pathname')])
-def display_page(pathname):
-    if pathname == '/':
-        return html.Div([
-            html.A('Go to Analytics', href='/RSSiC')
-        ])
-    if pathname != '/RSSiC':
-        return html.Div([
-            html.A('404: Not found')
-        ])
-    return html.Div([html.H1('404: Not found')])
+from dash import callback_context
 
 
 
-@app.callback(
-    Output('run_obs_script', 'n_clicks'),
-    [Input('run_obs_script', 'n_clicks')],    prevent_initial_call=True)
-def run_obs_nexrad_scripts():
-    #script_progress("Running obs script...")
-
-
-
-    Mesowest(sa.radar,str(sa.lat),str(sa.lon),sa.sim_start_str,str(sa.duration))
-    #script_progress("Obs script completed ... Now downloading radar data ...")
-    NexradDownloader(sa.radar, sa.sim_start_str, sa.duration)
-    #script_progress("Radar download complete ... Now making hodographs ...")
-    run_hodo_script([sa.radar.upper()])
-    #script_progress("Hodos complete!")
-    return
-
-
-def run_hodo_script(args):
-    subprocess.run(["python", sa.hodo_script_path] + args, check=True)
-    return
-
-
+# -------------------------------------
+# ---  Run Scripts button ---
+# -------------------------------------
 @app.callback(
     Output('run_obs_script', 'n_clicks'),
     [Input('run_scripts', 'n_clicks')],
     prevent_initial_call=True)
 def launch_obs_script(n_clicks):
     if n_clicks > 0:
-        try:
-            print('Scripts running!')
-            run_obs_nexrad_scripts()
-            return 'Scripts complete!'
-        except (FileNotFoundError, PermissionError) as e:
-            return f'Error: {e}'
+        return n_clicks
+    return 0
+
+# -------------------------------------
+# ---  Mesowest Placefile script ---
+# -------------------------------------
+@app.callback(
+    Output('run_transpose_script', 'n_clicks'),
+    Input('run_obs_script', 'n_clicks'))
+def run_obs_script(n_clicks):
+    if n_clicks > 0:
+        Mesowest(sa.radar,str(sa.lat),str(sa.lon),sa.sim_start_str,str(sa.duration))
+        return n_clicks
+    return 0
+
+# -------------------------------------
+# --- Transpose if transpose radar selected
+# -------------------------------------
+@app.callback(
+    Output('run_nexrad_script', 'n_clicks'),
+    Input('run_transpose_script', 'n_clicks'))
+def run_transpose_script(n_clicks):
+    if sa.t_radar != 'None' and n_clicks > 0:
+        sa.shift_placefiles(sa.placefiles_dir)
+        return n_clicks
+    return n_clicks
+
+# -------------------------------------
+# --- Get Nexrad data ---
+# -------------------------------------
+@app.callback(
+    Output('run_hodo_script', 'n_clicks'),
+    Input('run_nexrad_script', 'n_clicks'))
+def run_nexrad_script(n_clicks):
+    NexradDownloader(sa.radar, sa.sim_start_str, sa.duration)
+    return n_clicks
+
+# -------------------------------------
+# --- Hodo plots ---
+# -------------------------------------
+@app.callback(
+    Output('run_hodo_script', 'n_clicks'),
+    Input('run_hodo_script', 'n_clicks'),allow_duplicate=True)
+def run_hodo_script(args):
+    subprocess.run(["python", sa.hodo_script_path] + args, check=True)
+    return
+
+
 
 ################################################################################################
 # ---------------------------------------- Clock Callbacks -------------------------------------
@@ -497,4 +530,9 @@ def get_duration(duration):
 
 if __name__ == '__main__':
     #app.run_server(debug=True, host="0.0.0.0", port=8050, threaded=True)
-    app.run_server(debug=True, port=8050, threaded=True)
+    app.run(debug=True, port=8050, threaded=True)
+    
+# pathname_params = dict()
+# if my_settings.hosting_path is not None:
+#     pathname_params["routes_pathname_prefix"] = "/"                                                                                                                                                                                                                              
+#     pathname_params["requests_pathname_prefix"] = "/{}/".format(my_settings.hosting_path)   

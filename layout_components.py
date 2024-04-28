@@ -220,28 +220,33 @@ scripts_button = html.Div([
         ])
             ], style={'padding':'1em', 'vertical-align':'middle'})
 
+
 #---------------------------------------------------------------
 # Script status components
 #---------------------------------------------------------------
-placefile_status_card = [dbc.CardBody([html.P("Placefile status",className="card-text")],style={'height':'5vh'})]
+placefile_status_card = [dbc.CardBody([html.P("Placefile status",className="card-text")]
+                                      ,style={'height':'5vh'})]
 placefile_status = dbc.Col(html.Div([
                     dbc.Card(placefile_status_card, color="secondary", inverse=True),
                     dbc.Progress(id='placefile_status',striped=True, value=0),
                     ]))
 
-radar_status_card = [dbc.CardBody([html.P("Radar data status",className="card-text")],style={'height':'5vh'})]
+radar_status_card = [dbc.CardBody([html.P("Radar data status",className="card-text")],
+                                  style={'height':'5vh'})]
 radar_status = dbc.Col(html.Div([
                     dbc.Card(radar_status_card, color="secondary", inverse=True),
                     dbc.Progress(id='radar_status',striped=True, value=0),
                     ]))
 
-hodograph_status_card = [dbc.CardBody([html.P("Hodograph status",className="card-text")],style={'height':'5vh'})]
+hodograph_status_card = [dbc.CardBody([html.P("Hodograph status",className="card-text")],
+                                      style={'height':'5vh'})]
 hodograph_status = dbc.Col(html.Div([
                     dbc.Card(hodograph_status_card, color="secondary", inverse=True),
                     dbc.Progress(id='hodo_status',striped=True, value=0),
                     ]))
 
-nse_status_card = [dbc.CardBody([html.P("NSE placefiles status",className="card-text")],style={'height':'5vh'})]
+nse_status_card = [dbc.CardBody([html.P("NSE placefiles status",className="card-text")],
+                                style={'height':'5vh'})]
 nse_status = dbc.Col(html.Div([
                     dbc.Card(nse_status_card, color="secondary", inverse=True),
                     dbc.Progress(id='nse_status',striped=True, value=0),
@@ -266,7 +271,7 @@ toggle_simulation_clock = html.Div([
         dbc.Row([
             dbc.Col(
                 html.Div([
-                    dbc.Button('Enable Simulation Clock', size="lg", id='enable_sim_clock', n_clicks=0),
+                        dbc.Button('Enable Simulation Clock', size="lg", id='enable_sim_clock', n_clicks=0),
                     ], className="d-grid gap-2"), style={'vertical-align':'middle'}
                 ),
         ])

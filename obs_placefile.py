@@ -171,7 +171,7 @@ class Mesowest():
         else:
             orig_time = init_time
 
-        for t, step in enumerate(self.steps):
+        for _t, step in enumerate(self.steps):
             mins = step * self.d_t
             new_time = orig_time + timedelta(minutes=mins)
             next_time = new_time + timedelta(minutes=self.d_t)
@@ -217,7 +217,6 @@ class Mesowest():
         self.all_placefile = 'Title: Mesowest ' + self.all_title + icon_font_text
 
         for _t,this_time in enumerate(self.times):
-            yield 
             time_str = this_time[0]
             print(time_str)
             jas = self.mesowest_get_nearest_time_data(time_str)
@@ -318,7 +317,6 @@ class Mesowest():
 
         with open(os.path.join(PLACEFILES_DIR, 'latest_surface_observations.txt'), 'w', encoding='utf8') as outfile:
             outfile.write(self.all_placefile)
-
 
         with open(os.path.join(PLACEFILES_DIR, 'latest_surface_observations.txt'),'r',encoding='utf8') as fin:
             data = fin.readlines()

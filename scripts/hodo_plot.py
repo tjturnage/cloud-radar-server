@@ -18,8 +18,6 @@ import pandas as pd
 import warnings
 import glob
 from pathlib import Path
-#Get Needed Parameters
-
 import hodo_resources as hr
 
 
