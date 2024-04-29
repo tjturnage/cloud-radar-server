@@ -27,6 +27,8 @@ weekdaynames= ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday",
 monthnames = ["January", "February", "March", "April", "May", "June", "July", "August",
               "September", "October", "November", "December" ]
 
+top_section = html.Div([ ], style={'height': '5px'})
+
 top_content = [
             dbc.CardBody([html.H2("Cloud Radar Simulation Server", className="card-title",
                                   style={'font-weight': 'bold', 'font-style': 'italic'}),
@@ -43,10 +45,19 @@ top_content = [
                 ])
             ]
 
-step_instructions = [
-            dbc.CardBody([html.H5("Select Simulation Start Date and Time ... Duration is in Minutes", 
-            className="card-text"),])]
+step_one_card = [dbc.CardBody([
+    html.H5("Step 1: Select Simulation Start Date, Time, and Duration (in Minutes)",className="card-text")])]
 
+step_one_section = html.Div([
+                dbc.Card(step_one_card, color="secondary", inverse=True)],
+                style={'text-align':'center'},)
+
+step_two_card = [dbc.CardBody([
+    html.H5("Step 2: Select radar from Map below",className="card-text")])]
+
+step_two_section = html.Div([
+                dbc.Card(step_two_card, color="secondary", inverse=True)],
+                style={'text-align':'center'},)
 
 
 list_radars = [dbc.CardBody([html.H5("Selected Radar(s)", className="card-text")])]
@@ -59,7 +70,7 @@ view_output = [
             ]
 
 
-first_content = html.Div([
+top_banner = html.Div([
         dbc.Container([
             dbc.Row([
                 dbc.Col(html.Div(dbc.Card(top_content, color="secondary", inverse=True)), width=9),
@@ -126,14 +137,21 @@ sim_duration_section = dbc.Col(
                         ]))
 
 
-store_settings_section = html.Div([
+time_settings_readout = html.Div([
+        dbc.Row([
+            dbc.Col(
+                    html.Div(id='show_time_data',style=feedback)
+            )
+        ])
+            ], style={'padding':'1em', 'vertical-align':'middle'})
+
+store_time_settings_section = html.Div([
         dbc.Row([
             dbc.Col(
                 html.Div([
-                    dbc.Button('Store settings and begin data processing',
-                               size="lg", id='sim_data_store_btn', n_clicks=0, disabled=True),
+                    dbc.Button('Store time settings and open map to select radar',
+                               size="lg", id='store_time_data_btn', n_clicks=0, disabled=False),
                     ], className="d-grid gap-2"), style={'vertical-align':'middle'}),
-                    html.Div(id='sim_data_store_status',style=feedback)
         ])
             ], style={'padding':'1em', 'vertical-align':'middle'})
 radar_id = html.Div(id='radar',style={'display': 'none'})
@@ -168,9 +186,9 @@ fig.update_layout(uirevision= 'foo', clickmode= 'event+select',
                 margin = {'r':0,'t':0,'l':0,'b':0},)
 
 graph_section = html.Div([
-        html.Div([
-                dbc.Card(step_radar, color="secondary", inverse=True)],
-                style={'text-align':'center'},),
+        # html.Div([
+        #         dbc.Card(step_radar, color="secondary", inverse=True)],
+        #         style={'text-align':'center'},),
         html.Div([dcc.Graph(
                 id='graph',
                 config={'displayModeBar': False,'scrollZoom': True},
@@ -224,11 +242,11 @@ scripts_button = html.Div([
 #---------------------------------------------------------------
 # Script status components
 #---------------------------------------------------------------
-placefile_status_card = [dbc.CardBody([html.P("Placefile status",className="card-text")]
+obs_placefile_status_card = [dbc.CardBody([html.P("Placefile status",className="card-text")]
                                       ,style={'height':'5vh'})]
-placefile_status = dbc.Col(html.Div([
-                    dbc.Card(placefile_status_card, color="secondary", inverse=True),
-                    dbc.Progress(id='placefile_status',striped=True, value=0),
+obs_placefile_status = dbc.Col(html.Div([
+                    dbc.Card(obs_placefile_status_card, color="secondary", inverse=True),
+                    dbc.Progress(id='obs_placefile_status',striped=True, value=0),
                     ]))
 
 radar_status_card = [dbc.CardBody([html.P("Radar data status",className="card-text")],
@@ -252,11 +270,14 @@ nse_status = dbc.Col(html.Div([
                     dbc.Progress(id='nse_status',striped=True, value=0),
                     ]))
 
-status_section = html.Div([dbc.Row([
-            placefile_status,
-            radar_status,
-            hodograph_status,
-            nse_status])])
+transpose_status_card = [dbc.CardBody([html.P("Transpose status",className="card-text")],
+                                style={'height':'5vh'})]
+transpose_status = dbc.Col(html.Div([
+                    dbc.Card(transpose_status_card, color="secondary", inverse=True),
+                    dbc.Progress(id='transpose_status',striped=True, value=0),
+                    ]))
+
+status_section = html.Div([dbc.Row([obs_placefile_status, radar_status, hodograph_status, nse_status, transpose_status])])
 #---------------------------------------------------------------
 # Clock components
 #---------------------------------------------------------------
@@ -278,6 +299,4 @@ toggle_simulation_clock = html.Div([
             ], style={'padding':'1em', 'vertical-align':'middle'})
 
 
-
-top_section = html.Div([ ], style={'height': '5px'})
 bottom_section = html.Div([ ], style={'height': '500px'})

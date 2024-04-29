@@ -14,6 +14,7 @@ from pathlib import Path
 import math
 import subprocess
 from dash import Dash, html, Input, Output, dcc, ctx, callback
+from dash.exceptions import PreventUpdate
 #from dash import diskcache, DiskcacheManager, CeleryManager
 #from uuid import uuid4
 #import diskcache
@@ -263,14 +264,13 @@ class RadarSimulator(Config):
 
 
 
-
 ################################################################################################
 #      Initialize the app
 ################################################################################################
 
 sa = RadarSimulator()
 app = Dash(__name__,external_stylesheets=[dbc.themes.CYBORG],
-                prevent_initial_callbacks=True, suppress_callback_exceptions=True)
+                prevent_initial_callbacks=False, suppress_callback_exceptions=True)
 app.title = "Radar Simulator"
 
 ################################################################################################
@@ -305,13 +305,15 @@ simulation_clock = html.Div([
 
 app.layout = dbc.Container([
     dcc.Store(id='sim_store'),
-    lc.top_section, lc.first_content, lc.check_values,
+    lc.top_section, lc.top_banner, lc.step_one_section,
+    lc.time_settings_readout,
     html.Div([
         dbc.Row([
                 lc.sim_year_section,lc.sim_month_section, sim_day_selection,
                 lc.sim_hour_section, lc.sim_minute_section, lc.sim_duration_section
         ])],style={'padding':'1em'}),
-    lc.map_toggle, lc.graph_section, lc.transpose_radar, lc.scripts_button,
+    lc.step_two_section, lc.map_toggle, 
+    lc.graph_section, lc.transpose_radar, lc.scripts_button,
     lc.status_section,
     lc.toggle_simulation_clock,simulation_clock, lc.radar_id, lc.bottom_section
     ])  # end of app.layout
@@ -319,23 +321,6 @@ app.layout = dbc.Container([
 ################################################################################################
 #     Run the scripts
 ################################################################################################
-
-# @app.callback(
-#     Output('output_id', 'property'),  # Adjust 'output_id' and 'property' as needed
-#     [Input('run_hodo_script', 'n_clicks'), Input('tradar', 'value')],  # Example inputs
-#     allow_duplicate=True  # Use this only if necessary
-# )
-# def unified_callback(*args):
-#     script_running = ctx.triggered_id
-#     if script_running == 'run_hodo_script':
-#         # Logic for run_hodo_script.n_clicks
-#         return some_value_based_on_script_click
-#     elif triggered_id == 'another_input':
-#         # Logic for another input
-#         return some_value_based_on_other_input
-#     else:
-#         # Default case if needed
-#         return default_value
 
 
 @app.callback(
@@ -350,9 +335,6 @@ def transpose_radar(tradar):
         return f'{sa.t_radar}'
 
     return 'None'
-
-from dash import callback_context
-
 
 
 # -------------------------------------
@@ -371,78 +353,73 @@ def launch_obs_script(n_clicks):
 # ---  Mesowest Placefile script ---
 # -------------------------------------
 @app.callback(
-    Output('run_transpose_script', 'n_clicks'),
+    [Output('obs_placefile_status', 'value'),
+    Output('run_nexrad_script', 'n_clicks')],
     Input('run_obs_script', 'n_clicks'))
 def run_obs_script(n_clicks):
     if n_clicks > 0:
         Mesowest(sa.radar,str(sa.lat),str(sa.lon),sa.sim_start_str,str(sa.duration))
-        return n_clicks
-    return 0
-
-# -------------------------------------
-# --- Transpose if transpose radar selected
-# -------------------------------------
-@app.callback(
-    Output('run_nexrad_script', 'n_clicks'),
-    Input('run_transpose_script', 'n_clicks'))
-def run_transpose_script(n_clicks):
-    if sa.t_radar != 'None' and n_clicks > 0:
-        sa.shift_placefiles(sa.placefiles_dir)
-        return n_clicks
-    return n_clicks
+        return 100, n_clicks
+    return PreventUpdate, PreventUpdate
 
 # -------------------------------------
 # --- Get Nexrad data ---
 # -------------------------------------
 @app.callback(
-    Output('run_hodo_script', 'n_clicks'),
+    [Output('run_hodo_script', 'n_clicks'),Output('radar_status', 'value')],
     Input('run_nexrad_script', 'n_clicks'))
 def run_nexrad_script(n_clicks):
-    NexradDownloader(sa.radar, sa.sim_start_str, sa.duration)
-    return n_clicks
+    if n_clicks > 0:
+        NexradDownloader(sa.radar, sa.sim_start_str, sa.duration)
+        return n_clicks, 100
+    return PreventUpdate, PreventUpdate
+
 
 # -------------------------------------
 # --- Hodo plots ---
 # -------------------------------------
 @app.callback(
-    Output('run_hodo_script', 'n_clicks'),
-    Input('run_hodo_script', 'n_clicks'),allow_duplicate=True)
+    [Output('run_nse', 'n_clicks'), Output('hodo_status', 'value')],
+    Input('run_hodo_script', 'n_clicks'))
 def run_hodo_script(args):
     subprocess.run(["python", sa.hodo_script_path] + args, check=True)
     return
 
-
-
-################################################################################################
-# ---------------------------------------- Clock Callbacks -------------------------------------
-################################################################################################
-
+# -------------------------------------
+# --- NSE placefiles
+# -------------------------------------
 @app.callback(
-    Output('clock-output', 'children'),
-    Input('interval-component', 'n_intervals')
-)
-def update_time(_n):
-    sa.sim_clock = sa.sim_clock + timedelta(seconds=15)
-    return sa.sim_clock.strftime("%Y-%m-%d %H:%M:%S UTC")
+    [Output('run_transpose_script', 'n_clicks'), Output('nse_status', 'value')],
+    Input('run_nse', 'n_clicks'))
+def run_nse_script(n_clicks):
+    if n_clicks > 0:
+        sa.shift_placefiles(sa.placefiles_dir)
+        return n_clicks, 100
+    return PreventUpdate, PreventUpdate
 
-################################################################################################
-# ---------------------------------------- Graph Callbacks -------------------------------------
-################################################################################################
-
+# -------------------------------------
+# --- Transpose if transpose radar selected
+# -------------------------------------
 @app.callback(
-    Output('clock-container', 'style'),
-    Input('enable_sim_clock', 'n_clicks'))
-def enable_simulation_clock(n):
-    if n % 2 == 0:
-        return {'display': 'none'}
-    else:
-        return {'padding-bottom': '2px', 'padding-left': '2px','height': '80vh', 'width': '100%'}
+    Output('transpose_status', 'value'),
+    Input('run_transpose_script', 'n_clicks'))
+def run_transpose_script(n_clicks):
+    if sa.t_radar == 'None':
+        return 100
+    if n_clicks > 0:
+        sa.shift_placefiles(sa.placefiles_dir)
+        return 100
+    return 0
+
+################################################################################################
+# ---------------------------------------- Radar Graph Callbacks -------------------------------------
+################################################################################################
 
 @app.callback(
     Output('graph-container', 'style'),
     Input('map_btn', 'n_clicks'))
 def toggle_map_display(n):
-    if n % 2 == 1:
+    if n%2 == 0:
         return {'display': 'none'}
     else:
         return {'padding-bottom': '2px', 'padding-left': '2px','height': '80vh', 'width': '100%'}
@@ -470,22 +447,17 @@ def display_click_data(clickData):
 ################################################################################################
 
 @app.callback(
-Output('show_values', 'children'),
+Output('show_time_data', 'children'),
 Input('start_year', 'value'),
 Input('start_month', 'value'),
 Input('start_day', 'value'),
 Input('start_hour', 'value'),
 Input('start_minute', 'value'),
 Input('duration', 'value'),
-Input('radar', 'children'),
-Input('tradar', 'value'),
-#Input('check_values', 'n_clicks')
 )
-def get_sim(_yr, _mo, _dy, _hr, _mn, _dur, _radar, _tradar):
+def get_sim(_yr, _mo, _dy, _hr, _mn, _dur):
     sa.make_times()
-    if sa.radar is None:
-        sa.radar = 'RADAR SELECTION REQUIRED!'
-    line1 = f'Sim Start: {sa.sim_start_str[:-7]}Z ____ Duration: {sa.duration} minutes ____ Radar: {sa.radar.upper()}'
+    line1 = f'Sim Start: {sa.sim_start_str[:-7]}Z ____ Duration: {sa.duration} minutes'
     return line1
 
 @app.callback(Output('start_year', 'value'),Input('start_year', 'value'))
@@ -527,6 +499,31 @@ def get_duration(duration):
     sa.duration = duration
     return sa.duration
 
+################################################################################################
+# ---------------------------------------- Clock Callbacks ----------------
+################################################################################################
+
+@app.callback(
+    Output('clock-container', 'style'),
+    Input('enable_sim_clock', 'n_clicks'))
+def enable_simulation_clock(n):
+    if n % 2 == 0:
+        return {'display': 'none'}
+    else:
+        return {'padding-bottom': '2px', 'padding-left': '2px','height': '80vh', 'width': '100%'}
+
+
+@app.callback(
+    Output('clock-output', 'children'),
+    Input('interval-component', 'n_intervals')
+)
+def update_time(_n):
+    sa.sim_clock = sa.sim_clock + timedelta(seconds=15)
+    return sa.sim_clock.strftime("%Y-%m-%d %H:%M:%S UTC")
+
+################################################################################################
+# ---------------------------------------- Call app ----------------
+################################################################################################
 
 if __name__ == '__main__':
     #app.run_server(debug=True, host="0.0.0.0", port=8050, threaded=True)
