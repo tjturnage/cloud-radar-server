@@ -13,13 +13,11 @@ import calendar
 from pathlib import Path
 import math
 import subprocess
-from dash import Dash, html, Input, Output, dcc, ctx, callback
+from dash import Dash, html, Input, Output, dcc #, ctx, callback
 from dash.exceptions import PreventUpdate
 #from dash import diskcache, DiskcacheManager, CeleryManager
 #from uuid import uuid4
 #import diskcache
-
-
 
 import numpy as np
 import boto3
@@ -278,7 +276,7 @@ app.title = "Radar Simulator"
 ################################################################################################
 
 sim_day_selection =  dbc.Col(html.Div([
-                    dbc.Card(lc.step_day, color="secondary", inverse=True),           
+                    lc.step_day,
                     dcc.Dropdown(np.arange(1,sa.days_in_month+1),15,id='start_day',clearable=False
                     ) ]))
 
@@ -305,15 +303,17 @@ simulation_clock = html.Div([
 
 app.layout = dbc.Container([
     dcc.Store(id='sim_store'),
-    lc.top_section, lc.top_banner, lc.step_one_section,
-    lc.time_settings_readout,
+    lc.top_section, lc.top_banner, lc.step_select_time_section,
     html.Div([
         dbc.Row([
                 lc.sim_year_section,lc.sim_month_section, sim_day_selection,
                 lc.sim_hour_section, lc.sim_minute_section, lc.sim_duration_section
         ])],style={'padding':'1em'}),
-    lc.step_two_section, lc.map_toggle, 
-    lc.graph_section, lc.transpose_radar, lc.scripts_button,
+        lc.spacer,
+        lc.step_time_confirm,lc.spacer,
+        lc.radar_select_section,lc.spacer,
+        lc.map_section, lc.transpose_section, lc.spacer,
+        lc.scripts_button,
     lc.status_section,
     lc.toggle_simulation_clock,simulation_clock, lc.radar_id, lc.bottom_section
     ])  # end of app.layout
@@ -426,7 +426,7 @@ def toggle_map_display(n):
 
 
 @app.callback(
-    Output('radar', 'children'),
+    Output('show_radar_selections', 'children'),
     [Input('graph', 'clickData')])
 def display_click_data(clickData):
     if clickData is None:
@@ -457,7 +457,7 @@ Input('duration', 'value'),
 )
 def get_sim(_yr, _mo, _dy, _hr, _mn, _dur):
     sa.make_times()
-    line1 = f'Sim Start: {sa.sim_start_str[:-7]}Z ____ Duration: {sa.duration} minutes'
+    line1 = f'Start: {sa.sim_start_str[:-7]}Z ____ {sa.duration} minutes'
     return line1
 
 @app.callback(Output('start_year', 'value'),Input('start_year', 'value'))
