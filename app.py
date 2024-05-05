@@ -9,6 +9,7 @@ import os
 import re
 from glob import glob
 from datetime import datetime, timedelta
+from time import sleep
 import calendar
 from pathlib import Path
 import math
@@ -81,23 +82,25 @@ class RadarSimulator(Config):
         self.timeshift = None
         self.timestring = None
         self.sim_clock = None
+        self.number_of_radars = 0
+        self.radar_list = []
         self.radar = None
         self.lat = None
         self.lon = None
-        self.t_radar = 'None'
+        self.tradar = 'None'
         self.tlat = None
         self.tlon = None
         self.simulation_running = False
         self.current_dir = Path.cwd()
-        self.make_directories()
-        self.make_radar_download_folders()
+        self.define_scripts_and_assets_directories()
+        self.create_radar_download_folders()
         self.make_times()
         self.make_prefix()
         self.bucket = boto3.resource('s3',
                                     config=Config(signature_version=botocore.UNSIGNED,
                                     user_agent_extra='Resource')).Bucket('noaa-nexrad-level2')
 
-    def make_directories(self):
+    def define_scripts_and_assets_directories(self):
         self.csv_file = self.current_dir / 'radars.csv'
         self.data_dir = self.current_dir / 'data'
         os.makedirs(self.data_dir, exist_ok=True)
@@ -105,11 +108,23 @@ class RadarSimulator(Config):
         self.obs_script_path = self.current_dir / 'obs_placefile.py'
         self.hodo_script_path = self.scripts_path / 'hodo_plot.py'
         self.nexrad_script_path = self.scripts_path / 'get_nexrad.py'
+        self.munge_dir = self.scripts_path / 'munge'
         self.assets_dir = self.current_dir / 'assets'
         self.hodo_images = self.assets_dir / 'hodographs'
         os.makedirs(self.hodo_images, exist_ok=True)
         self.placefiles_dir = self.assets_dir / 'placefiles'
         os.makedirs(self.placefiles_dir, exist_ok=True)
+        return
+
+    def create_radar_download_folders(self):
+        if self.radar is not None:
+            self.radar_site_dir = self.data_dir / 'radar' / self.radar
+            os.makedirs(self.radar_site_dir, exist_ok=True)
+            self.radar_site_download_dir = self.radar_site_dir / 'downloads'
+            os.makedirs(self.radar_site_download_dir, exist_ok=True)
+            self.cf_dir = self.radar_site_download_dir / 'cf_radial'
+            os.makedirs(self.cf_dir, exist_ok=True)
+            return
         return
 
     def make_times(self):
@@ -124,21 +139,10 @@ class RadarSimulator(Config):
         self.days_in_month = calendar.monthrange(self.start_year, self.start_month)[1]
         return
 
-    def make_radar_download_folders(self):
-        if self.radar is not None:
-            self.radar_site_dir = self.data_dir / 'radar' / self.radar
-            os.makedirs(self.radar_site_dir, exist_ok=True)
-            self.radar_site_download_dir = self.radar_site_dir / 'downloads'
-            os.makedirs(self.radar_site_download_dir, exist_ok=True)
-            self.cf_dir = self.radar_site_download_dir / 'cf_radial'
-            os.makedirs(self.cf_dir, exist_ok=True)
-            return
-        return
-
     def make_prefix(self):
         first_folder = self.sim_start.strftime('%Y/%m/%d/')
         second_folder = self.sim_end.strftime('%Y/%m/%d/')
-        self.prefix_day_one = f'{first_folder}{self.radar}'  
+        self.prefix_day_one = f'{first_folder}{self.radar}'
         if first_folder != second_folder:
             self.prefix_day_two = f'{second_folder}{self.radar}'
         else:
@@ -163,8 +167,15 @@ class RadarSimulator(Config):
                     if obj.key.endswith('V06') or obj.key.endswith('V08'):
                         print(obj.key)
                         self.bucket.download_file(obj.key, str(self.radar_site_download_dir / Path(obj.key).name))
-
         return
+    
+    def get_timestamp(self,file):
+        """
+        - extracts datetime info from the radar filename
+        - converts it to a datetime timestamp (epoch seconds) object
+        """
+        file_epoch_time = datetime.strptime(file[4:19], '%Y%m%d_%H%M%S').timestamp()
+        return file_epoch_time
 
     def move_point(self,plat,plon):
         """
@@ -211,6 +222,13 @@ class RadarSimulator(Config):
                     math.sin(phi_out))
         return math.degrees(phi_out), math.degrees(lambda_out)
 
+    def get_radar_coordinates(self,radar):
+        """
+        Get the latitude and longitude coordinates for the radar site.
+        """
+        radar_lat = lc.df[lc.df['radar'] == radar]['lat'].values[0]
+        radar_lon = lc.df[lc.df['radar'] == radar]['lon'].values[0]
+        return radar_lat, radar_lon
 
     def shift_placefiles(self, filepath):
         filenames = glob(f"{filepath}/*.txt")
@@ -242,7 +260,7 @@ class RadarSimulator(Config):
         new_line = line
         if 'Valid:' in line:
             idx = line.find('Valid:')
-            valid_timestring = line[idx+len('Valid:')+1:-1] # Leave off \n character 
+            valid_timestring = line[idx+len('Valid:')+1:-1] # Leave off \n character
             dt = datetime.strptime(valid_timestring, '%H:%MZ %a %b %d %Y')
             new_validstring = datetime.strftime(dt + timedelta(minutes=self.timeshift),
                                                 '%H:%MZ %a %b %d %Y')
@@ -257,8 +275,8 @@ class RadarSimulator(Config):
             new_datestring_2 = datetime.strftime(dt + timedelta(minutes=self.timeshift),
                                                 '%Y-%m-%dT%H:%M:%SZ')
             new_line = line.replace(f"{regex[0]} {regex[1]}",
-                                    f"{new_datestring_1} {new_datestring_2}") 
-        return new_line 
+                                    f"{new_datestring_1} {new_datestring_2}")
+        return new_line
 
 
 
@@ -268,7 +286,7 @@ class RadarSimulator(Config):
 
 sa = RadarSimulator()
 app = Dash(__name__,external_stylesheets=[dbc.themes.CYBORG],
-                prevent_initial_callbacks=False, suppress_callback_exceptions=True)
+                suppress_callback_exceptions=True)
 app.title = "Radar Simulator"
 
 ################################################################################################
@@ -280,42 +298,26 @@ sim_day_selection =  dbc.Col(html.Div([
                     dcc.Dropdown(np.arange(1,sa.days_in_month+1),15,id='start_day',clearable=False
                     ) ]))
 
-simulation_clock_slider = dcc.Slider(id='sim_clock', min=0, max=1440, step=1, value=0,
-                                     marks={0:'00:00', 240:'04:00'})
-
-
-simulation_clock = html.Div([
-        html.Div([
-        html.Div([
-                dbc.Card(lc.step_sim_clock, color="secondary", inverse=True)],
-                style={'text-align':'center'},),
-                simulation_clock_slider,
-            dcc.Interval(
-                id='interval-component',
-                interval=999*1000, # in milliseconds
-                n_intervals=0
-                ),
-        html.Div(id='clock-output', style=lc.feedback),
-
-        ], id='clock-container', style={'display': 'none'}), 
-    ])
-
-
 app.layout = dbc.Container([
     dcc.Store(id='sim_store'),
-    lc.top_section, lc.top_banner, lc.step_select_time_section,
-    html.Div([
+    lc.top_section, lc.top_banner,
+    dbc.Container([
+    dbc.Container([
+    html.Div([html.Div([ lc.step_select_time_section,lc.spacer,
         dbc.Row([
                 lc.sim_year_section,lc.sim_month_section, sim_day_selection,
-                lc.sim_hour_section, lc.sim_minute_section, lc.sim_duration_section
-        ])],style={'padding':'1em'}),
+                lc.sim_hour_section, lc.sim_minute_section, lc.sim_duration_section,
+                lc.spacer,lc.step_time_confirm])],style={'padding':'1em'}),
+    ],style=lc.section_box)])
+    ]),lc.spacer,lc.spacer,
+        dbc.Container([
+        dbc.Container([html.Div([lc.radar_select_section],style={'background-color': '#333333', 'border': '2.5px gray solid','padding':'1em'})]),
+]),
         lc.spacer,
-        lc.step_time_confirm,lc.spacer,
-        lc.radar_select_section,lc.spacer,
-        lc.map_section, lc.transpose_section, lc.spacer,
+        lc.map_section, lc.transpose_section, lc.spacer_mini,
         lc.scripts_button,
     lc.status_section,
-    lc.toggle_simulation_clock,simulation_clock, lc.radar_id, lc.bottom_section
+    lc.toggle_simulation_clock,lc.simulation_clock, lc.radar_id, lc.bottom_section
     ])  # end of app.layout
 
 ################################################################################################
@@ -323,18 +325,66 @@ app.layout = dbc.Container([
 ################################################################################################
 
 
+################################################################################################
+# ---------------------------------------- Radar Map Callbacks -------------------------------------
+################################################################################################
+
 @app.callback(
     Output('tradar', 'value'),
     Input('tradar', 'value'), prevent_initial_call=True)
 def transpose_radar(tradar):
     if tradar != 'None':
-        sa.t_radar = tradar
-        sa.tlat = lc.df[lc.df['radar'] == sa.t_radar]['lat'].values[0]
-        sa.tlon = lc.df[lc.df['radar'] == sa.t_radar]['lon'].values[0]
-        #print(sa.radar,sa.lat,sa.lon,sa.t_radar,sa.tlat,sa.tlon)
-        return f'{sa.t_radar}'
-
+        sa.tradar = tradar
+        sa.tlat, sa.tlon = sa.get_radar_coordinates(sa.tradar)
+        return f'{sa.tradar}'
     return 'None'
+
+
+@app.callback(
+    Output('graph-container', 'style'),
+    Input('map_btn', 'n_clicks'))
+def toggle_map_display(n):
+    if n%2 == 0:
+        return {'display': 'none'}
+    else:
+        return {'padding-bottom': '2px', 'padding-left': '2px','height': '80vh', 'width': '100%'}
+
+
+@app.callback(
+    Output('show_radar_selections', 'children'),
+    [Input('graph', 'clickData')])
+def display_click_data(clickData):
+    if clickData is None:
+        return 'No radars selected ...'
+    else:
+        print (clickData)
+        the_link=clickData['points'][0]['customdata']
+        if the_link is None:
+            return 'No Website Available'
+        else:
+            sa.radar = the_link
+            sa.lat, sa.lon = sa.get_radar_coordinates(sa.radar)
+            if sa.radar not in sa.radar_list:
+                sa.radar_list.append(sa.radar)
+            if len(sa.radar_list) <= sa.number_of_radars:
+                radar_list = ', '.join(sa.radar_list)
+                return f'{radar_list}'
+            sa.radar_list = sa.radar_list[1:]
+            radar_list = ', '.join(sa.radar_list)
+            return f'{radar_list}'
+
+@app.callback(
+    Output('transpose_section', 'style'),
+    Input('radar_quantity', 'value'))
+def toggle_transpose_display(value):
+    """
+    Resets the radar list when the number of radars is changed
+    """
+    sa.number_of_radars = value
+    sa.radar_list = []
+    if sa.number_of_radars == 1:
+        return lc.section_box
+    return {'display': 'none'}
 
 
 # -------------------------------------
@@ -404,43 +454,12 @@ def run_nse_script(n_clicks):
     Output('transpose_status', 'value'),
     Input('run_transpose_script', 'n_clicks'))
 def run_transpose_script(n_clicks):
-    if sa.t_radar == 'None':
+    if sa.tradar == 'None':
         return 100
     if n_clicks > 0:
         sa.shift_placefiles(sa.placefiles_dir)
         return 100
     return 0
-
-################################################################################################
-# ---------------------------------------- Radar Graph Callbacks -------------------------------------
-################################################################################################
-
-@app.callback(
-    Output('graph-container', 'style'),
-    Input('map_btn', 'n_clicks'))
-def toggle_map_display(n):
-    if n%2 == 0:
-        return {'display': 'none'}
-    else:
-        return {'padding-bottom': '2px', 'padding-left': '2px','height': '80vh', 'width': '100%'}
-
-
-@app.callback(
-    Output('show_radar_selections', 'children'),
-    [Input('graph', 'clickData')])
-def display_click_data(clickData):
-    if clickData is None:
-        return 'No radars selected ...'
-    else:
-        print (clickData)
-        the_link=clickData['points'][0]['customdata']
-        if the_link is None:
-            return 'No Website Available'
-        else:
-            sa.radar = the_link
-            sa.lat = lc.df[lc.df['radar'] == sa.radar]['lat'].values[0]
-            sa.lon = lc.df[lc.df['radar'] == sa.radar]['lon'].values[0]
-            return f'{the_link.upper()}'
 
 ################################################################################################
 # ---------------------------------------- Time Selection Summary and Callbacks ----------------
@@ -532,4 +551,60 @@ if __name__ == '__main__':
 # pathname_params = dict()
 # if my_settings.hosting_path is not None:
 #     pathname_params["routes_pathname_prefix"] = "/"                                                                                                                                                                                                                              
-#     pathname_params["requests_pathname_prefix"] = "/{}/".format(my_settings.hosting_path)   
+#     pathname_params["requests_pathname_prefix"] = "/{}/".format(my_settings.hosting_path)
+
+    # def update_dirlist(self):
+    #     """
+    #     The dir.list file is needed for GR2Analyst to poll in DRT
+    #     """
+    #     simulation_counter = self.get_timestamp(self.simulation_files[0].parts[-1]) + 360
+    #     last_file_timestamp = self.get_timestamp(self.simulation_files[-1].parts[-1])
+    #     print(simulation_counter,last_file_timestamp-simulation_counter)
+    #     while simulation_counter < last_file_timestamp:
+    #         simulation_counter += 60
+    #         self.output = ''     
+    #         for file in self.simulation_files:
+    #             file_timestamp = self.get_timestamp(file.parts[-1])
+    #             if file_timestamp < simulation_counter:
+    #                 line = f'{file.stat().st_size} {file.parts[-1]}\n'
+    #                 self.output = self.output + line
+    #                 with open(f'{self.radar_dir}/dir.list', mode='w', encoding='utf-8') as f:
+    #                     f.write(self.output)
+    #             else:
+    #                 pass
+
+    #         sleep(int(60/self.playback_speed))
+
+    #     print("simulation complete!")
+
+    #     return
+    # def catalog_files(self):
+    #     self.source_directory = Path(self.radar_site_download_dir)
+    #     self.source_files = list(self.source_directory.glob('*V06'))
+    #     self.uncompressed_files = list(self.source_directory.glob('*V06.uncompressed'))
+    #     self.first_file_epoch_time = self.get_timestamp(self.source_files[0].parts[-1])
+    #     self.last_file_epoch_time = self.get_timestamp(self.source_files[-1].parts[-1])
+    #     return
+
+
+    # def uncompress_radar_files(self):
+    #     """
+    #     example command line: python debz.py KBRO20170825_195747_V06 KBRO20170825_195747_V06.uncompressed
+    #     """
+
+    #     os.chdir(self.munge_dir)
+    #     self.source_files = list(self.source_directory.glob('*V06'))
+    #     for original_file in self.source_files:
+    #         command_string = f'python debz.py {str(original_file)} {str(original_file)}.uncompressed'
+    #         os.system(command_string)
+    #     print("uncompress complete!")
+    #     return
+    
+        # def stage_files_to_munge(self):
+        # """
+        # stages raw files into munge directory where munger script lives
+        # """
+        # cp_cmd = f'cp {self.radar_site_download_dir}/* {self.munge_dir}'
+        # os.system(cp_cmd)
+        
+        # return

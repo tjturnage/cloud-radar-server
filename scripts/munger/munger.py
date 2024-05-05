@@ -22,7 +22,7 @@ class Munger():
 
     munge_data: Boolean
         uses l2munger to:
-        - change valid times starting at 2 hours from current real time
+        - change valid times starting at 2 hours prior to current real time
         - remap data to new_rda if provided (see below).
 
     new_rda: string or None
@@ -30,7 +30,7 @@ class Munger():
          If None, will use radar location associated with archive files 
      
     start_simulation: Boolean
-        To poll in displac
+        To poll in displaced real time
         a dir.list file will be created and updated in the polling directory so GR2Analyst can play this back
     - playback_speed: float
         speed of simulation compared to real time ... example: 2.0 means event proceeds twice as fast
@@ -93,7 +93,7 @@ class Munger():
         cp_cmd = f'cp {raw_dir}/* {munge_dir}'
         os.system(cp_cmd)
         
-        return 
+        return
     
     def uncompress_files(self):
         """
@@ -114,7 +114,7 @@ class Munger():
         - converts it to a datetime timestamp (epoch seconds) object
         """
         file_epoch_time = datetime.strptime(file[4:19], '%Y%m%d_%H%M%S').timestamp()
-        return file_epoch_time        
+        return file_epoch_time
     
     def munge_files(self):
         """
@@ -160,15 +160,14 @@ class Munger():
         print(simulation_counter,last_file_timestamp-simulation_counter)
         while simulation_counter < last_file_timestamp:
             simulation_counter += 60
-            self.output = ''            
+            self.output = ''     
             for file in self.simulation_files:
                 file_timestamp = self.get_timestamp(file.parts[-1])
                 if file_timestamp < simulation_counter:
                     line = f'{file.stat().st_size} {file.parts[-1]}\n'
                     self.output = self.output + line
-                    f = open(f'{self.radar_dir}/dir.list',mode='w')
-                    f.write(self.output)
-                    f.close()
+                    with open(f'{self.radar_dir}/dir.list', mode='w', encoding='utf-8') as f:
+                        f.write(self.output)
                 else:
                     pass
 

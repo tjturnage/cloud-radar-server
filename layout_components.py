@@ -8,6 +8,9 @@ from dash import html, dcc
 
 now = datetime.now(pytz.utc)
 
+spacer = html.Div([ ], style={'height': '30px'})
+spacer_mini = html.Div([ ], style={'height': '10px'})
+
 df = pd.read_csv('radars.csv', dtype={'lat': float, 'lon': float})
 df['radar_id'] = df['radar']
 df.set_index('radar_id', inplace=True)
@@ -27,6 +30,8 @@ steps_center = {'padding':'0.4em', 'border': '0.3em', 'border-radius': '15px',
                 'text-align':'center', 'height':'vh5'}
 
 
+section_box = {'background-color': '#333333', 'border': '2.5px gray solid'}
+
 url_rename = html.Div([
     dcc.Location(id='url', refresh=False),
     html.Div(id='page-content')
@@ -37,7 +42,7 @@ monthnames = ["January", "February", "March", "April", "May", "June", "July", "A
               "September", "October", "November", "December" ]
 
 top_section = html.Div([ ], style={'height': '5px'})
-spacer = html.Div([ ], style={'height': '20px'})
+
 
 top_content = [
             dbc.CardBody([html.H2("Cloud Radar Simulation Server", className="card-title",
@@ -103,7 +108,7 @@ sim_minute_section =  dbc.Col(html.Div([
 sim_duration_section = dbc.Col(html.Div([
                     step_duration,dcc.Dropdown(np.arange(0,240,30),60,id='duration',clearable=False),]))
 
-CONFIRM_TIMES_TEXT = "Confirm simulation date/time/duration, then proceed below"
+CONFIRM_TIMES_TEXT = "Confirm start time and duration -->"
 confirm_times_section = dbc.Col(html.Div(children=CONFIRM_TIMES_TEXT,style=steps_right))
 time_settings_readout = dbc.Col(html.Div(id='show_time_data',style=feedback))
 step_time_confirm = dbc.Container(html.Div([dbc.Row([confirm_times_section, time_settings_readout
@@ -115,15 +120,24 @@ radar_id = html.Div(id='radar',style={'display': 'none'})
 # Radar map components
 #---------------------------------------------------------------
 
+radar_quantity = html.Div(children="Number of radars",style=time_headers)
+radar_quantity_section = dbc.Col(html.Div([radar_quantity,spacer_mini,
+                    dcc.Slider(0,3,1,value=0,id='radar_quantity'),]))
+
+
 STEP_CHOOSE_FROM_MAP = "Use button at right to display map of radars"
 
 #step_radar_section = dbc.Col(html.Div(children=STEP_CHOOSE_FROM_MAP,style=steps_right))
-map_toggle_button = dbc.Col(html.Div([dbc.Button('ClICK HERE TO TOGGLE RADAR MAP DISPLAY', size="lg", id='map_btn', n_clicks=0)],
+map_toggle_button = dbc.Col(html.Div([dbc.Button('Click here for radar map', size="lg", id='map_btn', n_clicks=0)],
                                   className="d-grid gap-2 col-12 mx-auto"))
 
-
+# map_reset_radars = dbc.Col(html.Div([dbc.Button('Reset', size="lg", id='radar_reset_btn', n_clicks=0)],
+#                                   className="d-grid gap-2 col-12 mx-auto"))
+map_instructions = "Select up to 3 radars for simulation. Most recent selections will be used."
+map_instructions_component = dbc.Row(dbc.Col(html.Div(children=map_instructions,style=steps_center)))
 radar_selections_readout = dbc.Col(html.Div(id='show_radar_selections',style=feedback))
-radar_select_section = dbc.Container(html.Div([dbc.Row([map_toggle_button,radar_selections_readout])]))
+radar_select_section = dbc.Container(html.Div([map_instructions_component, spacer, dbc.Row([radar_quantity_section,
+                                                        map_toggle_button,radar_selections_readout])]))
 
 fig = go.Figure(go.Scattermapbox(
     mode='markers',
@@ -148,10 +162,9 @@ fig.update_layout(uirevision= 'foo', clickmode= 'event+select',
                 hovermode='closest', hoverdistance=2,
                 margin = {'r':0,'t':0,'l':0,'b':0},)
 
-radar_map_instruction = dbc.Col(html.Div(children="Click circles to select up to three radars",style=steps_center))
 
 map_section = html.Div([
-    radar_map_instruction,
+
         html.Div([dcc.Graph(
                 id='graph',
                 config={'displayModeBar': False,'scrollZoom': True},
@@ -171,12 +184,13 @@ transpose_list = sorted(list(df.index))
 transpose_list.insert(0, 'None')
 
 
-STEP_TRANSPOSE_TEXT = "Select radar to transpose to (if desired)"
+STEP_TRANSPOSE_TEXT = "Single radar selected. Optional: selected radar site to transpose to"
 step_transpose_radar = dbc.Col(html.Div(children=STEP_TRANSPOSE_TEXT,style=steps_right))
 
-transpose_radar_dropdown = dbc.Col(html.Div([dcc.Dropdown(transpose_list,'None',id='tradar',
+transpose_radar_dropdown = dbc.Col(html.Div([spacer_mini,dcc.Dropdown(transpose_list,'None',id='tradar',
                                                 clearable=False)],className="d-grid gap-2 col-10 mx-auto",style={'vertical-align':'bottom'}))
-transpose_section = dbc.Container(html.Div([dbc.Row([step_transpose_radar, transpose_radar_dropdown],style={'vertical-align':'bottom'})]))
+transpose_section = dbc.Container(
+    dbc.Container(html.Div([dbc.Row([step_transpose_radar, transpose_radar_dropdown],id='transpose_section')])))
 
 #---------------------------------------------------------------
 # Run script button
@@ -231,6 +245,23 @@ step_sim_clock = [dbc.CardBody([html.H5("Simulation Clock", className="card-text
 
 simulation_clock_slider = dcc.Slider(id='sim_clock', min=0, max=1440, step=1, value=0,
                                      marks={0:'00:00', 240:'04:00'})
+
+
+simulation_clock = html.Div([
+        html.Div([
+        html.Div([
+                dbc.Card(step_sim_clock, color="secondary", inverse=True)],
+                style={'text-align':'center'},),
+                simulation_clock_slider,
+            dcc.Interval(
+                id='interval-component',
+                interval=999*1000, # in milliseconds
+                n_intervals=0
+                ),
+        html.Div(id='clock-output', style=feedback),
+
+        ], id='clock-container', style={'display': 'none'}), 
+    ])
 
 
 toggle_simulation_clock = html.Div([
