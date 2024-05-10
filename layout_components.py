@@ -159,7 +159,7 @@ fig.update_layout(
 
 
 fig.update_layout(uirevision= 'foo', clickmode= 'event+select',
-                hovermode='closest', hoverdistance=2,
+                hovermode='closest', hoverdistance=3,
                 margin = {'r':0,'t':0,'l':0,'b':0},)
 
 
@@ -201,7 +201,7 @@ scripts_button = html.Div([
             dbc.Col(
                 html.Div([
                     dbc.Button('Run Scripts',
-                               size="lg", id='run_scripts', n_clicks=0),
+                               size="lg", id='run_scripts_btn', n_clicks=0),
                     ], className="d-grid gap-2"), style={'vertical-align':'middle'}),
         ])
             ], style={'padding':'1em', 'vertical-align':'middle'})

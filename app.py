@@ -28,7 +28,7 @@ from botocore.client import Config
 # bootstrap is what helps styling for a better presentation
 import dash_bootstrap_components as dbc
 from obs_placefile import Mesowest
-from get_nexrad import NexradDownloader
+from Nexrad import NexradDownloader
 import layout_components as lc
 
  # Earth radius (km)
@@ -84,6 +84,7 @@ class RadarSimulator(Config):
         self.sim_clock = None
         self.number_of_radars = 0
         self.radar_list = []
+        self.radar_dict = {}
         self.radar = None
         self.lat = None
         self.lon = None
@@ -93,12 +94,8 @@ class RadarSimulator(Config):
         self.simulation_running = False
         self.current_dir = Path.cwd()
         self.define_scripts_and_assets_directories()
-        self.create_radar_download_folders()
-        self.make_times()
-        self.make_prefix()
-        self.bucket = boto3.resource('s3',
-                                    config=Config(signature_version=botocore.UNSIGNED,
-                                    user_agent_extra='Resource')).Bucket('noaa-nexrad-level2')
+        self.make_simulation_times()
+
 
     def define_scripts_and_assets_directories(self):
         self.csv_file = self.current_dir / 'radars.csv'
@@ -116,18 +113,7 @@ class RadarSimulator(Config):
         os.makedirs(self.placefiles_dir, exist_ok=True)
         return
 
-    def create_radar_download_folders(self):
-        if self.radar is not None:
-            self.radar_site_dir = self.data_dir / 'radar' / self.radar
-            os.makedirs(self.radar_site_dir, exist_ok=True)
-            self.radar_site_download_dir = self.radar_site_dir / 'downloads'
-            os.makedirs(self.radar_site_download_dir, exist_ok=True)
-            self.cf_dir = self.radar_site_download_dir / 'cf_radial'
-            os.makedirs(self.cf_dir, exist_ok=True)
-            return
-        return
-
-    def make_times(self):
+    def make_simulation_times(self):
         self.sim_start = datetime(self.start_year,self.start_month,self.start_day,
                                   self.start_hour,self.start_minute,second=0)
         self.sim_clock = self.sim_start
@@ -139,36 +125,21 @@ class RadarSimulator(Config):
         self.days_in_month = calendar.monthrange(self.start_year, self.start_month)[1]
         return
 
-    def make_prefix(self):
-        first_folder = self.sim_start.strftime('%Y/%m/%d/')
-        second_folder = self.sim_end.strftime('%Y/%m/%d/')
-        self.prefix_day_one = f'{first_folder}{self.radar}'
-        if first_folder != second_folder:
-            self.prefix_day_two = f'{second_folder}{self.radar}'
-        else:
-            self.prefix_day_two = None
-        
-        return
-
-    def download_files(self):
-        for obj in self.bucket.objects.filter(Prefix=self.prefix_day_one):
-            file_dt = datetime.strptime(obj.key[20:35], '%Y%m%d_%H%M%S')
-            if file_dt >= self.sim_start and file_dt <= self.sim_end:
-                if obj.key.endswith('V06') or obj.key.endswith('V08'):
-                    print(obj.key)
-                    file_dt = datetime.strptime(obj.key[20:35], '%Y%m%d_%H%M%S')
-                    self.bucket.download_file(obj.key, str(self.radar_site_download_dir / Path(obj.key).name))
+    def get_radar_coordinates(self,radar):
+        """
+        Get the latitude and longitude coordinates for the radar site.
+        """
+        radar_lat = lc.df[lc.df['radar'] == radar]['lat'].values[0]
+        radar_lon = lc.df[lc.df['radar'] == radar]['lon'].values[0]
+        return radar_lat, radar_lon
 
 
-        if self.prefix_day_two is not None:
-            for obj in self.bucket.objects.filter(Prefix=self.prefix_day_two):
-                file_dt = datetime.strptime(obj.key[20:35], '%Y%m%d_%H%M%S')
-                if file_dt >= self.sim_start and file_dt <= self.sim_end:
-                    if obj.key.endswith('V06') or obj.key.endswith('V08'):
-                        print(obj.key)
-                        self.bucket.download_file(obj.key, str(self.radar_site_download_dir / Path(obj.key).name))
-        return
-    
+    # def build_radar_dictionary(self):
+    #     self.radar_dict = {}
+    #     for radar in self.radar_list:
+    #         lat,lon = self.get_radar_coordinates(radar)
+    #         self.radar_dict[radar] = {'lat':lat,'lon':lon}
+
     def get_timestamp(self,file):
         """
         - extracts datetime info from the radar filename
@@ -222,13 +193,7 @@ class RadarSimulator(Config):
                     math.sin(phi_out))
         return math.degrees(phi_out), math.degrees(lambda_out)
 
-    def get_radar_coordinates(self,radar):
-        """
-        Get the latitude and longitude coordinates for the radar site.
-        """
-        radar_lat = lc.df[lc.df['radar'] == radar]['lat'].values[0]
-        radar_lon = lc.df[lc.df['radar'] == radar]['lon'].values[0]
-        return radar_lat, radar_lon
+
 
     def shift_placefiles(self, filepath):
         filenames = glob(f"{filepath}/*.txt")
@@ -320,10 +285,6 @@ app.layout = dbc.Container([
     lc.toggle_simulation_clock,lc.simulation_clock, lc.radar_id, lc.bottom_section
     ])  # end of app.layout
 
-################################################################################################
-#     Run the scripts
-################################################################################################
-
 
 ################################################################################################
 # ---------------------------------------- Radar Map Callbacks -------------------------------------
@@ -363,9 +324,11 @@ def display_click_data(clickData):
             return 'No Website Available'
         else:
             sa.radar = the_link
-            sa.lat, sa.lon = sa.get_radar_coordinates(sa.radar)
             if sa.radar not in sa.radar_list:
                 sa.radar_list.append(sa.radar)
+            else:
+                radar_list = ', '.join(sa.radar_list)
+                return f'{sa.radar} already selected'
             if len(sa.radar_list) <= sa.number_of_radars:
                 radar_list = ', '.join(sa.radar_list)
                 return f'{radar_list}'
@@ -381,7 +344,9 @@ def toggle_transpose_display(value):
     Resets the radar list when the number of radars is changed
     """
     sa.number_of_radars = value
-    sa.radar_list = []
+    #sa.radar_list = []
+    while len(sa.radar_list) > sa.number_of_radars:
+        sa.radar_list = sa.radar_list[1:]
     if sa.number_of_radars == 1:
         return lc.section_box
     return {'display': 'none'}
@@ -391,38 +356,40 @@ def toggle_transpose_display(value):
 # ---  Run Scripts button ---
 # -------------------------------------
 @app.callback(
-    Output('run_obs_script', 'n_clicks'),
-    [Input('run_scripts', 'n_clicks')],
-    prevent_initial_call=True)
-def launch_obs_script(n_clicks):
+    Output('launch_obs_script', 'n_clicks'),
+    Input('run_scripts_btn', 'n_clicks'))
+def launch_scripts(n_clicks):
     if n_clicks > 0:
+        print('Launching scripts ...')
         return n_clicks
-    return 0
 
 # -------------------------------------
 # ---  Mesowest Placefile script ---
 # -------------------------------------
 @app.callback(
-    [Output('obs_placefile_status', 'value'),
-    Output('run_nexrad_script', 'n_clicks')],
-    Input('run_obs_script', 'n_clicks'))
+    Output('run_nexrad_script', 'n_clicks'),
+    Input('launch_obs_script', 'n_clicks'))
 def run_obs_script(n_clicks):
     if n_clicks > 0:
-        Mesowest(sa.radar,str(sa.lat),str(sa.lon),sa.sim_start_str,str(sa.duration))
-        return 100, n_clicks
-    return PreventUpdate, PreventUpdate
+        #Mesowest(sa.radar,str(sa.lat),str(sa.lon),sa.sim_start_str,str(sa.duration))
+        Mesowest(sa.radar,'42','-83',sa.sim_start_str,str(sa.duration))
+        return n_clicks
+    return 0
 
 # -------------------------------------
 # --- Get Nexrad data ---
 # -------------------------------------
 @app.callback(
-    [Output('run_hodo_script', 'n_clicks'),Output('radar_status', 'value')],
+    [Output('run_hodo_script', 'n_clicks')],
     Input('run_nexrad_script', 'n_clicks'))
 def run_nexrad_script(n_clicks):
+    sa.radar_dict = {}
     if n_clicks > 0:
-        NexradDownloader(sa.radar, sa.sim_start_str, sa.duration)
-        return n_clicks, 100
-    return PreventUpdate, PreventUpdate
+        for r,radar in enumerate(sa.radar_list):
+            sa.radar_dict[radar] = NexradDownloader(radar, sa.sim_start_str, sa.duration)
+            print(sa.radar_dict[radar].radar_files_list)
+            return n_clicks, r * 100/len(sa.radar_list)
+    return PreventUpdate, 0
 
 
 # -------------------------------------
@@ -475,7 +442,7 @@ Input('start_minute', 'value'),
 Input('duration', 'value'),
 )
 def get_sim(_yr, _mo, _dy, _hr, _mn, _dur):
-    sa.make_times()
+    sa.make_simulation_times()
     line1 = f'Start: {sa.sim_start_str[:-7]}Z ____ {sa.duration} minutes'
     return line1
 
@@ -545,8 +512,8 @@ def update_time(_n):
 ################################################################################################
 
 if __name__ == '__main__':
-    #app.run_server(debug=True, host="0.0.0.0", port=8050, threaded=True)
-    app.run(debug=True, port=8050, threaded=True)
+    app.run_server(host="0.0.0.0", port=8050, threaded=True, debug=True, use_reloader=False)
+    #app.run(debug=True, port=8050, threaded=True)
     
 # pathname_params = dict()
 # if my_settings.hosting_path is not None:

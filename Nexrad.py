@@ -10,7 +10,10 @@ from pathlib import Path
 import boto3
 import botocore
 from botocore.client import Config
-
+import pandas as pd
+df = pd.read_csv('radars.csv', dtype={'lat': float, 'lon': float})
+df['radar_id'] = df['radar']
+df.set_index('radar_id', inplace=True)
 
 class NexradDownloader:
     def __init__(self, radar_id, start_tstr, duration):
@@ -28,8 +31,17 @@ class NexradDownloader:
         os.makedirs(self.radar_directory, exist_ok=True)
         self.download_directory = self.radar_directory / 'downloads'
         os.makedirs(self.download_directory, exist_ok=True)
+        self.lat, self.lon = self.get_radar_coordinates()
+        self.radar_files_list = []
         self.download_files()
 
+    def get_radar_coordinates(self):
+        """
+        Get the latitude and longitude coordinates for the radar site.
+        """
+        radar_lat = df[df['radar'] == self.radar_id]['lat'].values[0]
+        radar_lon = df[df['radar'] == self.radar_id]['lon'].values[0]
+        return radar_lat, radar_lon
 
     def make_prefix(self):
         first_folder = self.start_time.strftime('%Y/%m/%d/')
@@ -50,18 +62,20 @@ class NexradDownloader:
             file_dt = datetime.strptime(obj.key[20:35], '%Y%m%d_%H%M%S')
             if file_dt >= self.start_time and file_dt <= self.end_time:
                 if obj.key.endswith('V06') or obj.key.endswith('V08'):
-                    self.bucket.download_file(obj.key, str(self.download_directory / Path(obj.key).name))
-
-
+                    this_file = str(self.download_directory / Path(obj.key).name)
+                    self.bucket.download_file(obj.key, this_file)
+                    self.radar_files_list.append(this_file)
+                    
         if self.prefix_day_two is not None:
             for obj in self.bucket.objects.filter(Prefix=self.prefix_day_two):
                 file_dt = datetime.strptime(obj.key[20:35], '%Y%m%d_%H%M%S')
                 if file_dt >= self.start_time and file_dt <= self.end_time:
                     if obj.key.endswith('V06') or obj.key.endswith('V08'):
-                        self.bucket.download_file(obj.key, str(self.download_directory / Path(obj.key).name))
+                        this_file = str(self.download_directory / Path(obj.key).name)
+                        self.bucket.download_file(obj.key, this_file)
+                        self.radar_files_list.append(this_file)
 
-        return
-
+        return {'radar':self.radar_id, 'lat':self.lat, 'lon':self.lon, 'files':self.radar_files_list}
 
 if __name__ == "__main__":
 
