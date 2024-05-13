@@ -21,14 +21,12 @@ from dash.exceptions import PreventUpdate
 #import diskcache
 
 import numpy as np
-import boto3
-import botocore
 from botocore.client import Config
 
 # bootstrap is what helps styling for a better presentation
 import dash_bootstrap_components as dbc
-from obs_placefile import Mesowest
-from Nexrad import NexradDownloader
+from scripts.obs_placefile import Mesowest
+from scripts.Nexrad import NexradDownloader
 import layout_components as lc
 
  # Earth radius (km)
@@ -37,6 +35,20 @@ R = 6_378_137
 # Regular expressions. First one finds lat/lon pairs, second finds the timestamps.
 LAT_LON_REGEX = "[0-9]{1,2}.[0-9]{1,100},[ ]{0,1}[|\\s-][0-9]{1,3}.[0-9]{1,100}"
 TIME_REGEX = "[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z"
+
+# ----------------------------------------
+#        Attempt to set up environment
+# ----------------------------------------
+TOKEN = 'INSERT YOUR MAPBOX TOKEN HERE'
+
+BASE_DIR = Path.cwd()
+DATA_DIR = BASE_DIR / 'data'
+RADAR_DIR = DATA_DIR / 'radar'
+CSV_PATH = BASE_DIR / 'radars.csv'
+SCRIPTS_DIR = BASE_DIR / 'scripts'
+OBS_SCRIPT_PATH = SCRIPTS_DIR / 'obs_placefile.py'
+HODO_SCRIPT_PATH = SCRIPTS_DIR / 'hodo_plot.py'
+NEXRAD_SCRIPT_PATH = SCRIPTS_DIR / 'Nexrad.py'
 
 ################################################################################################
 #       Define class RadarSimulator
@@ -75,10 +87,10 @@ class RadarSimulator(Config):
         self.start_year = 2023
         self.start_month = 6
         self.days_in_month = 30
-        self.start_day = 15
-        self.start_hour = 18
-        self.start_minute = 30
-        self.duration = 60
+        self.start_day = 7
+        self.start_hour = 21
+        self.start_minute = 45
+        self.duration = 30
         self.timeshift = None
         self.timestring = None
         self.sim_clock = None
@@ -95,8 +107,17 @@ class RadarSimulator(Config):
         self.current_dir = Path.cwd()
         self.define_scripts_and_assets_directories()
         self.make_simulation_times()
+        # self.get_radar_coordinates()
 
-
+    def create_radar_dict(self):
+        for _i,radar in enumerate(self.radar_list):
+            self.lat = lc.df[lc.df['radar'] == radar]['lat'].values[0]
+            self.lon = lc.df[lc.df['radar'] == radar]['lon'].values[0]
+            asos_one = lc.df[lc.df['radar'] == radar]['asos_one'].values[0]
+            asos_two = lc.df[lc.df['radar'] == radar]['asos_two'].values[0]
+            self.radar_dict[radar.upper()] = {'lat':self.lat,'lon':self.lon, 'asos_one':asos_one, 'asos_two':asos_two, 'radar':radar.upper(), 'file_list':[]}
+        return
+    
     def define_scripts_and_assets_directories(self):
         self.csv_file = self.current_dir / 'radars.csv'
         self.data_dir = self.current_dir / 'data'
@@ -118,27 +139,13 @@ class RadarSimulator(Config):
                                   self.start_hour,self.start_minute,second=0)
         self.sim_clock = self.sim_start
         self.sim_start_str = datetime.strftime(self.sim_start,"%Y-%m-%d %H:%M:%S UTC")
+        self.timestring = self.sim_start_str
         self.sim_end = self.sim_start + timedelta(minutes=int(self.duration))
         return
    
     def get_days_in_month(self):
         self.days_in_month = calendar.monthrange(self.start_year, self.start_month)[1]
         return
-
-    def get_radar_coordinates(self,radar):
-        """
-        Get the latitude and longitude coordinates for the radar site.
-        """
-        radar_lat = lc.df[lc.df['radar'] == radar]['lat'].values[0]
-        radar_lon = lc.df[lc.df['radar'] == radar]['lon'].values[0]
-        return radar_lat, radar_lon
-
-
-    # def build_radar_dictionary(self):
-    #     self.radar_dict = {}
-    #     for radar in self.radar_list:
-    #         lat,lon = self.get_radar_coordinates(radar)
-    #         self.radar_dict[radar] = {'lat':lat,'lon':lon}
 
     def get_timestamp(self,file):
         """
@@ -244,6 +251,16 @@ class RadarSimulator(Config):
         return new_line
 
 
+scripts_button = html.Div([
+        dbc.Row([
+            dbc.Col(
+                html.Div([
+                    dbc.Button('Make Obs Placefile ... Download radar data ... Make hodo plots', size="lg", id='run_scripts', n_clicks=0),
+                    ], className="d-grid gap-2"), style={'vertical-align':'middle'}),
+                    html.Div(id='show_script_progress',style=lc.feedback)
+        ])
+            ], style={'padding':'1em', 'vertical-align':'middle'})
+
 
 ################################################################################################
 #      Initialize the app
@@ -260,7 +277,7 @@ app.title = "Radar Simulator"
 
 sim_day_selection =  dbc.Col(html.Div([
                     lc.step_day,
-                    dcc.Dropdown(np.arange(1,sa.days_in_month+1),15,id='start_day',clearable=False
+                    dcc.Dropdown(np.arange(1,sa.days_in_month+1),7,id='start_day',clearable=False
                     ) ]))
 
 app.layout = dbc.Container([
@@ -280,7 +297,7 @@ app.layout = dbc.Container([
 ]),
         lc.spacer,
         lc.map_section, lc.transpose_section, lc.spacer_mini,
-        lc.scripts_button,
+        scripts_button,
     lc.status_section,
     lc.toggle_simulation_clock,lc.simulation_clock, lc.radar_id, lc.bottom_section
     ])  # end of app.layout
@@ -296,7 +313,6 @@ app.layout = dbc.Container([
 def transpose_radar(tradar):
     if tradar != 'None':
         sa.tradar = tradar
-        sa.tlat, sa.tlon = sa.get_radar_coordinates(sa.tradar)
         return f'{sa.tradar}'
     return 'None'
 
@@ -333,6 +349,7 @@ def display_click_data(clickData):
                 radar_list = ', '.join(sa.radar_list)
                 return f'{radar_list}'
             sa.radar_list = sa.radar_list[1:]
+            sa.create_radar_dict()
             radar_list = ', '.join(sa.radar_list)
             return f'{radar_list}'
 
@@ -355,64 +372,57 @@ def toggle_transpose_display(value):
 # -------------------------------------
 # ---  Run Scripts button ---
 # -------------------------------------
-@app.callback(
-    Output('launch_obs_script', 'n_clicks'),
-    Input('run_scripts_btn', 'n_clicks'))
-def launch_scripts(n_clicks):
-    if n_clicks > 0:
-        print('Launching scripts ...')
-        return n_clicks
-
-# -------------------------------------
-# ---  Mesowest Placefile script ---
-# -------------------------------------
-@app.callback(
-    Output('run_nexrad_script', 'n_clicks'),
-    Input('launch_obs_script', 'n_clicks'))
-def run_obs_script(n_clicks):
-    if n_clicks > 0:
-        #Mesowest(sa.radar,str(sa.lat),str(sa.lon),sa.sim_start_str,str(sa.duration))
-        Mesowest(sa.radar,'42','-83',sa.sim_start_str,str(sa.duration))
-        return n_clicks
-    return 0
-
-# -------------------------------------
-# --- Get Nexrad data ---
-# -------------------------------------
-@app.callback(
-    [Output('run_hodo_script', 'n_clicks')],
-    Input('run_nexrad_script', 'n_clicks'))
-def run_nexrad_script(n_clicks):
-    sa.radar_dict = {}
-    if n_clicks > 0:
-        for r,radar in enumerate(sa.radar_list):
-            sa.radar_dict[radar] = NexradDownloader(radar, sa.sim_start_str, sa.duration)
-            print(sa.radar_dict[radar].radar_files_list)
-            return n_clicks, r * 100/len(sa.radar_list)
-    return PreventUpdate, 0
 
 
-# -------------------------------------
-# --- Hodo plots ---
-# -------------------------------------
-@app.callback(
-    [Output('run_nse', 'n_clicks'), Output('hodo_status', 'value')],
-    Input('run_hodo_script', 'n_clicks'))
 def run_hodo_script(args):
-    subprocess.run(["python", sa.hodo_script_path] + args, check=True)
+    subprocess.run(["python", HODO_SCRIPT_PATH] + args)
     return
 
-# -------------------------------------
-# --- NSE placefiles
-# -------------------------------------
+
 @app.callback(
-    [Output('run_transpose_script', 'n_clicks'), Output('nse_status', 'value')],
-    Input('run_nse', 'n_clicks'))
-def run_nse_script(n_clicks):
+    Output('show_script_progress', 'children'),
+    [Input('run_scripts', 'n_clicks')],
+    prevent_initial_call=True)
+def launch_obs_script(n_clicks):
     if n_clicks > 0:
-        sa.shift_placefiles(sa.placefiles_dir)
-        return n_clicks, 100
-    return PreventUpdate, PreventUpdate
+        sa.make_simulation_times()
+        print(sa.radar_list)
+        try:
+            sa.create_radar_dict()
+        except Exception as e:
+            print("Error creating radar dictionary: ", e)
+        for radar, data in sa.radar_dict.items():
+            pass
+            try:
+                asos_one = data['asos_one']
+                asos_two = data['asos_two']
+                print(asos_one, asos_two, radar)
+            except KeyError as e:
+                print("Error getting radar metadata: ", e)
+            try:
+                file_list = NexradDownloader(radar, sa.timestring, str(sa.duration))
+                sa.radar_dict[radar]['file_list'] = file_list
+                #print("Nexrad script completed ... Now creating hodographs ...")
+            except Exception as e:
+                print("Error running nexrad script: ", e)
+            try:
+                print(f'hodo script: {radar}, {BASE_DIR}, {asos_one}, {asos_two}')
+                run_hodo_script([radar, BASE_DIR, asos_one, asos_two])
+                #print("Hodograph script completed ...")
+            except Exception as e:
+                print("Error running hodo script: ", e)
+
+                
+        try:
+            #mean_lat,mean_lon = sa.get_mean_lat_lon_values()
+            print("Running obs script...")
+            Mesowest(str(sa.lat),str(sa.lon),sa.timestring,str(sa.duration))
+            print("Obs script completed")
+        except Exception as e:
+            print("Error running obs script: ", e)
+
+        return ""
+
 
 # -------------------------------------
 # --- Transpose if transpose radar selected
@@ -512,8 +522,8 @@ def update_time(_n):
 ################################################################################################
 
 if __name__ == '__main__':
-    app.run_server(host="0.0.0.0", port=8050, threaded=True, debug=True, use_reloader=False)
-    #app.run(debug=True, port=8050, threaded=True)
+    #app.run_server(host="0.0.0.0", port=8050, threaded=True, debug=True, use_reloader=False)
+    app.run(debug=True, port=8050, threaded=True)
     
 # pathname_params = dict()
 # if my_settings.hosting_path is not None:
@@ -575,3 +585,62 @@ if __name__ == '__main__':
         # os.system(cp_cmd)
         
         # return
+# def handle_script_progress(n_clicks):
+#     try:
+#         if n_clicks > 0:
+#             print("Running script...")
+#             sa.make_simulation_times()
+#             sa.create_radar_dict()
+
+#             for key in sa.radar_dict.keys():
+#                 try:
+#                     asos_one = sa.radar_dict[key]['asos_one']
+#                     asos_two = sa.radar_dict[key]['asos_two']
+#                     radar = key
+#                     print(asos_one, asos_two, radar)
+#                 except KeyError as e:
+#                     print("Error getting radar metadata: ", e)
+#                 except Exception as e:
+#                     print("Error: ", e)
+
+#                 try:
+#                     NexradDownloader(radar, sa.timestring, str(sa.duration))
+#                 except Exception as e:
+#                     print("Error running nexrad script: ", e)
+
+#                 try:
+#                     run_hodo_script([radar, BASE_DIR, asos_one, asos_two])
+#                 except Exception as e:
+#                     print("Error running hodograph script: ", e)
+#     except Exception as e:
+#         print("Error: ", e)
+
+
+
+# def handle_script_progress(n_clicks):
+#     try:
+#         if n_clicks > 0:
+#             print("Running script...")
+#             sa.make_simulation_times()
+#             sa.create_radar_dict()
+
+#             for key in sa.radar_dict.keys():
+#                 try:
+#                     asos_one = sa.radar_dict[key]['asos_one']
+#                     asos_two = sa.radar_dict[key]['asos_two']
+#                     radar = key
+#                     print(asos_one, asos_two, radar)
+#                 except KeyError as e:
+#                     print("Error getting radar metadata: ", e)
+#                 except Exception as e:
+#                     print("Error: ", e)
+
+#                 try:
+#                     NexradDownloader(radar, sa.timestring, str(sa.duration))
+#                 except Exception as e:
+#                     print("Error running nexrad script: ", e)
+
+#                 try:
+#                     run_hodo_script([radar, BASE_DIR, asos_one, asos_two])
+#                 except Exception as e:
+#                     print("Error: ", e)

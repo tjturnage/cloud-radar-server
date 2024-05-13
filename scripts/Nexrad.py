@@ -10,15 +10,16 @@ from pathlib import Path
 import boto3
 import botocore
 from botocore.client import Config
-import pandas as pd
-df = pd.read_csv('radars.csv', dtype={'lat': float, 'lon': float})
-df['radar_id'] = df['radar']
-df.set_index('radar_id', inplace=True)
+# import pandas as pd
+# df = pd.read_csv('radars.csv', dtype={'lat': float, 'lon': float})
+# df['radar_id'] = df['radar']
+# df.set_index('radar_id', inplace=True)
+
 
 class NexradDownloader:
     def __init__(self, radar_id, start_tstr, duration):
         super().__init__()
-        self.radar_id = radar_id.upper()
+        self.radar_id = radar_id
         self.start_tstr = start_tstr
         self.start_time = datetime.strptime(self.start_tstr,'%Y-%m-%d %H:%M:%S UTC')
         self.duration = int(duration)
@@ -31,17 +32,8 @@ class NexradDownloader:
         os.makedirs(self.radar_directory, exist_ok=True)
         self.download_directory = self.radar_directory / 'downloads'
         os.makedirs(self.download_directory, exist_ok=True)
-        self.lat, self.lon = self.get_radar_coordinates()
         self.radar_files_list = []
         self.download_files()
-
-    def get_radar_coordinates(self):
-        """
-        Get the latitude and longitude coordinates for the radar site.
-        """
-        radar_lat = df[df['radar'] == self.radar_id]['lat'].values[0]
-        radar_lon = df[df['radar'] == self.radar_id]['lon'].values[0]
-        return radar_lat, radar_lon
 
     def make_prefix(self):
         first_folder = self.start_time.strftime('%Y/%m/%d/')
@@ -75,10 +67,9 @@ class NexradDownloader:
                         self.bucket.download_file(obj.key, this_file)
                         self.radar_files_list.append(this_file)
 
-        return {'radar':self.radar_id, 'lat':self.lat, 'lon':self.lon, 'files':self.radar_files_list}
+        return self.radar_files_list
 
 if __name__ == "__main__":
 
-    #NexradDownloader('KGRR', '2023-08-24 23:45:00 UTC', 30)
+    #NexradDownloader('kgrr', '2023-08-24 23:45:00 UTC', 30)
     NexradDownloader(sys.argv[1], sys.argv[2], sys.argv[3])
-

@@ -1,206 +1,206 @@
 radar_id,radar,wfo,lat,lon,elevation,radar_type,state,full_name,asos_one,asos_two
-PABC,pabc,pafc,60.79198,-161.87648,57,1,AK,Bethel,PABE,PPIT
-PACG,pacg,pajk,56.85264,-135.52875,82,1,AK,Biorka Island,PASI,PAGN
-PAHG,pahg,pafc,60.72598,-151.35155,108,1,AK,Kenai,PAEN,PASX
-PAKC,pakc,pafc,58.67962,-156.62949,43,1,AK,King Salmon,PAKN,PAIG
-PAIH,paih,pafc,59.46127,-146.30351,40,1,AK,Middleton Island,PAMD,PACV
-PAEC,paec,pafg,64.51152,-165.29547,27,1,AK,Nome,PAOM,PATE
-PAPD,papd,pafg,65.03508,-147.50156,825,1,AK,Pedro Dome,PAFA,PAFB
-KBMX,kbmx,kbmx,33.17216,-86.76974,231,1,AL,Birmingham,KEET,KEKY
-KEOX,keox,ktae,31.46054,-85.45937,163,1,AL,Fort Rucker,KDHN,KHEY
-KHTX,khtx,khun,34.93048,-86.08347,566,1,AL,Huntsville,K4A6,KBGF
-KMXX,kmxx,kbmx,32.53668,-85.78975,170,1,AL,Maxwell AFB,KAUO,KALX
-KMOB,kmob,kmob,30.67955,-88.23988,88,1,AL,Mobile,KMOB,KBFM
-KSRX,ksrx,ktsa,35.29044,-94.36192,224,1,AR,Fort Smith,KFSM,KRKR
-KLZK,klzk,klzk,34.83653,-92.26219,197,1,AR,Little Rock,KORK,KLIT
-KFSX,kfsx,kfgz,34.57437,-111.1984,2290,1,AZ,Flagstaff,KPAN,KSEZ
-KIWA,kiwa,kpsr,33.28996,-111.66997,434,1,AZ,Phoenix,KIWA,KCHD
-TPHX,tphx,kpsr,33.42058,-112.16288,331,3,AZ,TDWR Phoenix,KPHX,KGEU
-KEMX,kemx,ktwc,31.89365,-110.63037,1621,1,AZ,Tucson,KTUS,KDMA
-KYUX,kyux,kpsr,32.49519,-114.6567,72,1,AZ,Yuma,KYNL,KNOZ
-KBBX,kbbx,ksto,39.49564,-121.63176,67,1,CA,Beale AFB,KOVE,KBAB
-KEYX,keyx,kvef,35.09783,-117.56094,875,1,CA,Edwards AFB,KEHW,KMHV
-KBHX,kbhx,keka,40.49863,-124.29204,766,1,CA,Eureka,KACV,KFOT
-KVTX,kvtx,klox,34.41161,-119.17963,855,1,CA,Los Angeles,KCMA,KOXR
-KDAX,kdax,ksto,38.50114,-121.67791,43,1,CA,Sacramento,KEDU,KSAC
-KNKX,knkx,ksgx,32.91896,-117.04178,320,1,CA,San Diego,KNKX,KSEE
-KMUX,kmux,kmtr,37.15556,-121.89845,1082,1,CA,San Francisco,KSJC,KE16
-KHNX,khnx,khnx,36.31421,-119.63211,103,1,CA,San Joaquin Valley,KHJO,KVIS
-KSOX,ksox,ksgx,33.81766,-117.63599,946,1,CA,Santa Ana Mountains,KAJO,KCNO
+PABC,pabc,pafc,60.79198,-161.87648,57,1,AK,Bethel,pabe,ppit
+PACG,pacg,pajk,56.85264,-135.52875,82,1,AK,Biorka Island,pasi,pagn
+PAHG,pahg,pafc,60.72598,-151.35155,108,1,AK,Kenai,paen,pasx
+PAKC,pakc,pafc,58.67962,-156.62949,43,1,AK,King Salmon,pakn,paig
+PAIH,paih,pafc,59.46127,-146.30351,40,1,AK,Middleton Island,pamd,pacv
+PAEC,paec,pafg,64.51152,-165.29547,27,1,AK,Nome,paom,pate
+PAPD,papd,pafg,65.03508,-147.50156,825,1,AK,Pedro Dome,pafa,pafb
+KBMX,kbmx,kbmx,33.17216,-86.76974,231,1,AL,Birmingham,keet,keky
+KEOX,keox,ktae,31.46054,-85.45937,163,1,AL,Fort Rucker,kdhn,khey
+KHTX,khtx,khun,34.93048,-86.08347,566,1,AL,Huntsville,k4a6,kbgf
+KMXX,kmxx,kbmx,32.53668,-85.78975,170,1,AL,Maxwell AFB,kauo,kalx
+KMOB,kmob,kmob,30.67955,-88.23988,88,1,AL,Mobile,kmob,kbfm
+KSRX,ksrx,ktsa,35.29044,-94.36192,224,1,AR,Fort Smith,kfsm,krkr
+KLZK,klzk,klzk,34.83653,-92.26219,197,1,AR,Little Rock,kork,klit
+KFSX,kfsx,kfgz,34.57437,-111.1984,2290,1,AZ,Flagstaff,kpan,ksez
+KIWA,kiwa,kpsr,33.28996,-111.66997,434,1,AZ,Phoenix,kiwa,kchd
+TPHX,tphx,kpsr,33.42058,-112.16288,331,3,AZ,TDWR Phoenix,kphx,kgeu
+KEMX,kemx,ktwc,31.89365,-110.63037,1621,1,AZ,Tucson,ktus,kdma
+KYUX,kyux,kpsr,32.49519,-114.6567,72,1,AZ,Yuma,kynl,knoz
+KBBX,kbbx,ksto,39.49564,-121.63176,67,1,CA,Beale AFB,kove,kbab
+KEYX,keyx,kvef,35.09783,-117.56094,875,1,CA,Edwards AFB,kehw,kmhv
+KBHX,kbhx,keka,40.49863,-124.29204,766,1,CA,Eureka,kacv,kfot
+KVTX,kvtx,klox,34.41161,-119.17963,855,1,CA,Los Angeles,kcma,koxr
+KDAX,kdax,ksto,38.50114,-121.67791,43,1,CA,Sacramento,kedu,ksac
+KNKX,knkx,ksgx,32.91896,-117.04178,320,1,CA,San Diego,knkx,ksee
+KMUX,kmux,kmtr,37.15556,-121.89845,1082,1,CA,San Francisco,ksjc,ke16
+KHNX,khnx,khnx,36.31421,-119.63211,103,1,CA,San Joaquin Valley,khjo,kvis
+KSOX,ksox,ksgx,33.81766,-117.63599,946,1,CA,Santa Ana Mountains,kajo,kcno
 KVBX,kvbx,klox,34.83831,-120.39805,412,1,CA,Vandenberg AFB,,
-KFTG,kftg,kbou,39.78661,-104.54572,1709,1,CO,Denver/Boulder,KCFO,KDEN
-KGJX,kgjx,kgjt,39.06214,-108.21375,3078,1,CO,Grand Junction,KGJT,KRIL
-KPUX,kpux,kpub,38.45964,-104.18135,1634,1,CO,Pueblo,KABH,KPUB
-TDEN,tden,kbou,39.72742,-104.52649,1737,3,CO,TDWR Denver,KCFO,KDEN
-KDOX,kdox,kakq,38.82574,-75.44004,49,1,DE,Dover AFB,KGED,KDOV
-KEVX,kevx,kmob,30.56503,-85.92174,67,1,FL,Eglin AFB,K54J,KECP
-KJAX,kjax,kjax,30.48459,-81.70189,48,1,FL,Jacksonville,KJAX,KNIP
-KBYX,kbyx,kkey,24.59745,-81.70316,27,1,FL,Key West,KNQX,KEYW
-KMLB,kmlb,kmlb,28.11311,-80.65357,45,1,FL,Melbourne,KMLB,KCOF
-KAMX,kamx,kmfl,25.61122,-80.41267,33,1,FL,Miami,KTMB,KHST
-TFLL,tfll,kmfl,26.1432,-80.34397,36,3,FL,TDWR Fort Lauderdale,KFXE,KFLL
-TMIA,tmia,kmfl,25.75753,-80.49116,38,3,FL,TDWR Miami,KMIA,KTNB
-TMCO,tmco,kmlb,28.34367,-81.32575,51,3,FL,TDWR Orlando International,KMCO,KISM
-TTPA,ttpa,ktbw,27.85955,-82.51778,28,3,FL,TDWR Tampa Bay,KMCF,KTPF
-TPBI,tpbi,kmfl,26.6879,-80.2733,40,3,FL,TDWR West Palm Beach,KPBI,KF45
-KTLH,ktlh,ktae,30.39768,-84.32887,53,1,FL,Tallahassee,KTLH,K2J9
-KTBW,ktbw,ktbw,27.70544,-82.40178,37,1,FL,Tampa,KMCF,KSPG
-KFFC,kffc,kffc,33.36354,-84.56602,296,1,GA,Atlanta,KFFC,KHMP
-KVAX,kvax,kjax,30.89025,-83.00169,100,1,GA,Moody AFB,KVAD,KHOE
-KJGX,kjgx,kffc,32.67557,-83.35094,188,1,GA,Robins AFB,KWRB,KMCN
-TATL,tatl,kffc,33.64661,-84.26217,327,3,GA,TDWR Atlanta,KATL,KFTY
-PGUA,pgua,pgum,13.4559,144.81104,117,1,GU,Andersen AFB,PGUM,PGUA
-PHKI,phki,phfo,21.89389,-159.5525,103,1,HI,Kauai,PHLI,PHBK
-PHKM,phkm,phfo,20.12535,-155.77801,1208,1,HI,Kohala,PHSF,PHKO
-PHMO,phmo,phfo,21.13284,-157.18013,440,1,HI,Molokai,PHMK,PHNY
-PHWA,phwa,phfo,19.09498,-155.56886,445,1,HI,South Shore,PHKO,PHTO
-KDMX,kdmx,kdmx,41.7312,-93.72296,333,1,IA,Des Moines,KIKV,KDSM
-KDVN,kdvn,kdvn,41.61237,-90.58207,259,1,IA,Quad Cities,KDVN,KMLI
-KCBX,kcbx,kboi,43.49026,-116.23613,966,1,ID,Boise,KBOI,KMAN
-KSFX,ksfx,kpih,43.10558,-112.68633,1383,1,ID,Pocatello,KPIH,KIDA
-KLOT,klot,klot,41.60445,-88.08451,231,1,IL,Chicago,KLOT,KJOT
-KILX,kilx,kilx,40.15056,-89.33698,222,1,IL,Lincoln,KAAA,KSPI
-TMDW,tmdw,klot,41.65134,-87.72955,232,3,IL,TDWR Chicago Midway,KMDW,KIGQ
-TORD,tord,klot,41.79709,-87.85824,226,3,IL,TDWR Chicago O'Hare,KMDW,KORD
-KVWX,kvwx,kpah,38.26038,-87.72454,191,1,IN,Evansville,KEVV,KCUL
-KIWX,kiwx,kiwx,41.35867,-85.6998,321,1,IN,Fort Wayne,KGSH,KASW
-KIND,kind,kind,39.7075,-86.28026,270,1,IN,Indianapolis,KIND,KEYE
-TIDS,tids,kind,39.63722,-86.43547,258,3,IN,TDWR Indianapolis,KIND,K2R2
-RODN,rodn,pafc,26.30781,127.90329,125,1,JP,Kadena AFB,RODN,ROTM
-RKSG,rksg,pafc,37.20762,127.28575,463,1,KR,Camp Humphreys,RKSG,RKSO
-RKJK,rkjk,pafc,35.92436,126.62214,58,1,KR,Kunsan AFB,RKJK,RJKB
-KDDC,kddc,kddc,37.76083,-99.96887,814,1,KS,Dodge City,KDDC,KGCK
-KGLD,kgld,kgld,39.36684,-101.70033,1132,1,KS,Goodland,KGLD,KCBK
-TICH,tich,kict,37.50714,-97.43697,411,3,KS,TDWR Wichita,KICT,KIAB
-KTWX,ktwx,ktop,38.99694,-96.23251,431,1,KS,Topeka,KMHK,KFRI
-KICT,kict,kict,37.65457,-97.44312,427,1,KS,Wichita,KICT,KIAB
-KHPX,khpx,kpah,36.73696,-87.28555,190,1,KY,Fort Campbell,KCKV,KHVC
-KJKL,kjkl,kjkl,37.59079,-83.31299,445,1,KY,Jackson,KJKL,KCPF
-KLVX,klvx,klmk,37.97528,-85.9436,253,1,KY,Louisville,KFTK,KSDF
-KPAH,kpah,kpah,37.06848,-88.77232,153,1,KY,Paducah,KPAH,KM30
-TSDF,tsdf,klmk,38.0459,-85.61061,222,3,KY,TDWR Louisville,KSDF,KLOU
-KPOE,kpoe,klch,31.15574,-92.97607,143,1,LA,Fort Polk,KPOE,KAEX
-KLCH,klch,klch,30.12532,-93.21586,41,1,LA,Lake Charles,KLCH,KUXL
-KLIX,klix,klix,30.33677,-89.82545,54,0,LA,New Orleans,KASD,KMJD
-KHDC,khdc,klix,30.519,-90.407,13,1,LA,New Orleans,KHDC,KASD
-KSHV,kshv,kshv,32.45079,-93.84132,117,1,LA,Shreveport,KSHV,KDTN
-TMSY,tmsy,klix,30.02163,-90.40331,30,3,LA,TDWR New Orleans,KMSY,KAPS
-KBOX,kbox,kbox,41.95585,-71.13699,70,1,MA,Boston,KTAN,KPYM
-TBOS,tbos,kbox,42.1583,-70.93343,80,3,MA,TDWR Boston,KOWD,KBOS
-TADW,tadw,klwx,38.69531,-76.84489,105,3,MD,TDWR Andrews Air Force Base,KADW,KDAA
-TBWI,tbwi,klwx,39.08961,-76.63018,104,3,MD,TDWR Baltimore/Wash,KBWI,KFME
-TDCA,tdca,klwx,38.75902,-76.96178,105,3,MD,TDWR Washington National,KADW,KDCA
-KCBW,kcbw,kcar,46.03928,-67.80636,261,1,ME,Caribou,KHUL,CEWD
-KGYX,kgyx,kgyx,43.89135,-70.25642,144,1,ME,Portland,KPWM,KIWI
-KDTX,kdtx,kdtx,42.69997,-83.47167,370,1,MI,Detroit,KPTK,KVLL
-KAPX,kapx,kapx,44.90712,-84.7196,475,1,MI,Gaylord,KGLR,KGOV
-KGRR,kgrr,kgrr,42.8939,-85.54479,266,1,MI,Grand Rapids,KGRR,KY70
-KMQT,kmqt,kmqt,46.53115,-87.54829,464,1,MI,Marquette,KSAW,KP53
-TDTW,tdtw,kdtx,42.11135,-83.51485,235,3,MI,TDWR Detroit,KYIP,KDTW
-KDLH,kdlh,kdlh,46.83689,-92.21005,470,1,MN,Duluth,KDLH,KDYT
-KMPX,kmpx,kmpx,44.84877,-93.56541,335,1,MN,Minneapolis,KFCM,KMSP
-TMSP,tmsp,kmpx,44.87144,-92.93295,341,3,MN,TDWR Minneapolis,KSGS,KSTP
-KEAX,keax,keax,38.81023,-94.26426,334,1,MO,Kansas City,KLXT,KLRY
-KSGF,ksgf,ksgf,37.23521,-93.40067,419,1,MO,Springfield,KSGF,KFWB
-KLSX,klsx,klsx,38.69868,-90.68259,219,1,MO,St. Louis,KSUS,KSTL
-TMCI,tmci,keax,39.49851,-94.7421,332,3,MO,TDWR Kansas City,KLRY,KIXD
-TSTL,tstl,klsx,38.80537,-90.48883,197,3,MO,TDWR St Louis,KALN,KSTL
-KGWX,kgwx,kjan,33.8969,-88.32911,179,1,MS,Columbus AFB,KM40,KCBM
-KDGX,kdgx,kjan,32.27982,-89.98447,185,1,MS,Jackson,KJAN,KMBO
-KBLX,kblx,kbyz,45.85389,-108.60686,1128,1,MT,Billings,KBIL,K6S8
-KGGW,kggw,kggw,48.20647,-106.62489,726,1,MT,Glasgow,KGGW,KOLF
-KTFX,ktfx,ktfx,47.45965,-111.38552,1159,1,MT,Great Falls,KGTF,KGFA
-KMSX,kmsx,kmso,47.04103,-113.98624,2431,1,MT,Missoula,KMSO,KHRF
-KMHX,kmhx,kmhx,34.77594,-76.87627,43,1,NC,Morehead City,KNKT,KNJM
-KRAX,krax,krah,35.66558,-78.48976,140,1,NC,Raleigh/Durham,KJNX,KRDU
-TCLT,tclt,kgsp,35.33737,-80.88487,265,3,NC,TDWR Charlotte,KJQF,KCLT
-TRDU,trdu,krah,36.00207,-78.69736,156,3,NC,TDWR Raleigh Durham,KRDU,KTQV
-KLTX,kltx,kilm,33.98917,-78.429,44,1,NC,Wilmington,KSUT,KCRE
-KBIS,kbis,kbis,46.77104,-100.76064,534,1,ND,Bismarck,KBIS,KY19
-KMVX,kmvx,kfgf,47.5289,-97.32525,329,1,ND,Grand Forks,KGFK,KRDR
-KMBX,kmbx,kbis,48.39305,-100.86457,484,1,ND,Minot AFB,KMOT,KMIB
-KUEX,kuex,kgid,40.32096,-98.44204,626,1,NE,Hastings,KHSI,KEAR
-KLNX,klnx,klbf,41.95786,-100.57639,948,1,NE,North Platte,KTIF,KBBW
-KOAX,koax,koax,41.32029,-96.36686,384,1,NE,Omaha,KAHQ,KFET
-TEWR,tewr,kokx,40.59357,-74.27018,41,3,NJ,TDWR Newark,KLDJ,KEWR
-KABX,kabx,kabq,35.14974,-106.82412,1813,1,NM,Albuquerque,KAEG,KABQ
-KFDX,kfdx,kabq,34.63406,-103.61879,1431,1,NM,Cannon AFB,KCVS,K4MR
-KHDX,khdx,kepz,33.07701,-106.1201,1301,1,NM,Holloman AFB,KHMN,KALM
-KLRX,klrx,klkn,40.73973,-116.80283,2101,1,NV,Elko,KBAM,KEKO
-KESX,kesx,kvef,35.7012,-114.89212,1508,1,NV,Las Vegas,KBVU,KHND
-KRGX,krgx,krev,39.75412,-119.46219,2559,1,NV,Reno,KRTS,KRNO
-TLAS,tlas,kvef,36.14356,-115.00739,627,3,NV,TDWR Las Vegas,KVGT,KHND
-KENX,kenx,kaly,42.58654,-74.0639,589,1,NY,Albany,KALB,KSCH
-KBGM,kbgm,kbgm,42.19966,-75.9848,519,1,NY,Binghamton,KBGM,KITH
-KBUF,kbuf,kbuf,42.94875,-78.73671,240,1,NY,Buffalo,KBUF,KIAG
-KTYX,ktyx,kbtv,43.75564,-75.67946,597,1,NY,Montague,KGTB,KART
-TJFK,tjfk,kokx,40.58884,-73.88023,34,3,NY,TDWR New York City,KJFK,KJRB
-KOKX,kokx,kokx,40.86554,-72.86387,60,1,NY,Upton,KHWV,KFOK
-KCLE,kcle,kcle,41.41318,-81.85951,262,1,OH,Cleveland,KCLE,KBKL
-TCVG,tcvg,kiln,38.89809,-84.57966,320,3,OH,TDWR Cincinnati,KCVG,KLUK
-TLVE,tlve,kcle,41.28979,-82.00743,283,3,OH,TDWR Cleveland,KCLE,KLPR
-TCMH,tcmh,kiln,40.00566,-82.71532,349,3,OH,TDWR Columbus,KCMH,KVTA
-TDAY,tday,kiln,40.02212,-84.12331,310,3,OH,TDWR Dayton,KDAY,KI74
-KILN,kiln,kiln,39.42024,-83.82189,356,1,OH,Wilmington,KILN,KI23
-KFDR,kfdr,koun,34.36218,-98.97682,399,1,OK,Frederick,KFDR,KF05
-KTLX,ktlx,koun,35.33335,-97.27776,389,1,OK,Oklahoma City,KTIK,KOUN
-TOKC,tokc,koun,35.27608,-97.50977,398,3,OK,TDWR Oklahoma City,KOUN,KOKC
-TTUL,ttul,ktsa,36.07051,-95.82645,250,3,OK,TDWR Tulsa,KRVS,KTUL
-KINX,kinx,ktsa,36.17509,-95.56416,228,1,OK,Tulsa,KGCM,KTUL
-KVNX,kvnx,koun,36.74059,-98.12763,383,1,OK,Vance AFB,KAVK,KWDG
-KMAX,kmax,kmfr,42.08112,-122.71729,2302,1,OR,Medford,KMFR,KSIY
-KPDT,kpdt,kpdt,45.69059,-118.85294,481,1,OR,Pendleton,KPDT,KHRI
-KRTX,krtx,kpqr,45.71498,-122.96487,526,1,OR,Portland,KSPB,KHIO
-KDIX,kdix,kphi,39.94703,-74.41076,70,1,PA,Philadelphia,KMJX,KWRI
-KPBZ,kpbz,kpbz,40.5319,-80.21773,385,1,PA,Pittsburgh,KPIT,KAGC
-KCCX,kccx,kctp,40.92318,-78.00381,757,1,PA,State College,KUNV,KFIG
-TPHL,tphl,kphi,39.94921,-75.06984,46,3,PA,TDWR Philadelphia,KPHL,KPNE
-TPIT,tpit,kpbz,40.50134,-80.48611,422,3,PA,TDWR Pittsburgh,KPIT,K2G2
-TJUA,tjua,tjsj,18.11569,-66.07817,901,1,PR,Puerto Rico,TJNR,TJIG
-TSJU,tsju,tjsj,18.47401,-66.17958,47,3,PR,TDWR San Juan,TJIG,TJSJ
-KCLX,kclx,kchs,32.65551,-81.04227,69,1,SC,Charleston,KNBC,KRBW
-KCAE,kcae,kcae,33.94874,-81.11825,104,1,SC,Columbia,KCAE,KCUB
-KGSP,kgsp,kgsp,34.8833,-82.21964,325,1,SC,Greer,KGSP,KGMU
-KABR,kabr,kabr,45.45578,-98.41325,421,1,SD,Aberdeen,KABR,K1D8
-KUDX,kudx,kunr,44.12486,-102.82964,973,1,SD,Rapid City,KRAP,KRCA
-KFSD,kfsd,kfsd,43.58772,-96.72948,455,1,SD,Sioux falls,KFSD,KLYV
-KMRX,kmrx,kmrx,36.16851,-83.40176,437,1,TN,Knoxville,KMOR,KGKT
-KNQA,knqa,kmeg,35.34475,-89.87342,132,1,TN,Memphis,KNQA,K2M8
-KOHX,kohx,kohx,36.24723,-86.56282,206,1,TN,Nashville,KBNA,KJWN
-TMEM,tmem,kmeg,34.8958,-89.99269,147,3,TN,TDWR Memphis,KMEM,KOLV
-TBNA,tbna,kohx,35.97968,-86.66166,249,3,TN,TDWR Nashville,KBNA,KMQY
-KAMA,kama,kama,35.23352,-101.70934,1128,1,TX,Amarillo,KAMA,KHRX
-KBRO,kbro,kbro,25.916,-97.419,26,1,TX,Brownsville,KBRO,KRHL
-KGRK,kgrk,kfwd,30.72179,-97.38298,183,1,TX,Central Texas,KGTU,KT74
-KCRP,kcrp,kcrp,27.784,-97.51124,43,1,TX,Corpus Christi,KCRP,KRBO
-KFWS,kfws,kfwd,32.573,-97.303,236,1,TX,Dallas/Fort Worth,KGKY,KNFW
-KDYX,kdyx,ksjt,32.5386,-99.25424,481,1,TX,Dyess AFB,KGZN,KABI
-KEPZ,kepz,kepz,31.87313,-106.69791,1285,1,TX,El Paso,KDNA,KELP
-KHGX,khgx,khgx,29.47189,-95.07856,35,1,TX,Houston,KLVJ,KHOU
-KDFX,kdfx,kewx,29.27308,-100.28039,364,1,TX,Laughlin AFB,KDRT,KUVA
-KLBB,klbb,klub,33.65413,-101.81415,1029,1,TX,Lubbock,KLBB,KLLN
-KMAF,kmaf,kmaf,31.94339,-102.18925,902,1,TX,Midland/Odessa,KMAF,KMDD
-KSJT,ksjt,ksjt,31.37127,-100.4924,610,1,TX,San Angelo,KSJT,KOZA
-KEWX,kewx,kewx,29.70395,-98.02851,233,1,TX,San Antonio,KBAZ,KSEQ
-TDAL,tdal,kfwd,32.92576,-96.96822,189,3,TX,TDWR Dallas Love Field,KDFW,KADS
-TDFW,tdfw,kfwd,33.06481,-96.91816,178,3,TX,TDWR Dallas/Ft Worth,KADS,KDFW
-THOU,thou,khgx,29.51631,-95.2416,35,3,TX,TDWR Houston Hobby,KLJV,KEFD
-TIAH,tiah,khgx,30.06484,-95.56697,77,3,TX,TDWR Houston International,KDWH,KIAH
-KICX,kicx,kslc,37.591,-112.86242,3278,1,UT,Cedar City,KCDC,KBCE
-KMTX,kmtx,kslc,41.26276,-112.44801,2009,1,UT,Salt Lake City,KOGD,KSLC
-TSLC,tslc,kslc,40.96733,-111.92974,1309,3,UT,TDWR Salt Lake City,KHIF,KSLC
-KFCX,kfcx,krnk,37.02442,-80.27379,903,1,VA,Blacksburg,KBCB,KPSK
-KLWX,klwx,klwx,38.97625,-77.48746,123,1,VA,Sterling,KIAD,KJYO
-TIAD,tiad,klwx,39.08385,-77.52944,144,3,VA,TDWR Dulles,KJYO,KIAD
-KAKQ,kakq,kakq,36.98404,-77.00747,77,1,VA,Wakefield,KAKQ,KFKN
-KCXX,kcxx,kbtv,44.511,-73.1665,131,1,VT,Burlington,KBTV,KPBG
-KLGX,klgx,ksew,47.11693,-124.10659,111,1,WA,Langley Hill,KHQM,KSHN
-KATX,katx,ksew,48.1946,-122.49586,195,1,WA,Seattle/Tacoma,KNUW,KAWO
-KOTX,kotx,kotx,47.68038,-117.62688,746,1,WA,Spokane,KGEG,KSFF
-KGRB,kgrb,kgrb,44.49958,-88.11115,250,1,WI,Green Bay,KGRB,KCLI
-KARX,karx,karx,43.82278,-91.19112,413,1,WI,La Crosse,KLSE,KONA
-KMKX,kmkx,kmkx,42.96785,-88.55058,311,1,WI,Milwaukee,KRYV,KUES
-TMKE,tmke,kmkx,42.81952,-88.04645,284,3,WI,TDWR Milwaukee,KMKE,KRAC
-KRLX,krlx,krlx,38.31101,-81.72287,369,1,WV,Charleston,KCRW,K6L4
-KCYS,kcys,kcys,41.15193,-104.80605,1887,1,WY,Cheyenne,KCYS,KFEW
-KRIW,kriw,kriw,43.06606,-108.4772,1716,1,WY,Riverton,KRIW,KTBX
+KFTG,kftg,kbou,39.78661,-104.54572,1709,1,CO,Denver/Boulder,kcfo,kden
+KGJX,kgjx,kgjt,39.06214,-108.21375,3078,1,CO,Grand Junction,kgjt,kril
+KPUX,kpux,kpub,38.45964,-104.18135,1634,1,CO,Pueblo,kabh,kpub
+TDEN,tden,kbou,39.72742,-104.52649,1737,3,CO,TDWR Denver,kcfo,kden
+KDOX,kdox,kakq,38.82574,-75.44004,49,1,DE,Dover AFB,kged,kdov
+KEVX,kevx,kmob,30.56503,-85.92174,67,1,FL,Eglin AFB,k54j,kecp
+KJAX,kjax,kjax,30.48459,-81.70189,48,1,FL,Jacksonville,kjax,knip
+KBYX,kbyx,kkey,24.59745,-81.70316,27,1,FL,Key West,knqx,keyw
+KMLB,kmlb,kmlb,28.11311,-80.65357,45,1,FL,Melbourne,kmlb,kcof
+KAMX,kamx,kmfl,25.61122,-80.41267,33,1,FL,Miami,ktmb,khst
+TFLL,tfll,kmfl,26.1432,-80.34397,36,3,FL,TDWR Fort Lauderdale,kfxe,kfll
+TMIA,tmia,kmfl,25.75753,-80.49116,38,3,FL,TDWR Miami,kmia,ktnb
+TMCO,tmco,kmlb,28.34367,-81.32575,51,3,FL,TDWR Orlando International,kmco,kism
+TTPA,ttpa,ktbw,27.85955,-82.51778,28,3,FL,TDWR Tampa Bay,kmcf,ktpf
+TPBI,tpbi,kmfl,26.6879,-80.2733,40,3,FL,TDWR West Palm Beach,kpbi,kf45
+KTLH,ktlh,ktae,30.39768,-84.32887,53,1,FL,Tallahassee,ktlh,k2j9
+KTBW,ktbw,ktbw,27.70544,-82.40178,37,1,FL,Tampa,kmcf,kspg
+KFFC,kffc,kffc,33.36354,-84.56602,296,1,GA,Atlanta,kffc,khmp
+KVAX,kvax,kjax,30.89025,-83.00169,100,1,GA,Moody AFB,kvad,khoe
+KJGX,kjgx,kffc,32.67557,-83.35094,188,1,GA,Robins AFB,kwrb,kmcn
+TATL,tatl,kffc,33.64661,-84.26217,327,3,GA,TDWR Atlanta,katl,kfty
+PGUA,pgua,pgum,13.4559,144.81104,117,1,GU,Andersen AFB,pgum,pgua
+PHKI,phki,phfo,21.89389,-159.5525,103,1,HI,Kauai,phli,phbk
+PHKM,phkm,phfo,20.12535,-155.77801,1208,1,HI,Kohala,phsf,phko
+PHMO,phmo,phfo,21.13284,-157.18013,440,1,HI,Molokai,phmk,phny
+PHWA,phwa,phfo,19.09498,-155.56886,445,1,HI,South Shore,phko,phto
+KDMX,kdmx,kdmx,41.7312,-93.72296,333,1,IA,Des Moines,kikv,kdsm
+KDVN,kdvn,kdvn,41.61237,-90.58207,259,1,IA,Quad Cities,kdvn,kmli
+KCBX,kcbx,kboi,43.49026,-116.23613,966,1,ID,Boise,kboi,kman
+KSFX,ksfx,kpih,43.10558,-112.68633,1383,1,ID,Pocatello,kpih,kida
+KLOT,klot,klot,41.60445,-88.08451,231,1,IL,Chicago,klot,kjot
+KILX,kilx,kilx,40.15056,-89.33698,222,1,IL,Lincoln,kaaa,kspi
+TMDW,tmdw,klot,41.65134,-87.72955,232,3,IL,TDWR Chicago Midway,kmdw,kigq
+TORD,tord,klot,41.79709,-87.85824,226,3,IL,TDWR Chicago O'Hare,kmdw,kord
+KVWX,kvwx,kpah,38.26038,-87.72454,191,1,IN,Evansville,kevv,kcul
+KIWX,kiwx,kiwx,41.35867,-85.6998,321,1,IN,Fort Wayne,kgsh,kasw
+KIND,kind,kind,39.7075,-86.28026,270,1,IN,Indianapolis,kind,keye
+TIDS,tids,kind,39.63722,-86.43547,258,3,IN,TDWR Indianapolis,kind,k2r2
+RODN,rodn,pafc,26.30781,127.90329,125,1,JP,Kadena AFB,rodn,rotm
+RKSG,rksg,pafc,37.20762,127.28575,463,1,KR,Camp Humphreys,rksg,rkso
+RKJK,rkjk,pafc,35.92436,126.62214,58,1,KR,Kunsan AFB,rkjk,rjkb
+KDDC,kddc,kddc,37.76083,-99.96887,814,1,KS,Dodge City,kddc,kgck
+KGLD,kgld,kgld,39.36684,-101.70033,1132,1,KS,Goodland,kgld,kcbk
+TICH,tich,kict,37.50714,-97.43697,411,3,KS,TDWR Wichita,kict,kiab
+KTWX,ktwx,ktop,38.99694,-96.23251,431,1,KS,Topeka,kmhk,kfri
+KICT,kict,kict,37.65457,-97.44312,427,1,KS,Wichita,kict,kiab
+KHPX,khpx,kpah,36.73696,-87.28555,190,1,KY,Fort Campbell,kckv,khvc
+KJKL,kjkl,kjkl,37.59079,-83.31299,445,1,KY,Jackson,kjkl,kcpf
+KLVX,klvx,klmk,37.97528,-85.9436,253,1,KY,Louisville,kftk,ksdf
+KPAH,kpah,kpah,37.06848,-88.77232,153,1,KY,Paducah,kpah,km30
+TSDF,tsdf,klmk,38.0459,-85.61061,222,3,KY,TDWR Louisville,ksdf,klou
+KPOE,kpoe,klch,31.15574,-92.97607,143,1,LA,Fort Polk,kpoe,kaex
+KLCH,klch,klch,30.12532,-93.21586,41,1,LA,Lake Charles,klch,kuxl
+KLIX,klix,klix,30.33677,-89.82545,54,0,LA,New Orleans,kasd,kmjd
+KHDC,khdc,klix,30.519,-90.407,13,1,LA,New Orleans,khdc,kasd
+KSHV,kshv,kshv,32.45079,-93.84132,117,1,LA,Shreveport,kshv,kdtn
+TMSY,tmsy,klix,30.02163,-90.40331,30,3,LA,TDWR New Orleans,kmsy,kaps
+KBOX,kbox,kbox,41.95585,-71.13699,70,1,MA,Boston,ktan,kpym
+TBOS,tbos,kbox,42.1583,-70.93343,80,3,MA,TDWR Boston,kowd,kbos
+TADW,tadw,klwx,38.69531,-76.84489,105,3,MD,TDWR Andrews Air Force Base,kadw,kdaa
+TBWI,tbwi,klwx,39.08961,-76.63018,104,3,MD,TDWR Baltimore/Wash,kbwi,kfme
+TDCA,tdca,klwx,38.75902,-76.96178,105,3,MD,TDWR Washington National,kadw,kdca
+KCBW,kcbw,kcar,46.03928,-67.80636,261,1,ME,Caribou,khul,cewd
+KGYX,kgyx,kgyx,43.89135,-70.25642,144,1,ME,Portland,kpwm,kiwi
+KDTX,kdtx,kdtx,42.69997,-83.47167,370,1,MI,Detroit,kptk,kvll
+KAPX,kapx,kapx,44.90712,-84.7196,475,1,MI,Gaylord,kglr,kgov
+KGRR,kgrr,kgrr,42.8939,-85.54479,266,1,MI,Grand Rapids,kgrr,ky70
+KMQT,kmqt,kmqt,46.53115,-87.54829,464,1,MI,Marquette,ksaw,kp53
+TDTW,tdtw,kdtx,42.11135,-83.51485,235,3,MI,TDWR Detroit,kyip,kdtw
+KDLH,kdlh,kdlh,46.83689,-92.21005,470,1,MN,Duluth,kdlh,kdyt
+KMPX,kmpx,kmpx,44.84877,-93.56541,335,1,MN,Minneapolis,kfcm,kmsp
+TMSP,tmsp,kmpx,44.87144,-92.93295,341,3,MN,TDWR Minneapolis,ksgs,kstp
+KEAX,keax,keax,38.81023,-94.26426,334,1,MO,Kansas City,klxt,klry
+KSGF,ksgf,ksgf,37.23521,-93.40067,419,1,MO,Springfield,ksgf,kfwb
+KLSX,klsx,klsx,38.69868,-90.68259,219,1,MO,St. Louis,ksus,kstl
+TMCI,tmci,keax,39.49851,-94.7421,332,3,MO,TDWR Kansas City,klry,kixd
+TSTL,tstl,klsx,38.80537,-90.48883,197,3,MO,TDWR St Louis,kaln,kstl
+KGWX,kgwx,kjan,33.8969,-88.32911,179,1,MS,Columbus AFB,km40,kcbm
+KDGX,kdgx,kjan,32.27982,-89.98447,185,1,MS,Jackson,kjan,kmbo
+KBLX,kblx,kbyz,45.85389,-108.60686,1128,1,MT,Billings,kbil,k6s8
+KGGW,kggw,kggw,48.20647,-106.62489,726,1,MT,Glasgow,kggw,kolf
+KTFX,ktfx,ktfx,47.45965,-111.38552,1159,1,MT,Great Falls,kgtf,kgfa
+KMSX,kmsx,kmso,47.04103,-113.98624,2431,1,MT,Missoula,kmso,khrf
+KMHX,kmhx,kmhx,34.77594,-76.87627,43,1,NC,Morehead City,knkt,knjm
+KRAX,krax,krah,35.66558,-78.48976,140,1,NC,Raleigh/Durham,kjnx,krdu
+TCLT,tclt,kgsp,35.33737,-80.88487,265,3,NC,TDWR Charlotte,kjqf,kclt
+TRDU,trdu,krah,36.00207,-78.69736,156,3,NC,TDWR Raleigh Durham,krdu,ktqv
+KLTX,kltx,kilm,33.98917,-78.429,44,1,NC,Wilmington,ksut,kcre
+KBIS,kbis,kbis,46.77104,-100.76064,534,1,ND,Bismarck,kbis,ky19
+KMVX,kmvx,kfgf,47.5289,-97.32525,329,1,ND,Grand Forks,kgfk,krdr
+KMBX,kmbx,kbis,48.39305,-100.86457,484,1,ND,Minot AFB,kmot,kmib
+KUEX,kuex,kgid,40.32096,-98.44204,626,1,NE,Hastings,khsi,kear
+KLNX,klnx,klbf,41.95786,-100.57639,948,1,NE,North Platte,ktif,kbbw
+KOAX,koax,koax,41.32029,-96.36686,384,1,NE,Omaha,kahq,kfet
+TEWR,tewr,kokx,40.59357,-74.27018,41,3,NJ,TDWR Newark,kldj,kewr
+KABX,kabx,kabq,35.14974,-106.82412,1813,1,NM,Albuquerque,kaeg,kabq
+KFDX,kfdx,kabq,34.63406,-103.61879,1431,1,NM,Cannon AFB,kcvs,k4mr
+KHDX,khdx,kepz,33.07701,-106.1201,1301,1,NM,Holloman AFB,khmn,kalm
+KLRX,klrx,klkn,40.73973,-116.80283,2101,1,NV,Elko,kbam,keko
+KESX,kesx,kvef,35.7012,-114.89212,1508,1,NV,Las Vegas,kbvu,khnd
+KRGX,krgx,krev,39.75412,-119.46219,2559,1,NV,Reno,krts,krno
+TLAS,tlas,kvef,36.14356,-115.00739,627,3,NV,TDWR Las Vegas,kvgt,khnd
+KENX,kenx,kaly,42.58654,-74.0639,589,1,NY,Albany,kalb,ksch
+KBGM,kbgm,kbgm,42.19966,-75.9848,519,1,NY,Binghamton,kbgm,kith
+KBUF,kbuf,kbuf,42.94875,-78.73671,240,1,NY,Buffalo,kbuf,kiag
+KTYX,ktyx,kbtv,43.75564,-75.67946,597,1,NY,Montague,kgtb,kart
+TJFK,tjfk,kokx,40.58884,-73.88023,34,3,NY,TDWR New York City,kjfk,kjrb
+KOKX,kokx,kokx,40.86554,-72.86387,60,1,NY,Upton,khwv,kfok
+KCLE,kcle,kcle,41.41318,-81.85951,262,1,OH,Cleveland,kcle,kbkl
+TCVG,tcvg,kiln,38.89809,-84.57966,320,3,OH,TDWR Cincinnati,kcvg,kluk
+TLVE,tlve,kcle,41.28979,-82.00743,283,3,OH,TDWR Cleveland,kcle,klpr
+TCMH,tcmh,kiln,40.00566,-82.71532,349,3,OH,TDWR Columbus,kcmh,kvta
+TDAY,tday,kiln,40.02212,-84.12331,310,3,OH,TDWR Dayton,kday,ki74
+KILN,kiln,kiln,39.42024,-83.82189,356,1,OH,Wilmington,kiln,ki23
+KFDR,kfdr,koun,34.36218,-98.97682,399,1,OK,Frederick,kfdr,kf05
+KTLX,ktlx,koun,35.33335,-97.27776,389,1,OK,Oklahoma City,ktik,koun
+TOKC,tokc,koun,35.27608,-97.50977,398,3,OK,TDWR Oklahoma City,koun,kokc
+TTUL,ttul,ktsa,36.07051,-95.82645,250,3,OK,TDWR Tulsa,krvs,ktul
+KINX,kinx,ktsa,36.17509,-95.56416,228,1,OK,Tulsa,kgcm,ktul
+KVNX,kvnx,koun,36.74059,-98.12763,383,1,OK,Vance AFB,kavk,kwdg
+KMAX,kmax,kmfr,42.08112,-122.71729,2302,1,OR,Medford,kmfr,ksiy
+KPDT,kpdt,kpdt,45.69059,-118.85294,481,1,OR,Pendleton,kpdt,khri
+KRTX,krtx,kpqr,45.71498,-122.96487,526,1,OR,Portland,kspb,khio
+KDIX,kdix,kphi,39.94703,-74.41076,70,1,PA,Philadelphia,kmjx,kwri
+KPBZ,kpbz,kpbz,40.5319,-80.21773,385,1,PA,Pittsburgh,kpit,kagc
+KCCX,kccx,kctp,40.92318,-78.00381,757,1,PA,State College,kunv,kfig
+TPHL,tphl,kphi,39.94921,-75.06984,46,3,PA,TDWR Philadelphia,kphl,kpne
+TPIT,tpit,kpbz,40.50134,-80.48611,422,3,PA,TDWR Pittsburgh,kpit,k2g2
+TJUA,tjua,tjsj,18.11569,-66.07817,901,1,PR,Puerto Rico,tjnr,tjig
+TSJU,tsju,tjsj,18.47401,-66.17958,47,3,PR,TDWR San Juan,tjig,tjsj
+KCLX,kclx,kchs,32.65551,-81.04227,69,1,SC,Charleston,knbc,krbw
+KCAE,kcae,kcae,33.94874,-81.11825,104,1,SC,Columbia,kcae,kcub
+KGSP,kgsp,kgsp,34.8833,-82.21964,325,1,SC,Greer,kgsp,kgmu
+KABR,kabr,kabr,45.45578,-98.41325,421,1,SD,Aberdeen,kabr,k1d8
+KUDX,kudx,kunr,44.12486,-102.82964,973,1,SD,Rapid City,krap,krca
+KFSD,kfsd,kfsd,43.58772,-96.72948,455,1,SD,Sioux falls,kfsd,klyv
+KMRX,kmrx,kmrx,36.16851,-83.40176,437,1,TN,Knoxville,kmor,kgkt
+KNQA,knqa,kmeg,35.34475,-89.87342,132,1,TN,Memphis,knqa,k2m8
+KOHX,kohx,kohx,36.24723,-86.56282,206,1,TN,Nashville,kbna,kjwn
+TMEM,tmem,kmeg,34.8958,-89.99269,147,3,TN,TDWR Memphis,kmem,kolv
+TBNA,tbna,kohx,35.97968,-86.66166,249,3,TN,TDWR Nashville,kbna,kmqy
+KAMA,kama,kama,35.23352,-101.70934,1128,1,TX,Amarillo,kama,khrx
+KBRO,kbro,kbro,25.916,-97.419,26,1,TX,Brownsville,kbro,krhl
+KGRK,kgrk,kfwd,30.72179,-97.38298,183,1,TX,Central Texas,kgtu,kt74
+KCRP,kcrp,kcrp,27.784,-97.51124,43,1,TX,Corpus Christi,kcrp,krbo
+KFWS,kfws,kfwd,32.573,-97.303,236,1,TX,Dallas/Fort Worth,kgky,knfw
+KDYX,kdyx,ksjt,32.5386,-99.25424,481,1,TX,Dyess AFB,kgzn,kabi
+KEPZ,kepz,kepz,31.87313,-106.69791,1285,1,TX,El Paso,kdna,kelp
+KHGX,khgx,khgx,29.47189,-95.07856,35,1,TX,Houston,klvj,khou
+KDFX,kdfx,kewx,29.27308,-100.28039,364,1,TX,Laughlin AFB,kdrt,kuva
+KLBB,klbb,klub,33.65413,-101.81415,1029,1,TX,Lubbock,klbb,klln
+KMAF,kmaf,kmaf,31.94339,-102.18925,902,1,TX,Midland/Odessa,kmaf,kmdd
+KSJT,ksjt,ksjt,31.37127,-100.4924,610,1,TX,San Angelo,ksjt,koza
+KEWX,kewx,kewx,29.70395,-98.02851,233,1,TX,San Antonio,kbaz,kseq
+TDAL,tdal,kfwd,32.92576,-96.96822,189,3,TX,TDWR Dallas Love Field,kdfw,kads
+TDFW,tdfw,kfwd,33.06481,-96.91816,178,3,TX,TDWR Dallas/Ft Worth,kads,kdfw
+THOU,thou,khgx,29.51631,-95.2416,35,3,TX,TDWR Houston Hobby,kljv,kefd
+TIAH,tiah,khgx,30.06484,-95.56697,77,3,TX,TDWR Houston International,kdwh,kiah
+KICX,kicx,kslc,37.591,-112.86242,3278,1,UT,Cedar City,kcdc,kbce
+KMTX,kmtx,kslc,41.26276,-112.44801,2009,1,UT,Salt Lake City,kogd,kslc
+TSLC,tslc,kslc,40.96733,-111.92974,1309,3,UT,TDWR Salt Lake City,khif,kslc
+KFCX,kfcx,krnk,37.02442,-80.27379,903,1,VA,Blacksburg,kbcb,kpsk
+KLWX,klwx,klwx,38.97625,-77.48746,123,1,VA,Sterling,kiad,kjyo
+TIAD,tiad,klwx,39.08385,-77.52944,144,3,VA,TDWR Dulles,kjyo,kiad
+KAKQ,kakq,kakq,36.98404,-77.00747,77,1,VA,Wakefield,kakq,kfkn
+KCXX,kcxx,kbtv,44.511,-73.1665,131,1,VT,Burlington,kbtv,kpbg
+KLGX,klgx,ksew,47.11693,-124.10659,111,1,WA,Langley Hill,khqm,kshn
+KATX,katx,ksew,48.1946,-122.49586,195,1,WA,Seattle/Tacoma,knuw,kawo
+KOTX,kotx,kotx,47.68038,-117.62688,746,1,WA,Spokane,kgeg,ksff
+KGRB,kgrb,kgrb,44.49958,-88.11115,250,1,WI,Green Bay,kgrb,kcli
+KARX,karx,karx,43.82278,-91.19112,413,1,WI,La Crosse,klse,kona
+KMKX,kmkx,kmkx,42.96785,-88.55058,311,1,WI,Milwaukee,kryv,kues
+TMKE,tmke,kmkx,42.81952,-88.04645,284,3,WI,TDWR Milwaukee,kmke,krac
+KRLX,krlx,krlx,38.31101,-81.72287,369,1,WV,Charleston,kcrw,k6l4
+KCYS,kcys,kcys,41.15193,-104.80605,1887,1,WY,Cheyenne,kcys,kfew
+KRIW,kriw,kriw,43.06606,-108.4772,1716,1,WY,Riverton,kriw,ktbx

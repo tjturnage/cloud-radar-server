@@ -81,8 +81,7 @@ class Mesowest():
 
     """
 
-    def __init__(self,radar,lat,lon, event_timestr, duration=None):
-        self.radar = radar
+    def __init__(self,lat,lon, event_timestr, duration=None):
         self.lat = float(lat)
         self.lon = float(lon)
         self.event_timestr = event_timestr
@@ -171,7 +170,7 @@ class Mesowest():
         else:
             orig_time = init_time
 
-        for _t, step in enumerate(self.steps):
+        for step in range(0,self.steps):
             mins = step * self.d_t
             new_time = orig_time + timedelta(minutes=mins)
             next_time = new_time + timedelta(minutes=self.d_t)
@@ -275,7 +274,7 @@ class Mesowest():
                                 wgst_str, text_info = self.convert_met_values(scratch,short,this_dict)
                                 #wgst_txt = temp_txt + text_info
 
-                        except:
+                        except Exception as e:
                             pass
 
 
@@ -517,4 +516,5 @@ class Mesowest():
 
 
 if __name__ == "__main__":
-    test = Mesowest(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5])
+    #test = Mesowest(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])
+    test = Mesowest('40.3', '-84.4', '2023-02-25 23:45:00 UTC', 30)

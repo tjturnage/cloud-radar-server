@@ -21,13 +21,19 @@ from pathlib import Path
 import hodo_resources as hr
 
 
-CSV_FILE = Path.cwd() / 'radars.csv'
-RADAR_DIR = Path.cwd() / 'data' / 'radar'
-HODO_IMAGES = Path.cwd() / 'assets'/ 'hodographs'
 #Time and Time Zone
 timezone = 'UTC'
 
-radar_id = sys.argv[1] #Make Uppercase
+radar_id = sys.argv[1]
+BASE_DIR = Path(sys.argv[2])
+asos_one = sys.argv[3].lower()
+try:
+  asos_two = sys.argv[4].lower()
+except:
+  asos_two = None
+
+RADAR_DIR = BASE_DIR / 'data' / 'radar'
+HODO_IMAGES = BASE_DIR / 'assets'/ 'hodographs'
 
 THIS_RADAR = RADAR_DIR / radar_id 
 os.makedirs(THIS_RADAR, exist_ok=True)
@@ -53,9 +59,6 @@ data_ceiling = 8000 #Max Data Height in Feet AGL
 range_type = 'Static' #Enter Dynamic For Changing Range From Values or Static for Constant Range Value
 static_value = 70 # Enter Static Hodo Range or 999 To Not Use
 
-
-df = pd.read_csv(CSV_FILE, dtype={'lat': float, 'lon': float})
-df.set_index('radar_id', inplace=True)
 
 # presumes you have the radar files downloaded already
 radar_files = [f.name for f in DOWNLOADS.iterdir()]
@@ -195,13 +198,12 @@ for p in radar_filepaths:
               pass
       return wnspd, wndir
   if sfc_status == 'Preset':
-    radar_list = pd.read_csv(CSV_FILE)
-    track = np.where(radar_list['radar_id'] == radar_id)
-    nearest_asos = df.loc[radar_id]['asos_one']
-    api_args = {"token":API_TOKEN, "stid": "kgrr", "attime":api_tstr, "within": 60,"status":"active", "units":"speed|kts",  "hfmetars":'1'}
+    track = radar_id
+    nearest_asos = asos_one
+    api_args = {"token":API_TOKEN, "stid": f"{nearest_asos}", "attime":api_tstr, "within": 60,"status":"active", "units":"speed|kts",  "hfmetars":'1'}
     wnspd, wndir = mesowest_get_sfcwind(api_args)
     if wndir == ''or wnspd  == '':
-      nearest_asos = df.loc[radar_id]['asos_two']
+      nearest_asos = asos_two
       newapi_args = {"token":API_TOKEN, "stid": f"{nearest_asos}", "attime": api_tstr, "within": 60,"status":"active", "units":"speed|kts",  "hfmetars":'1'}
       wnspd, wndir = mesowest_get_sfcwind(newapi_args)
     sfc_dir = wndir
@@ -492,6 +494,7 @@ for p in radar_filepaths:
   SRH_units = (units.m*units.m)/(units.s*units.s)
 
   ureg=UnitRegistry()
+  ureg.default_format = "~P"
   for u in (SRH05, SRH1, SRH3, SRH6, SRH8):
     try:
       u=ureg(str(u)).m
@@ -631,9 +634,9 @@ for p in radar_filepaths:
   except:
       plt.figtext(0.91,0.85, f"{shr005} kt", fontsize = 12, weight = 'bold', color = 'purple')
   try:
-    plt.figtext(0.95,0.85, f"{'{:.0f}'.format(SRH05) * SRH_units:~P}", fontsize = 12, weight = 'bold', color = 'purple')
+    plt.figtext(0.95,0.85, f"{'{:.0f}'.format(SRH05) * SRH_units}", fontsize = 12, weight = 'bold', color = 'purple')
   except:
-    plt.figtext(0.95,0.85, f"{SRH05 * SRH_units:~P}", fontsize = 12, weight = 'bold', color = 'purple')
+    plt.figtext(0.95,0.85, f"{SRH05 * SRH_units}", fontsize = 12, weight = 'bold', color = 'purple')
   try:
     plt.figtext(1.01,0.85, f"{'{:.0f}'.format(SR05) } kt", fontsize = 12, weight = 'bold', color = 'purple')
   except:
@@ -870,7 +873,7 @@ for p in radar_filepaths:
   except:
     plt.figtext(0.95,0.85, f"{SRH05 * SRH_units:~P}", fontsize = 12, weight = 'bold', color = 'purple')
   try:
-    plt.figtext(1.01,0.85, f"{'{:.0f}'.format(SR05) } kt", fontsize = 12, weight = 'bold', color = 'purple')
+    plt.figtext(1.01,0.85, f"{'{:.0f}'.format(SR05)} kt", fontsize = 12, weight = 'bold', color = 'purple')
   except:
     plt.figtext(1.01,0.85, f"{SR05} kt", fontsize = 12, weight = 'bold', color = 'purple')
   try:
@@ -893,7 +896,7 @@ for p in radar_filepaths:
   try:
     plt.figtext(0.95,0.80, f"{'{:.0f}'.format(SRH1) * SRH_units:~P}", fontsize = 12, weight = 'bold', color = 'darkorchid')
   except:
-    plt.figtext(0.95,0.80, f"{SRH1 * SRH_units:~P}", fontsize = 12, weight = 'bold', color = 'darkorchid')
+    plt.figtext(0.95,0.80, f"{SRH1 * SRH_units}", fontsize = 12, weight = 'bold', color = 'darkorchid')
   try:
     plt.figtext(1.01,0.80, f"{'{:.0f}'.format(SR1) } kt", fontsize = 12, weight = 'bold', color = 'darkorchid')
   except:
@@ -918,7 +921,7 @@ for p in radar_filepaths:
   try:
     plt.figtext(0.95,0.75, f"{'{:.0f}'.format(SRH3) * SRH_units:~P}", fontsize = 12, weight = 'bold', color = 'mediumslateblue')
   except:
-    plt.figtext(0.95,0.75, f"{SRH3 * SRH_units:~P}", fontsize = 12, weight = 'bold', color = 'mediumslateblue')
+    plt.figtext(0.95,0.75, f"{SRH3 * SRH_units}", fontsize = 12, weight = 'bold', color = 'mediumslateblue')
   try:
     plt.figtext(1.01,0.75, f"{'{:.0f}'.format(SR3) } kt", fontsize = 12, weight = 'bold', color = 'mediumslateblue')
   except:

@@ -14,6 +14,7 @@ spacer_mini = html.Div([ ], style={'height': '10px'})
 df = pd.read_csv('radars.csv', dtype={'lat': float, 'lon': float})
 df['radar_id'] = df['radar']
 df.set_index('radar_id', inplace=True)
+
 bold = {'font-weight': 'bold'}
 
 feedback = {'border': '1px gray solid', 'padding':'0.4em', 'font-weight': 'bold',
@@ -93,20 +94,20 @@ step_minute = html.Div(children="Minute",style=time_headers)
 step_duration = html.Div(children="Duration",style=time_headers)
 
 sim_year_section = dbc.Col(html.Div([step_year,
-                    dcc.Dropdown(np.arange(1992,now.year + 1),now.year-1,
+                    dcc.Dropdown(np.arange(1992,now.year + 1),now.year,
                     id='start_year',clearable=False),]))
 
 sim_month_section = dbc.Col(html.Div([
-                    step_month, dcc.Dropdown(np.arange(1,13),6,id='start_month',clearable=False),]))
+                    step_month, dcc.Dropdown(np.arange(1,13),5,id='start_month',clearable=False),]))
 
 sim_hour_section = dbc.Col(html.Div([
-                    step_hour, dcc.Dropdown(np.arange(0,24),18,id='start_hour',clearable=False),]))
+                    step_hour, dcc.Dropdown(np.arange(0,24),21,id='start_hour',clearable=False),]))
 
 sim_minute_section =  dbc.Col(html.Div([
-                    step_minute, dcc.Dropdown([0,15,30,45],30,id='start_minute',clearable=False),]))
+                    step_minute, dcc.Dropdown([0,15,30,45],45,id='start_minute',clearable=False),]))
 
 sim_duration_section = dbc.Col(html.Div([
-                    step_duration,dcc.Dropdown(np.arange(0,240,30),60,id='duration',clearable=False),]))
+                    step_duration,dcc.Dropdown(np.arange(0,240,30),30,id='duration',clearable=False),]))
 
 CONFIRM_TIMES_TEXT = "Confirm start time and duration -->"
 confirm_times_section = dbc.Col(html.Div(children=CONFIRM_TIMES_TEXT,style=steps_right))
@@ -122,13 +123,13 @@ radar_id = html.Div(id='radar',style={'display': 'none'})
 
 radar_quantity = html.Div(children="Number of radars",style=time_headers)
 radar_quantity_section = dbc.Col(html.Div([radar_quantity,spacer_mini,
-                    dcc.Slider(0,3,1,value=0,id='radar_quantity'),]))
+                    dcc.Slider(1,3,1,value=1,id='radar_quantity'),]))
 
 
 STEP_CHOOSE_FROM_MAP = "Use button at right to display map of radars"
 
 #step_radar_section = dbc.Col(html.Div(children=STEP_CHOOSE_FROM_MAP,style=steps_right))
-map_toggle_button = dbc.Col(html.Div([dbc.Button('Click here for radar map', size="lg", id='map_btn', n_clicks=0)],
+map_toggle_button = dbc.Col(html.Div([dbc.Button('Click to toggle radar map on/off', size="lg", id='map_btn', n_clicks=0)],
                                   className="d-grid gap-2 col-12 mx-auto"))
 
 # map_reset_radars = dbc.Col(html.Div([dbc.Button('Reset', size="lg", id='radar_reset_btn', n_clicks=0)],
@@ -184,11 +185,11 @@ transpose_list = sorted(list(df.index))
 transpose_list.insert(0, 'None')
 
 
-STEP_TRANSPOSE_TEXT = "Single radar selected. Optional: selected radar site to transpose to"
+STEP_TRANSPOSE_TEXT = "Optional: selected radar site to transpose to -->"
 step_transpose_radar = dbc.Col(html.Div(children=STEP_TRANSPOSE_TEXT,style=steps_right))
 
 transpose_radar_dropdown = dbc.Col(html.Div([spacer_mini,dcc.Dropdown(transpose_list,'None',id='tradar',
-                                                clearable=False)],className="d-grid gap-2 col-10 mx-auto",style={'vertical-align':'bottom'}))
+                                                clearable=False)],className="d-grid gap-2 col-10 mx-auto",style={'vertical-align':'top'}))
 transpose_section = dbc.Container(
     dbc.Container(html.Div([dbc.Row([step_transpose_radar, transpose_radar_dropdown],id='transpose_section')])))
 
@@ -196,15 +197,7 @@ transpose_section = dbc.Container(
 # Run script button
 #---------------------------------------------------------------
 
-scripts_button = html.Div([
-        dbc.Row([
-            dbc.Col(
-                html.Div([
-                    dbc.Button('Run Scripts',
-                               size="lg", id='run_scripts_btn', n_clicks=0),
-                    ], className="d-grid gap-2"), style={'vertical-align':'middle'}),
-        ])
-            ], style={'padding':'1em', 'vertical-align':'middle'})
+
 
 
 #---------------------------------------------------------------
