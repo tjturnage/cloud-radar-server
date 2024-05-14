@@ -516,5 +516,4 @@ class Mesowest():
 
 
 if __name__ == "__main__":
-    #test = Mesowest(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])
-    test = Mesowest('40.3', '-84.4', '2023-02-25 23:45:00 UTC', 30)
+    test = Mesowest(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])

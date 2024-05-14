@@ -5,6 +5,15 @@ import numpy as np
 import plotly.graph_objs as go
 import dash_bootstrap_components as dbc
 from dash import html, dcc
+from pathlib import Path
+
+
+dir_parts = Path.cwd().parts
+link_base = "https://rssic.nws.noaa.gov/"
+if 'C:\\' in dir_parts:
+    link_base = "http://localhost:8050/assets"
+
+place_base = f"{link_base}/placefiles"
 
 now = datetime.now(pytz.utc)
 
@@ -230,6 +239,29 @@ transpose_status = dbc.Col(html.Div([transpose_status_header,
 status_section = dbc.Container(dbc.Container(
     html.Div([dbc.Row([obs_placefile_status, radar_status, hodograph_status, nse_status, transpose_status])] )
     ))
+
+placefiles_banner_text = "Placefile and graphics links"
+placefiles_banner = dbc.Row(dbc.Col(html.Div(children=placefiles_banner_text,style=steps_center)))
+
+links_section = html.Div(
+    [spacer_mini,spacer_mini,
+     placefiles_banner,
+        dbc.ListGroup(
+            [
+                dbc.ListGroupItem("Hodographs", href=f"{link_base}/hodograph.html"),
+                dbc.ListGroupItem("surface obs placefile", href=f"{place_base}/latest_surface_observations.txt"),
+                dbc.ListGroupItem("surface obs placefile (large font)", href=f"{place_base}/latest_surface_observations_lg.txt"),
+                dbc.ListGroupItem("surface obs placefile (small font)", href=f"{place_base}/latest_surface_observations_xlg.txt"),
+                dbc.ListGroupItem("wind placefile", href=f"{place_base}/wind.txt"),
+                dbc.ListGroupItem("temp placefile", href=f"{place_base}/temp.txt"),
+                dbc.ListGroupItem("dwpt placefile", href=f"{place_base}/dwpt.txt"),
+                dbc.ListGroupItem("road placefile", href=f"{place_base}/road.txt"),
+            ]
+        ),
+        html.P(id="counter"),
+    ]
+)
+
 #---------------------------------------------------------------
 # Clock components
 #---------------------------------------------------------------

@@ -4,7 +4,7 @@
     Main page for radar-server
         _type_: _description_
 """
-
+from flask import Flask, render_template
 import os
 import re
 from glob import glob
@@ -42,6 +42,7 @@ TIME_REGEX = "[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z"
 TOKEN = 'INSERT YOUR MAPBOX TOKEN HERE'
 
 BASE_DIR = Path.cwd()
+HODOGRAPHS = BASE_DIR / 'assets' / 'hodographs'
 DATA_DIR = BASE_DIR / 'data'
 RADAR_DIR = DATA_DIR / 'radar'
 CSV_PATH = BASE_DIR / 'radars.csv'
@@ -250,6 +251,27 @@ class RadarSimulator(Config):
                                     f"{new_datestring_1} {new_datestring_2}")
         return new_line
 
+    def make_hodo_page(self):
+        head = """<!DOCTYPE html>
+        <html>
+        <head>
+        <title>Hodographs</title>
+        </head>
+        <body>
+        <ul>"""
+        tail = """</ul>
+        </body>
+        </html>"""
+        with open('assets/hodograph.html', 'w', encoding='utf-8') as fout:
+            fout.write(head)
+            image_files = [f for f in os.listdir(HODOGRAPHS) if f.endswith('.png') or f.endswith('.jpg')]
+            for image in image_files:
+                line = f'<li><a href="hodographs/{image}">{image}</a></li>\n'
+                fout.write(line)
+
+        fout.write(tail)
+        return
+
 
 scripts_button = html.Div([
         dbc.Row([
@@ -299,6 +321,7 @@ app.layout = dbc.Container([
         lc.map_section, lc.transpose_section, lc.spacer_mini,
         scripts_button,
     lc.status_section,
+    lc.links_section,
     lc.toggle_simulation_clock,lc.simulation_clock, lc.radar_id, lc.bottom_section
     ])  # end of app.layout
 
@@ -306,6 +329,11 @@ app.layout = dbc.Container([
 ################################################################################################
 # ---------------------------------------- Radar Map Callbacks -------------------------------------
 ################################################################################################
+
+
+
+
+
 
 @app.callback(
     Output('tradar', 'value'),
@@ -392,7 +420,6 @@ def launch_obs_script(n_clicks):
         except Exception as e:
             print("Error creating radar dictionary: ", e)
         for radar, data in sa.radar_dict.items():
-            pass
             try:
                 asos_one = data['asos_one']
                 asos_two = data['asos_two']
@@ -400,21 +427,25 @@ def launch_obs_script(n_clicks):
             except KeyError as e:
                 print("Error getting radar metadata: ", e)
             try:
+                pass
                 file_list = NexradDownloader(radar, sa.timestring, str(sa.duration))
                 sa.radar_dict[radar]['file_list'] = file_list
-                #print("Nexrad script completed ... Now creating hodographs ...")
+                print("Nexrad script completed ... Now creating hodographs ...")
             except Exception as e:
                 print("Error running nexrad script: ", e)
             try:
                 print(f'hodo script: {radar}, {BASE_DIR}, {asos_one}, {asos_two}')
                 run_hodo_script([radar, BASE_DIR, asos_one, asos_two])
-                #print("Hodograph script completed ...")
+                print("Hodograph script completed ...")
             except Exception as e:
                 print("Error running hodo script: ", e)
-
-                
         try:
-            #mean_lat,mean_lon = sa.get_mean_lat_lon_values()
+            sa.make_hodo_page()
+            print("Hodo page created")
+        except Exception as e:
+            print("Error creating hodo page: ", e)
+           
+        try:
             print("Running obs script...")
             Mesowest(str(sa.lat),str(sa.lon),sa.timestring,str(sa.duration))
             print("Obs script completed")
