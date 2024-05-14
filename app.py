@@ -4,18 +4,19 @@
     Main page for radar-server
         _type_: _description_
 """
-from flask import Flask, render_template
+#from flask import Flask, render_template
 import os
+import shutil
 import re
 from glob import glob
 from datetime import datetime, timedelta
-from time import sleep
+#from time import sleep
 import calendar
 from pathlib import Path
 import math
 import subprocess
 from dash import Dash, html, Input, Output, dcc #, ctx, callback
-from dash.exceptions import PreventUpdate
+#from dash.exceptions import PreventUpdate
 #from dash import diskcache, DiskcacheManager, CeleryManager
 #from uuid import uuid4
 #import diskcache
@@ -251,6 +252,18 @@ class RadarSimulator(Config):
                                     f"{new_datestring_1} {new_datestring_2}")
         return new_line
 
+
+    def remove_files_and_dirs(self):
+        dirs = ['data/radar/', 'assets/hodographs/']
+        for directory in dirs:
+            for root, dirs, files in os.walk(directory, topdown=False):
+                for name in files:
+                    os.remove(os.path.join(root, name))
+                for name in dirs:
+                    os.rmdir(os.path.join(root, name))
+        return
+
+
     def make_hodo_page(self):
         head = """<!DOCTYPE html>
         <html>
@@ -271,18 +284,6 @@ class RadarSimulator(Config):
 
         fout.write(tail)
         return
-
-
-scripts_button = html.Div([
-        dbc.Row([
-            dbc.Col(
-                html.Div([
-                    dbc.Button('Make Obs Placefile ... Download radar data ... Make hodo plots', size="lg", id='run_scripts', n_clicks=0),
-                    ], className="d-grid gap-2"), style={'vertical-align':'middle'}),
-                    html.Div(id='show_script_progress',style=lc.feedback)
-        ])
-            ], style={'padding':'1em', 'vertical-align':'middle'})
-
 
 ################################################################################################
 #      Initialize the app
@@ -319,7 +320,7 @@ app.layout = dbc.Container([
 ]),
         lc.spacer,
         lc.map_section, lc.transpose_section, lc.spacer_mini,
-        scripts_button,
+        lc.scripts_button,
     lc.status_section,
     lc.links_section,
     lc.toggle_simulation_clock,lc.simulation_clock, lc.radar_id, lc.bottom_section
@@ -329,11 +330,6 @@ app.layout = dbc.Container([
 ################################################################################################
 # ---------------------------------------- Radar Map Callbacks -------------------------------------
 ################################################################################################
-
-
-
-
-
 
 @app.callback(
     Output('tradar', 'value'),
@@ -401,7 +397,6 @@ def toggle_transpose_display(value):
 # ---  Run Scripts button ---
 # -------------------------------------
 
-
 def run_hodo_script(args):
     subprocess.run(["python", HODO_SCRIPT_PATH] + args)
     return
@@ -414,7 +409,10 @@ def run_hodo_script(args):
 def launch_obs_script(n_clicks):
     if n_clicks > 0:
         sa.make_simulation_times()
-        print(sa.radar_list)
+        try:
+            sa.remove_files_and_dirs()
+        except Exception as e:
+            print("Error removing files and directories: ", e)
         try:
             sa.create_radar_dict()
         except Exception as e:

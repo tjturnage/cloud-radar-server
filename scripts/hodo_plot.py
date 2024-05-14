@@ -490,16 +490,29 @@ for p in radar_filepaths:
   SRH6 = hr.calc_srh_from_rm(data_ceiling, 6000, u_avg, v_avg, rmu, rmv, zlevels)
   SRH8 = hr.calc_srh_from_rm(data_ceiling, 8000, u_avg, v_avg, rmu, rmv, zlevels)
 
-
   SRH_units = (units.m*units.m)/(units.s*units.s)
-
   ureg=UnitRegistry()
-  ureg.default_format = "~P"
-  for u in (SRH05, SRH1, SRH3, SRH6, SRH8):
-    try:
-      u=ureg(str(u)).m
-    except:
-      pass
+  #ureg.default_format = "~P"
+  try:
+    SRH05=ureg(str(SRH05)).m
+  except:
+    pass
+  try:
+    SRH1=ureg(str(SRH1)).m
+  except:
+    pass
+  try:
+    SRH3=ureg(str(SRH3)).m
+  except:
+    pass
+  try:
+    SRH6=ureg(str(SRH6)).m
+  except:
+    pass
+  try:
+    SRH8=ureg(str(SRH8)).m
+  except:
+    pass
 
 
   #Calculate SR Wind
@@ -634,7 +647,7 @@ for p in radar_filepaths:
   except:
       plt.figtext(0.91,0.85, f"{shr005} kt", fontsize = 12, weight = 'bold', color = 'purple')
   try:
-    plt.figtext(0.95,0.85, f"{'{:.0f}'.format(SRH05) * SRH_units}", fontsize = 12, weight = 'bold', color = 'purple')
+    plt.figtext(0.95,0.85, f"{'{:.0f}'.format(SRH05) * SRH_units:~P}", fontsize = 12, weight = 'bold', color = 'purple')
   except:
     plt.figtext(0.95,0.85, f"{SRH05 * SRH_units}", fontsize = 12, weight = 'bold', color = 'purple')
   try:

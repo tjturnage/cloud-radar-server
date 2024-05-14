@@ -9,7 +9,7 @@ from pathlib import Path
 
 
 dir_parts = Path.cwd().parts
-link_base = "https://rssic.nws.noaa.gov/"
+link_base = "https://rssic.nws.noaa.gov"
 if 'C:\\' in dir_parts:
     link_base = "http://localhost:8050/assets"
 
@@ -206,7 +206,15 @@ transpose_section = dbc.Container(
 # Run script button
 #---------------------------------------------------------------
 
-
+scripts_button = html.Div([
+        dbc.Row([
+            dbc.Col(
+                html.Div([
+                    dbc.Button('Make Obs Placefile ... Download radar data ... Make hodo plots', size="lg", id='run_scripts', n_clicks=0),
+                    ], className="d-grid gap-2"), style={'vertical-align':'middle'}),
+                    html.Div(id='show_script_progress',style=feedback)
+        ])
+            ], style={'padding':'1em', 'vertical-align':'middle'})
 
 
 #---------------------------------------------------------------
