@@ -55,7 +55,7 @@ def main(argv):
         print("Usage: python l2munger.py <newid> YYYY/MM/DD HH:MI:SS <file>")
         return
     new_stid = argv[1]
-    new_dt = datetime.datetime.strptime("%s %s" % (argv[2], argv[3]),
+    new_dt = datetime.datetime.strptime(f"%s %s" % (argv[2], argv[3]),
                                         '%Y/%m/%d %H:%M:%S')
     filename = argv[4]
     fake(filename, new_stid, new_dt)

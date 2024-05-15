@@ -9,7 +9,7 @@ import os
 import shutil
 import re
 from glob import glob
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 #from time import sleep
 import calendar
 from pathlib import Path
@@ -26,9 +26,10 @@ from botocore.client import Config
 
 # bootstrap is what helps styling for a better presentation
 import dash_bootstrap_components as dbc
+import layout_components as lc
 from scripts.obs_placefile import Mesowest
 from scripts.Nexrad import NexradDownloader
-import layout_components as lc
+from scripts.munger import Munger
 
  # Earth radius (km)
 R = 6_378_137
@@ -137,9 +138,10 @@ class RadarSimulator(Config):
         return
 
     def make_simulation_times(self):
+        self.playback_start = datetime.now(tz=timezone.utc) - timedelta(hours=2)
         self.sim_start = datetime(self.start_year,self.start_month,self.start_day,
-                                  self.start_hour,self.start_minute,second=0)
-        self.sim_clock = self.sim_start
+                                  self.start_hour,self.start_minute,second=0).astimezone()
+        self.sim_clock = self.playback_start
         self.sim_start_str = datetime.strftime(self.sim_start,"%Y-%m-%d %H:%M:%S UTC")
         self.timestring = self.sim_start_str
         self.sim_end = self.sim_start + timedelta(minutes=int(self.duration))
@@ -281,8 +283,7 @@ class RadarSimulator(Config):
             for image in image_files:
                 line = f'<li><a href="hodographs/{image}">{image}</a></li>\n'
                 fout.write(line)
-
-        fout.write(tail)
+            fout.write(tail)
         return
 
 ################################################################################################
@@ -408,6 +409,7 @@ def run_hodo_script(args):
     prevent_initial_call=True)
 def launch_obs_script(n_clicks):
     if n_clicks > 0:
+        
         sa.make_simulation_times()
         try:
             sa.remove_files_and_dirs()
@@ -614,62 +616,3 @@ if __name__ == '__main__':
         # os.system(cp_cmd)
         
         # return
-# def handle_script_progress(n_clicks):
-#     try:
-#         if n_clicks > 0:
-#             print("Running script...")
-#             sa.make_simulation_times()
-#             sa.create_radar_dict()
-
-#             for key in sa.radar_dict.keys():
-#                 try:
-#                     asos_one = sa.radar_dict[key]['asos_one']
-#                     asos_two = sa.radar_dict[key]['asos_two']
-#                     radar = key
-#                     print(asos_one, asos_two, radar)
-#                 except KeyError as e:
-#                     print("Error getting radar metadata: ", e)
-#                 except Exception as e:
-#                     print("Error: ", e)
-
-#                 try:
-#                     NexradDownloader(radar, sa.timestring, str(sa.duration))
-#                 except Exception as e:
-#                     print("Error running nexrad script: ", e)
-
-#                 try:
-#                     run_hodo_script([radar, BASE_DIR, asos_one, asos_two])
-#                 except Exception as e:
-#                     print("Error running hodograph script: ", e)
-#     except Exception as e:
-#         print("Error: ", e)
-
-
-
-# def handle_script_progress(n_clicks):
-#     try:
-#         if n_clicks > 0:
-#             print("Running script...")
-#             sa.make_simulation_times()
-#             sa.create_radar_dict()
-
-#             for key in sa.radar_dict.keys():
-#                 try:
-#                     asos_one = sa.radar_dict[key]['asos_one']
-#                     asos_two = sa.radar_dict[key]['asos_two']
-#                     radar = key
-#                     print(asos_one, asos_two, radar)
-#                 except KeyError as e:
-#                     print("Error getting radar metadata: ", e)
-#                 except Exception as e:
-#                     print("Error: ", e)
-
-#                 try:
-#                     NexradDownloader(radar, sa.timestring, str(sa.duration))
-#                 except Exception as e:
-#                     print("Error running nexrad script: ", e)
-
-#                 try:
-#                     run_hodo_script([radar, BASE_DIR, asos_one, asos_two])
-#                 except Exception as e:
-#                     print("Error: ", e)

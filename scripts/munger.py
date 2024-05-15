@@ -1,19 +1,19 @@
-import glob
+"""_summary_
+
+    Returns:
+        _type_: _description_
+"""
+
 import os
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from time import sleep
+from __future__ import print_function
+import bz2
+import gzip
+import struct
+import datetime
 
-scripts_dir = '/home/wwwgrr/scripts'
-
-munge_dir = f'{scripts_dir}/munger'
-#py3_path = '/home/tjt/anaconda3/bin/python'
-py3_path = '/usr/bin/python3'
-
-#base_destination_directory = '/home/tjt/public_html/public/radar/'
-base_destination_directory = '/data/www/html/soo/munger/'
-
-raw_dir = f'{scripts_dir}/arc2dat/'
 
 class Munger():
     """
@@ -36,14 +36,17 @@ class Munger():
         speed of simulation compared to real time ... example: 2.0 means event proceeds twice as fast
     """
     
-    def __init__(self, munge_data=True, new_rda='KGRR', start_simulation=True, playback_speed=1.5):
+    def __init__(self, munge_dir, polling_dir, munge_data=True, new_rda='KGRR', start_simulation=True, playback_speed=1.5):
 
         self.new_rda = new_rda
+        self.munge_dir = munge_dir
+        self.polling_dir = polling_dir
         self.munge_data = munge_data
-        self.source_directory = Path(munge_dir)
+
+        self.source_directory = Path(self.munge_dir)
         self.start_simulation = start_simulation
         self.playback_speed = playback_speed
-        self.radar_dir = f'{base_destination_directory}{self.new_rda}'
+        self.radar_dir = f'{self.polling_dir}{self.new_rda}'
         self.clean_files()
         self.copy_files()
         self.uncompress_files()
@@ -75,9 +78,9 @@ class Munger():
         """
         Purges all radar files associated with previous simulation
         """
-        rm_munge_files = f'rm {munge_dir}/K*'
+        rm_munge_files = f'rm {self.munge_dir}/K*'
         os.system(rm_munge_files)
-        os.chdir(munge_dir)
+        os.chdir(self.munge_dir)
         os.chdir(self.radar_dir)
         try:
             [os.remove(f) for f in os.listdir()]
@@ -90,7 +93,7 @@ class Munger():
         """
         stages raw files into munge directory where munger script lives
         """
-        cp_cmd = f'cp {raw_dir}/* {munge_dir}'
+        cp_cmd = f'cp {self.source_directory}/* self.{self.munge_dir}'
         os.system(cp_cmd)
         
         return
@@ -100,10 +103,10 @@ class Munger():
         example command line: python debz.py KBRO20170825_195747_V06 KBRO20170825_195747_V06.uncompressed
         """
 
-        os.chdir(munge_dir)
+        os.chdir(self.munge_dir)
         self.source_files = list(self.source_directory.glob('*V06'))
         for original_file in self.source_files:
-            command_string = f'{py3_path} debz.py {str(original_file)} {str(original_file)}.uncompressed'
+            command_string = f'python debz.py {str(original_file)} {str(original_file)}.uncompressed'
             os.system(command_string)
         print("uncompress complete!")
         return
@@ -115,6 +118,43 @@ class Munger():
         """
         file_epoch_time = datetime.strptime(file[4:19], '%Y%m%d_%H%M%S').timestamp()
         return file_epoch_time
+
+
+    def fake(self,filename):#,filename, new_stid, new_dt):
+        """Heavily borrow metpy's code!"""
+        if filename.endswith('.bz2'):
+            fobj = bz2.BZ2File(filename, 'rb')
+        elif filename.endswith('.gz'):
+            fobj = gzip.GzipFile(filename, 'rb')
+        else:
+            fobj = open(filename, 'rb')
+        version = struct.unpack('9s', fobj.read(9))[0]
+        vol_num = struct.unpack('3s', fobj.read(3))[0]
+        date = struct.unpack('>L', fobj.read(4))[0]
+        time_ms = struct.unpack('>L', fobj.read(4))[0]
+        stid = struct.unpack('4s', fobj.read(4))[0]
+        orig_dt = datetime.datetime.utcfromtimestamp((date - 1) * 86400. +
+                                                    time_ms * 0.001)
+
+        seconds = (new_dt - datetime.datetime(1970, 1, 1)).total_seconds()
+        new_date = int(seconds / 86400) + 1
+        new_time_ms = int(seconds % 86400) * 1000
+        newfn = "%s%s" % (self.new_rda, new_dt.strftime("%Y%m%d_%H%M%S"))
+        if os.path.isfile(newfn):
+            print("Abort: Refusing to overwrite existing file: '%s'" % (newfn, ))
+            return
+        print(new_date)
+        print(date)
+        output = open(newfn, 'wb')
+        output.write(struct.pack('9s', version.encode('utf-8')))
+        output.write(struct.pack('3s', vol_num.encode('utf-8')))
+        output.write(struct.pack('>L', new_date))
+        output.write(struct.pack('>L', new_time_ms))
+        output.write(struct.pack('4s', self.new_rda.encode('utf-8')))
+        output.write(fobj.read())
+        output.close()
+        return
+
     
     def munge_files(self):
         """
@@ -122,7 +162,7 @@ class Munger():
         munges radar files to start at the reference time
         also changes RDA location
         """
-        os.chdir(munge_dir)
+        os.chdir(self.munge_dir)
         simulation_start_time = datetime.now(timezone.utc) - timedelta(seconds=(60*60*2))
         simulation_start_time_epoch = simulation_start_time.timestamp()
         for uncompressed_file in self.uncompressed_files:
@@ -137,7 +177,7 @@ class Munger():
             #print(f'     source file = {fn}')
             os.system(command_line)
             new_filename = f'{self.new_rda}{new_filename_date_string}'
-            move_command = f'mv {munge_dir}/{new_filename} {self.radar_dir}/{new_filename}'
+            move_command = f'mv {self.munge_dir}/{new_filename} {self.radar_dir}/{new_filename}'
             print(move_command)
             os.system(move_command)
         
@@ -181,3 +221,13 @@ class Munger():
 
 test = Munger(new_rda='KGRR',munge_data=True,start_simulation=True)
 
+# def main(argv):
+#     """Our main function called with arguments"""
+#     if len(argv) != 5:
+#         print("Usage: python l2munger.py <newid> YYYY/MM/DD HH:MI:SS <file>")
+#         return
+#     new_stid = argv[1]
+#     new_dt = datetime.datetime.strptime(f"%s %s" % (argv[2], argv[3]),
+#                                         '%Y/%m/%d %H:%M:%S')
+#     filename = argv[4]
+#     fake(filename, new_stid, new_dt)
