@@ -4,17 +4,16 @@
         _type_: _description_
 """
 
+from __future__ import print_function
 import os
+import sys
 from datetime import datetime, timedelta, timezone
+import pytz
 from pathlib import Path
 from time import sleep
-from __future__ import print_function
 import bz2
 import gzip
 import struct
-import datetime
-
-
 class Munger():
     """
     Copies Nexrad Archive 2 files from a raw directory so Displaced Real-Time (DRT) simulations can be performed
@@ -36,15 +35,14 @@ class Munger():
         speed of simulation compared to real time ... example: 2.0 means event proceeds twice as fast
     """
     
-    def __init__(self, munge_dir, polling_dir, munge_data=True, new_rda='KGRR', start_simulation=True, playback_speed=1.5):
+    def __init__(self, munge_dir, polling_dir, sim_timedelta, new_rda, playback_speed=1.5):
 
         self.new_rda = new_rda
         self.munge_dir = munge_dir
         self.polling_dir = polling_dir
-        self.munge_data = munge_data
-
+        self.sim_timedelta = sim_timedelta
         self.source_directory = Path(self.munge_dir)
-        self.start_simulation = start_simulation
+        #self.start_simulation = start_simulation
         self.playback_speed = playback_speed
         self.radar_dir = f'{self.polling_dir}{self.new_rda}'
         self.clean_files()
@@ -56,23 +54,20 @@ class Munger():
         self.first_file = self.uncompressed_files[0].parts[-1]
         self.first_file_epoch_time = self.get_timestamp(self.first_file)
 
-        if self.munge_data:
-        # Determine RDA associated with archive files if necessary
-            if self.new_rda == 'None':
-                self.first_file_rda = self.first_file[:4]
-                self.new_rda = self.first_file_rda
-            # commence munging
-            self.munge_files()
+        # # Determine RDA associated with archive files if necessary
+        # if self.new_rda == 'None':
+        #     self.first_file_rda = self.first_file[:4]
+        #     self.new_rda = self.first_file_rda
+        # # commence munging
+        # self.munge_files()
 
-        if self.start_simulation:
-            #print(' Starting simulation!! \n Set polling to https://turnageweather.us/public/radar')
-            print(' Starting simulation!! \n Set polling to http://intra-grr.cr.nws.noaa/grr/soo/munger/')
-            self.simulation_files_directory = Path(self.radar_dir)
-            self.simulation_files = sorted(list(self.simulation_files_directory.glob('*gz')))
-            self.update_dirlist()
+        # if self.start_simulation:
+        #     #print(' Starting simulation!! \n Set polling to https://turnageweather.us/public/radar')
+        #     print(' Starting simulation!! \n Set polling to http://intra-grr.cr.nws.noaa/grr/soo/munger/')
+        #     self.simulation_files_directory = Path(self.radar_dir)
+        #     self.simulation_files = sorted(list(self.simulation_files_directory.glob('*gz')))
+        #     self.update_dirlist()
 
-        if not self.munge_data and not self.start_simulation:
-            print('nothing to do!')
     
     def clean_files(self):
         """
@@ -84,8 +79,8 @@ class Munger():
         os.chdir(self.radar_dir)
         try:
             [os.remove(f) for f in os.listdir()]
-        except:
-            print('cannot delete radar web files!')
+        except Exception as e:
+            print(f'Error: {e}')
         
         return            
 
@@ -111,13 +106,14 @@ class Munger():
         print("uncompress complete!")
         return
 
-    def get_timestamp(self,file):
+    def get_timestamp(self, file):
         """
         - extracts datetime info from the radar filename
-        - converts it to a datetime timestamp (epoch seconds) object
+        - converts it to a timezone aware datetime object in UTC
         """
-        file_epoch_time = datetime.strptime(file[4:19], '%Y%m%d_%H%M%S').timestamp()
-        return file_epoch_time
+        file_time = datetime.strptime(file[4:19], '%Y%m%d_%H%M%S')
+        utc_file_time = file_time.replace(tzinfo=pytz.UTC)
+        return utc_file_time
 
 
     def fake(self,filename):#,filename, new_stid, new_dt):
@@ -133,10 +129,10 @@ class Munger():
         date = struct.unpack('>L', fobj.read(4))[0]
         time_ms = struct.unpack('>L', fobj.read(4))[0]
         stid = struct.unpack('4s', fobj.read(4))[0]
-        orig_dt = datetime.datetime.utcfromtimestamp((date - 1) * 86400. +
+        orig_dt = datetime.utcfromtimestamp((date - 1) * 86400. +
                                                     time_ms * 0.001)
 
-        seconds = (new_dt - datetime.datetime(1970, 1, 1)).total_seconds()
+        seconds = (new_dt - datetime(1970, 1, 1)).total_seconds()
         new_date = int(seconds / 86400) + 1
         new_time_ms = int(seconds % 86400) * 1000
         newfn = "%s%s" % (self.new_rda, new_dt.strftime("%Y%m%d_%H%M%S"))
@@ -218,16 +214,8 @@ class Munger():
         return
 
 #-------------------------------
+if __name__ == "__main__":
 
-test = Munger(new_rda='KGRR',munge_data=True,start_simulation=True)
-
-# def main(argv):
-#     """Our main function called with arguments"""
-#     if len(argv) != 5:
-#         print("Usage: python l2munger.py <newid> YYYY/MM/DD HH:MI:SS <file>")
-#         return
-#     new_stid = argv[1]
-#     new_dt = datetime.datetime.strptime(f"%s %s" % (argv[2], argv[3]),
-#                                         '%Y/%m/%d %H:%M:%S')
-#     filename = argv[4]
-#     fake(filename, new_stid, new_dt)
+    #NexradDownloader('kgrr', '2023-08-24 23:45:00 UTC', 30)
+    Munger(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5])
+    #Munger(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], sys.argv[6])

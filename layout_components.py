@@ -9,9 +9,13 @@ from pathlib import Path
 
 
 dir_parts = Path.cwd().parts
-link_base = "https://rssic.nws.noaa.gov"
 if 'C:\\' in dir_parts:
     link_base = "http://localhost:8050/assets"
+    cloud = False
+
+else:
+    link_base = "https://rssic.nws.noaa.gov/assets"
+    cloud = True
 
 place_base = f"{link_base}/placefiles"
 

@@ -553,8 +553,10 @@ def update_time(_n):
 ################################################################################################
 
 if __name__ == '__main__':
-    #app.run_server(host="0.0.0.0", port=8050, threaded=True, debug=True, use_reloader=False)
-    app.run(debug=True, port=8050, threaded=True)
+    if lc.cloud:
+        app.run_server(host="0.0.0.0", port=8050, threaded=True, debug=True, use_reloader=False)
+    else:
+        app.run(debug=True, port=8050, threaded=True)
     
 # pathname_params = dict()
 # if my_settings.hosting_path is not None:
