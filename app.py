@@ -44,7 +44,9 @@ TIME_REGEX = "[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z"
 TOKEN = 'INSERT YOUR MAPBOX TOKEN HERE'
 
 BASE_DIR = Path.cwd()
-HODOGRAPHS = BASE_DIR / 'assets' / 'hodographs'
+ASSETS_DIR = BASE_DIR / 'assets'
+HODOGRAPHS_DIR = ASSETS_DIR / 'hodographs'
+PLACEFILES_DIR = ASSETS_DIR / 'placefiles'
 DATA_DIR = BASE_DIR / 'data'
 RADAR_DIR = DATA_DIR / 'radar'
 CSV_PATH = BASE_DIR / 'radars.csv'
@@ -87,25 +89,25 @@ class RadarSimulator(Config):
 
     def __init__(self):
         super().__init__()
-        self.start_year = 2023
-        self.start_month = 6
+        self.event_start_year = 2023
+        self.event_start_month = 6
         self.days_in_month = 30
-        self.start_day = 7
-        self.start_hour = 21
-        self.start_minute = 45
-        self.duration = 30
+        self.event_start_day = 7
+        self.event_start_hour = 21
+        self.event_start_minute = 45
+        self.event_duration = 30
         self.timeshift = None
         self.timestring = None
-        self.sim_clock = None
         self.number_of_radars = 0
         self.radar_list = []
         self.radar_dict = {}
         self.radar = None
         self.lat = None
         self.lon = None
-        self.tradar = 'None'
-        self.tlat = None
-        self.tlon = None
+        self.new_radar = 'None'
+        self.new_lat = None
+        self.new_lon = None
+        self.simulation_clock = None
         self.simulation_running = False
         self.current_dir = Path.cwd()
         self.define_scripts_and_assets_directories()
@@ -138,17 +140,18 @@ class RadarSimulator(Config):
         return
 
     def make_simulation_times(self):
-        self.playback_start = datetime.now(tz=timezone.utc) - timedelta(hours=2)
-        self.sim_start = datetime(self.start_year,self.start_month,self.start_day,
-                                  self.start_hour,self.start_minute,second=0).astimezone()
-        self.sim_clock = self.playback_start
-        self.sim_start_str = datetime.strftime(self.sim_start,"%Y-%m-%d %H:%M:%S UTC")
-        self.timestring = self.sim_start_str
-        self.sim_end = self.sim_start + timedelta(minutes=int(self.duration))
+        self.playback_start_time = datetime.now(tz=timezone.utc) - timedelta(hours=2)
+        self.event_start_time = datetime(self.event_start_year,self.event_start_month,self.event_start_day,
+                                  self.event_start_hour,self.event_start_minute,second=0).astimezone()
+        self.simulation_time_shift = self.playback_start_time - self.event_start_time
+        self.sim_clock = self.playback_start_time
+        self.event_start_str = datetime.strftime(self.event_start_time,"%Y-%m-%d %H:%M:%S UTC")
+        self.timestring = self.event_start_str
+        self.playback_end_time = self.event_start_time + timedelta(minutes=int(self.event_duration))
         return
    
     def get_days_in_month(self):
-        self.days_in_month = calendar.monthrange(self.start_year, self.start_month)[1]
+        self.days_in_month = calendar.monthrange(self.event_start_year, self.event_start_month)[1]
         return
 
     def get_timestamp(self,file):
@@ -160,6 +163,7 @@ class RadarSimulator(Config):
         return file_epoch_time
 
     def move_point(self,plat,plon):
+        #radar1_lat, radar1_lon, radar2_lat, radar2_lon, lat, lon
         """
         Shift placefiles to a different radar site. Maintains the original azimuth and range
         from a specified RDA and applies it to a new radar location. 
@@ -196,7 +200,7 @@ class RadarSimulator(Config):
         bearing = (math.degrees(theta) + 360) % 360
 
         # Apply this distance and bearing to the new radar location
-        phi_new, lambda_new = math.radians(self.tlat), math.radians(self.tlon)
+        phi_new, lambda_new = math.radians(self.new_lat), math.radians(self.new_lon)
         phi_out = math.asin((math.sin(phi_new) * math.cos(d/R)) + (math.cos(phi_new) * \
                             math.sin(d/R) * math.cos(math.radians(bearing))))
         lambda_out = lambda_new + math.atan2(math.sin(math.radians(bearing)) *    \
@@ -206,8 +210,8 @@ class RadarSimulator(Config):
 
 
 
-    def shift_placefiles(self, filepath):
-        filenames = glob(f"{filepath}/*.txt")
+    def shift_placefiles(self):
+        filenames = glob(f"{PLACEFILES_DIR}/*.txt")
         for file_ in filenames:
             print(f"Shifting placefile: {file_}")
             with open(file_, 'r', encoding='utf-8') as f: data = f.readlines()
@@ -279,7 +283,7 @@ class RadarSimulator(Config):
         </html>"""
         with open('assets/hodograph.html', 'w', encoding='utf-8') as fout:
             fout.write(head)
-            image_files = [f for f in os.listdir(HODOGRAPHS) if f.endswith('.png') or f.endswith('.jpg')]
+            image_files = [f for f in os.listdir(HODOGRAPHS_DIR) if f.endswith('.png') or f.endswith('.jpg')]
             for image in image_files:
                 line = f'<li><a href="hodographs/{image}">{image}</a></li>\n'
                 fout.write(line)
@@ -328,29 +332,9 @@ app.layout = dbc.Container([
     ])  # end of app.layout
 
 
-################################################################################################
-# ---------------------------------------- Radar Map Callbacks -------------------------------------
-################################################################################################
-
-@app.callback(
-    Output('tradar', 'value'),
-    Input('tradar', 'value'), prevent_initial_call=True)
-def transpose_radar(tradar):
-    if tradar != 'None':
-        sa.tradar = tradar
-        return f'{sa.tradar}'
-    return 'None'
-
-
-@app.callback(
-    Output('graph-container', 'style'),
-    Input('map_btn', 'n_clicks'))
-def toggle_map_display(n):
-    if n%2 == 0:
-        return {'display': 'none'}
-    else:
-        return {'padding-bottom': '2px', 'padding-left': '2px','height': '80vh', 'width': '100%'}
-
+# -------------------------------------
+# ---  Radar Map section  ---
+# -------------------------------------
 
 @app.callback(
     Output('show_radar_selections', 'children'),
@@ -379,6 +363,30 @@ def display_click_data(clickData):
             return f'{radar_list}'
 
 @app.callback(
+    Output('graph-container', 'style'),
+    Input('map_btn', 'n_clicks'))
+def toggle_map_display(n):
+    if n%2 == 0:
+        return {'display': 'none'}
+    else:
+        return {'padding-bottom': '2px', 'padding-left': '2px','height': '80vh', 'width': '100%'}
+
+# -------------------------------------
+# ---  Transpose radar section  ---
+# -------------------------------------
+
+@app.callback(
+    Output('tradar', 'value'),
+    Input('new_radar_selection', 'value'))
+def transpose_radar(value):
+    if value != 'None':
+        sa.new_radar = value
+        sa.new_lat = lc.df[lc.df['radar'] == sa.new_radar]['lat'].values[0]
+        sa.new_lon = lc.df[lc.df['radar'] == sa.new_radar]['lon'].values[0]
+        return f'{sa.new_radar}'
+    return 'None'
+
+@app.callback(
     Output('transpose_section', 'style'),
     Input('radar_quantity', 'value'))
 def toggle_transpose_display(value):
@@ -386,22 +394,19 @@ def toggle_transpose_display(value):
     Resets the radar list when the number of radars is changed
     """
     sa.number_of_radars = value
-    #sa.radar_list = []
     while len(sa.radar_list) > sa.number_of_radars:
         sa.radar_list = sa.radar_list[1:]
     if sa.number_of_radars == 1:
         return lc.section_box
     return {'display': 'none'}
 
-
 # -------------------------------------
 # ---  Run Scripts button ---
 # -------------------------------------
 
 def run_hodo_script(args):
-    subprocess.run(["python", HODO_SCRIPT_PATH] + args)
+    subprocess.run(["python", HODO_SCRIPT_PATH] + args, check=True)
     return
-
 
 @app.callback(
     Output('show_script_progress', 'children'),
@@ -409,7 +414,6 @@ def run_hodo_script(args):
     prevent_initial_call=True)
 def launch_obs_script(n_clicks):
     if n_clicks > 0:
-        
         sa.make_simulation_times()
         try:
             sa.remove_files_and_dirs()
@@ -428,7 +432,7 @@ def launch_obs_script(n_clicks):
                 print("Error getting radar metadata: ", e)
             try:
                 pass
-                file_list = NexradDownloader(radar, sa.timestring, str(sa.duration))
+                file_list = NexradDownloader(radar, sa.timestring, str(sa.event_duration))
                 sa.radar_dict[radar]['file_list'] = file_list
                 print("Nexrad script completed ... Now creating hodographs ...")
             except Exception as e:
@@ -447,7 +451,7 @@ def launch_obs_script(n_clicks):
            
         try:
             print("Running obs script...")
-            Mesowest(str(sa.lat),str(sa.lon),sa.timestring,str(sa.duration))
+            Mesowest(str(sa.lat),str(sa.lon),sa.timestring,str(sa.event_duration))
             print("Obs script completed")
         except Exception as e:
             print("Error running obs script: ", e)
@@ -462,10 +466,10 @@ def launch_obs_script(n_clicks):
     Output('transpose_status', 'value'),
     Input('run_transpose_script', 'n_clicks'))
 def run_transpose_script(n_clicks):
-    if sa.tradar == 'None':
+    if sa.new_radar == None:
         return 100
     if n_clicks > 0:
-        sa.shift_placefiles(sa.placefiles_dir)
+        sa.shift_placefiles()
         return 100
     return 0
 
@@ -484,13 +488,13 @@ Input('duration', 'value'),
 )
 def get_sim(_yr, _mo, _dy, _hr, _mn, _dur):
     sa.make_simulation_times()
-    line1 = f'Start: {sa.sim_start_str[:-7]}Z ____ {sa.duration} minutes'
+    line1 = f'Start: {sa.event_start_str[:-7]}Z ____ {sa.event_duration} minutes'
     return line1
 
 @app.callback(Output('start_year', 'value'),Input('start_year', 'value'))
 def get_year(start_year):
-    sa.start_year = start_year
-    return sa.start_year
+    sa.event_start_year = start_year
+    return sa.event_start_year
 
 @app.callback(
     Output('start_day', 'options'),
@@ -503,28 +507,28 @@ def update_day_dropdown(selected_year, selected_month):
 
 @app.callback(Output('start_month', 'value'),Input('start_month', 'value'))
 def get_month(start_month):
-    sa.start_month = start_month
-    return sa.start_month
+    sa.event_start_month = start_month
+    return sa.event_start_month
 
 @app.callback(Output('start_day', 'value'),Input('start_day', 'value'))
 def get_day(start_day):
-    sa.start_day = start_day
-    return sa.start_day
+    sa.event_start_day = start_day
+    return sa.event_start_day
 
 @app.callback(Output('start_hour', 'value'),Input('start_hour', 'value'))
 def get_hour(start_hour):
-    sa.start_hour = start_hour
-    return sa.start_hour
+    sa.event_start_hour = start_hour
+    return sa.event_start_hour
 
 @app.callback(Output('start_minute', 'value'),Input('start_minute', 'value'))
 def get_minute(start_minute):
-    sa.start_minute = start_minute
-    return sa.start_minute
+    sa.event_start_minute = start_minute
+    return sa.event_start_minute
 
 @app.callback(Output('duration', 'value'),Input('duration', 'value'))
 def get_duration(duration):
-    sa.duration = duration
-    return sa.duration
+    sa.event_duration = duration
+    return sa.event_duration
 
 ################################################################################################
 # ---------------------------------------- Clock Callbacks ----------------
@@ -545,8 +549,8 @@ def enable_simulation_clock(n):
     Input('interval-component', 'n_intervals')
 )
 def update_time(_n):
-    sa.sim_clock = sa.sim_clock + timedelta(seconds=15)
-    return sa.sim_clock.strftime("%Y-%m-%d %H:%M:%S UTC")
+    sa.simulation_clock = sa.sim_clock + timedelta(seconds=15)
+    return sa.simulation_clock.strftime("%Y-%m-%d %H:%M:%S UTC")
 
 ################################################################################################
 # ---------------------------------------- Call app ----------------

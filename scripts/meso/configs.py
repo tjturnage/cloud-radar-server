@@ -8,13 +8,15 @@ from collections import OrderedDict
 #
 # OUTPUT_DIR, MODEL_DIR, and LOG_DIR are used by run.py to automate scripting.
 ##########################################################################################
-PYTHON = '/Users/leecarlaw/mambaforge/envs/cloud-radar/bin/python'
+#PYTHON = '/Users/leecarlaw/mambaforge/envs/cloud-radar/bin/python'
+#WGRIB2 = '/usr/local/bin/wgrib2'
+#WGET = '/usr/local/bin/wget'
+PYTHON = '/opt/miniforge3/envs/cloud-radar/bin/python'
 WGRIB2 = '/usr/local/bin/wgrib2'
-WGET = '/usr/local/bin/wget'
-
-OUTPUT_DIR = '/Users/leecarlaw/Desktop/test'            # Location to store placefiles
-MODEL_DIR = '/Users/leecarlaw/model_data'               # Location to store model data
-LOG_DIR = '/Users/leecarlaw/scripts/cloud-radar-server/scripts/meso/logs'
+WGET = '/usr/bin/wget'
+OUTPUT_DIR = '/data/cloud-radar-server/assets/placefiles'            # Location to store placefiles
+MODEL_DIR = '/data/model_data'               # Location to store model data
+LOG_DIR = '/data/logs'
 
 # URL or local path to wind icon files
 WIND_ICONS = 'https://raw.githubusercontent.com/lcarlaw/meso/master/output/windicons.png'

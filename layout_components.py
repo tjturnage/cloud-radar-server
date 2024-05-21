@@ -44,6 +44,8 @@ steps_center = {'padding':'0.4em', 'border': '0.3em', 'border-radius': '15px',
                 'text-align':'center', 'height':'vh5'}
 
 
+column_label = {'font-weight': 'bold','text-align':'right'}
+
 section_box = {'background-color': '#333333', 'border': '2.5px gray solid'}
 
 url_rename = html.Div([
@@ -201,16 +203,16 @@ transpose_list.insert(0, 'None')
 STEP_TRANSPOSE_TEXT = "Optional: selected radar site to transpose to -->"
 step_transpose_radar = dbc.Col(html.Div(children=STEP_TRANSPOSE_TEXT,style=steps_right))
 
-transpose_radar_dropdown = dbc.Col(html.Div([spacer_mini,dcc.Dropdown(transpose_list,'None',id='tradar',
+transpose_radar_dropdown = dbc.Col(html.Div([spacer_mini,dcc.Dropdown(transpose_list,'None',id='new_radar_selection',
                                                 clearable=False)],className="d-grid gap-2 col-10 mx-auto",style={'vertical-align':'top'}))
-transpose_section = dbc.Container(
-    dbc.Container(html.Div([dbc.Row([step_transpose_radar, transpose_radar_dropdown],id='transpose_section')])))
+transpose_section = dbc.Container(dbc.Container(
+    dbc.Container(html.Div([dbc.Row([step_transpose_radar, transpose_radar_dropdown],id='transpose_section')]))))
 
 #---------------------------------------------------------------
 # Run script button
 #---------------------------------------------------------------
 
-scripts_button = html.Div([
+scripts_button = dbc.Container(html.Div([
         dbc.Row([
             dbc.Col(
                 html.Div([
@@ -218,7 +220,7 @@ scripts_button = html.Div([
                     ], className="d-grid gap-2"), style={'vertical-align':'middle'}),
                     html.Div(id='show_script_progress',style=feedback)
         ])
-            ], style={'padding':'1em', 'vertical-align':'middle'})
+            ], style={'padding':'1em', 'vertical-align':'middle'}))
 
 
 #---------------------------------------------------------------
@@ -255,25 +257,42 @@ status_section = dbc.Container(dbc.Container(
 placefiles_banner_text = "Placefile and graphics links"
 placefiles_banner = dbc.Row(dbc.Col(html.Div(children=placefiles_banner_text,style=steps_center)))
 
-links_section = html.Div(
-    [spacer_mini,spacer_mini,
-     placefiles_banner,
-        dbc.ListGroup(
+links_section = dbc.Container(dbc.Container(html.Div(
+    [
+        spacer_mini,
+        spacer_mini,
+        placefiles_banner,
+        spacer_mini,
+        spacer_mini,
+        dbc.Row(
             [
-                dbc.ListGroupItem("Hodographs", href=f"{link_base}/hodograph.html"),
-                dbc.ListGroupItem("surface obs placefile", href=f"{place_base}/latest_surface_observations.txt"),
-                dbc.ListGroupItem("surface obs placefile (large font)", href=f"{place_base}/latest_surface_observations_lg.txt"),
-                dbc.ListGroupItem("surface obs placefile (small font)", href=f"{place_base}/latest_surface_observations_xlg.txt"),
-                dbc.ListGroupItem("wind placefile", href=f"{place_base}/wind.txt"),
-                dbc.ListGroupItem("temp placefile", href=f"{place_base}/temp.txt"),
-                dbc.ListGroupItem("dwpt placefile", href=f"{place_base}/dwpt.txt"),
-                dbc.ListGroupItem("road placefile", href=f"{place_base}/road.txt"),
-            ]
+                dbc.Col(dbc.ListGroupItem("Graphics links"), style={'font-weight': 'bold', 'color':'white', 'border': '1px gray solid','font-size':'1.2em','text-align':'right'}, width=3),
+                dbc.Col(dbc.ListGroupItem("Hodographs", href=f"{link_base}/hodograph.html"), width=2),
+            ],
+            style={"display": "flex", "flexWrap": "wrap"},
+        ),
+        dbc.Row(
+            [
+                dbc.Col(dbc.ListGroupItem("Surface obs placefiles"), style={'font-weight': 'bold', 'color':'white', 'border': '1px gray solid', 'font-size':'1.2em','text-align':'right'}, width=3),
+                dbc.Col(dbc.ListGroupItem("Regular font", href=f"{place_base}/latest_surface_observations.txt"), width=2),
+                dbc.Col(dbc.ListGroupItem("Large font", href=f"{place_base}/latest_surface_observations_lg.txt"), width=2),
+                dbc.Col(dbc.ListGroupItem("Small font", href=f"{place_base}/latest_surface_observations_xlg.txt"), width=2),
+            ],
+            style={"display": "flex", "flexWrap": "wrap"},
+        ),
+        dbc.Row(
+            [
+                dbc.Col(dbc.ListGroupItem("Surface obs components"), style={'font-weight': 'bold', 'color':'white','border': '1px gray solid', 'font-size':'1.2em','text-align':'right'}, width=3),
+                dbc.Col(dbc.ListGroupItem("Wind", href=f"{place_base}/wind.txt"), style={'a:hover':{'color':'yellow'}},width=2),
+                dbc.Col(dbc.ListGroupItem("Temp", href=f"{place_base}/temp.txt"), width=2),
+                dbc.Col(dbc.ListGroupItem("Dwpt", href=f"{place_base}/dwpt.txt"), width=2),
+                dbc.Col(dbc.ListGroupItem("Road obs", href=f"{place_base}/road.txt"), width=2),
+            ],
+            style={"display": "flex", "flexWrap": "wrap"},
         ),
         html.P(id="counter"),
     ]
-)
-
+)))
 #---------------------------------------------------------------
 # Clock components
 #---------------------------------------------------------------
