@@ -4,11 +4,11 @@ import os, sys
 from pathlib import Path
 from glob import glob
 import argparse
-#from multiprocessing import Pool, freeze_support
+from multiprocessing import Pool, freeze_support
 import numpy as np
 import timeout_decorator
 
-from configs import (WGRIB2, WGET, TIMEOUT, MINSIZE, MODEL_DIR, DATA_SOURCES,
+from configs import (WGRIB2, WGET, TIMEOUT, MINSIZE, DATA_SOURCES,
                      GOOGLE_CONFIGS, THREDDS_CONFIGS, vars, grid_info)
 from utils.cmd import execute
 from utils.logs import logfile
@@ -255,17 +255,17 @@ def download_data(dts, data_path, model='RAP', num_hours=1, status_path=None):
             log.info("Target file: %s" % (full_name))
             expected_files += 1
 
-    # Previous code using multiprocessing.pool
     # Download requested files via separate processes
-    #if len(downloads.keys()) >= 1:
-    #    my_pool = Pool(np.clip(1, len(downloads), 4))
-    #    my_pool.starmap(execute_download, zip(downloads.keys(), downloads.values()))
-    #    my_pool.map(execute_regrid, downloads.keys())
-    #    my_pool.close()
-    #    my_pool.terminate()
-    #else:
-    #    log.error("Some or all requested data was not found.")
+    if len(downloads.keys()) >= 1:
+        my_pool = Pool(np.clip(1, len(downloads), 4))
+        my_pool.starmap(execute_download, zip(downloads.keys(), downloads.values()))
+        my_pool.map(execute_regrid, downloads.keys())
+        my_pool.close()
+        my_pool.terminate()
+    else:
+        log.error("Some or all requested data was not found.")
 
+    '''
     # Download and regrid requested files. 
     num_good_files = 0
     for counter, f in enumerate(downloads):
@@ -285,6 +285,7 @@ def download_data(dts, data_path, model='RAP', num_hours=1, status_path=None):
         # good files, total expected, iteration number
         with open(f"{status_path}/download_status.txt", 'w') as status:
             status.write(f"{num_good_files}, {len(downloads)}, {counter+1}\n")
+    '''
 
 def check_configs():
     """
@@ -303,8 +304,8 @@ def parse_logic(args):
     QC user inputs and send arguments to download functions.
 
     """
-    if args.data_path is None:
-        args.data_path = MODEL_DIR
+    #if args.data_path is None:
+    #    args.data_path = MODEL_DIR
 
     timestr_fmt = '%Y-%m-%d/%H'
     log.info("----> New download processing")
@@ -350,7 +351,7 @@ def parse_logic(args):
         log.warning("Only 1 hour of forecast data available. Setting -n to 1")
         args.num_hours=1
 
-    log.info(f"Saving model data to: {MODEL_DIR}")
+    log.info(f"Saving model data to: {args.data_path}")
     #with open("%s/download_status.txt" % (script_path), 'w') as f: f.write(str(False))
     download_data(list(cycle_dt), data_path=args.data_path, model=args.model, 
                   num_hours=args.num_hours, status_path=args.status_path)
@@ -383,6 +384,6 @@ def main():
     parse_logic(args)   # Set and QC user inputs. Pass for downloading
 
 if __name__ == '__main__':
-    #freeze_support()    # Needed for multiprocessing.Pool
+    freeze_support()    # Needed for multiprocessing.Pool
     check_configs()     # Test USER paths from config file
     main()              # Parse inputs

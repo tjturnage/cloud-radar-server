@@ -30,6 +30,7 @@ import layout_components as lc
 from scripts.obs_placefile import Mesowest
 from scripts.Nexrad import NexradDownloader
 from scripts.munger import Munger
+from scripts.nse import Nse
 
  # Earth radius (km)
 R = 6_378_137
@@ -309,6 +310,10 @@ sim_day_selection =  dbc.Col(html.Div([
                     ) ]))
 
 app.layout = dbc.Container([
+    # testing directory size monitoring
+    dcc.Interval(id='directory_monitor', interval=1000), 
+    dcc.Store(id='model_dir_size'),
+    dcc.Store(id='radar_dir_size'),
     dcc.Store(id='sim_store'),
     lc.top_section, lc.top_banner,
     dbc.Container([
@@ -432,32 +437,68 @@ def launch_obs_script(n_clicks):
                 print("Error getting radar metadata: ", e)
             try:
                 pass
-                file_list = NexradDownloader(radar, sa.timestring, str(sa.event_duration))
-                sa.radar_dict[radar]['file_list'] = file_list
+                #file_list = NexradDownloader(radar, sa.timestring, str(sa.event_duration))
+                #sa.radar_dict[radar]['file_list'] = file_list
                 print("Nexrad script completed ... Now creating hodographs ...")
             except Exception as e:
                 print("Error running nexrad script: ", e)
             try:
                 print(f'hodo script: {radar}, {BASE_DIR}, {asos_one}, {asos_two}')
-                run_hodo_script([radar, BASE_DIR, asos_one, asos_two])
+                #run_hodo_script([radar, BASE_DIR, asos_one, asos_two])
                 print("Hodograph script completed ...")
             except Exception as e:
                 print("Error running hodo script: ", e)
         try:
-            sa.make_hodo_page()
+            #sa.make_hodo_page()
             print("Hodo page created")
         except Exception as e:
             print("Error creating hodo page: ", e)
            
         try:
             print("Running obs script...")
-            Mesowest(str(sa.lat),str(sa.lon),sa.timestring,str(sa.event_duration))
+            #Mesowest(str(sa.lat),str(sa.lon),sa.timestring,str(sa.event_duration))
             print("Obs script completed")
         except Exception as e:
             print("Error running obs script: ", e)
 
-        return ""
+        # NSE placefiles 
+        try:
+            print("Running NSE scripts...")
+            Nse(sa.event_start_time, sa.event_duration, sa.scripts_path, sa.data_dir)
+        except Exception as e:
+            print("Error running NSE scripts: ", e)
 
+# Monitoring size of data and output directories for progress bar output
+def directory_stats(folder):
+    """Return the size of a directory. If path hasn't been created yet, returns 0."""
+    num_files = 0
+    total_size = 0
+    if os.path.isdir(folder):
+        total_size = sum(
+            sum(
+                os.path.getsize(os.path.join(walk_result[0], element))
+                for element in walk_result[2]
+            )
+            for walk_result in os.walk(folder)
+        )
+
+        for _, _, files in os.walk(folder):
+            num_files += len(files)
+
+    return total_size/1024000, num_files
+
+
+@app.callback(
+    Output('model_dir_size', 'data'),
+    Output('radar_dir_size', 'data'),
+    [Input('directory_monitor', 'n_intervals')],
+    prevent_initial_call=True)
+def monitor(n):
+    model_dir = directory_stats(f"{sa.data_dir}/model_data")
+    radar_dir = directory_stats(f"{sa.data_dir}/radar")
+    #print(model_dir)
+
+    return model_dir[0], radar_dir[0]
 
 # -------------------------------------
 # --- Transpose if transpose radar selected
