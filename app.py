@@ -231,9 +231,9 @@ class RadarSimulator(Config):
                 if self.simulation_time_shift is not None and any(x in line for x in ['Valid', 'TimeRange']):
                     new_line = self.shift_time(line)
 
-                # Shift this line in space
-                # This regex search finds lines with valid latitude/longitude pairs
-                if self.new_radar != 'None':
+                # Shift this line in space. Only perform if both an original and 
+                # transposing radar have been specified. 
+                if self.new_radar != 'None' and self.radar is not None:
                     regex = re.findall(LAT_LON_REGEX, line)
                     if len(regex) > 0:
                         idx = regex[0].index(',')
@@ -432,7 +432,19 @@ def run_hodo_script(args):
 @app.callback(
     Output('show_script_progress', 'children'),
     [Input('run_scripts', 'n_clicks')],
-    prevent_initial_call=True)
+    prevent_initial_call=True,
+    running=[
+        (Output('start_year', 'disabled'), True, False),
+        (Output('start_month', 'disabled'), True, False),
+        (Output('start_day', 'disabled'), True, False),
+        (Output('start_hour', 'disabled'), True, False),
+        (Output('start_minute', 'disabled'), True, False),
+        (Output('duration', 'disabled'), True, False),
+        (Output('radar_quantity', 'disabled'), True, False),
+        (Output('map_btn', 'disabled'), True, False),
+        (Output('new_radar_selection', 'disabled'), True, False),
+        (Output('run_scripts', 'disabled'), True, False),
+    ])
 def launch_obs_script(n_clicks):
     if n_clicks > 0:
         sa.make_simulation_times()
@@ -453,8 +465,8 @@ def launch_obs_script(n_clicks):
                 print("Error getting radar metadata: ", e)
             try:
                 pass
-                #file_list = NexradDownloader(radar, sa.timestring, str(sa.event_duration))
-                #sa.radar_dict[radar]['file_list'] = file_list
+                file_list = NexradDownloader(radar, sa.timestring, str(sa.event_duration))
+                sa.radar_dict[radar]['file_list'] = file_list
                 print("Nexrad script completed ... Now creating hodographs ...")
             except Exception as e:
                 print("Error running nexrad script: ", e)
@@ -480,7 +492,7 @@ def launch_obs_script(n_clicks):
         # NSE placefiles 
         try:
             print("Running NSE scripts...")
-            #Nse(sa.event_start_time, sa.event_duration, sa.scripts_path, sa.data_dir)
+            Nse(sa.event_start_time, sa.event_duration, sa.scripts_path, sa.data_dir)
         except Exception as e:
             print("Error running NSE scripts: ", e)
 
@@ -488,6 +500,7 @@ def launch_obs_script(n_clicks):
         # script needs to execute every time, even if a user doesn't select a radar
         # to transpose to. 
         run_transpose_script()
+        print("Finished with scripts")
 
 '''
 # Monitoring size of data and output directories for progress bar output
@@ -546,6 +559,7 @@ def monitor(n):
 # a check for sa.new_radar != None takes place. 
 def run_transpose_script():
     sa.shift_placefiles()
+    return
 
 #@app.callback(
 #    Output('transpose_status', 'value'),
