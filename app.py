@@ -145,7 +145,8 @@ class RadarSimulator(Config):
     def make_simulation_times(self):
         self.playback_start_time = datetime.now(tz=timezone.utc) - timedelta(hours=2)
         self.event_start_time = datetime(self.event_start_year,self.event_start_month,self.event_start_day,
-                                  self.event_start_hour,self.event_start_minute,second=0).astimezone()
+                                  self.event_start_hour,self.event_start_minute,second=0, 
+                                  tzinfo=timezone.utc)
         self.simulation_time_shift = self.playback_start_time - self.event_start_time
         self.sim_clock = self.playback_start_time
         self.event_start_str = datetime.strftime(self.event_start_time,"%Y-%m-%d %H:%M:%S UTC")
@@ -220,9 +221,8 @@ class RadarSimulator(Config):
     def shift_placefiles(self):
         filenames = glob(f"{self.placefiles_dir}/*.txt")
         for file_ in filenames:
-            print(f"Shifting placefile: {file_}")
             with open(file_, 'r', encoding='utf-8') as f: data = f.readlines()
-            outfilename = f"{file_[0:file_.index('.txt')]}.shifted.txt"
+            outfilename = f"{file_[0:file_.index('.txt')]}.shifted"
             outfile = open(outfilename, 'w', encoding='utf-8')
             
             for line in data:
@@ -233,12 +233,13 @@ class RadarSimulator(Config):
 
                 # Shift this line in space
                 # This regex search finds lines with valid latitude/longitude pairs
-                regex = re.findall(LAT_LON_REGEX, line)
-                if len(regex) > 0:
-                    idx = regex[0].index(',')
-                    lat, lon = float(regex[0][0:idx]), float(regex[0][idx+1:])
-                    lat_out, lon_out = self.move_point(lat, lon)
-                    new_line = line.replace(regex[0], f"{lat_out}, {lon_out}")
+                if self.new_radar != 'None':
+                    regex = re.findall(LAT_LON_REGEX, line)
+                    if len(regex) > 0:
+                        idx = regex[0].index(',')
+                        lat, lon = float(regex[0][0:idx]), float(regex[0][idx+1:])
+                        lat_out, lon_out = self.move_point(lat, lon)
+                        new_line = line.replace(regex[0], f"{lat_out}, {lon_out}")
 
                 outfile.write(new_line)
             outfile.close()
@@ -250,17 +251,17 @@ class RadarSimulator(Config):
             idx = line.find('Valid:')
             valid_timestring = line[idx+len('Valid:')+1:-1] # Leave off \n character
             dt = datetime.strptime(valid_timestring, '%H:%MZ %a %b %d %Y')
-            new_validstring = datetime.strftime(dt + timedelta(minutes=self.simulation_time_shift),
+            new_validstring = datetime.strftime(dt + self.simulation_time_shift,
                                                 '%H:%MZ %a %b %d %Y')
             new_line = line.replace(valid_timestring, new_validstring)
 
         if 'TimeRange' in line:
             regex = re.findall(TIME_REGEX, line)
             dt = datetime.strptime(regex[0], '%Y-%m-%dT%H:%M:%SZ')
-            new_datestring_1 = datetime.strftime(dt + timedelta(minutes=self.simulation_time_shift),
+            new_datestring_1 = datetime.strftime(dt + self.simulation_time_shift,
                                                 '%Y-%m-%dT%H:%M:%SZ')
             dt = datetime.strptime(regex[1], '%Y-%m-%dT%H:%M:%SZ')
-            new_datestring_2 = datetime.strftime(dt + timedelta(minutes=self.simulation_time_shift),
+            new_datestring_2 = datetime.strftime(dt + self.simulation_time_shift,
                                                 '%Y-%m-%dT%H:%M:%SZ')
             new_line = line.replace(f"{regex[0]} {regex[1]}",
                                     f"{new_datestring_1} {new_datestring_2}")
@@ -452,26 +453,26 @@ def launch_obs_script(n_clicks):
                 print("Error getting radar metadata: ", e)
             try:
                 pass
-                file_list = NexradDownloader(radar, sa.timestring, str(sa.event_duration))
-                sa.radar_dict[radar]['file_list'] = file_list
+                #file_list = NexradDownloader(radar, sa.timestring, str(sa.event_duration))
+                #sa.radar_dict[radar]['file_list'] = file_list
                 print("Nexrad script completed ... Now creating hodographs ...")
             except Exception as e:
                 print("Error running nexrad script: ", e)
             try:
                 print(f'hodo script: {radar}, {BASE_DIR}, {asos_one}, {asos_two}')
-                run_hodo_script([radar, BASE_DIR, asos_one, asos_two])
+                #run_hodo_script([radar, BASE_DIR, asos_one, asos_two])
                 print("Hodograph script completed ...")
             except Exception as e:
                 print("Error running hodo script: ", e)
         try:
-            sa.make_hodo_page()
+            #sa.make_hodo_page()
             print("Hodo page created")
         except Exception as e:
             print("Error creating hodo page: ", e)
            
         try:
             print("Running obs script...")
-            Mesowest(str(sa.lat),str(sa.lon),sa.timestring,str(sa.event_duration))
+            #Mesowest(str(sa.lat),str(sa.lon),sa.timestring,str(sa.event_duration))
             print("Obs script completed")
         except Exception as e:
             print("Error running obs script: ", e)
@@ -485,8 +486,7 @@ def launch_obs_script(n_clicks):
 
         # Since there will always be a timeshift associated with a simulation, this 
         # script needs to execute every time, even if a user doesn't select a radar
-        # to transpose to. TO DO: Currently, this only runs if sa.new_radar is not 
-        # None. Re-work this to execute each time to apply the timeshift offset
+        # to transpose to. 
         run_transpose_script()
 
 '''
@@ -539,12 +539,13 @@ def monitor(n):
 '''
 
 # -------------------------------------
-# --- Transpose if transpose radar selected
+# --- Transpose placefiles in time and space
 # -------------------------------------
+# A time shift will always be applied in the case of a simulation. Determination of 
+# whether to also perform a spatial shift occurrs within self.shift_placefiles where
+# a check for sa.new_radar != None takes place. 
 def run_transpose_script():
-    print(sa.new_radar)
-    if sa.new_radar != 'None':
-        sa.shift_placefiles()
+    sa.shift_placefiles()
 
 #@app.callback(
 #    Output('transpose_status', 'value'),
@@ -644,7 +645,9 @@ if __name__ == '__main__':
     if lc.cloud:
         app.run_server(host="0.0.0.0", port=8050, threaded=True, debug=True, use_reloader=False)
     else:
-        app.run(debug=True, port=8050, threaded=True)
+        # Add hot reload to False. As files update during a run, page updates, and 
+        # simulation dates change back to defaults causing issues with time shifting. 
+        app.run(debug=True, port=8050, threaded=True, dev_tools_hot_reload=False)
     
 # pathname_params = dict()
 # if my_settings.hosting_path is not None:
