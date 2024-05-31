@@ -472,19 +472,19 @@ def launch_obs_script(n_clicks):
                 print("Error running nexrad script: ", e)
             try:
                 print(f'hodo script: {radar}, {BASE_DIR}, {asos_one}, {asos_two}')
-                #run_hodo_script([radar, BASE_DIR, asos_one, asos_two])
+                run_hodo_script([radar, BASE_DIR, asos_one, asos_two])
                 print("Hodograph script completed ...")
             except Exception as e:
                 print("Error running hodo script: ", e)
         try:
-            #sa.make_hodo_page()
+            sa.make_hodo_page()
             print("Hodo page created")
         except Exception as e:
             print("Error creating hodo page: ", e)
            
         try:
             print("Running obs script...")
-            #Mesowest(str(sa.lat),str(sa.lon),sa.timestring,str(sa.event_duration))
+            Mesowest(str(sa.lat),str(sa.lon),sa.timestring,str(sa.event_duration))
             print("Obs script completed")
         except Exception as e:
             print("Error running obs script: ", e)
@@ -492,7 +492,7 @@ def launch_obs_script(n_clicks):
         # NSE placefiles 
         try:
             print("Running NSE scripts...")
-            Nse(sa.event_start_time, sa.event_duration, sa.scripts_path, sa.data_dir)
+            #Nse(sa.event_start_time, sa.event_duration, sa.scripts_path, sa.data_dir)
         except Exception as e:
             print("Error running NSE scripts: ", e)
 
