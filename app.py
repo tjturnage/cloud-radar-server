@@ -21,6 +21,8 @@ from dash import Dash, html, Input, Output, dcc #, ctx, callback
 #from uuid import uuid4
 #import diskcache
 
+import pandas as pd 
+
 import numpy as np
 from botocore.client import Config
 
@@ -30,6 +32,7 @@ import layout_components as lc
 from scripts.obs_placefile import Mesowest
 from scripts.Nexrad import NexradDownloader
 from scripts.munger import Munger
+from scripts.nse import Nse
 
  # Earth radius (km)
 R = 6_378_137
@@ -46,7 +49,7 @@ TOKEN = 'INSERT YOUR MAPBOX TOKEN HERE'
 BASE_DIR = Path.cwd()
 ASSETS_DIR = BASE_DIR / 'assets'
 HODOGRAPHS_DIR = ASSETS_DIR / 'hodographs'
-PLACEFILES_DIR = ASSETS_DIR / 'placefiles'
+#PLACEFILES_DIR = ASSETS_DIR / 'placefiles' (don't need now)
 DATA_DIR = BASE_DIR / 'data'
 RADAR_DIR = DATA_DIR / 'radar'
 CSV_PATH = BASE_DIR / 'radars.csv'
@@ -170,10 +173,16 @@ class RadarSimulator(Config):
 
         Parameters:
         -----------
-        lat: float 
+        plat: float 
             Original placefile latitude
-        lon: float 
+        plon: float 
             Original palcefile longitude
+
+        self.lat and self.lon is the lat/lon pair for the original radar 
+        self.new_lat and self.new_lon is for the transposed radar. These values are set in 
+        the transpose_radar function after a user makes a selection in the new_radar_selection
+        dropdown. 
+
         """
         def _clamp(n, minimum, maximum):
             """
@@ -208,19 +217,18 @@ class RadarSimulator(Config):
                     math.sin(phi_out))
         return math.degrees(phi_out), math.degrees(lambda_out)
 
-
-
     def shift_placefiles(self):
-        filenames = glob(f"{PLACEFILES_DIR}/*.txt")
+        filenames = glob(f"{self.placefiles_dir}/*.txt")
         for file_ in filenames:
             print(f"Shifting placefile: {file_}")
             with open(file_, 'r', encoding='utf-8') as f: data = f.readlines()
+            outfilename = f"{file_[0:file_.index('.txt')]}.shifted.txt"
             outfile = open(outfilename, 'w', encoding='utf-8')
-            outfilename = f"{file_[0:file_.index('.txt')]}.shifted"
+            
             for line in data:
                 new_line = line
 
-                if self.timeshift is not None and any(x in line for x in ['Valid', 'TimeRange']):
+                if self.simulation_time_shift is not None and any(x in line for x in ['Valid', 'TimeRange']):
                     new_line = self.shift_time(line)
 
                 # Shift this line in space
@@ -242,17 +250,17 @@ class RadarSimulator(Config):
             idx = line.find('Valid:')
             valid_timestring = line[idx+len('Valid:')+1:-1] # Leave off \n character
             dt = datetime.strptime(valid_timestring, '%H:%MZ %a %b %d %Y')
-            new_validstring = datetime.strftime(dt + timedelta(minutes=self.timeshift),
+            new_validstring = datetime.strftime(dt + timedelta(minutes=self.simulation_time_shift),
                                                 '%H:%MZ %a %b %d %Y')
             new_line = line.replace(valid_timestring, new_validstring)
 
         if 'TimeRange' in line:
             regex = re.findall(TIME_REGEX, line)
             dt = datetime.strptime(regex[0], '%Y-%m-%dT%H:%M:%SZ')
-            new_datestring_1 = datetime.strftime(dt + timedelta(minutes=self.timeshift),
+            new_datestring_1 = datetime.strftime(dt + timedelta(minutes=self.simulation_time_shift),
                                                 '%Y-%m-%dT%H:%M:%SZ')
             dt = datetime.strptime(regex[1], '%Y-%m-%dT%H:%M:%SZ')
-            new_datestring_2 = datetime.strftime(dt + timedelta(minutes=self.timeshift),
+            new_datestring_2 = datetime.strftime(dt + timedelta(minutes=self.simulation_time_shift),
                                                 '%Y-%m-%dT%H:%M:%SZ')
             new_line = line.replace(f"{regex[0]} {regex[1]}",
                                     f"{new_datestring_1} {new_datestring_2}")
@@ -309,6 +317,11 @@ sim_day_selection =  dbc.Col(html.Div([
                     ) ]))
 
 app.layout = dbc.Container([
+    # testing directory size monitoring
+    dcc.Interval(id='directory_monitor', interval=1000), 
+    dcc.Store(id='model_dir_size'),
+    dcc.Store(id='radar_dir_size'),
+    dcc.Store(id='tradar'),
     dcc.Store(id='sim_store'),
     lc.top_section, lc.top_banner,
     dbc.Container([
@@ -374,11 +387,18 @@ def toggle_map_display(n):
 # -------------------------------------
 # ---  Transpose radar section  ---
 # -------------------------------------
-
+# Added tradar as a dcc.Store as this callback didn't seem to execute otherwise. The 
+# tradar store value is not used (currently), as everything is stored in sa.whatever.
 @app.callback(
-    Output('tradar', 'value'),
+    Output('tradar', 'data'),
     Input('new_radar_selection', 'value'))
 def transpose_radar(value):
+    # If a user switches from a selection BACK to "None", without this, the application 
+    # will not update sa.new_radar to None. Instead, it'll be the previous selection.
+    # Since we always evaluate "value" after every user selection, always set new_radar 
+    # initially to None. 
+    sa.new_radar = 'None'
+
     if value != 'None':
         sa.new_radar = value
         sa.new_lat = lc.df[lc.df['radar'] == sa.new_radar]['lat'].values[0]
@@ -456,22 +476,86 @@ def launch_obs_script(n_clicks):
         except Exception as e:
             print("Error running obs script: ", e)
 
-        return ""
+        # NSE placefiles 
+        try:
+            print("Running NSE scripts...")
+            #Nse(sa.event_start_time, sa.event_duration, sa.scripts_path, sa.data_dir)
+        except Exception as e:
+            print("Error running NSE scripts: ", e)
 
+        # Since there will always be a timeshift associated with a simulation, this 
+        # script needs to execute every time, even if a user doesn't select a radar
+        # to transpose to. TO DO: Currently, this only runs if sa.new_radar is not 
+        # None. Re-work this to execute each time to apply the timeshift offset
+        run_transpose_script()
+
+'''
+# Monitoring size of data and output directories for progress bar output
+def directory_stats(folder):
+    """Return the size of a directory. If path hasn't been created yet, returns 0."""
+    num_files = 0
+    total_size = 0
+    if os.path.isdir(folder):
+        total_size = sum(
+            sum(
+                os.path.getsize(os.path.join(walk_result[0], element))
+                for element in walk_result[2]
+            )
+            for walk_result in os.walk(folder)
+        )
+
+        for _, _, files in os.walk(folder):
+            num_files += len(files)
+
+    return total_size/1024000, num_files
+'''
+'''
+@app.callback(
+    #Output('tradar', 'value'),
+    Output('model_dir_size', 'data'),
+    Output('radar_dir_size', 'data'),
+    #Output('model_table_df', 'data'),
+    [Input('directory_monitor', 'n_intervals')],
+    prevent_initial_call=True)
+def monitor(n):
+    model_dir = directory_stats(f"{sa.data_dir}/model_data")
+    radar_dir = directory_stats(f"{sa.data_dir}/radar")
+    print("sa.new_radar", sa.new_radar)
+    #print(model_dir)
+
+    # Read modeldata.txt file 
+    #filename = f"{sa.data_dir}/model_data/model_list.txt"
+    #model_table = []
+    #if os.path.exists(filename):
+    #    model_listing = []
+    #    with open(filename, 'r') as f: model_list = f.readlines()
+    #    for line in model_list:
+    #        model_listing.append(line.rsplit('/', 1)[1][:-1])
+    # 
+    #     df = pd.DataFrame({'Model Data': model_listing})
+    #     output = df.to_dict('records')
+
+    return model_dir[0], radar_dir[0]
+'''
 
 # -------------------------------------
 # --- Transpose if transpose radar selected
 # -------------------------------------
-@app.callback(
-    Output('transpose_status', 'value'),
-    Input('run_transpose_script', 'n_clicks'))
-def run_transpose_script(n_clicks):
-    if sa.new_radar == None:
-        return 100
-    if n_clicks > 0:
+def run_transpose_script():
+    print(sa.new_radar)
+    if sa.new_radar != 'None':
         sa.shift_placefiles()
-        return 100
-    return 0
+
+#@app.callback(
+#    Output('transpose_status', 'value'),
+#    Input('run_transpose_script', 'n_clicks'))
+#def run_transpose_script(n_clicks):
+#    if sa.new_radar == None:
+#        return 100
+#    if n_clicks > 0:
+#        sa.shift_placefiles()
+#        return 100
+#    return 0
 
 ################################################################################################
 # ---------------------------------------- Time Selection Summary and Callbacks ----------------

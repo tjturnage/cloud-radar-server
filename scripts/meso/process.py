@@ -14,7 +14,7 @@ from utils.timing import timeit
 
 from plot.plots import write_placefile
 from plot.hodographs import parse_vector, compute_parameters, plot_hodograph
-from configs import MODEL_DIR
+#from configs import MODEL_DIR
 
 import IO.read as read
 from utils.cmd import execute
@@ -143,8 +143,8 @@ def parse_logic(args):
         log.error("Missing one of -hodo, -meso")
         sys.exit(1)
 
-    if args.data_path is None:
-        args.data_path = MODEL_DIR
+    #if args.data_path is None:
+    #    args.data_path = MODEL_DIR
 
     # Logic for reading data. Updated to allow for cases with partial data to proceed.
     # Notification of partial downloads or failed downloads likley handled in get_data
