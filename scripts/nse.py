@@ -21,7 +21,11 @@ class Nse:
         self.download_model_data()
 
     def download_model_data(self):
-        args = f"-s {self.start_string} -e {self.end_string} -p {self.data_path}".split()
+        args = (
+            f"-s {self.start_string} -e {self.end_string} -p {self.data_path} "
+            f"-statuspath {self.data_path}"
+        ).split()
+        print(args)
 
         # Blocking call to download model data. 
         subprocess.call(["python", f"{self.scripts_path}/meso/get_data.py"] + args)

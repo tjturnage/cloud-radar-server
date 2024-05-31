@@ -136,7 +136,7 @@ def execute_download(full_name, url):
     # For GOOGLE-based downloads
     if arg2 is not None:
         execute(arg2)
-        execute("rm %s" % (full_name))
+        #execute("rm %s" % (full_name))
         execute("mv %s.tmp %s" % (full_name, full_name))
 
 def make_dir(run_time, data_path):
@@ -255,6 +255,11 @@ def download_data(dts, data_path, model='RAP', num_hours=1, status_path=None):
             log.info("Target file: %s" % (full_name))
             expected_files += 1
 
+    # Write expected datafiles to output text file for tracking by app.py
+    with open(f"{status_path}/model_list.txt", 'w') as f:
+        for filename in downloads.keys():
+            f.write(f"{filename}.reduced\n")
+
     # Download requested files via separate processes
     if len(downloads.keys()) >= 1:
         my_pool = Pool(np.clip(1, len(downloads), 4))
@@ -264,28 +269,6 @@ def download_data(dts, data_path, model='RAP', num_hours=1, status_path=None):
         my_pool.terminate()
     else:
         log.error("Some or all requested data was not found.")
-
-    '''
-    # Download and regrid requested files. 
-    num_good_files = 0
-    for counter, f in enumerate(downloads):
-        execute_download(f, downloads[f])
-        execute_regrid(f)
-
-        # File status checks
-        filename = f + '.reduced'
-        if os.path.exists(filename):
-            if os.stat(filename).st_size > MINSIZE/1024000.:
-                num_good_files += 1
-            else:
-                log.error("%s is %s MB" % (filename, os.stat(filename).st_size/1024000.))
-        else:
-            log.error("%s doesn't exist" % (filename))
-        
-        # good files, total expected, iteration number
-        with open(f"{status_path}/download_status.txt", 'w') as status:
-            status.write(f"{num_good_files}, {len(downloads)}, {counter+1}\n")
-    '''
 
 def check_configs():
     """
@@ -352,10 +335,8 @@ def parse_logic(args):
         args.num_hours=1
 
     log.info(f"Saving model data to: {args.data_path}")
-    #with open("%s/download_status.txt" % (script_path), 'w') as f: f.write(str(False))
     download_data(list(cycle_dt), data_path=args.data_path, model=args.model, 
                   num_hours=args.num_hours, status_path=args.status_path)
-    #with open("%s/download_status.txt" % (script_path), 'w') as f: f.write(str(status))
 
     # If this is realtime, interpolate the 1 and 2-hour forecasts in time
     #if not args.num_hours: args.num_hours = 0
