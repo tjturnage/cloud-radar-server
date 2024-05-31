@@ -217,8 +217,6 @@ class RadarSimulator(Config):
                     math.sin(phi_out))
         return math.degrees(phi_out), math.degrees(lambda_out)
 
-
-
     def shift_placefiles(self):
         filenames = glob(f"{self.placefiles_dir}/*.txt")
         for file_ in filenames:
@@ -230,7 +228,7 @@ class RadarSimulator(Config):
             for line in data:
                 new_line = line
 
-                if self.timeshift is not None and any(x in line for x in ['Valid', 'TimeRange']):
+                if self.simulation_time_shift is not None and any(x in line for x in ['Valid', 'TimeRange']):
                     new_line = self.shift_time(line)
 
                 # Shift this line in space
@@ -252,17 +250,17 @@ class RadarSimulator(Config):
             idx = line.find('Valid:')
             valid_timestring = line[idx+len('Valid:')+1:-1] # Leave off \n character
             dt = datetime.strptime(valid_timestring, '%H:%MZ %a %b %d %Y')
-            new_validstring = datetime.strftime(dt + timedelta(minutes=self.timeshift),
+            new_validstring = datetime.strftime(dt + timedelta(minutes=self.simulation_time_shift),
                                                 '%H:%MZ %a %b %d %Y')
             new_line = line.replace(valid_timestring, new_validstring)
 
         if 'TimeRange' in line:
             regex = re.findall(TIME_REGEX, line)
             dt = datetime.strptime(regex[0], '%Y-%m-%dT%H:%M:%SZ')
-            new_datestring_1 = datetime.strftime(dt + timedelta(minutes=self.timeshift),
+            new_datestring_1 = datetime.strftime(dt + timedelta(minutes=self.simulation_time_shift),
                                                 '%Y-%m-%dT%H:%M:%SZ')
             dt = datetime.strptime(regex[1], '%Y-%m-%dT%H:%M:%SZ')
-            new_datestring_2 = datetime.strftime(dt + timedelta(minutes=self.timeshift),
+            new_datestring_2 = datetime.strftime(dt + timedelta(minutes=self.simulation_time_shift),
                                                 '%Y-%m-%dT%H:%M:%SZ')
             new_line = line.replace(f"{regex[0]} {regex[1]}",
                                     f"{new_datestring_1} {new_datestring_2}")
@@ -454,26 +452,26 @@ def launch_obs_script(n_clicks):
                 print("Error getting radar metadata: ", e)
             try:
                 pass
-                #file_list = NexradDownloader(radar, sa.timestring, str(sa.event_duration))
-                #sa.radar_dict[radar]['file_list'] = file_list
+                file_list = NexradDownloader(radar, sa.timestring, str(sa.event_duration))
+                sa.radar_dict[radar]['file_list'] = file_list
                 print("Nexrad script completed ... Now creating hodographs ...")
             except Exception as e:
                 print("Error running nexrad script: ", e)
             try:
                 print(f'hodo script: {radar}, {BASE_DIR}, {asos_one}, {asos_two}')
-                #run_hodo_script([radar, BASE_DIR, asos_one, asos_two])
+                run_hodo_script([radar, BASE_DIR, asos_one, asos_two])
                 print("Hodograph script completed ...")
             except Exception as e:
                 print("Error running hodo script: ", e)
         try:
-            #sa.make_hodo_page()
+            sa.make_hodo_page()
             print("Hodo page created")
         except Exception as e:
             print("Error creating hodo page: ", e)
            
         try:
             print("Running obs script...")
-            #Mesowest(str(sa.lat),str(sa.lon),sa.timestring,str(sa.event_duration))
+            Mesowest(str(sa.lat),str(sa.lon),sa.timestring,str(sa.event_duration))
             print("Obs script completed")
         except Exception as e:
             print("Error running obs script: ", e)
@@ -481,13 +479,14 @@ def launch_obs_script(n_clicks):
         # NSE placefiles 
         try:
             print("Running NSE scripts...")
-            Nse(sa.event_start_time, sa.event_duration, sa.scripts_path, sa.data_dir)
+            #Nse(sa.event_start_time, sa.event_duration, sa.scripts_path, sa.data_dir)
         except Exception as e:
             print("Error running NSE scripts: ", e)
 
-        # Run the transpose scripts here? If wanting a separate button, could just call 
-        # this function from that callback. If the new_radar_selection is 'None', this
-        # won't do anything, which is what we want.
+        # Since there will always be a timeshift associated with a simulation, this 
+        # script needs to execute every time, even if a user doesn't select a radar
+        # to transpose to. TO DO: Currently, this only runs if sa.new_radar is not 
+        # None. Re-work this to execute each time to apply the timeshift offset
         run_transpose_script()
 
 '''
