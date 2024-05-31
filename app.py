@@ -99,7 +99,6 @@ class RadarSimulator(Config):
         self.event_start_hour = 21
         self.event_start_minute = 45
         self.event_duration = 30
-        self.timeshift = None
         self.timestring = None
         self.number_of_radars = 0
         self.radar_list = []
@@ -148,6 +147,7 @@ class RadarSimulator(Config):
                                   self.event_start_hour,self.event_start_minute,second=0, 
                                   tzinfo=timezone.utc)
         self.simulation_time_shift = self.playback_start_time - self.event_start_time
+        self.simulation_seconds_shift = self.simulation_time_shift.total_seconds()
         self.sim_clock = self.playback_start_time
         self.event_start_str = datetime.strftime(self.event_start_time,"%Y-%m-%d %H:%M:%S UTC")
         self.timestring = self.event_start_str

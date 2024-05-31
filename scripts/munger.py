@@ -45,7 +45,7 @@ class Munger():
         #self.start_simulation = start_simulation
         self.playback_speed = playback_speed
         self.radar_dir = f'{self.polling_dir}{self.new_rda}'
-        self.clean_files()
+        #self.clean_files()
         self.copy_files()
         self.uncompress_files()
 
@@ -88,7 +88,7 @@ class Munger():
         """
         stages raw files into munge directory where munger script lives
         """
-        cp_cmd = f'cp {self.source_directory}/* self.{self.munge_dir}'
+        cp_cmd = f'cp {self.source_directory}/* {self.munge_dir}'
         os.system(cp_cmd)
         
         return
