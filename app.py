@@ -151,7 +151,7 @@ class RadarSimulator(Config):
                                   self.event_start_hour,self.event_start_minute,second=0, 
                                   tzinfo=timezone.utc)
         self.simulation_time_shift = self.playback_start_time - self.event_start_time
-        self.simulation_seconds_shift = self.simulation_time_shift.total_seconds()
+        self.simulation_seconds_shift = round(self.simulation_time_shift.total_seconds())
         self.sim_clock = self.playback_start_time
         self.event_start_str = datetime.strftime(self.event_start_time,"%Y-%m-%d %H:%M:%S UTC")
         self.playback_start_str = datetime.strftime(self.playback_start_time,"%Y-%m-%d %H:%M:%S UTC")
@@ -498,7 +498,7 @@ def launch_obs_script(n_clicks):
                 print("Error running nexrad script: ", e)
             try:
                 print(f'hodo script:  {radar}, {sa.new_radar.upper()}, {asos_one}, {asos_two}, {sa.simulation_seconds_shift}')
-                run_hodo_script([radar, sa.new_radar.upper(), asos_one, asos_two, sa.simulation_seconds_shift])
+                run_hodo_script([radar, sa.new_radar.upper(), asos_one, asos_two, str(sa.simulation_seconds_shift)])
                 print("Hodograph script completed ...")
             except Exception as e:
                 print("Error running hodo script: ", e)

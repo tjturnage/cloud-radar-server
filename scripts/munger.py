@@ -40,9 +40,8 @@ class Munger():
     DEBZ_FILEPATH = SCRIPTS_DIR / 'debz.py'
     RADAR_DATA_BASE_DIR = Path('/data/cloud-radar-server/data/radar') #/KGRR/downloads'
     POLLING_DIR = Path('/data/cloud-radar-server/assets/polling')
+
     def __init__(self, original_rda, playback_start, duration, timeshift, new_rda, playback_speed=1.5):
-
-
         self.original_rda = original_rda
         self.source_directory = self.RADAR_DATA_BASE_DIR / self.original_rda / 'downloads'
         os.makedirs(self.source_directory, exist_ok=True)
@@ -50,7 +49,10 @@ class Munger():
         self.duration = duration
         self.seconds_shift = timeshift
         self.new_rda = new_rda
-        self.this_radar_polling_dir = self.POLLING_DIR / self.new_rda
+        if self.new_rda != 'None':
+            self.this_radar_polling_dir = self.POLLING_DIR / self.new_rda
+        else:
+            self.this_radar_polling_dir = self.POLLING_DIR / self.original_rda
         os.makedirs(self.this_radar_polling_dir, exist_ok=True)
         
         self.playback_speed = playback_speed
@@ -60,8 +62,8 @@ class Munger():
         self.uncompressed_files = list(self.source_directory.glob('*uncompressed'))
         # commence munging
         self.munge_files()
-        
-    
+
+
     def clean_files(self):
         """
         Purges all radar files associated with previous simulation

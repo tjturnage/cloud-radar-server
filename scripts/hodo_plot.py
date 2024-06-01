@@ -31,9 +31,9 @@ if new_radar != 'None':
   
 asos_one = sys.argv[3].lower()
 try:
-  asos_two = sys.argv[4].lower()
+    asos_two = sys.argv[4].lower()
 except:
-  asos_two = None
+    asos_two = None
 
 timeshift_seconds = int(sys.argv[5])
 BASE_DIR = Path('/data/cloud-radar-server')
