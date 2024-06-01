@@ -48,7 +48,8 @@ class Munger():
         self.playback_start = datetime.strptime(playback_start,"%Y-%m-%d %H:%M:%S UTC").replace(tzinfo=pytz.UTC)
         self.duration = duration
         self.seconds_shift = timeshift
-        self.source_directory = f'{self.RADAR_DATA_BASE_DIR}/{self.original_rda}/downloads'
+        #self.source_directory = f'{self.RADAR_DATA_BASE_DIR}/{self.original_rda}/downloads'        
+        self.source_directory = os.path.join(self.RADAR_DATA_BASE_DIR,self.original_rda,'downloads')
         self.start_simulation = start_simulation
         self.playback_speed = playback_speed
         #self.clean_files()
