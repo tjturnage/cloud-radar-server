@@ -497,8 +497,8 @@ def launch_obs_script(n_clicks):
             except Exception as e:
                 print("Error running nexrad script: ", e)
             try:
-                print(f'hodo script:  {BASE_DIR}, {radar}, {sa.new_radar}, {asos_one}, {asos_two}, {sa.simulation_seconds_shift}')
-                run_hodo_script([BASE_DIR, radar, sa.new_radar, asos_one, asos_two, str(sa.simulation_seconds_shift)])
+                print(f'hodo script:  {radar}, {sa.new_radar}, {asos_one}, {asos_two}, {sa.simulation_seconds_shift}')
+                run_hodo_script([radar, sa.new_radar, asos_one, asos_two, str(sa.simulation_seconds_shift)])
                 print("Hodograph script completed ...")
             except Exception as e:
                 print("Error running hodo script: ", e)
@@ -510,7 +510,7 @@ def launch_obs_script(n_clicks):
                     new_radar = sa.new_radar
                     
                 Munger(radar,sa.playback_start_str,sa.event_duration, sa.simulation_seconds_shift,
-                       new_radar, start_simulation=True, playback_speed=1.5)
+                       new_radar, playback_speed=1.5)
                 print(f"Munge for {radar} completed ...")
             except Exception as e:
                 print(f"Error running Munge for {radar}: ", e)

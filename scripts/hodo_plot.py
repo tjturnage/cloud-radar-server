@@ -23,21 +23,20 @@ import hodo_resources as hr
 
 #Time and Time Zone
 timezone = 'UTC'
-BASE_DIR = Path(sys.argv[1])
-radar_id = sys.argv[2]
-new_radar = sys.argv[3]
+radar_id = sys.argv[1]
+new_radar = sys.argv[2]
 radar_label = radar_id
 if new_radar != 'None':
     radar_label = new_radar
   
-asos_one = sys.argv[4].lower()
+asos_one = sys.argv[3].lower()
 try:
-  asos_two = sys.argv[5].lower()
+  asos_two = sys.argv[4].lower()
 except:
   asos_two = None
 
-timeshift_seconds = int(sys.argv[6])
-
+timeshift_seconds = int(sys.argv[5])
+BASE_DIR = Path('/data/cloud-radar-server')
 RADAR_DIR = BASE_DIR / 'data' / 'radar'
 HODO_IMAGES = BASE_DIR / 'assets'/ 'hodographs'
 

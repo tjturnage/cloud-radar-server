@@ -40,30 +40,27 @@ class Munger():
     DEBZ_FILEPATH = SCRIPTS_DIR / 'debz.py'
     RADAR_DATA_BASE_DIR = Path('/data/cloud-radar-server/data/radar') #/KGRR/downloads'
     POLLING_DIR = Path('/data/cloud-radar-server/assets/polling')
-    def __init__(self, original_rda, playback_start, duration, timeshift, new_rda, start_simulation=True, playback_speed=1.5):
+    def __init__(self, original_rda, playback_start, duration, timeshift, new_rda, playback_speed=1.5):
 
-        self.new_rda = new_rda
+
         self.original_rda = original_rda
+        self.source_directory = self.RADAR_DATA_BASE_DIR / self.original_rda / 'downloads'
+        os.makedirs(self.source_directory, exist_ok=True)
         self.playback_start = datetime.strptime(playback_start,"%Y-%m-%d %H:%M:%S UTC").replace(tzinfo=pytz.UTC)
         self.duration = duration
         self.seconds_shift = timeshift
-        self.source_directory = self.RADAR_DATA_BASE_DIR / self.original_rda / 'downloads'
-        os.makedirs(self.source_directory, exist_ok=True)
+        self.new_rda = new_rda
         self.this_radar_polling_dir = self.POLLING_DIR / self.new_rda
         os.makedirs(self.this_radar_polling_dir, exist_ok=True)
-        self.start_simulation = start_simulation
+        
         self.playback_speed = playback_speed
         #self.clean_files()
         self.copy_l2munger_executable()
         self.uncompress_files()
-
-
         self.uncompressed_files = list(self.source_directory.glob('*uncompressed'))
-
         # commence munging
         self.munge_files()
         
-        return
     
     def clean_files(self):
         """
@@ -197,4 +194,5 @@ if __name__ == "__main__":
     #playback_start_str = datetime.strftime(playback_start_time,"%Y-%m-%d %H:%M:%S UTC")
     #playback_end_time = playback_start_time + timedelta(minutes=int(event_duration))
 
-    Munger(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], start_simulation=True, playback_speed=1.5)
+    Munger(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], playback_speed=1.5)
+    #original_rda, playback_start, duration, timeshift, new_rda, playback_speed=1.5
