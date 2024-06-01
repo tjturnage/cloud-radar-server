@@ -36,8 +36,9 @@ class Munger():
     - playback_speed: float
         speed of simulation compared to real time ... example: 2.0 means event proceeds twice as fast
     """
-    
-    MUNGER_SCRIPT_PATH = '/data/munger_test/'
+    SCRIPTS_DIR = '/data/cloud-radar-server/scripts'
+    L2MUNGER_FILEPATH = f'{SCRIPTS_DIR}/l2munger'
+    DEBZ_FILEPATH = f'{SCRIPTS_DIR}/debz.py'
     MUNGER_SCRIPT_BASE = '/data/cloud-radar-server/data/radar' #/KGRR/downloads'
     POLLING_DIR = '/data/cloud-radar-server/assets/polling'
     def __init__(self, original_rda, playback_start, duration, timeshift, new_rda, start_simulation=True, playback_speed=1.5):
@@ -88,7 +89,7 @@ class Munger():
         The compiled l2munger executable needs to be in the source
         radar files directory to work properly
         """
-        cp_cmd = f'cp l2munger {self.source_directory}'
+        cp_cmd = f'cp {self.L2MUNGER_FILEPATH} {self.source_directory}'
         os.system(cp_cmd)
         
         return
@@ -101,7 +102,7 @@ class Munger():
         os.chdir(self.source_directory)
         self.source_files = list(self.source_directory.glob('*V06'))
         for original_file in self.source_files:
-            command_string = f'python {self.MUNGER_SCRIPT_PATH}/debz.py {str(original_file)} {str(original_file)}.uncompressed'
+            command_string = f'python {self.DEBZ_FILEPATH} {str(original_file)} {str(original_file)}.uncompressed'
             os.system(command_string)
         print("uncompress complete!")
         return

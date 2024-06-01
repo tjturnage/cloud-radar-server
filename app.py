@@ -57,6 +57,7 @@ SCRIPTS_DIR = BASE_DIR / 'scripts'
 OBS_SCRIPT_PATH = SCRIPTS_DIR / 'obs_placefile.py'
 HODO_SCRIPT_PATH = SCRIPTS_DIR / 'hodo_plot.py'
 NEXRAD_SCRIPT_PATH = SCRIPTS_DIR / 'Nexrad.py'
+L2MUNGER_FILEPATH = SCRIPTS_DIR / 'l2munger'
 
 ################################################################################################
 #       Define class RadarSimulator
@@ -470,12 +471,12 @@ def launch_obs_script(n_clicks):
                 print("Nexrad script completed ... Now creating hodographs ...")
             except Exception as e:
                 print("Error running nexrad script: ", e)
-            try:
-                print(f'hodo script: {radar}, {BASE_DIR}, {asos_one}, {asos_two}')
-                run_hodo_script([radar, BASE_DIR, asos_one, asos_two])
-                print("Hodograph script completed ...")
-            except Exception as e:
-                print("Error running hodo script: ", e)
+            # try:
+            #     print(f'hodo script: {radar}, {BASE_DIR}, {asos_one}, {asos_two}')
+            #     run_hodo_script([radar, BASE_DIR, asos_one, asos_two])
+            #     print("Hodograph script completed ...")
+            # except Exception as e:
+            #     print("Error running hodo script: ", e)
             try:
                 print(f'Munger script')
                 Munger(radar,sa.playback_start_str,sa.event_duration, sa.simulation_seconds_shift,
@@ -483,11 +484,11 @@ def launch_obs_script(n_clicks):
                 print(f"Munge for {radar} completed ...")
             except Exception as e:
                 print(f"Error running Munge for {radar}: ", e)
-        try:
-            sa.make_hodo_page()
-            print("Hodo page created")
-        except Exception as e:
-            print("Error creating hodo page: ", e)
+        # try:
+        #     sa.make_hodo_page()
+        #     print("Hodo page created")
+        # except Exception as e:
+        #     print("Error creating hodo page: ", e)
            
         try:
             print("Running obs script...")
