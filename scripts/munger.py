@@ -36,11 +36,11 @@ class Munger():
     - playback_speed: float
         speed of simulation compared to real time ... example: 2.0 means event proceeds twice as fast
     """
-    SCRIPTS_DIR = '/data/cloud-radar-server/scripts'
-    L2MUNGER_FILEPATH = f'{SCRIPTS_DIR}/l2munger'
-    DEBZ_FILEPATH = f'{SCRIPTS_DIR}/debz.py'
-    RADAR_DATA_BASE_DIR = '/data/cloud-radar-server/data/radar' #/KGRR/downloads'
-    POLLING_DIR = '/data/cloud-radar-server/assets/polling'
+    SCRIPTS_DIR = Path('/data/cloud-radar-server/scripts')
+    L2MUNGER_FILEPATH = SCRIPTS_DIR / 'l2munger'
+    DEBZ_FILEPATH = SCRIPTS_DIR / 'debz.py'
+    RADAR_DATA_BASE_DIR = Path('/data/cloud-radar-server/data/radar') #/KGRR/downloads'
+    POLLING_DIR = Path('/data/cloud-radar-server/assets/polling')
     def __init__(self, original_rda, playback_start, duration, timeshift, new_rda, start_simulation=True, playback_speed=1.5):
 
         self.new_rda = new_rda
@@ -48,17 +48,17 @@ class Munger():
         self.playback_start = datetime.strptime(playback_start,"%Y-%m-%d %H:%M:%S UTC").replace(tzinfo=pytz.UTC)
         self.duration = duration
         self.seconds_shift = timeshift
-        #self.source_directory = f'{self.RADAR_DATA_BASE_DIR}/{self.original_rda}/downloads'        
-        self.source_directory = os.path.join(self.RADAR_DATA_BASE_DIR,self.original_rda,'downloads')
+        self.source_directory = self.RADAR_DATA_BASE_DIR / self.original_rda / 'downloads'       
+        #self.source_directory = os.path.join(self.RADAR_DATA_BASE_DIR,self.original_rda,'downloads')
         self.start_simulation = start_simulation
         self.playback_speed = playback_speed
         #self.clean_files()
         self.copy_l2munger_executable()
         self.uncompress_files()
 
-        # determine amount of time shift needed for munge based on first file's timestamp
+
         self.uncompressed_files = list(self.source_directory.glob('*uncompressed'))
-        self.full_polling_dir = os.path.join(self.POLLING_DIR, self.new_rda)
+        self.full_polling_dir = self.POLLING_DIR / self.new_rda
         os.makedirs(self.full_polling_dir, exist_ok=True)
 
         # commence munging
@@ -90,6 +90,8 @@ class Munger():
         The compiled l2munger executable needs to be in the source
         radar files directory to work properly
         """
+        chmod_cmd = f'chmod 775 {self.L2MUNGER_FILEPATH}'
+        os.system(chmod_cmd)
         cp_cmd = f'cp {self.L2MUNGER_FILEPATH} {self.source_directory}'
         os.system(cp_cmd)
         
@@ -102,6 +104,7 @@ class Munger():
 
         os.chdir(self.source_directory)
         self.source_files = list(self.source_directory.glob('*V06'))
+        #self.source_files = list(os.glob('*V06'))
         for original_file in self.source_files:
             command_string = f'python {self.DEBZ_FILEPATH} {str(original_file)} {str(original_file)}.uncompressed'
             os.system(command_string)
@@ -202,7 +205,7 @@ class Munger():
         """
         #simulation_counter = self.datetime_from_timestring_argument(self.playback_start) + timedelta(seconds=60)
         #playback_end = self.datetime_from_timestring_argument(self.playback_start) + timedelta(minutes=self.duration)
-        simulation_counter = self.playback_start + timedelta(seconds=60)
+        simulation_counter = self.playback_start + timedelta(seconds=360) # skip forward 6 min to start with some data
         playback_end = self.playback_start + timedelta(minutes=self.duration)
         #print(simulation_counter,last_file_timestamp-simulation_counter)
         while simulation_counter < playback_end:
@@ -213,7 +216,7 @@ class Munger():
                 if file_timestamp < simulation_counter:
                     line = f'{file.stat().st_size} {file.parts[-1]}\n'
                     self.output = self.output + line
-                    with open(f'{self.POLLING_DIR}/dir.list', mode='w', encoding='utf-8') as f:
+                    with open(f'{self.full_polling_dir}/dir.list', mode='w', encoding='utf-8') as f:
                         f.write(self.output)
                 else:
                     pass
@@ -226,16 +229,16 @@ class Munger():
 
 #-------------------------------
 if __name__ == "__main__":
-    orig_rda = 'KGRR'
-    target_rda = 'KGRR'
-    playback_start_time = datetime.now(tz=timezone.utc) - timedelta(hours=2)
-    event_start_time = datetime(2024, 5, 7, 22, 0, 0, tzinfo=timezone.utc)
-    sim_duration = 60   # minutes
+    #orig_rda = 'KGRR'
+    #target_rda = 'KGRR'
+    #playback_start_time = datetime.now(tz=timezone.utc) - timedelta(hours=2)
+    #event_start_time = datetime(2024, 5, 7, 21, 45, 0, tzinfo=timezone.utc)
+    #sim_duration = 30   # minutes
 
-    simulation_time_shift = playback_start_time - event_start_time
-    seconds_shift = int(simulation_time_shift.total_seconds())
+    #simulation_time_shift = playback_start_time - event_start_time
+    #seconds_shift = int(simulation_time_shift.total_seconds())
 
-    playback_start_str = datetime.strftime(playback_start_time,"%Y-%m-%d %H:%M:%S UTC")
+    #playback_start_str = datetime.strftime(playback_start_time,"%Y-%m-%d %H:%M:%S UTC")
     #playback_end_time = playback_start_time + timedelta(minutes=int(event_duration))
 
-    Munger(orig_rda, playback_start_str, sim_duration, seconds_shift, target_rda, start_simulation=True, playback_speed=1.5)
+    Munger(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], start_simulation=True, playback_speed=1.5)
