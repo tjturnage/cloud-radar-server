@@ -23,19 +23,20 @@ import hodo_resources as hr
 
 #Time and Time Zone
 timezone = 'UTC'
-
-radar_id = sys.argv[1]
-new_radar = sys.argv[2]
+BASE_DIR = Path(sys.argv[1])
+radar_id = sys.argv[2]
+new_radar = sys.argv[3]
 radar_label = radar_id
 if new_radar != 'None':
     radar_label = new_radar
   
-BASE_DIR = Path(sys.argv[3])
 asos_one = sys.argv[4].lower()
 try:
   asos_two = sys.argv[5].lower()
 except:
   asos_two = None
+
+timeshift_seconds = int(sys.argv[6])
 
 RADAR_DIR = BASE_DIR / 'data' / 'radar'
 HODO_IMAGES = BASE_DIR / 'assets'/ 'hodographs'
@@ -63,8 +64,6 @@ os.makedirs(CF_DIR, exist_ok=True)
 data_ceiling = 8000 #Max Data Height in Feet AGL
 range_type = 'Static' #Enter Dynamic For Changing Range From Values or Static for Constant Range Value
 static_value = 70 # Enter Static Hodo Range or 999 To Not Use
-
-timeshift_seconds = 10000 #Enter Time Shift in Seconds
 
 # presumes you have the radar files downloaded already
 radar_files = [f.name for f in DOWNLOADS.iterdir()]
@@ -1049,5 +1048,4 @@ for p in radar_filepaths:
   del sfc_angle, sfc_u, sfc_v
   sr_hodo_fp = HODO_IMAGES / f'SR_Hodograph_{radar_label}_{r_date}_{r_time}.png'
   plt.savefig(sr_hodo_fp, bbox_inches='tight')
-
 
