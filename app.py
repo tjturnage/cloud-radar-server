@@ -127,6 +127,14 @@ class RadarSimulator(Config):
             asos_two = lc.df[lc.df['radar'] == radar]['asos_two'].values[0]
             self.radar_dict[radar.upper()] = {'lat':self.lat,'lon':self.lon, 'asos_one':asos_one, 'asos_two':asos_two, 'radar':radar.upper(), 'file_list':[]}
         return
+
+    def create_grlevel2_cfg_file(self) -> None:
+        f = open(POLLING_DIR / 'grlevel2.cfg', 'w', encoding='utf-8')
+        f.write('ListFile: dir.list\n')
+        for _i,radar in enumerate(self.radar_list):
+            f.write(f'Site: {radar}\n')
+        f.close()
+        return
     
     def define_scripts_and_assets_directories(self):
         self.csv_file = self.current_dir / 'radars.csv'
@@ -479,8 +487,9 @@ def launch_obs_script(n_clicks):
             print("Error removing files and directories: ", e)
         try:
             sa.create_radar_dict()
+            sa.create_grlevel2_cfg_file()
         except Exception as e:
-            print("Error creating radar dictionary: ", e)
+            print("Error creating radar dict or config file: ", e)
         for radar, data in sa.radar_dict.items():
             try:
                 asos_one = data['asos_one']
@@ -513,11 +522,11 @@ def launch_obs_script(n_clicks):
 
             except Exception as e:
                 print(f"Error running Munge for {radar}: ", e)
-        # try:
-        #     sa.make_hodo_page()
-        #     print("Hodo page created")
-        # except Exception as e:
-        #     print("Error creating hodo page: ", e)
+        try:
+            sa.make_hodo_page()
+            print("Hodo page created")
+        except Exception as e:
+            print("Error creating hodo page: ", e)
            
         try:
             print("Running obs script...")
@@ -682,14 +691,14 @@ def enable_simulation_clock(n):
 
 @app.callback(
     Output('clock-output', 'children'),
-    Input('interval-component', 'n_intervals')
+    Input('playback-clock-component', 'n_intervals')
 )
 def update_time(_n):
     """Steps the counter by 15 seconds and returns the current time."""
     sa.playback_timer += timedelta(seconds=90)
     while sa.playback_timer < sa.playback_end_time:
         sa.playback_timer += timedelta(seconds=90)
-        # update dir.list
+        sa.update_dirlist()
         # update hodo html
         return sa.playback_timer.strftime("%Y-%m-%d %H:%M:%S UTC")
     return("simulation complete")
