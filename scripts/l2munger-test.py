@@ -38,20 +38,20 @@ class Munger():
     """
     
     MUNGER_SCRIPT_PATH = '/data/munger_test/'
-    MUNGER_SCRIPT_BASE = '/data/cloud-radar-server/data/radar' #/KGRR/downloads'
     POLLING_DIR = '/data/cloud-radar-server/assets/polling'
-    def __init__(self, original_rda, playback_start, duration, timeshift, new_rda, start_simulation=True, playback_speed=1.5):
+    def __init__(self, munge_dir, playback_start, duration, timeshift, new_rda, start_simulation=True, playback_speed=1.5):
 
         self.new_rda = new_rda
-        self.original_rda = original_rda
-        self.playback_start = datetime.strptime(playback_start,"%Y-%m-%d %H:%M:%S UTC").replace(tzinfo=pytz.UTC)
+        self.munge_dir = munge_dir
+        self.playback_start = playback_start
         self.duration = duration
         self.seconds_shift = timeshift
-        self.source_directory = Path(f'{self.MUNGER_SCRIPT_BASE}/{self.original_rda}/downloads')
+        self.source_directory = Path(self.munge_dir)
         self.start_simulation = start_simulation
         self.playback_speed = playback_speed
+        #self.radar_dir = f'{self.polling_dir}{self.new_rda}'
         #self.clean_files()
-        self.copy_l2munger_executable()
+        self.copy_files()
         self.uncompress_files()
 
         # determine amount of time shift needed for munge based on first file's timestamp
@@ -67,14 +67,15 @@ class Munger():
             self.simulation_files_directory = Path(self.full_polling_dir)
             self.simulation_files = sorted(list(self.simulation_files_directory.glob('*gz')))
             self.update_dirlist()
+
     
     def clean_files(self):
         """
         Purges all radar files associated with previous simulation
         """
-        rm_munge_files = f'rm {self.source_directory}/K*'
+        rm_munge_files = f'rm {self.munge_dir}/K*'
         os.system(rm_munge_files)
-        os.chdir(self.source_directory)
+        os.chdir(self.munge_dir)
         os.chdir(self.full_polling_dir)
         try:
             [os.remove(f) for f in os.listdir()]
@@ -83,12 +84,11 @@ class Munger():
         
         return    
 
-    def copy_l2munger_executable(self):
+    def copy_files(self):
         """
-        The compiled l2munger executable needs to be in the source
-        radar files directory to work properly
+        stages raw files into munge directory where munger script lives
         """
-        cp_cmd = f'cp l2munger {self.source_directory}'
+        cp_cmd = f'cp l2munger {self.munge_dir}'
         os.system(cp_cmd)
         
         return
@@ -98,7 +98,7 @@ class Munger():
         example command line: python debz.py KBRO20170825_195747_V06 KBRO20170825_195747_V06.uncompressed
         """
 
-        os.chdir(self.source_directory)
+        os.chdir(self.munge_dir)
         self.source_files = list(self.source_directory.glob('*V06'))
         for original_file in self.source_files:
             command_string = f'python {self.MUNGER_SCRIPT_PATH}/debz.py {str(original_file)} {str(original_file)}.uncompressed'
@@ -167,7 +167,7 @@ class Munger():
         munges radar files to start at the reference time
         also changes RDA location
         """
-        os.chdir(self.source_directory)
+        os.chdir(self.munge_dir)
         self.source_files = list(self.source_directory.glob('*uncompressed'))
         for uncompressed_file in self.uncompressed_files:
             file_datetime_str = str(uncompressed_file.parts[-1])
@@ -182,14 +182,14 @@ class Munger():
             new_filename = f'{self.new_rda}{new_filename_date_string}'
             #print(new_filename)
             gzip_filename = f'{new_filename}.gz'
-            if gzip_filename not in os.listdir(self.source_directory):
+            if gzip_filename not in os.listdir(self.munge_dir):
                 gzip_command = f'gzip {new_filename}'
                 os.system(gzip_command)
             else:
                 print(f'{gzip_filename} already exists!')
 
         
-        move_command = f'mv {self.source_directory}/{self.new_rda}*gz {self.full_polling_dir}'
+        move_command = f'mv {self.munge_dir}/{self.new_rda}*gz {self.full_polling_dir}'
         #print(move_command)
         os.system(move_command)
         return
@@ -198,10 +198,8 @@ class Munger():
         """
         The dir.list file is needed for GR2Analyst to poll in DRT
         """
-        #simulation_counter = self.datetime_from_timestring_argument(self.playback_start) + timedelta(seconds=60)
-        #playback_end = self.datetime_from_timestring_argument(self.playback_start) + timedelta(minutes=self.duration)
-        simulation_counter = self.playback_start + timedelta(seconds=60)
-        playback_end = self.playback_start + timedelta(minutes=self.duration)
+        simulation_counter = self.datetime_from_timestring_argument(self.playback_start) + timedelta(seconds=60)
+        playback_end = self.datetime_from_timestring_argument(self.playback_start) + timedelta(minutes=self.duration)
         #print(simulation_counter,last_file_timestamp-simulation_counter)
         while simulation_counter < playback_end:
             simulation_counter = simulation_counter + timedelta(seconds=60)
@@ -224,8 +222,7 @@ class Munger():
 
 #-------------------------------
 if __name__ == "__main__":
-    orig_rda = 'KGRR'
-    target_rda = 'KGRR'
+    radar_source_dir = '/data/munger_test/downloads'
     playback_start_time = datetime.now(tz=timezone.utc) - timedelta(hours=2)
     event_start_time = datetime(2024, 5, 7, 22, 0, 0, tzinfo=timezone.utc)
     sim_duration = 60   # minutes
@@ -236,4 +233,4 @@ if __name__ == "__main__":
     playback_start_str = datetime.strftime(playback_start_time,"%Y-%m-%d %H:%M:%S UTC")
     #playback_end_time = playback_start_time + timedelta(minutes=int(event_duration))
 
-    Munger(orig_rda, playback_start_str, sim_duration, seconds_shift, target_rda, start_simulation=True, playback_speed=1.5)
+    Munger(radar_source_dir, playback_start_str, sim_duration, seconds_shift, new_rda='KGRR', start_simulation=True, playback_speed=1.5)

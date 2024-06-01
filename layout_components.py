@@ -122,7 +122,7 @@ sim_minute_section =  dbc.Col(html.Div([
                     step_minute, dcc.Dropdown([0,15,30,45],45,id='start_minute',clearable=False),]))
 
 sim_duration_section = dbc.Col(html.Div([
-                    step_duration,dcc.Dropdown(np.arange(0,240,30),30,id='duration',clearable=False),]))
+                    step_duration,dcc.Dropdown(np.arange(0,240,30),15,id='duration',clearable=False),]))
 
 CONFIRM_TIMES_TEXT = "Confirm start time and duration -->"
 confirm_times_section = dbc.Col(html.Div(children=CONFIRM_TIMES_TEXT,style=steps_right))
