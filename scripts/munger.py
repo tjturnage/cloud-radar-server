@@ -7,10 +7,9 @@
 from __future__ import print_function
 import os
 import sys
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 import pytz
 from pathlib import Path
-from time import sleep
 import bz2
 import gzip
 import struct
@@ -63,12 +62,8 @@ class Munger():
 
         # commence munging
         self.munge_files()
-
-        if self.start_simulation:
-            #print(' Starting simulation!! \n Set polling to https://turnageweather.us/public/radar')
-            self.simulation_files_directory = Path(self.full_polling_dir)
-            self.simulation_files = sorted(list(self.simulation_files_directory.glob('*gz')))
-            self.update_dirlist()
+        
+        return
     
     def clean_files(self):
         """
@@ -199,34 +194,6 @@ class Munger():
         os.system(move_command)
         return
         
-    def update_dirlist(self):
-        """
-        The dir.list file is needed for GR2Analyst to poll in DRT
-        """
-        #simulation_counter = self.datetime_from_timestring_argument(self.playback_start) + timedelta(seconds=60)
-        #playback_end = self.datetime_from_timestring_argument(self.playback_start) + timedelta(minutes=self.duration)
-        simulation_counter = self.playback_start + timedelta(seconds=360) # skip forward 6 min to start with some data
-        playback_end = self.playback_start + timedelta(minutes=self.duration)
-        #print(simulation_counter,last_file_timestamp-simulation_counter)
-        while simulation_counter < playback_end:
-            simulation_counter = simulation_counter + timedelta(seconds=60)
-            self.output = ''     
-            for file in self.simulation_files:
-                file_timestamp = self.datetime_object_from_timestring(file.parts[-1])
-                if file_timestamp < simulation_counter:
-                    line = f'{file.stat().st_size} {file.parts[-1]}\n'
-                    self.output = self.output + line
-                    with open(f'{self.full_polling_dir}/dir.list', mode='w', encoding='utf-8') as f:
-                        f.write(self.output)
-                else:
-                    pass
-
-            sleep(int(60/self.playback_speed))
-
-        print("simulation complete!")
-
-        return
-
 #-------------------------------
 if __name__ == "__main__":
     #orig_rda = 'KGRR'
