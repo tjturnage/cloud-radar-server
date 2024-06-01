@@ -272,17 +272,6 @@ class RadarSimulator(Config):
         return new_line
 
 
-    def remove_files_and_dirs(self):
-        dirs = ['data/radar/', 'assets/hodographs/']
-        for directory in dirs:
-            for root, dirs, files in os.walk(directory, topdown=False):
-                for name in files:
-                    os.remove(os.path.join(root, name))
-                for name in dirs:
-                    os.rmdir(os.path.join(root, name))
-        return
-
-
     def make_hodo_page(self) -> None:
         head = """<!DOCTYPE html>
         <html>
@@ -325,6 +314,16 @@ class RadarSimulator(Config):
                     with open(dirlist_file, mode='w', encoding='utf-8') as f:
                         f.write(output)
         return
+    
+    def remove_files_and_dirs(self):
+        dirs = [RADAR_DIR, POLLING_DIR, HODOGRAPHS_DIR]
+        for directory in dirs:
+            for root, dirs, files in os.walk(directory, topdown=False):
+                for name in files:
+                    os.remove(os.path.join(root, name))
+                for name in dirs:
+                    os.rmdir(os.path.join(root, name))
+        return
 ################################################################################################
 #      Initialize the app
 ################################################################################################
@@ -345,7 +344,7 @@ sim_day_selection =  dbc.Col(html.Div([
 
 app.layout = dbc.Container([
     # testing directory size monitoring
-    dcc.Interval(id='directory_monitor', interval=1000), 
+    dcc.Interval(id='directory_monitor', interval=1000),
     dcc.Store(id='model_dir_size'),
     dcc.Store(id='radar_dir_size'),
     dcc.Store(id='tradar'),
@@ -490,7 +489,6 @@ def launch_obs_script(n_clicks):
             except KeyError as e:
                 print("Error getting radar metadata: ", e)
             try:
-                pass
                 file_list = NexradDownloader(radar, sa.event_start_str, str(sa.event_duration))
                 sa.radar_dict[radar]['file_list'] = file_list
                 print("Nexrad script completed ... Now creating hodographs ...")
@@ -512,6 +510,7 @@ def launch_obs_script(n_clicks):
                 Munger(radar,sa.playback_start_str,sa.event_duration, sa.simulation_seconds_shift,
                        new_radar, playback_speed=1.5)
                 print(f"Munge for {radar} completed ...")
+
             except Exception as e:
                 print(f"Error running Munge for {radar}: ", e)
         # try:

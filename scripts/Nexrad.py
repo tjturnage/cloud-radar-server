@@ -28,9 +28,7 @@ class NexradDownloader:
                                                          user_agent_extra='Resource')).Bucket('noaa-nexrad-level2')
      
         self.prefix_day_one, self.prefix_day_two = self.make_prefix()
-        self.radar_directory = Path.cwd() / 'data' / 'radar' / self.radar_id
-        os.makedirs(self.radar_directory, exist_ok=True)
-        self.download_directory = self.radar_directory / 'downloads'
+        self.download_directory = Path.cwd() / 'data' / 'radar' / self.radar_id / 'downloads'
         os.makedirs(self.download_directory, exist_ok=True)
         self.radar_files_list = []
         self.download_files()
