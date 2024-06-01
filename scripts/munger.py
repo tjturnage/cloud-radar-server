@@ -49,7 +49,8 @@ class Munger():
         self.seconds_shift = timeshift
         self.source_directory = self.RADAR_DATA_BASE_DIR / self.original_rda / 'downloads'
         os.makedirs(self.source_directory, exist_ok=True)
-        #self.source_directory = os.path.join(self.RADAR_DATA_BASE_DIR,self.original_rda,'downloads')
+        self.this_radar_polling_dir = self.POLLING_DIR / self.new_rda
+        os.makedirs(self.this_radar_polling_dir, exist_ok=True)
         self.start_simulation = start_simulation
         self.playback_speed = playback_speed
         #self.clean_files()
@@ -58,8 +59,6 @@ class Munger():
 
 
         self.uncompressed_files = list(self.source_directory.glob('*uncompressed'))
-        self.full_polling_dir = self.POLLING_DIR / self.new_rda
-        os.makedirs(self.full_polling_dir, exist_ok=True)
 
         # commence munging
         self.munge_files()
@@ -73,7 +72,7 @@ class Munger():
         rm_munge_files = f'rm {self.source_directory}/K*'
         os.system(rm_munge_files)
         os.chdir(self.source_directory)
-        os.chdir(self.full_polling_dir)
+        os.chdir(self.this_radar_polling_dir)
         try:
             [os.remove(f) for f in os.listdir()]
         except Exception as e:
@@ -100,7 +99,6 @@ class Munger():
 
         os.chdir(self.source_directory)
         self.source_files = list(self.source_directory.glob('*V06'))
-        #self.source_files = list(os.glob('*V06'))
         for original_file in self.source_files:
             command_string = f'python {self.DEBZ_FILEPATH} {str(original_file)} {str(original_file)}.uncompressed'
             os.system(command_string)
@@ -115,16 +113,6 @@ class Munger():
         file_time = datetime.strptime(file[4:19], '%Y%m%d_%H%M%S')
         utc_file_time = file_time.replace(tzinfo=pytz.UTC)
         return utc_file_time
-
-    def datetime_from_timestring_argument(self, string):
-        """
-        - extracts datetime info from the radar filename
-        - converts it to a timezone aware datetime object in UTC
-        """
-        dt = datetime.strptime(string,"%Y-%m-%d %H:%M:%S UTC")
-        utc_time_object = dt.replace(tzinfo=pytz.UTC)
-        return utc_time_object
-
 
     def fake(self,filename, new_dt):
         """Heavily borrow metpy's code!"""
@@ -190,7 +178,7 @@ class Munger():
                 print(f'{gzip_filename} already exists!')
 
         
-        move_command = f'mv {self.source_directory}/{self.new_rda}*gz {self.full_polling_dir}'
+        move_command = f'mv {self.source_directory}/{self.new_rda}*gz {self.this_radar_polling_dir}'
         #print(move_command)
         os.system(move_command)
         return
