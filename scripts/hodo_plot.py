@@ -7,7 +7,7 @@ import pyart
 import numpy as np
 from metpy.plots import Hodograph
 import metpy.calc as mpcalc
-from datetime import datetime
+from datetime import datetime, timedelta
 import matplotlib.colors as colors
 from pint import UnitRegistry
 import math
@@ -25,10 +25,15 @@ import hodo_resources as hr
 timezone = 'UTC'
 
 radar_id = sys.argv[1]
-BASE_DIR = Path(sys.argv[2])
-asos_one = sys.argv[3].lower()
+new_radar = sys.argv[2]
+radar_label = radar_id
+if new_radar != 'None':
+    radar_label = new_radar
+  
+BASE_DIR = Path(sys.argv[3])
+asos_one = sys.argv[4].lower()
 try:
-  asos_two = sys.argv[4].lower()
+  asos_two = sys.argv[5].lower()
 except:
   asos_two = None
 
@@ -59,6 +64,7 @@ data_ceiling = 8000 #Max Data Height in Feet AGL
 range_type = 'Static' #Enter Dynamic For Changing Range From Values or Static for Constant Range Value
 static_value = 70 # Enter Static Hodo Range or 999 To Not Use
 
+timeshift_seconds = 10000 #Enter Time Shift in Seconds
 
 # presumes you have the radar files downloaded already
 radar_files = [f.name for f in DOWNLOADS.iterdir()]
@@ -71,6 +77,7 @@ for p in radar_filepaths:
   file = p.name
   fout = CF_DIR / f'{file}.nc'  
   radar_time = datetime.strptime(file[4:19], '%Y%m%d_%H%M%S')
+  shifted_time = radar_time + timedelta(seconds=timeshift_seconds)
   api_tstr = datetime.strftime(radar_time, '%Y%m%d%H%M')
   if radar_id.startswith('K') or radar_id.startswith('P'):
 
@@ -768,8 +775,9 @@ for p in radar_filepaths:
   plt.legend(loc = 'right', bbox_to_anchor=(1.885, 0.55),
             ncol=2, fancybox=True, shadow=True, fontsize=11, facecolor='white', framealpha=1.0,
               labelcolor='k', borderpad=0.7)
-  rts = datetime.strftime(radar_time, "%Y-%m-%d %H:%M:%S")
-  hodo_title = f'Hodograph from {radar_id} Valid {rts} UTC'
+  #rts = datetime.strftime(radar_time, "%Y-%m-%d %H:%M:%S")
+  rts = datetime.strftime(shifted_time, "%Y-%m-%d %H:%M:%S")
+  hodo_title = f'Hodograph from {radar_label} Valid {rts} UTC'
   plt.title(hodo_title, fontsize = 16, weight = 'bold')
   try:
     #Plot SRW wrt Hgt
@@ -800,9 +808,12 @@ for p in radar_filepaths:
     pass
   #Add Title and Legend and Save Figure
 
-  r_date = radar_time.strftime("%Y%m%d")
-  r_time = radar_time.strftime("%H%M%S")
-  hodo_fname = f'Hodograph_{radar_id}_{r_date}_{r_time}.png'
+  #r_date = radar_time.strftime("%Y%m%d")
+  #r_time = radar_time.strftime("%H%M%S")
+  #hodo_fname = f'Hodograph_{radar_id}_{r_date}_{r_time}.png'
+  r_date = shifted_time.strftime("%Y%m%d")
+  r_time = shifted_time.strftime("%H%M%S")
+  hodo_fname = f'Hodograph_{radar_label}_{r_date}_{r_time}.png'
   hodo_fp = HODO_IMAGES / hodo_fname
   plt.savefig(hodo_fp, bbox_inches='tight')
 
@@ -1003,8 +1014,9 @@ for p in radar_filepaths:
   plt.legend(loc = 'right', bbox_to_anchor=(1.885, 0.55),
             ncol=2, fancybox=True, shadow=True, fontsize=11, facecolor='white', framealpha=1.0,
               labelcolor='k', borderpad=0.7)
-  rts = datetime.strftime(radar_time, "%Y-%m-%d %H:%M:%S")
-  plt.title(f'SR Hodograph from {radar_id} Valid: {rts}', fontsize = 16, weight = 'bold')
+  #rts = datetime.strftime(radar_time, "%Y-%m-%d %H:%M:%S")
+  rts = datetime.strftime(shifted_time, "%Y-%m-%d %H:%M:%S")
+  plt.title(f'SR Hodograph from {radar_label} Valid: {rts}', fontsize = 16, weight = 'bold')
 
   try:
   #Plot SRW wrt Hgt
@@ -1035,7 +1047,7 @@ for p in radar_filepaths:
     pass
   #Add Title and Legend and Save Figure
   del sfc_angle, sfc_u, sfc_v
-  sr_hodo_fp = HODO_IMAGES / f'SR_Hodograph_{radar_id}_{r_date}_{r_time}.png'
+  sr_hodo_fp = HODO_IMAGES / f'SR_Hodograph_{radar_label}_{r_date}_{r_time}.png'
   plt.savefig(sr_hodo_fp, bbox_inches='tight')
 
 

@@ -10,6 +10,7 @@ import shutil
 import re
 from glob import glob
 from datetime import datetime, timedelta, timezone
+import pytz
 #from time import sleep
 import calendar
 from pathlib import Path
@@ -48,6 +49,7 @@ TOKEN = 'INSERT YOUR MAPBOX TOKEN HERE'
 
 BASE_DIR = Path.cwd()
 ASSETS_DIR = BASE_DIR / 'assets'
+POLLING_DIR = ASSETS_DIR / 'polling'
 HODOGRAPHS_DIR = ASSETS_DIR / 'hodographs'
 #PLACEFILES_DIR = ASSETS_DIR / 'placefiles' (don't need now)
 DATA_DIR = BASE_DIR / 'data'
@@ -144,6 +146,7 @@ class RadarSimulator(Config):
 
     def make_simulation_times(self):
         self.playback_start_time = datetime.now(tz=timezone.utc) - timedelta(hours=2)
+        self.playback_timer = self.playback_start_time + timedelta(seconds=360)
         self.event_start_time = datetime(self.event_start_year,self.event_start_month,self.event_start_day,
                                   self.event_start_hour,self.event_start_minute,second=0, 
                                   tzinfo=timezone.utc)
@@ -280,7 +283,7 @@ class RadarSimulator(Config):
         return
 
 
-    def make_hodo_page(self):
+    def make_hodo_page(self) -> None:
         head = """<!DOCTYPE html>
         <html>
         <head>
@@ -300,6 +303,28 @@ class RadarSimulator(Config):
             fout.write(tail)
         return
 
+    def datetime_object_from_timestring(self, file):
+        """
+        - extracts datetime info from the radar filename
+        - converts it to a timezone aware datetime object in UTC
+        """
+        file_time = datetime.strptime(file[4:19], '%Y%m%d_%H%M%S')
+        utc_file_time = file_time.replace(tzinfo=pytz.UTC)
+        return utc_file_time
+
+    def update_dirlist(self) -> None:
+        for _i,radar in enumerate(self.radar_list):
+            output = ''
+            dirlist_file = POLLING_DIR / radar / 'dir.list'
+            this_radar_polling_dir = RADAR_DIR / radar
+            for file in sorted(list(this_radar_polling_dir.glob('*gz'))):
+                file_timestamp = self.datetime_object_from_timestring(file.parts[-1])
+                if file_timestamp < self.playback_timer:
+                    line = f'{file.stat().st_size} {file.parts[-1]}\n'
+                    output = output + line
+                    with open(dirlist_file, mode='w', encoding='utf-8') as f:
+                        f.write(output)
+        return
 ################################################################################################
 #      Initialize the app
 ################################################################################################
@@ -471,12 +496,12 @@ def launch_obs_script(n_clicks):
                 print("Nexrad script completed ... Now creating hodographs ...")
             except Exception as e:
                 print("Error running nexrad script: ", e)
-            # try:
-            #     print(f'hodo script: {radar}, {BASE_DIR}, {asos_one}, {asos_two}')
-            #     run_hodo_script([radar, BASE_DIR, asos_one, asos_two])
-            #     print("Hodograph script completed ...")
-            # except Exception as e:
-            #     print("Error running hodo script: ", e)
+            try:
+                print(f'hodo script: {radar}, {sa.new_radar}, {BASE_DIR}, {asos_one}, {asos_two}')
+                run_hodo_script([radar, BASE_DIR, asos_one, asos_two])
+                print("Hodograph script completed ...")
+            except Exception as e:
+                print("Error running hodo script: ", e)
             try:
                 print(f'Munger script')
                 if sa.new_radar == 'None':
@@ -661,8 +686,14 @@ def enable_simulation_clock(n):
     Input('interval-component', 'n_intervals')
 )
 def update_time(_n):
-    sa.simulation_clock = sa.sim_clock + timedelta(seconds=15)
-    return sa.simulation_clock.strftime("%Y-%m-%d %H:%M:%S UTC")
+    """Steps the counter by 15 seconds and returns the current time."""
+    sa.playback_timer += timedelta(seconds=90)
+    while sa.playback_timer < sa.playback_end_time:
+        sa.playback_timer += timedelta(seconds=90)
+        # update dir.list
+        # update hodo html
+        return sa.playback_timer.strftime("%Y-%m-%d %H:%M:%S UTC")
+    return("simulation complete")
 
 ################################################################################################
 # ---------------------------------------- Call app ----------------
