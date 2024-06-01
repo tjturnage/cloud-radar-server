@@ -497,8 +497,8 @@ def launch_obs_script(n_clicks):
             except Exception as e:
                 print("Error running nexrad script: ", e)
             try:
-                print(f'hodo script: {radar}, {sa.new_radar}, {BASE_DIR}, {asos_one}, {asos_two}')
-                run_hodo_script([BASE_DIR, radar, sa.new_radar, asos_one, asos_two, sa.simulation_seconds_shift])
+                print(f'hodo script:  {BASE_DIR}, {radar}, {sa.new_radar}, {asos_one}, {asos_two}, {sa.simulation_seconds_shift}')
+                run_hodo_script([BASE_DIR, radar, sa.new_radar, asos_one, asos_two, str(sa.simulation_seconds_shift)])
                 print("Hodograph script completed ...")
             except Exception as e:
                 print("Error running hodo script: ", e)
