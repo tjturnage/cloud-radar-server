@@ -39,7 +39,7 @@ class Munger():
     SCRIPTS_DIR = '/data/cloud-radar-server/scripts'
     L2MUNGER_FILEPATH = f'{SCRIPTS_DIR}/l2munger'
     DEBZ_FILEPATH = f'{SCRIPTS_DIR}/debz.py'
-    MUNGER_SCRIPT_BASE = '/data/cloud-radar-server/data/radar' #/KGRR/downloads'
+    RADAR_DATA_BASE_DIR = '/data/cloud-radar-server/data/radar' #/KGRR/downloads'
     POLLING_DIR = '/data/cloud-radar-server/assets/polling'
     def __init__(self, original_rda, playback_start, duration, timeshift, new_rda, start_simulation=True, playback_speed=1.5):
 
@@ -48,7 +48,7 @@ class Munger():
         self.playback_start = datetime.strptime(playback_start,"%Y-%m-%d %H:%M:%S UTC").replace(tzinfo=pytz.UTC)
         self.duration = duration
         self.seconds_shift = timeshift
-        self.source_directory = Path(f'{self.MUNGER_SCRIPT_BASE}/{self.original_rda}/downloads')
+        self.source_directory = f'{self.RADAR_DATA_BASE_DIR}/{self.original_rda}/downloads'
         self.start_simulation = start_simulation
         self.playback_speed = playback_speed
         #self.clean_files()

@@ -479,6 +479,11 @@ def launch_obs_script(n_clicks):
             #     print("Error running hodo script: ", e)
             try:
                 print(f'Munger script')
+                if sa.new_radar == 'None':
+                    new_radar = radar
+                else:
+                    new_radar = sa.new_radar
+                    Munger(radar, sa.playback_start_str, sa.event_duration, sa.simulation_seconds_shift, new_radar, start_simulation=True, playback_speed=1.5)
                 Munger(radar,sa.playback_start_str,sa.event_duration, sa.simulation_seconds_shift,
                        sa.new_radar, start_simulation=True, playback_speed=1.5)
                 print(f"Munge for {radar} completed ...")
