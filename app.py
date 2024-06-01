@@ -150,8 +150,8 @@ class RadarSimulator(Config):
         self.simulation_seconds_shift = self.simulation_time_shift.total_seconds()
         self.sim_clock = self.playback_start_time
         self.event_start_str = datetime.strftime(self.event_start_time,"%Y-%m-%d %H:%M:%S UTC")
-        self.timestring = self.event_start_str
-        self.playback_end_time = self.event_start_time + timedelta(minutes=int(self.event_duration))
+        self.playback_start_str = datetime.strftime(self.playback_start_time,"%Y-%m-%d %H:%M:%S UTC")
+        self.playback_end_time = self.playback_start_time + timedelta(minutes=int(self.event_duration))
         return
    
     def get_days_in_month(self):
@@ -465,7 +465,7 @@ def launch_obs_script(n_clicks):
                 print("Error getting radar metadata: ", e)
             try:
                 pass
-                file_list = NexradDownloader(radar, sa.timestring, str(sa.event_duration))
+                file_list = NexradDownloader(radar, sa.event_start_str, str(sa.event_duration))
                 sa.radar_dict[radar]['file_list'] = file_list
                 print("Nexrad script completed ... Now creating hodographs ...")
             except Exception as e:
@@ -476,6 +476,13 @@ def launch_obs_script(n_clicks):
                 print("Hodograph script completed ...")
             except Exception as e:
                 print("Error running hodo script: ", e)
+            try:
+                print(f'Munger script')
+                Munger(radar,sa.playback_start_str,sa.event_duration, sa.simulation_seconds_shift,
+                       sa.new_radar, start_simulation=True, playback_speed=1.5)
+                print(f"Munge for {radar} completed ...")
+            except Exception as e:
+                print(f"Error running Munge for {radar}: ", e)
         try:
             sa.make_hodo_page()
             print("Hodo page created")
@@ -484,7 +491,7 @@ def launch_obs_script(n_clicks):
            
         try:
             print("Running obs script...")
-            Mesowest(str(sa.lat),str(sa.lon),sa.timestring,str(sa.event_duration))
+            Mesowest(str(sa.lat),str(sa.lon),sa.event_start_str,str(sa.event_duration))
             print("Obs script completed")
         except Exception as e:
             print("Error running obs script: ", e)
@@ -667,59 +674,3 @@ if __name__ == '__main__':
 # if my_settings.hosting_path is not None:
 #     pathname_params["routes_pathname_prefix"] = "/"                                                                                                                                                                                                                              
 #     pathname_params["requests_pathname_prefix"] = "/{}/".format(my_settings.hosting_path)
-
-    # def update_dirlist(self):
-    #     """
-    #     The dir.list file is needed for GR2Analyst to poll in DRT
-    #     """
-    #     simulation_counter = self.get_timestamp(self.simulation_files[0].parts[-1]) + 360
-    #     last_file_timestamp = self.get_timestamp(self.simulation_files[-1].parts[-1])
-    #     print(simulation_counter,last_file_timestamp-simulation_counter)
-    #     while simulation_counter < last_file_timestamp:
-    #         simulation_counter += 60
-    #         self.output = ''     
-    #         for file in self.simulation_files:
-    #             file_timestamp = self.get_timestamp(file.parts[-1])
-    #             if file_timestamp < simulation_counter:
-    #                 line = f'{file.stat().st_size} {file.parts[-1]}\n'
-    #                 self.output = self.output + line
-    #                 with open(f'{self.radar_dir}/dir.list', mode='w', encoding='utf-8') as f:
-    #                     f.write(self.output)
-    #             else:
-    #                 pass
-
-    #         sleep(int(60/self.playback_speed))
-
-    #     print("simulation complete!")
-
-    #     return
-    # def catalog_files(self):
-    #     self.source_directory = Path(self.radar_site_download_dir)
-    #     self.source_files = list(self.source_directory.glob('*V06'))
-    #     self.uncompressed_files = list(self.source_directory.glob('*V06.uncompressed'))
-    #     self.first_file_epoch_time = self.get_timestamp(self.source_files[0].parts[-1])
-    #     self.last_file_epoch_time = self.get_timestamp(self.source_files[-1].parts[-1])
-    #     return
-
-
-    # def uncompress_radar_files(self):
-    #     """
-    #     example command line: python debz.py KBRO20170825_195747_V06 KBRO20170825_195747_V06.uncompressed
-    #     """
-
-    #     os.chdir(self.munge_dir)
-    #     self.source_files = list(self.source_directory.glob('*V06'))
-    #     for original_file in self.source_files:
-    #         command_string = f'python debz.py {str(original_file)} {str(original_file)}.uncompressed'
-    #         os.system(command_string)
-    #     print("uncompress complete!")
-    #     return
-    
-        # def stage_files_to_munge(self):
-        # """
-        # stages raw files into munge directory where munger script lives
-        # """
-        # cp_cmd = f'cp {self.radar_site_download_dir}/* {self.munge_dir}'
-        # os.system(cp_cmd)
-        
-        # return
