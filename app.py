@@ -75,23 +75,6 @@ class RadarSimulator(Config):
     including the handling of time shifts and geographical coordinates.
 
     Attributes:
-        start_year (int): The year when the simulation starts.
-        start_month (int): The month when the simulation starts.
-        days_in_month (int): The number of days in the starting month.
-        start_day (int): The day of the month when the simulation starts.
-        start_hour (int): The hour of the day when the simulation starts (24-hour format).
-        start_minute (int): The minute of the hour when the simulation starts.
-        duration (int): The total duration of the simulation in minutes.
-        timeshift (Optional[int]): The time shift in minutes to apply to the simulation clock. Default is None.
-        timestring (Optional[str]): A string representation of the current simulation time. Default is None.
-        sim_clock (Optional[datetime]): The current simulation time as a datetime object. Default is None.
-        radar (Optional[object]): An instance of a radar object used in the simulation. Default is None.
-        lat (Optional[float]): The latitude coordinate for the radar. Default is None.
-        lon (Optional[float]): The longitude coordinate for the radar. Default is None.
-        t_radar (str): A temporary variable for radar type. Default is 'None'.
-        tlat (Optional[float]): Temporary storage for latitude coordinate. Default is None.
-        tlon (Optional[float]): Temporary storage for longitude coordinate. Default is None.
-        simulation_running (bool): Flag to indicate if the simulation is currently running. Default is False.
     """
 
     def __init__(self):
@@ -235,7 +218,7 @@ class RadarSimulator(Config):
         filenames = glob(f"{self.placefiles_dir}/*.txt")
         for file_ in filenames:
             with open(file_, 'r', encoding='utf-8') as f: data = f.readlines()
-            outfilename = f"{file_[0:file_.index('.txt')]}.shifted"
+            outfilename = f"{file_[0:file_.index('.txt')]}_shifted.txt"
             outfile = open(outfilename, 'w', encoding='utf-8')
             
             for line in data:
@@ -310,14 +293,14 @@ class RadarSimulator(Config):
         utc_file_time = file_time.replace(tzinfo=pytz.UTC)
         return utc_file_time
 
-    def update_dirlist(self) -> None:
+    def update_dirlist(self, playback_time) -> None:
         for _i,radar in enumerate(self.radar_list):
             output = ''
             dirlist_file = POLLING_DIR / radar / 'dir.list'
             this_radar_polling_dir = RADAR_DIR / radar
             for file in sorted(list(this_radar_polling_dir.glob('*gz'))):
                 file_timestamp = self.datetime_object_from_timestring(file.parts[-1])
-                if file_timestamp < self.playback_timer:
+                if file_timestamp < playback_time:
                     line = f'{file.stat().st_size} {file.parts[-1]}\n'
                     print(line)
                     output = output + line
@@ -653,7 +636,7 @@ def update_time(_n):
     #sa.playback_timer += timedelta(seconds=90)
     while sa.playback_timer < sa.playback_end_time:
         sa.playback_timer += timedelta(seconds=90)
-        sa.update_dirlist()
+        sa.update_dirlist(sa.playback_timer)
         # update hodo html
         print(sa.playback_timer.strftime("%Y-%m-%d %H:%M:%S UTC"))
         return sa.playback_timer.strftime("%Y-%m-%d %H:%M:%S UTC")

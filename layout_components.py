@@ -274,19 +274,19 @@ links_section = dbc.Container(dbc.Container(html.Div(
         dbc.Row(
             [
                 dbc.Col(dbc.ListGroupItem("Surface obs placefiles"), style={'font-weight': 'bold', 'color':'white', 'border': '1px gray solid', 'font-size':'1.2em','text-align':'right'}, width=3),
-                dbc.Col(dbc.ListGroupItem("Regular font", href=f"{place_base}/latest_surface_observations.shifted"), width=2),
-                dbc.Col(dbc.ListGroupItem("Large font", href=f"{place_base}/latest_surface_observations_lg.shifted"), width=2),
-                dbc.Col(dbc.ListGroupItem("Small font", href=f"{place_base}/latest_surface_observations_xlg.shifted"), width=2),
+                dbc.Col(dbc.ListGroupItem("Regular font", href=f"{place_base}/latest_surface_observations_shifted.txt"), width=2),
+                dbc.Col(dbc.ListGroupItem("Large font", href=f"{place_base}/latest_surface_observations_lg_shifted.txt"), width=2),
+                dbc.Col(dbc.ListGroupItem("Small font", href=f"{place_base}/latest_surface_observations_xlg_shifted.txt"), width=2),
             ],
             style={"display": "flex", "flexWrap": "wrap"},
         ),
         dbc.Row(
             [
                 dbc.Col(dbc.ListGroupItem("Surface obs components"), style={'font-weight': 'bold', 'color':'white','border': '1px gray solid', 'font-size':'1.2em','text-align':'right'}, width=3),
-                dbc.Col(dbc.ListGroupItem("Wind", href=f"{place_base}/wind.shifted"), style={'a:hover':{'color':'yellow'}},width=2),
-                dbc.Col(dbc.ListGroupItem("Temp", href=f"{place_base}/temp.shifted"), width=2),
-                dbc.Col(dbc.ListGroupItem("Dwpt", href=f"{place_base}/dwpt.shifted"), width=2),
-                dbc.Col(dbc.ListGroupItem("Road obs", href=f"{place_base}/road.shifted"), width=2),
+                dbc.Col(dbc.ListGroupItem("Wind", href=f"{place_base}/wind_shifted.txt"), style={'a:hover':{'color':'yellow'}},width=2),
+                dbc.Col(dbc.ListGroupItem("Temp", href=f"{place_base}/temp_shifted.txt"), width=2),
+                dbc.Col(dbc.ListGroupItem("Dwpt", href=f"{place_base}/dwpt_shifted.txt"), width=2),
+                dbc.Col(dbc.ListGroupItem("Road obs", href=f"{place_base}/road_shifted.txt"), width=2),
             ],
             style={"display": "flex", "flexWrap": "wrap"},
         ),
