@@ -549,6 +549,7 @@ def launch_obs_script(n_clicks):
         # to transpose to. 
         run_transpose_script()
         print("Finished with scripts")
+    return
 
 
 # -------------------------------------
