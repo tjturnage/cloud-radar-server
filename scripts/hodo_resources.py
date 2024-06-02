@@ -3,9 +3,34 @@
 Returns:
     _type_: _description_
 """
+import os
 import numpy as np
 import metpy.calc as mpcalc
 from metpy.units import units
+
+HODOGRAPHS_DIR = '/data/cloud-radar-server/assets/hodographs'
+HODOGRAPHS_HTML_PAGE = '/data/cloud-radar-server/assets/hodographs.html'
+
+def update_hodo_page() -> None:
+    head = """<!DOCTYPE html>
+    <html>
+    <head>
+    <title>Hodographs</title>
+    </head>
+    <body>
+    <ul>"""
+    tail = """</ul>
+    </body>
+    </html>"""
+    with open(HODOGRAPHS_HTML_PAGE, 'w', encoding='utf-8') as fout:
+        fout.write(head)
+        image_files = [f for f in os.listdir(HODOGRAPHS_DIR) if f.endswith('.png') or f.endswith('.jpg')]
+        for image in image_files:
+            print(image[-19:-4])
+            line = f'<li><a href="hodographs/{image}">{image}</a></li>\n'
+            fout.write(line)
+        fout.write(tail)
+    return
 
 def calc_components(speed, direction):
     u_comp = speed * np.cos(np.deg2rad(direction))

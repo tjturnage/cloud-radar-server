@@ -6,24 +6,22 @@
 """
 #from flask import Flask, render_template
 import os
-import shutil
+#import shutil
 import re
+import subprocess
+from pathlib import Path
 from glob import glob
 from datetime import datetime, timedelta, timezone
+import calendar
+import math
+#import pandas as pd
 import pytz
 #from time import sleep
-import calendar
-from pathlib import Path
-import math
-import subprocess
 from dash import Dash, html, Input, Output, dcc #, ctx, callback
 #from dash.exceptions import PreventUpdate
 #from dash import diskcache, DiskcacheManager, CeleryManager
 #from uuid import uuid4
 #import diskcache
-
-import pandas as pd 
-
 import numpy as np
 from botocore.client import Config
 
@@ -33,6 +31,8 @@ import layout_components as lc
 from scripts.obs_placefile import Mesowest
 from scripts.Nexrad import NexradDownloader
 from scripts.munger import Munger
+from scripts.update_dir_list import UpdateDirList
+from scripts.update_hodo_page import UpdateHodoHTML
 from scripts.nse import Nse
 
  # Earth radius (km)
@@ -52,7 +52,6 @@ ASSETS_DIR = BASE_DIR / 'assets'
 HODO_HTML_PAGE = ASSETS_DIR / 'hodographs.html'
 POLLING_DIR = ASSETS_DIR / 'polling'
 HODOGRAPHS_DIR = ASSETS_DIR / 'hodographs'
-#PLACEFILES_DIR = ASSETS_DIR / 'placefiles' (don't need now)
 DATA_DIR = BASE_DIR / 'data'
 RADAR_DIR = DATA_DIR / 'radar'
 CSV_PATH = BASE_DIR / 'radars.csv'
@@ -103,24 +102,32 @@ class RadarSimulator(Config):
         self.make_simulation_times()
         # self.get_radar_coordinates()
 
-    def create_radar_dict(self):
+    def create_radar_dict(self) -> None:
+        """
+        Creates a dictionary of radar sites and their associated metadata that will be used in the simulation.
+        """
         for _i,radar in enumerate(self.radar_list):
             self.lat = lc.df[lc.df['radar'] == radar]['lat'].values[0]
             self.lon = lc.df[lc.df['radar'] == radar]['lon'].values[0]
             asos_one = lc.df[lc.df['radar'] == radar]['asos_one'].values[0]
             asos_two = lc.df[lc.df['radar'] == radar]['asos_two'].values[0]
             self.radar_dict[radar.upper()] = {'lat':self.lat,'lon':self.lon, 'asos_one':asos_one, 'asos_two':asos_two, 'radar':radar.upper(), 'file_list':[]}
-        return
 
     def create_grlevel2_cfg_file(self) -> None:
+        """
+        Ensures a grlevel2.cfg file is created in the polling directory. It's required for GR2Analyst to poll for radar data.
+        Only the radar sites used in the simulation are listed in this file instead of all available radars
+        """
         f = open(POLLING_DIR / 'grlevel2.cfg', 'w', encoding='utf-8')
         f.write('ListFile: dir.list\n')
         for _i,radar in enumerate(self.radar_list):
             f.write(f'Site: {radar}\n')
         f.close()
-        return
     
-    def define_scripts_and_assets_directories(self):
+    def define_scripts_and_assets_directories(self) -> None:
+        """
+        Defines the directories for scripts, data files, and web assets used in the simulation.
+        """
         self.csv_file = self.current_dir / 'radars.csv'
         self.data_dir = self.current_dir / 'data'
         os.makedirs(self.data_dir, exist_ok=True)
@@ -134,13 +141,26 @@ class RadarSimulator(Config):
         os.makedirs(self.hodo_images, exist_ok=True)
         self.placefiles_dir = self.assets_dir / 'placefiles'
         os.makedirs(self.placefiles_dir, exist_ok=True)
-        return
 
-    def make_simulation_times(self):
+    def make_simulation_times(self) -> None:
+        """
+        playback_start_time: datetime object
+            the time the simulation starts. It's arbitrarily set to 2 hours prior to current real time so GR2Analyst can poll for data
+        playback_timer: datetime object
+            the "current" displaced realtime during the playback
+        event_start_time: datetime object
+            the historical time the actual event started. This is based on user inputs of the event start time
+        simulation_time_shift: timedelta object
+            the difference between the playback start time and the event start time
+        simulation_seconds_shift: int
+            the difference between the playback start time and the event start time in seconds
+
+        Variables ending with "_str" are the string representations of the datetime objects
+        """
         self.playback_start_time = datetime.now(tz=timezone.utc) - timedelta(hours=2)
         self.playback_timer = self.playback_start_time + timedelta(seconds=360)
         self.event_start_time = datetime(self.event_start_year,self.event_start_month,self.event_start_day,
-                                  self.event_start_hour,self.event_start_minute,second=0, 
+                                  self.event_start_hour,self.event_start_minute,second=0,
                                   tzinfo=timezone.utc)
         self.simulation_time_shift = self.playback_start_time - self.event_start_time
         self.simulation_seconds_shift = round(self.simulation_time_shift.total_seconds())
@@ -148,16 +168,17 @@ class RadarSimulator(Config):
         self.event_start_str = datetime.strftime(self.event_start_time,"%Y-%m-%d %H:%M:%S UTC")
         self.playback_start_str = datetime.strftime(self.playback_start_time,"%Y-%m-%d %H:%M:%S UTC")
         self.playback_end_time = self.playback_start_time + timedelta(minutes=int(self.event_duration))
-        return
-   
-    def get_days_in_month(self):
-        self.days_in_month = calendar.monthrange(self.event_start_year, self.event_start_month)[1]
-        return
 
-    def get_timestamp(self,file):
+    def get_days_in_month(self) -> None:
+        """
+        This is a helper function for knowing how many days to list in the dropdown for the day selection
+        """
+        self.days_in_month = calendar.monthrange(self.event_start_year, self.event_start_month)[1]
+
+    def get_timestamp(self,file: str) -> float:
         """
         - extracts datetime info from the radar filename
-        - converts it to a datetime timestamp (epoch seconds) object
+        - returns a datetime timestamp (epoch seconds) object
         """
         file_epoch_time = datetime.strptime(file[4:19], '%Y%m%d_%H%M%S').timestamp()
         return file_epoch_time
@@ -263,27 +284,6 @@ class RadarSimulator(Config):
                                     f"{new_datestring_1} {new_datestring_2}")
         return new_line
 
-
-    def make_hodo_page(self) -> None:
-        head = """<!DOCTYPE html>
-        <html>
-        <head>
-        <title>Hodographs</title>
-        </head>
-        <body>
-        <ul>"""
-        tail = """</ul>
-        </body>
-        </html>"""
-        with open(HODO_HTML_PAGE, 'w', encoding='utf-8') as fout:
-            fout.write(head)
-            image_files = [f for f in os.listdir(HODOGRAPHS_DIR) if f.endswith('.png') or f.endswith('.jpg')]
-            for image in image_files:
-                line = f'<li><a href="hodographs/{image}">{image}</a></li>\n'
-                fout.write(line)
-            fout.write(tail)
-        return
-
     def datetime_object_from_timestring(self, file):
         """
         - extracts datetime info from the radar filename
@@ -293,22 +293,11 @@ class RadarSimulator(Config):
         utc_file_time = file_time.replace(tzinfo=pytz.UTC)
         return utc_file_time
 
-    def update_dirlist(self, playback_time):
-        for _i,radar in enumerate(self.radar_list):
-            output = ''
-            dirlist_file = POLLING_DIR / radar / 'dir.list'
-            this_radar_polling_dir = RADAR_DIR / radar
-            for file in sorted(list(this_radar_polling_dir.glob('*gz'))):
-                file_timestamp = self.datetime_object_from_timestring(file.parts[-1])
-                if file_timestamp < playback_time:
-                    line = f'{file.stat().st_size} {file.parts[-1]}\n'
-                    print(line)
-                    output = output + line
-                    with open(dirlist_file, mode='w', encoding='utf-8') as f:
-                        f.write(output)
-        return
-    
     def remove_files_and_dirs(self):
+        """
+        Cleans up files and directories from the previous simulation so these datasets
+        are not included in the current simulation.
+        """
         dirs = [RADAR_DIR, POLLING_DIR, HODOGRAPHS_DIR]
         for directory in dirs:
             for root, dirs, files in os.walk(directory, topdown=False):
@@ -371,7 +360,16 @@ app.layout = dbc.Container([
 @app.callback(
     Output('show_radar_selections', 'children'),
     [Input('graph', 'clickData')])
-def display_click_data(clickData):
+def display_click_data(clickData: dict) -> str:
+   
+    """_summary_
+
+    Args:
+        clickData (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
     if clickData is None:
         return 'No radars selected ...'
     else:
@@ -397,11 +395,14 @@ def display_click_data(clickData):
 @app.callback(
     Output('graph-container', 'style'),
     Input('map_btn', 'n_clicks'))
-def toggle_map_display(n):
+def toggle_map_display(n) -> dict:
+    """
+    based on button click, show or hide the map by returning a css style dictionary
+    to modify the associated html element
+    """
     if n%2 == 0:
         return {'display': 'none'}
-    else:
-        return {'padding-bottom': '2px', 'padding-left': '2px','height': '80vh', 'width': '100%'}
+    return {'padding-bottom': '2px', 'padding-left': '2px','height': '80vh', 'width': '100%'}
 
 # -------------------------------------
 # ---  Transpose radar section  ---
@@ -412,10 +413,12 @@ def toggle_map_display(n):
     Output('tradar', 'data'),
     Input('new_radar_selection', 'value'))
 def transpose_radar(value):
-    # If a user switches from a selection BACK to "None", without this, the application 
-    # will not update sa.new_radar to None. Instead, it'll be the previous selection.
-    # Since we always evaluate "value" after every user selection, always set new_radar 
-    # initially to None. 
+    """
+    If a user switches from a selection BACK to "None", without this, the application 
+    will not update sa.new_radar to None. Instead, it'll be the previous selection.
+    Since we always evaluate "value" after every user selection, always set new_radar 
+    initially to None.
+    """
     sa.new_radar = 'None'
 
     if value != 'None':
@@ -430,7 +433,8 @@ def transpose_radar(value):
     Input('radar_quantity', 'value'))
 def toggle_transpose_display(value):
     """
-    Resets the radar list when the number of radars is changed
+    Transposing is an option only if the number of selected radars = 1
+    This function will hide the transpose section if the number of radars is > 1
     """
     sa.number_of_radars = value
     while len(sa.radar_list) > sa.number_of_radars:
@@ -475,6 +479,9 @@ def launch_obs_script(n_clicks):
             sa.create_grlevel2_cfg_file()
         except Exception as e:
             print("Error creating radar dict or config file: ", e)
+
+        # begin iterating through the radar_dict
+
         for radar, data in sa.radar_dict.items():
             try:
                 asos_one = data['asos_one']
@@ -507,12 +514,9 @@ def launch_obs_script(n_clicks):
 
             except Exception as e:
                 print(f"Error running Munge for {radar}: ", e)
-        try:
-            sa.make_hodo_page()
-            print("Hodo page created")
-        except Exception as e:
-            print("Error creating hodo page: ", e)
-           
+        
+        # end iterating through radar_dict
+        
         try:
             print("Running obs script...")
             Mesowest(str(sa.lat),str(sa.lon),sa.event_start_str,str(sa.event_duration))
@@ -620,28 +624,13 @@ def get_duration(duration):
 @app.callback(
     Output('clock-container', 'style'),
     Input('enable_sim_clock', 'n_clicks'))
-def enable_simulation_clock(n):
+def enable_simulation_clock(n: int) -> dict:
+    """
+    Toggles the simulation clock display on/off by returning a css style dictionary to modify
+    """
     if n % 2 == 0:
         return {'display': 'none'}
-    else:
-        return {'padding-bottom': '2px', 'padding-left': '2px','height': '80vh', 'width': '100%'}
-
-
-def update_dirlist(playback_time):
-    for _i,radar in enumerate(sa.radar_list):
-        output = ''
-        dirlist_file = POLLING_DIR / radar / 'dir.list'
-        this_radar_polling_dir = RADAR_DIR / radar
-        for file in sorted(list(this_radar_polling_dir.glob('*gz'))):
-            print(file.parts[-1])
-            file_timestamp = sa.datetime_object_from_timestring(file.parts[-1])
-            if file_timestamp < playback_time:
-                line = f'{file.stat().st_size} {file.parts[-1]}\n'
-                print(line)
-                output = output + line
-                with open(dirlist_file, mode='w', encoding='utf-8') as f:
-                    f.write(output)
-    return
+    return {'padding-bottom': '2px', 'padding-left': '2px','height': '80vh', 'width': '100%'}
 
 
 @app.callback(
@@ -653,10 +642,11 @@ def update_time(_n):
     #sa.playback_timer += timedelta(seconds=90)
     while sa.playback_timer < sa.playback_end_time:
         sa.playback_timer += timedelta(seconds=45)
-        update_dirlist(sa.playback_timer)
-        # update hodo html
-        print(sa.playback_timer.strftime("%Y-%m-%d %H:%M:%S UTC"))
-        return sa.playback_timer.strftime("%Y-%m-%d %H:%M:%S UTC")
+        playback_time_str = sa.playback_timer.strftime("%Y-%m-%d %H:%M:%S UTC")
+        UpdateHodoHTML(playback_time_str).update_hodo_page()
+        for _r, radar in enumerate(sa.radar_list):
+            UpdateDirList(radar, playback_time_str).update_dirlist()
+        return playback_time_str
     return("simulation complete")
 
 ################################################################################################
@@ -670,13 +660,14 @@ if __name__ == '__main__':
         # Add hot reload to False. As files update during a run, page updates, and 
         # simulation dates change back to defaults causing issues with time shifting. 
         app.run(debug=True, port=8050, threaded=True, dev_tools_hot_reload=False)
-    
+ 
+'''
 # pathname_params = dict()
 # if my_settings.hosting_path is not None:
-#     pathname_params["routes_pathname_prefix"] = "/"                                                                                                                                                                                                                              
+#     pathname_params["routes_pathname_prefix"] = "/"
 #     pathname_params["requests_pathname_prefix"] = "/{}/".format(my_settings.hosting_path)
 
-'''
+
 # Monitoring size of data and output directories for progress bar output
 def directory_stats(folder):
     """Return the size of a directory. If path hasn't been created yet, returns 0."""
