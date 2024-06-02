@@ -308,7 +308,7 @@ simulation_clock = html.Div([
         html.Div([
                 dbc.Card(step_sim_clock, color="secondary", inverse=True)],
                 style={'text-align':'center'},),
-                simulation_clock_slider,
+                #simulation_clock_slider,
             dcc.Interval(
                 id='playback-clock-component',
                 interval=30*1000, # in milliseconds

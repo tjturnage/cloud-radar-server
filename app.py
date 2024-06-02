@@ -293,7 +293,7 @@ class RadarSimulator(Config):
         utc_file_time = file_time.replace(tzinfo=pytz.UTC)
         return utc_file_time
 
-    def update_dirlist(self, playback_time) -> None:
+    def update_dirlist(self, playback_time):
         for _i,radar in enumerate(self.radar_list):
             output = ''
             dirlist_file = POLLING_DIR / radar / 'dir.list'
@@ -627,6 +627,23 @@ def enable_simulation_clock(n):
         return {'padding-bottom': '2px', 'padding-left': '2px','height': '80vh', 'width': '100%'}
 
 
+def update_dirlist(playback_time):
+    for _i,radar in enumerate(sa.radar_list):
+        output = ''
+        dirlist_file = POLLING_DIR / radar / 'dir.list'
+        this_radar_polling_dir = RADAR_DIR / radar
+        for file in sorted(list(this_radar_polling_dir.glob('*gz'))):
+            print(file.parts[-1])
+            file_timestamp = sa.datetime_object_from_timestring(file.parts[-1])
+            if file_timestamp < playback_time:
+                line = f'{file.stat().st_size} {file.parts[-1]}\n'
+                print(line)
+                output = output + line
+                with open(dirlist_file, mode='w', encoding='utf-8') as f:
+                    f.write(output)
+    return
+
+
 @app.callback(
     Output('clock-output', 'children'),
     Input('playback-clock-component', 'n_intervals')
@@ -635,8 +652,8 @@ def update_time(_n):
     """Steps the counter by 15 seconds and returns the current time."""
     #sa.playback_timer += timedelta(seconds=90)
     while sa.playback_timer < sa.playback_end_time:
-        sa.playback_timer += timedelta(seconds=90)
-        sa.update_dirlist(sa.playback_timer)
+        sa.playback_timer += timedelta(seconds=45)
+        update_dirlist(sa.playback_timer)
         # update hodo html
         print(sa.playback_timer.strftime("%Y-%m-%d %H:%M:%S UTC"))
         return sa.playback_timer.strftime("%Y-%m-%d %H:%M:%S UTC")
