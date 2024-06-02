@@ -311,7 +311,7 @@ simulation_clock = html.Div([
                 simulation_clock_slider,
             dcc.Interval(
                 id='playback-clock-component',
-                interval=60*1000, # in milliseconds
+                interval=30*1000, # in milliseconds
                 n_intervals=0
                 ),
         html.Div(id='clock-output', style=feedback),

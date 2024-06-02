@@ -49,6 +49,7 @@ TOKEN = 'INSERT YOUR MAPBOX TOKEN HERE'
 
 BASE_DIR = Path.cwd()
 ASSETS_DIR = BASE_DIR / 'assets'
+HODO_HTML_PAGE = ASSETS_DIR / 'hodographs.html'
 POLLING_DIR = ASSETS_DIR / 'polling'
 HODOGRAPHS_DIR = ASSETS_DIR / 'hodographs'
 #PLACEFILES_DIR = ASSETS_DIR / 'placefiles' (don't need now)
@@ -291,7 +292,7 @@ class RadarSimulator(Config):
         tail = """</ul>
         </body>
         </html>"""
-        with open('assets/hodograph.html', 'w', encoding='utf-8') as fout:
+        with open(HODO_HTML_PAGE, 'w', encoding='utf-8') as fout:
             fout.write(head)
             image_files = [f for f in os.listdir(HODOGRAPHS_DIR) if f.endswith('.png') or f.endswith('.jpg')]
             for image in image_files:
@@ -318,6 +319,7 @@ class RadarSimulator(Config):
                 file_timestamp = self.datetime_object_from_timestring(file.parts[-1])
                 if file_timestamp < self.playback_timer:
                     line = f'{file.stat().st_size} {file.parts[-1]}\n'
+                    print(line)
                     output = output + line
                     with open(dirlist_file, mode='w', encoding='utf-8') as f:
                         f.write(output)
@@ -548,54 +550,6 @@ def launch_obs_script(n_clicks):
         run_transpose_script()
         print("Finished with scripts")
 
-'''
-# Monitoring size of data and output directories for progress bar output
-def directory_stats(folder):
-    """Return the size of a directory. If path hasn't been created yet, returns 0."""
-    num_files = 0
-    total_size = 0
-    if os.path.isdir(folder):
-        total_size = sum(
-            sum(
-                os.path.getsize(os.path.join(walk_result[0], element))
-                for element in walk_result[2]
-            )
-            for walk_result in os.walk(folder)
-        )
-
-        for _, _, files in os.walk(folder):
-            num_files += len(files)
-
-    return total_size/1024000, num_files
-'''
-'''
-@app.callback(
-    #Output('tradar', 'value'),
-    Output('model_dir_size', 'data'),
-    Output('radar_dir_size', 'data'),
-    #Output('model_table_df', 'data'),
-    [Input('directory_monitor', 'n_intervals')],
-    prevent_initial_call=True)
-def monitor(n):
-    model_dir = directory_stats(f"{sa.data_dir}/model_data")
-    radar_dir = directory_stats(f"{sa.data_dir}/radar")
-    print("sa.new_radar", sa.new_radar)
-    #print(model_dir)
-
-    # Read modeldata.txt file 
-    #filename = f"{sa.data_dir}/model_data/model_list.txt"
-    #model_table = []
-    #if os.path.exists(filename):
-    #    model_listing = []
-    #    with open(filename, 'r') as f: model_list = f.readlines()
-    #    for line in model_list:
-    #        model_listing.append(line.rsplit('/', 1)[1][:-1])
-    # 
-    #     df = pd.DataFrame({'Model Data': model_listing})
-    #     output = df.to_dict('records')
-
-    return model_dir[0], radar_dir[0]
-'''
 
 # -------------------------------------
 # --- Transpose placefiles in time and space
@@ -695,11 +649,12 @@ def enable_simulation_clock(n):
 )
 def update_time(_n):
     """Steps the counter by 15 seconds and returns the current time."""
-    sa.playback_timer += timedelta(seconds=90)
+    #sa.playback_timer += timedelta(seconds=90)
     while sa.playback_timer < sa.playback_end_time:
         sa.playback_timer += timedelta(seconds=90)
         sa.update_dirlist()
         # update hodo html
+        print(sa.playback_timer.strftime("%Y-%m-%d %H:%M:%S UTC"))
         return sa.playback_timer.strftime("%Y-%m-%d %H:%M:%S UTC")
     return("simulation complete")
 
@@ -719,3 +674,52 @@ if __name__ == '__main__':
 # if my_settings.hosting_path is not None:
 #     pathname_params["routes_pathname_prefix"] = "/"                                                                                                                                                                                                                              
 #     pathname_params["requests_pathname_prefix"] = "/{}/".format(my_settings.hosting_path)
+
+'''
+# Monitoring size of data and output directories for progress bar output
+def directory_stats(folder):
+    """Return the size of a directory. If path hasn't been created yet, returns 0."""
+    num_files = 0
+    total_size = 0
+    if os.path.isdir(folder):
+        total_size = sum(
+            sum(
+                os.path.getsize(os.path.join(walk_result[0], element))
+                for element in walk_result[2]
+            )
+            for walk_result in os.walk(folder)
+        )
+
+        for _, _, files in os.walk(folder):
+            num_files += len(files)
+
+    return total_size/1024000, num_files
+'''
+'''
+@app.callback(
+    #Output('tradar', 'value'),
+    Output('model_dir_size', 'data'),
+    Output('radar_dir_size', 'data'),
+    #Output('model_table_df', 'data'),
+    [Input('directory_monitor', 'n_intervals')],
+    prevent_initial_call=True)
+def monitor(n):
+    model_dir = directory_stats(f"{sa.data_dir}/model_data")
+    radar_dir = directory_stats(f"{sa.data_dir}/radar")
+    print("sa.new_radar", sa.new_radar)
+    #print(model_dir)
+
+    # Read modeldata.txt file 
+    #filename = f"{sa.data_dir}/model_data/model_list.txt"
+    #model_table = []
+    #if os.path.exists(filename):
+    #    model_listing = []
+    #    with open(filename, 'r') as f: model_list = f.readlines()
+    #    for line in model_list:
+    #        model_listing.append(line.rsplit('/', 1)[1][:-1])
+    # 
+    #     df = pd.DataFrame({'Model Data': model_listing})
+    #     output = df.to_dict('records')
+
+    return model_dir[0], radar_dir[0]
+'''
