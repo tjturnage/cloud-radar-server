@@ -7,15 +7,14 @@ import json
 import os
 from datetime import datetime, timedelta
 from collections import defaultdict
-import logging as log
+#import logging as log
 
 import sharptab.winds as winds
-from configs import ALPHA, OUTPUT_DIR
+from configs import ALPHA
 from plotconfigs import (SCALAR_PARAMS, VECTOR_PARAMS, BUNDLES, PLOTCONFIGS, barbconfigs,
                          contourconfigs)
 
 PARAMS = {**SCALAR_PARAMS, **VECTOR_PARAMS}
-if not os.path.exists(OUTPUT_DIR): os.makedirs(OUTPUT_DIR)
 
 def contour(lon, lat, data, time_str, timerange_str, **kwargs):
     """
@@ -183,7 +182,7 @@ def contourf(lon, lat, data, time_str, timerange_str, **kwargs):
     plt.close(fig)
     return out
 
-def write_placefile(arrs, realtime=False):
+def write_placefile(arrs, output_path, realtime=False):
     """
     Main function controlling the plotting of GR2/Analyst-readable placefiles. Called
     by the primary run.py script.
@@ -194,7 +193,8 @@ def write_placefile(arrs, realtime=False):
         List of dictionaries storing values necessary for plotting. This includes
         longitudes, latitudes, valid times, and any 2-d arrays. Each list entry
         corresponds to a new forecast time.
-    plotinfo : string
+    output_path : string
+        Full path describing where to save placefiles. 
 
     Other Parameters:
     -----------------
@@ -286,15 +286,15 @@ def write_placefile(arrs, realtime=False):
         if not realtime:
             save_time = "%s-%s" % (arrs[0]['valid_time'].strftime('%Y%m%d%H'),
                                    arrs[-1]['valid_time'].strftime('%Y%m%d%H'))
-            out_file = '%s/%s_%s.txt' % (OUTPUT_DIR, parm, save_time)
+            out_file = '%s/%s_%s.txt' % (output_path, parm, save_time)
         else:
-            out_file = '%s/%s.txt' % (OUTPUT_DIR, parm)
+            out_file = '%s/%s.txt' % (output_path, parm)
         with open(out_file, 'w') as f: f.write("".join(output))
 
     # Write any bundled placefiles
-    write_bundles(save_time)
+    write_bundles(save_time, output_path)
 
-def write_bundles(save_time):
+def write_bundles(save_time, output_path):
     """
     Write out bundled placefiles. Works for archived runs.
 
@@ -315,23 +315,24 @@ def write_bundles(save_time):
 
     # If entries exist in the BUNDLES dictionary, output bundled placefiles
     for bundle_name, parameters in BUNDLES.items():
-        log.info("Writing bundle: %s with components: %s" % (bundle_name, parameters))
-        bundle_file = '%s/%s.txt' % (OUTPUT_DIR, bundle_name)
+        #log.info("Writing bundle: %s with components: %s" % (bundle_name, parameters))
+        bundle_file = '%s/%s.txt' % (output_path, bundle_name)
         if save_time:
-            bundle_file = '%s/%s_%s.txt' % (OUTPUT_DIR, bundle_name, save_time)
+            bundle_file = '%s/%s_%s.txt' % (output_path, bundle_name, save_time)
 
         with open(bundle_file, 'w') as f:
             for parm in parameters:
-                filename = '%s/%s.txt' % (OUTPUT_DIR, parm)
+                filename = '%s/%s.txt' % (output_path, parm)
                 if save_time:
-                    filename = '%s/%s_%s.txt' % (OUTPUT_DIR, parm, save_time)
+                    filename = '%s/%s_%s.txt' % (output_path, parm, save_time)
                 try:
                     in_file = open(filename, 'r')
                     lines = in_file.readlines()
                     lines = replace_title_lines()
                     f.write("".join(lines))
                 except IOError:
-                    log.error("%s not found. Skipped during bundling step" % (in_file))
+                    pass
+                    #log.error("%s not found. Skipped during bundling step" % (in_file))
 
 def barbs(lon, lat, U, V, time_str, timerange_str, **kwargs):
     """

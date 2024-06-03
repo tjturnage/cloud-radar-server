@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 import requests
-import os, sys
+import os, sys, shutil
 from pathlib import Path
 from glob import glob
 import argparse
@@ -8,13 +8,20 @@ from multiprocessing import Pool, freeze_support
 import numpy as np
 import timeout_decorator
 
-from configs import (WGRIB2, WGET, TIMEOUT, MINSIZE, DATA_SOURCES,
+from configs import (TIMEOUT, MINSIZE, DATA_SOURCES,
                      GOOGLE_CONFIGS, THREDDS_CONFIGS, vars, grid_info)
 from utils.cmd import execute
-from utils.logs import logfile
+#from utils.logs import logfile
 
 script_path = os.path.dirname(os.path.realpath(__file__))
-log = logfile('download')
+
+# Find the wgrib2 and wget executables. If None, kill the NSE script. 
+WGRIB2 = shutil.which('wgrib2')
+WGET = shutil.which('wget')
+if WGRIB2 is None and WGET is None: 
+    print('Either or both WGRIB2 or WGET executables are missing. Exiting.')
+    sys.exit(1)
+
 def interpolate_in_time(download_dir):
     """Interpolate 1 and 2 hour forecasts in time every 15 minutes using WGRIB2. Used for
     realtime runs.
@@ -40,11 +47,11 @@ def interpolate_in_time(download_dir):
     for i in range(len(files)):
         arg = "cp %s %s/%s_0.grib2" % (files[i], download_dir, i)
         p = execute(arg)
-        if p.returncode == 0: log.info(arg)
+        #if p.returncode == 0: log.info(arg)
 
         arg = "rm %s" % (files[i])
         p = execute(arg)
-        if p.returncode == 0: log.info(arg)
+        #if p.returncode == 0: log.info(arg)
 
 def test_url(url):
     """Test for online file existence.
@@ -87,16 +94,16 @@ def execute_regrid(full_name):
         else:
             arg = "%s %s -new_grid %s %s" % (WGRIB2, full_name, grid_info, save_name)
 
-        log.info("CMD %s" % (arg))
+        #log.info("CMD %s" % (arg))
         p = execute(arg)
 
-        if p.returncode != 0:
-            log.error("Failure in execute_regrid. Check that WGRIB2 path is specified in "
-                      "configs.py")
+        #if p.returncode != 0:
+        #    log.error("Failure in execute_regrid. Check that WGRIB2 path is specified in "
+        #              "configs.py")
 
     # Remove the original file
     p = execute("rm %s" % (full_name))
-    if p.returncode == 0: log.info("Removed %s" % (full_name))
+    #if p.returncode == 0: log.info("Removed %s" % (full_name))
 
 # Catch hung download processes with this decorator function. TIMEOUT specified in config
 @timeout_decorator.timeout(TIMEOUT, timeout_exception=StopIteration)
@@ -127,11 +134,11 @@ def execute_download(full_name, url):
     # Download data if not on the current filesystem
     if not os.path.exists(full_name + '.reduced'):
         p = execute(arg1)
-        if p.returncode != 0:
-            log.error("Failed to download from source. Check WGET variable in configs.py")
-    else:
-        log.info("Data already exists locally at %s.reduced" % (full_name))
-        pass
+        #if p.returncode != 0:
+        #    log.error("Failed to download from source. Check WGET variable in configs.py")
+    #else:
+    #    log.info("Data already exists locally at %s.reduced" % (full_name))
+    #    pass
 
     # For GOOGLE-based downloads
     if arg2 is not None:
@@ -146,7 +153,8 @@ def make_dir(run_time, data_path):
 
 # Catch hung download processes with this decorator function. TIMEOUT specified in config
 #@timeout_decorator.timeout(TIMEOUT, timeout_exception=StopIteration)
-def download_data(dts, data_path, model='RAP', num_hours=1, status_path=None):
+def download_data(dts, data_path, model='RAP', num_hours=1, 
+                  status_path=None):
     """Function called by main() to control download of model data.
 
     Parameters
@@ -186,7 +194,7 @@ def download_data(dts, data_path, model='RAP', num_hours=1, status_path=None):
                 filename = "rap.t%sz.awp130bgrbf%s.grib2" % (str(dt.hour).zfill(2),
                                                              str(fhr).zfill(2))
             else:
-                log.error("Bad model type `%s` passed" % (model))
+                #log.error("Bad model type `%s` passed" % (model))
                 sys.exit(1)
 
             ##############################################################################
@@ -247,12 +255,12 @@ def download_data(dts, data_path, model='RAP', num_hours=1, status_path=None):
                 url = url[0:idx] + url[idx:].replace('//', '/')
                 status = test_url(url)
                 if status:
-                    log.info("Download source: %s" % (source))
-                    log.info("URL: %s" % (url))
+                    #log.info("Download source: %s" % (source))
+                    #log.info("URL: %s" % (url))
                     downloads[full_name] = url
                     break
 
-            log.info("Target file: %s" % (full_name))
+            #log.info("Target file: %s" % (full_name))
             expected_files += 1
 
     # Write expected datafiles to output text file for tracking by app.py
@@ -267,8 +275,8 @@ def download_data(dts, data_path, model='RAP', num_hours=1, status_path=None):
         my_pool.map(execute_regrid, downloads.keys())
         my_pool.close()
         my_pool.terminate()
-    else:
-        log.error("Some or all requested data was not found.")
+    #else:
+    #    log.error("Some or all requested data was not found.")
 
 def check_configs():
     """
@@ -279,7 +287,8 @@ def check_configs():
     for item in [WGET, WGRIB2]:
         if not Path(item).is_file():
             error_message = "%s not found on filesystem. Check configs.py file." % (item)
-            log.error(error_message)
+            print(error_message)
+            #log.error(error_message)
             sys.exit(1)
 
 def parse_logic(args):
@@ -291,7 +300,7 @@ def parse_logic(args):
     #    args.data_path = MODEL_DIR
 
     timestr_fmt = '%Y-%m-%d/%H'
-    log.info("----> New download processing")
+    #log.info("----> New download processing")
 
     # USER has specified the -rt flag or a specific cycle time
     curr_time = datetime.utcnow()
@@ -303,7 +312,7 @@ def parse_logic(args):
 
             # If 0 or 12z, RAP is delayed until ~01:28z or ~13:28z
             if target.hour in [0, 12] and curr_time.minute < 29 and args.model == 'RAP':
-                log.info("Realtime RAP not available for 0 or 12z cycle. Setting to HRRR")
+                #log.info("Realtime RAP not available for 0 or 12z cycle. Setting to HRRR")
                 args.model = 'HRRR'
 
             cycle_dt = [datetime(target.year, target.month, target.day, target.hour)]
@@ -316,7 +325,7 @@ def parse_logic(args):
         start_dt = datetime.strptime(args.start_time, timestr_fmt)
         end_dt = datetime.strptime(args.end_time, timestr_fmt)
         if start_dt > end_dt:
-            log.error("Requested start time is after the end time")
+            #log.error("Requested start time is after the end time")
             sys.exit(1)
 
         cycle_dt = []
@@ -326,22 +335,22 @@ def parse_logic(args):
             start_dt += timedelta(hours=1)
 
     else:
-        log.error("Missing time flags. Need one of -rt, -t, or -s and -e")
+        #log.error("Missing time flags. Need one of -rt, -t, or -s and -e")
         sys.exit(1)
 
     # RAP/RUC data via NCEI. Analyses and 1-hour forecasts only.
     if args.model in ['RAP', None] and cycle_dt[-1] < datetime(2021, 2, 21, 23):
-        log.warning("Only 1 hour of forecast data available. Setting -n to 1")
+        #log.warning("Only 1 hour of forecast data available. Setting -n to 1")
         args.num_hours=1
 
-    log.info(f"Saving model data to: {args.data_path}")
+    #log.info(f"Saving model data to: {args.data_path}")
     download_data(list(cycle_dt), data_path=args.data_path, model=args.model, 
                   num_hours=args.num_hours, status_path=args.status_path)
 
     # If this is realtime, interpolate the 1 and 2-hour forecasts in time
     #if not args.num_hours: args.num_hours = 0
     #if status and args.realtime: interpolate_in_time(download_dir)
-    log.info("===================================================================\n")
+    #log.info("===================================================================\n")
 
 def main():
     ap = argparse.ArgumentParser()
