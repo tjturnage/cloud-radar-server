@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 import requests
-import os, sys
+import os, sys, shutil
 from pathlib import Path
 from glob import glob
 import argparse
@@ -8,12 +8,19 @@ from multiprocessing import Pool, freeze_support
 import numpy as np
 import timeout_decorator
 
-from configs import (WGRIB2, WGET, TIMEOUT, MINSIZE, DATA_SOURCES,
+from configs import (TIMEOUT, MINSIZE, DATA_SOURCES,
                      GOOGLE_CONFIGS, THREDDS_CONFIGS, vars, grid_info)
 from utils.cmd import execute
 #from utils.logs import logfile
 
 script_path = os.path.dirname(os.path.realpath(__file__))
+
+# Find the wgrib2 and wget executables. If None, kill the NSE script. 
+WGRIB2 = shutil.which('wgrib2')
+WGET = shutil.which('wget')
+if WGRIB2 is None and WGET is None: 
+    print('Either or both WGRIB2 or WGET executables are missing. Exiting.')
+    sys.exit(1)
 
 def interpolate_in_time(download_dir):
     """Interpolate 1 and 2 hour forecasts in time every 15 minutes using WGRIB2. Used for

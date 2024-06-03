@@ -9,8 +9,8 @@ from collections import OrderedDict
 # OUTPUT_DIR, MODEL_DIR, and LOG_DIR are used by run.py to automate scripting.
 ##########################################################################################
 #PYTHON = '/Users/leecarlaw/mambaforge/envs/cloud-radar/bin/python'
-WGRIB2 = '/usr/local/bin/wgrib2'
-WGET = '/usr/local/bin/wget'
+#WGRIB2 = '/usr/local/bin/wgrib2'
+#WGET = '/usr/local/bin/wget'
 #PYTHON = '/opt/miniforge3/envs/cloud-radar/bin/python'
 #WGRIB2 = '/usr/local/bin/wgrib2'
 #WGET = '/usr/bin/wget'
