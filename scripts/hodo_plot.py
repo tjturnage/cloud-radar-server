@@ -23,11 +23,12 @@ import hodo_resources as hr
 
 #Time and Time Zone
 timezone = 'UTC'
-radar_id = sys.argv[1]
+radar_id = sys.argv[1].upper()
 new_radar = sys.argv[2]
 radar_label = radar_id
 if new_radar != 'None':
     radar_label = new_radar
+
   
 asos_one = sys.argv[3].lower()
 try:
