@@ -469,6 +469,14 @@ def run_hodo_script(args):
     ])
 def launch_obs_script(n_clicks):
     if n_clicks > 0:
+        # set up polling directories and dir.list files ahead of time
+        for _r, radar in enumerate(sa.radar_list):
+            this_polling_dir = POLLING_DIR / radar.upper()
+            os.makedirs(this_polling_dir, exist_ok=True)
+            file = this_polling_dir / 'dir.list'
+            with open(file, 'w', encoding='utf-8') as _fp:
+                pass
+            
         sa.make_simulation_times()
         try:
             sa.remove_files_and_dirs()
