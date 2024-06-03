@@ -68,7 +68,7 @@ def create_hodograph(data, point, storm_motion='right-mover', sfc_wind=None,
         plot_hodograph(hodo_data, params, storm_relative=storm_relative)
 
 @timeit
-def create_placefiles(data, realtime=False):
+def create_placefiles(data, output_path, realtime=False):
     plot_arrays = []
     for i in range(len(data)):
         arr = data[i]
@@ -93,7 +93,7 @@ def create_placefiles(data, realtime=False):
     #export_for_testing('tests/standard.pickle', prof_data)
 
     # Writing to placefiles
-    write_placefile(plot_arrays, realtime=realtime)
+    write_placefile(plot_arrays, output_path, realtime=realtime)
 
 def query_files(filepath):
     """
@@ -168,7 +168,7 @@ def parse_logic(args):
         point = [[float(point[1]), float(point[0])]]
         create_hodograph(data, point, storm_motion=args.storm_motion,
                          sfc_wind=args.sfc_wind, storm_relative=args.storm_relative)
-    if args.meso: create_placefiles(data, realtime=args.realtime)
+    if args.meso: create_placefiles(data, args.output_path, realtime=args.realtime)
     log.info("===================================================================\n")
 
 def main():
@@ -199,6 +199,7 @@ def main():
                           the speed in knots (e.g. 240/25).', default='right-mover')
     ap.add_argument('-statuspath', dest='status_path', help='Where to output status      \
                     tracking files.')
+    ap.add_argument('-outputpath', dest='output_path', help='Where to output placefiles.')
     args = ap.parse_args()
     parse_logic(args)   # Set and QC user inputs. Pass for downloading
 

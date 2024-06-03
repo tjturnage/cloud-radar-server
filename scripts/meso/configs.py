@@ -15,9 +15,9 @@ WGET = '/usr/local/bin/wget'
 #WGRIB2 = '/usr/local/bin/wgrib2'
 #WGET = '/usr/bin/wget'
 
-OUTPUT_DIR = '/Users/leecarlaw/scripts/cloud-radar-server/assets/placefiles'            
+#OUTPUT_DIR = '/Users/leecarlaw/scripts/cloud-radar-server/assets/placefiles'            
 #MODEL_DIR = '/Users/leecarlaw/scripts/cloud-radar-server/data'
-LOG_DIR = '/Users/leecarlaw/scripts/cloud-radar-server/scripts/meso/logs/'
+#LOG_DIR = '/Users/leecarlaw/scripts/cloud-radar-server/scripts/meso/logs/'
 
 # URL or local path to wind icon files
 WIND_ICONS = 'https://raw.githubusercontent.com/lcarlaw/meso/master/output/windicons.png'
