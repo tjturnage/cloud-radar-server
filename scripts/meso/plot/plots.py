@@ -7,7 +7,7 @@ import json
 import os
 from datetime import datetime, timedelta
 from collections import defaultdict
-import logging as log
+#import logging as log
 
 import sharptab.winds as winds
 from configs import ALPHA
@@ -315,7 +315,7 @@ def write_bundles(save_time, output_path):
 
     # If entries exist in the BUNDLES dictionary, output bundled placefiles
     for bundle_name, parameters in BUNDLES.items():
-        log.info("Writing bundle: %s with components: %s" % (bundle_name, parameters))
+        #log.info("Writing bundle: %s with components: %s" % (bundle_name, parameters))
         bundle_file = '%s/%s.txt' % (output_path, bundle_name)
         if save_time:
             bundle_file = '%s/%s_%s.txt' % (output_path, bundle_name, save_time)
@@ -331,7 +331,8 @@ def write_bundles(save_time, output_path):
                     lines = replace_title_lines()
                     f.write("".join(lines))
                 except IOError:
-                    log.error("%s not found. Skipped during bundling step" % (in_file))
+                    pass
+                    #log.error("%s not found. Skipped during bundling step" % (in_file))
 
 def barbs(lon, lat, U, V, time_str, timerange_str, **kwargs):
     """
