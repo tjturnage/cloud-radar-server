@@ -19,7 +19,7 @@ from botocore.client import Config
 class NexradDownloader:
     def __init__(self, radar_id, start_tstr, duration):
         super().__init__()
-        self.radar_id = radar_id
+        self.radar_id = radar_id.upper()
         self.start_tstr = start_tstr
         self.start_time = datetime.strptime(self.start_tstr,'%Y-%m-%d %H:%M:%S UTC')
         self.duration = int(duration)

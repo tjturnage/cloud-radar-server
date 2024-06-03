@@ -26,7 +26,7 @@ timezone = 'UTC'
 radar_id = sys.argv[1].upper()
 new_radar = sys.argv[2]
 radar_label = radar_id
-if new_radar != 'None':
+if new_radar != 'NONE':
     radar_label = new_radar
 
   

@@ -94,7 +94,7 @@ class RadarSimulator(Config):
         self.radar = None
         self.lat = None
         self.lon = None
-        self.new_radar = 'None'
+        self.new_radar = 'NONE'
         self.new_lat = None
         self.new_lon = None
         self.simulation_clock = None
@@ -287,7 +287,25 @@ class RadarSimulator(Config):
                                     f"{new_datestring_1} {new_datestring_2}")
         return new_line
 
-    def datetime_object_from_timestring(self, file):
+
+    def rename_shifted_nse_placefiles(self) -> None:
+        """
+        making a standard name for NSE placefiles by removing the datetime info
+        Example -- mlcape_2024050721-2024050722_shifted.txt -> mlcape_shifted.txt
+        """
+        placefiles = list(PLACEFILES_DIR.glob('*txt'))
+        for file in placefiles:
+            if '-' in file.name:
+                print(f'filename: {file.name}')
+                parts = file.name.split('_')
+                new_parts = [p for p in parts if '-' not in p]
+                new_filename = '_'.join(new_parts)
+                if file.name != new_filename:
+                    new_filepath = PLACEFILES_DIR / new_filename
+                    shutil.copy(file, new_filepath)
+
+
+    def datetime_object_from_timestring(self, file: str) -> datetime:
         """
         - extracts datetime info from the radar filename
         - converts it to a timezone aware datetime object in UTC
@@ -352,7 +370,7 @@ app.layout = dbc.Container([
         lc.scripts_button,
     lc.status_section,
     lc.links_section,
-    lc.toggle_simulation_clock,lc.simulation_clock, lc.radar_id, lc.bottom_section
+    lc.simulation_clock, lc.radar_id, lc.bottom_section
     ])  # end of app.layout
 
 
@@ -422,14 +440,14 @@ def transpose_radar(value):
     Since we always evaluate "value" after every user selection, always set new_radar 
     initially to None.
     """
-    sa.new_radar = 'None'
+    sa.new_radar = 'NONE'
 
-    if value != 'None':
+    if value != 'NONE':
         sa.new_radar = value
         sa.new_lat = lc.df[lc.df['radar'] == sa.new_radar]['lat'].values[0]
         sa.new_lon = lc.df[lc.df['radar'] == sa.new_radar]['lon'].values[0]
         return f'{sa.new_radar}'
-    return 'None'
+    return 'NONE'
 
 @app.callback(
     Output('transpose_section', 'style'),
@@ -493,22 +511,18 @@ def launch_simulation(n_clicks):
             print("Error creating radar dict or config file: ", e)
 
         # acquire radar data for the event
-        sa.scripts_progress = 'Acquiring radar data ...'
+        sa.scripts_progress = 'Downloading radar data ...'
         try:
             for _r, radar in enumerate(sa.radar_list):
-                asos_one = sa.radar_dict[radar]['asos_one']
-                asos_two = sa.radar_dict[radar]['asos_two']
-                print(asos_one, asos_two, radar)
-                file_list = NexradDownloader(radar.upper(), sa.event_start_str, str(sa.event_duration))
+                print(f"Nexrad Downloader - {radar}, {sa.event_start_str}, {str(sa.event_duration)}")
+                file_list = NexradDownloader(radar, sa.event_start_str, str(sa.event_duration))
                 sa.radar_dict[radar]['file_list'] = file_list
-            print("Nexrad script completed ... Now creating hodographs ...")
         except Exception as e:
             print("Error running nexrad script: ", e)
 
         sa.scripts_progress = 'Modifying radar data ...'
         for _r, radar in enumerate(sa.radar_list):
             try:
-                print('Munger script')
                 if sa.new_radar == 'None':
                     new_radar = radar
                 else:
@@ -542,22 +556,8 @@ def launch_simulation(n_clicks):
         # script needs to execute every time, even if a user doesn't select a radar
         # to transpose to. 
         run_transpose_script()
-        
-        # making a standard name for NSE placefiles by removing the datetime info
-        # Example -- mlcape_2024050721-2024050722_shifted.txt -> mlcape_shifted.txt
-        placefiles = list(PLACEFILES_DIR.glob('*txt'))
-        for file in placefiles:
-            if '-' in file.name:
-                parts = file.name.split('_')
-                new_parts = [p for p in parts if '-' not in p]
-                new_filename = '_'.join(new_parts)
-                if file.name != new_filename:
-                    new_filepath = PLACEFILES_DIR / new_filename
-                    shutil.copy(file, new_filepath)
-            
-
-        print("Finished with scripts")
-
+        sa.rename_shifted_nse_placefiles()
+          
         sa.scripts_progress = 'Creating hodo plots ...'
         for radar, data in sa.radar_dict.items():
             try:
@@ -569,7 +569,7 @@ def launch_simulation(n_clicks):
 
             try:
                 print(f'hodo script:  {radar}, {sa.new_radar}, {asos_one}, {asos_two}, {sa.simulation_seconds_shift}')
-                run_hodo_script([radar.upper(), sa.new_radar, asos_one, asos_two, str(sa.simulation_seconds_shift)])
+                run_hodo_script([radar, sa.new_radar, asos_one, asos_two, str(sa.simulation_seconds_shift)])
                 print("Hodograph script completed ...")
             except Exception as e:
                 print("Error running hodo script: ", e)

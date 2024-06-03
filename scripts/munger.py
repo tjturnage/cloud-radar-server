@@ -48,36 +48,19 @@ class Munger():
         self.playback_start = datetime.strptime(playback_start,"%Y-%m-%d %H:%M:%S UTC").replace(tzinfo=pytz.UTC)
         self.duration = duration
         self.seconds_shift = timeshift
-        self.new_rda = new_rda.upper()
-        if self.new_rda != 'None':
-            self.this_radar_polling_dir = self.POLLING_DIR / self.new_rda
-        else:
-            self.this_radar_polling_dir = self.POLLING_DIR / self.original_rda
+        self.new_rda = new_rda
+        self.this_radar_polling_dir = self.POLLING_DIR / self.original_rda
+        if self.new_rda != 'NONE':
+            self.this_radar_polling_dir = self.POLLING_DIR / self.new_rda.upper()
+
         os.makedirs(self.this_radar_polling_dir, exist_ok=True)
         
         self.playback_speed = playback_speed
-        #self.clean_files()
         self.copy_l2munger_executable()
         self.uncompress_files()
         self.uncompressed_files = list(self.source_directory.glob('*uncompressed'))
         # commence munging
         self.munge_files()
-
-
-    def clean_files(self):
-        """
-        Purges all radar files associated with previous simulation
-        """
-        rm_munge_files = f'rm {self.source_directory}/K*'
-        os.system(rm_munge_files)
-        os.chdir(self.source_directory)
-        os.chdir(self.this_radar_polling_dir)
-        try:
-            [os.remove(f) for f in os.listdir()]
-        except Exception as e:
-            print(f'Error: {e}')
-        
-        return    
 
     def copy_l2munger_executable(self):
         """
