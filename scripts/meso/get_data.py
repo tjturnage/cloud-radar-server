@@ -280,7 +280,8 @@ def check_configs():
     for item in [WGET, WGRIB2]:
         if not Path(item).is_file():
             error_message = "%s not found on filesystem. Check configs.py file." % (item)
-            log.error(error_message)
+            print(error_message)
+            #log.error(error_message)
             sys.exit(1)
 
 def parse_logic(args):
