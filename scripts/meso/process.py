@@ -18,10 +18,10 @@ from plot.hodographs import parse_vector, compute_parameters, plot_hodograph
 
 import IO.read as read
 from utils.cmd import execute
-from utils.logs import logfile
+#from utils.logs import logfile
 
 script_path = os.path.dirname(os.path.realpath(__file__))
-log = logfile('process')
+#log = logfile('process')
 
 def import_for_testing(testfile):
     import pickle
@@ -68,7 +68,7 @@ def create_hodograph(data, point, storm_motion='right-mover', sfc_wind=None,
         plot_hodograph(hodo_data, params, storm_relative=storm_relative)
 
 @timeit
-def create_placefiles(data, realtime=False):
+def create_placefiles(data, output_path, realtime=False):
     plot_arrays = []
     for i in range(len(data)):
         arr = data[i]
@@ -86,14 +86,14 @@ def create_placefiles(data, realtime=False):
     #plot_arrays = import_for_testing('tests/sharppy.pickle')
 
     # Final filter (smoothing and masking logic) and plotting/placefiles.
-    log.info("Entering filtering code")
+    #info("Entering filtering code")
     plot_arrays = filtering.filter(plot_arrays)
 
     #export_for_testing('tests/sharppy.pickle', plot_arrays)
     #export_for_testing('tests/standard.pickle', prof_data)
 
     # Writing to placefiles
-    write_placefile(plot_arrays, realtime=realtime)
+    write_placefile(plot_arrays, output_path, realtime=realtime)
 
 def query_files(filepath):
     """
@@ -108,10 +108,10 @@ def query_files(filepath):
     """
     files = glob(filepath + '/*.reduced')
     if len(files) >= 1:
-        if len(files) > 1: log.warning("More than 1 model file in %s" % (filepath))
+        #if len(files) > 1: log.warning("More than 1 model file in %s" % (filepath))
         return files[0]
     else:
-        log.warning("No model data found in %s" % (filepath))
+        #log.warning("No model data found in %s" % (filepath))
         #sys.exit(1)
         return None
 
@@ -121,7 +121,7 @@ def parse_logic(args):
 
     """
 
-    log.info("----> New processing run")
+    #info("----> New processing run")
 
     timestr_fmt = '%Y-%m-%d/%H'
     dt_end = None
@@ -136,11 +136,11 @@ def parse_logic(args):
             dt_end = datetime.strptime(args.end_time, timestr_fmt)
             dt_end = dt_end - timedelta(hours=1)
         else:
-            log.error("Missing one of -rt, -t, or -start/-end flags")
+            #error("Missing one of -rt, -t, or -start/-end flags")
             sys.exit(1)
 
     if args.hodo is None and args.meso is None:
-        log.error("Missing one of -hodo, -meso")
+        #log.error("Missing one of -hodo, -meso")
         sys.exit(1)
 
     #if args.data_path is None:
@@ -168,8 +168,8 @@ def parse_logic(args):
         point = [[float(point[1]), float(point[0])]]
         create_hodograph(data, point, storm_motion=args.storm_motion,
                          sfc_wind=args.sfc_wind, storm_relative=args.storm_relative)
-    if args.meso: create_placefiles(data, realtime=args.realtime)
-    log.info("===================================================================\n")
+    if args.meso: create_placefiles(data, args.output_path, realtime=args.realtime)
+    #info("===================================================================\n")
 
 def main():
     ap = argparse.ArgumentParser()
@@ -199,6 +199,8 @@ def main():
                           the speed in knots (e.g. 240/25).', default='right-mover')
     ap.add_argument('-statuspath', dest='status_path', help='Where to output status      \
                     tracking files.')
+    ap.add_argument('-outputpath', dest='output_path', help='Where to output placefiles.')
+    ap.add_argument('-logfilepath', dest='logfile_path', help='Where to store log files.')
     args = ap.parse_args()
     parse_logic(args)   # Set and QC user inputs. Pass for downloading
 

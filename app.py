@@ -236,7 +236,7 @@ class RadarSimulator(Config):
         return math.degrees(phi_out), math.degrees(lambda_out)
 
     def shift_placefiles(self):
-        filenames = glob(f"{self.placefiles_dir}/*.txt")
+        filenames = glob(f"{self.placefiles_dir}/*[0-9].txt")
         for file_ in filenames:
             with open(file_, 'r', encoding='utf-8') as f: data = f.readlines()
             outfilename = f"{file_[0:file_.index('.txt')]}_shifted.txt"
@@ -527,7 +527,8 @@ def launch_obs_script(n_clicks):
         # NSE placefiles 
         try:
             print("Running NSE scripts...")
-            #Nse(sa.event_start_time, sa.event_duration, sa.scripts_path, sa.data_dir)
+            Nse(sa.event_start_time, sa.event_duration, sa.scripts_path, sa.data_dir, 
+                sa.placefiles_dir)
         except Exception as e:
             print("Error running NSE scripts: ", e)
 
