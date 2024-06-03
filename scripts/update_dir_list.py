@@ -27,7 +27,7 @@ class UpdateDirList():
     POLLING_DIR = Path('/data/cloud-radar-server/assets/polling')
 
     def __init__(self, radar: str, current_playback_time: str):
-        self.radar = radar
+        self.radar = radar.upper()
         self.this_radar_polling_directory = self.POLLING_DIR / self.radar
         print(self.this_radar_polling_directory)
         self.dirlist_flle = self.this_radar_polling_directory / 'dir.list'
