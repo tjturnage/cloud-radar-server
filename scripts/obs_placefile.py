@@ -120,8 +120,10 @@ class Mesowest():
         self.var_list = list(short_dict.keys())
         self.station_dict = station_dict
 
+        # took out time stamp for purposes of simulation
         place_text = \
-        f'{self.place_ts[0:4]}-{self.place_ts[4:6]}-{self.place_ts[6:8]}-{self.place_ts[-4:]}'
+        '-- for radar simulation'
+        #f'{self.place_ts[0:4]}-{self.place_ts[4:6]}-{self.place_ts[6:8]}-{self.place_ts[-4:]}'
         self.all_title = f'All Elements {place_text}'
         self.place_title = f'Air Temperature {place_text}'
         self.wind_place_title = f'Wind and Gust {place_text}'

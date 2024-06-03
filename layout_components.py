@@ -266,14 +266,14 @@ links_section = dbc.Container(dbc.Container(html.Div(
         spacer_mini,
         dbc.Row(
             [
-                dbc.Col(dbc.ListGroupItem("Graphics links"), style={'font-weight': 'bold', 'color':'white', 'border': '1px gray solid','font-size':'1.2em','text-align':'right'}, width=3),
+                dbc.Col(dbc.ListGroupItem("Graphics"), style={'font-weight': 'bold', 'color':'white', 'border': '1px gray solid','font-size':'1.2em','text-align':'right'}, width=2),
                 dbc.Col(dbc.ListGroupItem("Hodographs", href=f"{link_base}/hodographs.html"), width=2),
             ],
             style={"display": "flex", "flexWrap": "wrap"},
         ),
         dbc.Row(
             [
-                dbc.Col(dbc.ListGroupItem("Surface obs placefiles"), style={'font-weight': 'bold', 'color':'white', 'border': '1px gray solid', 'font-size':'1.2em','text-align':'right'}, width=3),
+                dbc.Col(dbc.ListGroupItem("Sfc obs"), style={'font-weight': 'bold', 'color':'white', 'border': '1px gray solid', 'font-size':'1.2em','text-align':'right'}, width=2),
                 dbc.Col(dbc.ListGroupItem("Regular font", href=f"{place_base}/latest_surface_observations_shifted.txt"), width=2),
                 dbc.Col(dbc.ListGroupItem("Large font", href=f"{place_base}/latest_surface_observations_lg_shifted.txt"), width=2),
                 dbc.Col(dbc.ListGroupItem("Small font", href=f"{place_base}/latest_surface_observations_xlg_shifted.txt"), width=2),
@@ -282,7 +282,7 @@ links_section = dbc.Container(dbc.Container(html.Div(
         ),
         dbc.Row(
             [
-                dbc.Col(dbc.ListGroupItem("Surface obs components"), style={'font-weight': 'bold', 'color':'white','border': '1px gray solid', 'font-size':'1.2em','text-align':'right'}, width=3),
+                dbc.Col(dbc.ListGroupItem("Sfc obs parts"), style={'font-weight': 'bold', 'color':'white','border': '1px gray solid', 'font-size':'1.2em','text-align':'right'}, width=2),
                 dbc.Col(dbc.ListGroupItem("Wind", href=f"{place_base}/wind_shifted.txt"), style={'a:hover':{'color':'yellow'}},width=2),
                 dbc.Col(dbc.ListGroupItem("Temp", href=f"{place_base}/temp_shifted.txt"), width=2),
                 dbc.Col(dbc.ListGroupItem("Dwpt", href=f"{place_base}/dwpt_shifted.txt"), width=2),
@@ -352,7 +352,7 @@ simulation_clock = html.Div([
                 ),
         html.Div(id='clock-output', style=feedback),
 
-        ], id='clock-container', style={'display': 'none'}), 
+        ], id='clock-container', style={'display': 'none'}),
     ])
 
 

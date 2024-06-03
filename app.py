@@ -514,7 +514,7 @@ def launch_simulation(n_clicks):
                 else:
                     new_radar = sa.new_radar.upper()
                     
-                Munger(radar,sa.playback_start_str,sa.event_duration, sa.simulation_seconds_shift,
+                Munger(radar.upper(),sa.playback_start_str,sa.event_duration, sa.simulation_seconds_shift,
                        new_radar, playback_speed=1.5)
                 print(f"Munge for {radar} completed ...")
 
@@ -545,12 +545,15 @@ def launch_simulation(n_clicks):
         
         # making a standard name for NSE placefiles by removing the datetime info
         # Example -- mlcape_2024050721-2024050722_shifted.txt -> mlcape_shifted.txt
-        placefiles = list(PLACEFILES_DIR.glob('*shifted.txt'))
+        placefiles = list(PLACEFILES_DIR.glob('*txt'))
         for file in placefiles:
-            parts = file.split('_')
-            new_parts = [p for p in parts if '-' not in p]
-            new_file = '_'.join(new_parts)
-            shutil.copy(file, new_file)
+            if '-' in file.name:
+                parts = file.name.split('_')
+                new_parts = [p for p in parts if '-' not in p]
+                new_filename = '_'.join(new_parts)
+                if file.name != new_filename:
+                    new_filepath = PLACEFILES_DIR / new_filename
+                    shutil.copy(file, new_filepath)
             
 
         print("Finished with scripts")
@@ -664,8 +667,9 @@ def get_duration(duration):
 def enable_simulation_clock(n: int) -> dict:
     """
     Toggles the simulation clock display on/off by returning a css style dictionary to modify
+    Disabled this for now
     """
-    if n % 2 == 0:
+    if n < 0:
         return {'display': 'none'}
     return {'padding-bottom': '2px', 'padding-left': '2px','height': '80vh', 'width': '100%'}
 
