@@ -527,8 +527,8 @@ def launch_obs_script(n_clicks):
         # NSE placefiles 
         try:
             print("Running NSE scripts...")
-            #Nse(sa.event_start_time, sa.event_duration, sa.scripts_path, sa.data_dir, 
-            #    sa.placefiles_dir)
+            Nse(sa.event_start_time, sa.event_duration, sa.scripts_path, sa.data_dir, 
+                sa.placefiles_dir)
         except Exception as e:
             print("Error running NSE scripts: ", e)
 
