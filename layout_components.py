@@ -307,8 +307,8 @@ links_section = dbc.Container(dbc.Container(html.Div(
             [
                 dbc.Col(dbc.ListGroupItem("NSE SRH"), style={'font-weight': 'bold', 'color':'white','border': '1px gray solid', 'font-size':'1.2em','text-align':'right'}, width=2),
                 dbc.Col(dbc.ListGroupItem("0-500m", href=f"{place_base}/srh500_shifted.txt"), style={'a:hover':{'color':'yellow'}},width=2),
-                dbc.Col(dbc.ListGroupItem("Blank", width=2)),
-                dbc.Col(dbc.ListGroupItem("Blank", width=2)),
+                dbc.Col(dbc.ListGroupItem("Blank"), width=2),
+                dbc.Col(dbc.ListGroupItem("Blank"), width=2),
                 dbc.Col(dbc.ListGroupItem("Effective", href=f"{place_base}/esrh_shifted.txt"), width=2),
             ],
             style={"display": "flex", "flexWrap": "wrap"},
