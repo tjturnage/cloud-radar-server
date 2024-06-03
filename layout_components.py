@@ -267,7 +267,7 @@ links_section = dbc.Container(dbc.Container(html.Div(
         dbc.Row(
             [
                 dbc.Col(dbc.ListGroupItem("Graphics links"), style={'font-weight': 'bold', 'color':'white', 'border': '1px gray solid','font-size':'1.2em','text-align':'right'}, width=3),
-                dbc.Col(dbc.ListGroupItem("Hodographs", href=f"{link_base}/hodograph.html"), width=2),
+                dbc.Col(dbc.ListGroupItem("Hodographs", href=f"{link_base}/hodographs.html"), width=2),
             ],
             style={"display": "flex", "flexWrap": "wrap"},
         ),
@@ -289,7 +289,43 @@ links_section = dbc.Container(dbc.Container(html.Div(
                 dbc.Col(dbc.ListGroupItem("Road obs", href=f"{place_base}/road_shifted.txt"), width=2),
             ],
             style={"display": "flex", "flexWrap": "wrap"},
+        
         ),
+        dbc.Row(
+            [
+                dbc.Col(dbc.ListGroupItem("NSE Shear"), style={'font-weight': 'bold', 'color':'white','border': '1px gray solid', 'font-size':'1.2em','text-align':'right'}, width=2),
+                dbc.Col(dbc.ListGroupItem("0-1 SHR", href=f"{place_base}/shr1_shifted.txt"), style={'a:hover':{'color':'yellow'}},width=2),
+                dbc.Col(dbc.ListGroupItem("0-3 SHR", href=f"{place_base}/shr3_shifted.txt"), width=2),
+                dbc.Col(dbc.ListGroupItem("0-6 SHR", href=f"{place_base}/shr6_shifted.txt"), width=2),
+                dbc.Col(dbc.ListGroupItem("0-8 SHR", href=f"{place_base}/shr8_shifted.txt"), width=2),
+                dbc.Col(dbc.ListGroupItem("Effective", href=f"{place_base}/ebwd_shifted.txt"), width=2),
+            ],
+            style={"display": "flex", "flexWrap": "wrap"},
+        
+        ),
+        dbc.Row(
+            [
+                dbc.Col(dbc.ListGroupItem("NSE SRH"), style={'font-weight': 'bold', 'color':'white','border': '1px gray solid', 'font-size':'1.2em','text-align':'right'}, width=2),
+                dbc.Col(dbc.ListGroupItem("0-500m", href=f"{place_base}/srh500_shifted.txt"), style={'a:hover':{'color':'yellow'}},width=2),
+                dbc.Col(dbc.ListGroupItem("Blank", width=2)),
+                dbc.Col(dbc.ListGroupItem("Blank", width=2)),
+                dbc.Col(dbc.ListGroupItem("Effective", href=f"{place_base}/esrh_shifted.txt"), width=2),
+            ],
+            style={"display": "flex", "flexWrap": "wrap"},
+        
+        ),
+        dbc.Row(
+            [
+                dbc.Col(dbc.ListGroupItem("NSE Thermo"), style={'font-weight': 'bold', 'color':'white','border': '1px gray solid', 'font-size':'1.2em','text-align':'right'}, width=2),
+                dbc.Col(dbc.ListGroupItem("MLCAPE", href=f"{place_base}/mlcape_shifted.txt"), style={'a:hover':{'color':'yellow'}},width=2),
+                dbc.Col(dbc.ListGroupItem("MLCIN", href=f"{place_base}/mlcin_shifted.txt"), style={'a:hover':{'color':'yellow'}},width=2),
+                dbc.Col(dbc.ListGroupItem("0-3 MLCP", href=f"{place_base}/cape3km_shifted.txt"), style={'a:hover':{'color':'yellow'}},width=2),
+                dbc.Col(dbc.ListGroupItem("0-3 LR", href=f"{place_base}/lr03km_shifted.txt"), style={'a:hover':{'color':'yellow'}},width=2),
+                dbc.Col(dbc.ListGroupItem("MUCAPE", href=f"{place_base}/mucape_shifted.txt"), style={'a:hover':{'color':'yellow'}},width=2),
+            ],
+            style={"display": "flex", "flexWrap": "wrap"},
+        
+        ), 
         html.P(id="counter"),
     ]
 )))

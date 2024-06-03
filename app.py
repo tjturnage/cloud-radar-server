@@ -10,6 +10,7 @@ import os
 import re
 import subprocess
 from pathlib import Path
+import shutil
 from glob import glob
 from datetime import datetime, timedelta, timezone
 import calendar
@@ -51,6 +52,7 @@ BASE_DIR = Path.cwd()
 ASSETS_DIR = BASE_DIR / 'assets'
 HODO_HTML_PAGE = ASSETS_DIR / 'hodographs.html'
 POLLING_DIR = ASSETS_DIR / 'polling'
+PLACEFILES_DIR = ASSETS_DIR / 'placefiles'
 HODOGRAPHS_DIR = ASSETS_DIR / 'hodographs'
 DATA_DIR = BASE_DIR / 'data'
 RADAR_DIR = DATA_DIR / 'radar'
@@ -97,6 +99,7 @@ class RadarSimulator(Config):
         self.new_lon = None
         self.simulation_clock = None
         self.simulation_running = False
+        self.scripts_progress = 'Scripts not started'
         self.current_dir = Path.cwd()
         self.define_scripts_and_assets_directories()
         self.make_simulation_times()
@@ -467,50 +470,45 @@ def run_hodo_script(args):
         (Output('new_radar_selection', 'disabled'), True, False),
         (Output('run_scripts', 'disabled'), True, False),
     ])
-def launch_obs_script(n_clicks):
+def launch_simulation(n_clicks):
+    """
+    This function is called when the "Run Scripts" button is clicked. It will execute the
+    necessary scripts to simulate radar operations, create hodographs, and transpose placefiles.
+    """
     if n_clicks > 0:
-        # set up polling directories and dir.list files ahead of time
-        for _r, radar in enumerate(sa.radar_list):
-            this_polling_dir = POLLING_DIR / radar.upper()
-            os.makedirs(this_polling_dir, exist_ok=True)
-            file = this_polling_dir / 'dir.list'
-            with open(file, 'w', encoding='utf-8') as _fp:
-                pass
-            
-        sa.make_simulation_times()
+        sa.scripts_progress = 'Setting up files and times'
+        sa.make_simulation_times()  # determine actual event time, playback time, diff of these two
+
+        # clean out old files and directories
         try:
             sa.remove_files_and_dirs()
         except Exception as e:
             print("Error removing files and directories: ", e)
+
+        # based on list of selected radars, create a dictionary of radar metadata
         try:
             sa.create_radar_dict()
             sa.create_grlevel2_cfg_file()
         except Exception as e:
             print("Error creating radar dict or config file: ", e)
 
-        # begin iterating through the radar_dict
-
-        for radar, data in sa.radar_dict.items():
-            try:
-                asos_one = data['asos_one']
-                asos_two = data['asos_two']
+        # acquire radar data for the event
+        sa.scripts_progress = 'Acquiring radar data ...'
+        try:
+            for _r, radar in enumerate(sa.radar_list):
+                asos_one = sa.radar_dict[radar]['asos_one']
+                asos_two = sa.radar_dict[radar]['asos_two']
                 print(asos_one, asos_two, radar)
-            except KeyError as e:
-                print("Error getting radar metadata: ", e)
-            try:
-                file_list = NexradDownloader(radar, sa.event_start_str, str(sa.event_duration))
+                file_list = NexradDownloader(radar.upper(), sa.event_start_str, str(sa.event_duration))
                 sa.radar_dict[radar]['file_list'] = file_list
-                print("Nexrad script completed ... Now creating hodographs ...")
-            except Exception as e:
-                print("Error running nexrad script: ", e)
+            print("Nexrad script completed ... Now creating hodographs ...")
+        except Exception as e:
+            print("Error running nexrad script: ", e)
+
+        sa.scripts_progress = 'Modifying radar data ...'
+        for _r, radar in enumerate(sa.radar_list):
             try:
-                print(f'hodo script:  {radar}, {sa.new_radar}, {asos_one}, {asos_two}, {sa.simulation_seconds_shift}')
-                run_hodo_script([radar.upper(), sa.new_radar, asos_one, asos_two, str(sa.simulation_seconds_shift)])
-                print("Hodograph script completed ...")
-            except Exception as e:
-                print("Error running hodo script: ", e)
-            try:
-                print(f'Munger script')
+                print('Munger script')
                 if sa.new_radar == 'None':
                     new_radar = radar
                 else:
@@ -522,9 +520,8 @@ def launch_obs_script(n_clicks):
 
             except Exception as e:
                 print(f"Error running Munge for {radar}: ", e)
-        
-        # end iterating through radar_dict
-        
+
+        sa.scripts_progress = 'Creating obs placefiles ...'
         try:
             print("Running obs script...")
             Mesowest(str(sa.lat),str(sa.lon),sa.event_start_str,str(sa.event_duration))
@@ -532,10 +529,11 @@ def launch_obs_script(n_clicks):
         except Exception as e:
             print("Error running obs script: ", e)
 
+        sa.scripts_progress = 'Creating NSE placefiles ...'
         # NSE placefiles 
         try:
             print("Running NSE scripts...")
-            Nse(sa.event_start_time, sa.event_duration, sa.scripts_path, sa.data_dir, 
+            Nse(sa.event_start_time, sa.event_duration, sa.scripts_path, sa.data_dir,
                 sa.placefiles_dir)
         except Exception as e:
             print("Error running NSE scripts: ", e)
@@ -544,7 +542,37 @@ def launch_obs_script(n_clicks):
         # script needs to execute every time, even if a user doesn't select a radar
         # to transpose to. 
         run_transpose_script()
+        
+        # making a standard name for NSE placefiles by removing the datetime info
+        # Example -- mlcape_2024050721-2024050722_shifted.txt -> mlcape_shifted.txt
+        placefiles = list(PLACEFILES_DIR.glob('*shifted.txt'))
+        for file in placefiles:
+            parts = file.split('_')
+            new_parts = [p for p in parts if '-' not in p]
+            new_file = '_'.join(new_parts)
+            shutil.copy(file, new_file)
+            
+
         print("Finished with scripts")
+
+        sa.scripts_progress = 'Creating hodo plots ...'
+        for radar, data in sa.radar_dict.items():
+            try:
+                asos_one = data['asos_one']
+                asos_two = data['asos_two']
+                print(asos_one, asos_two, radar)
+            except KeyError as e:
+                print("Error getting radar metadata: ", e)
+
+            try:
+                print(f'hodo script:  {radar}, {sa.new_radar}, {asos_one}, {asos_two}, {sa.simulation_seconds_shift}')
+                run_hodo_script([radar.upper(), sa.new_radar, asos_one, asos_two, str(sa.simulation_seconds_shift)])
+                print("Hodograph script completed ...")
+            except Exception as e:
+                print("Error running hodo script: ", e)
+                
+        sa.scripts_progress = 'Scripts completed!'
+
     return
 
 
@@ -646,8 +674,17 @@ def enable_simulation_clock(n: int) -> dict:
     Output('clock-output', 'children'),
     Input('playback-clock-component', 'n_intervals')
 )
-def update_time(_n):
-    """Steps the counter by 15 seconds and returns the current time."""
+def update_time(_n) -> str:
+    """
+    If scripts are still running, provides a text status update.
+    After scripts are done:
+       - counter updates the playback time, and this used to update:
+       - assets/hodographs.html page
+       - assets/polling/KXXX/dir.list files
+    """
+    if sa.scripts_progress != 'Scripts completed!':
+        return sa.scripts_progress
+    
     #sa.playback_timer += timedelta(seconds=90)
     while sa.playback_timer < sa.playback_end_time:
         sa.playback_timer += timedelta(seconds=45)
@@ -656,7 +693,6 @@ def update_time(_n):
         for _r, radar in enumerate(sa.radar_list):
             UpdateDirList(radar, playback_time_str).update_dirlist()
         return playback_time_str
-    return("simulation complete")
 
 ################################################################################################
 # ---------------------------------------- Call app ----------------
