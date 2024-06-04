@@ -124,7 +124,7 @@ class RadarSimulator(Config):
         f = open(POLLING_DIR / 'grlevel2.cfg', 'w', encoding='utf-8')
         f.write('ListFile: dir.list\n')
         for _i,radar in enumerate(self.radar_list):
-            f.write(f'Site: {radar}\n')
+            f.write(f'Site: {radar.upper()}\n')
         f.close()
     
     def define_scripts_and_assets_directories(self) -> None:
@@ -515,8 +515,8 @@ def launch_simulation(n_clicks):
         sa.scripts_progress = 'Downloading radar data ...'
         try:
             for _r, radar in enumerate(sa.radar_list):
-                print(f"Nexrad Downloader - {radar}, {sa.event_start_str}, {str(sa.event_duration)}")
-                file_list = NexradDownloader(radar, sa.event_start_str, str(sa.event_duration))
+                print(f"Nexrad Downloader - {radar.upper()}, {sa.event_start_str}, {str(sa.event_duration)}")
+                file_list = NexradDownloader(radar.upper(), sa.event_start_str, str(sa.event_duration))
                 sa.radar_dict[radar]['file_list'] = file_list
         except Exception as e:
             print("Error running nexrad script: ", e)
@@ -525,7 +525,7 @@ def launch_simulation(n_clicks):
         for _r, radar in enumerate(sa.radar_list):
             try:
                 if sa.new_radar == 'None':
-                    new_radar = radar
+                    new_radar = radar.upper()
                 else:
                     new_radar = sa.new_radar.upper()
                     
