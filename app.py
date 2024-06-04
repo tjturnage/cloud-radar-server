@@ -12,6 +12,7 @@ import subprocess
 from pathlib import Path
 import shutil
 from glob import glob
+import time
 from datetime import datetime, timedelta, timezone
 import calendar
 import math
@@ -518,6 +519,7 @@ def launch_simulation(n_clicks):
                 print(f"Nexrad Downloader - {radar.upper()}, {sa.event_start_str}, {str(sa.event_duration)}")
                 file_list = NexradDownloader(radar.upper(), sa.event_start_str, str(sa.event_duration))
                 sa.radar_dict[radar]['file_list'] = file_list
+                time.sleep(10)
         except Exception as e:
             print("Error running nexrad script: ", e)
 
