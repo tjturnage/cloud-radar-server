@@ -293,8 +293,8 @@ links_section = dbc.Container(dbc.Container(html.Div(
         ),
         dbc.Row(
             [
-                dbc.Col(dbc.ListGroupItem("Effective", href=f"{place_base}/ebwd_shifted.txt"), width=2),
                 dbc.Col(dbc.ListGroupItem("NSE Shear"), style={'font-weight': 'bold', 'color':'white','border': '1px gray solid', 'font-size':'1.2em','text-align':'right'}, width=2),
+                dbc.Col(dbc.ListGroupItem("Effective", href=f"{place_base}/ebwd_shifted.txt"), width=2),
                 dbc.Col(dbc.ListGroupItem("0-1 SHR", href=f"{place_base}/shr1_shifted.txt"), style={'a:hover':{'color':'yellow'}},width=2),
                 dbc.Col(dbc.ListGroupItem("0-3 SHR", href=f"{place_base}/shr3_shifted.txt"), width=2),
                 dbc.Col(dbc.ListGroupItem("0-6 SHR", href=f"{place_base}/shr6_shifted.txt"), width=2),
@@ -306,8 +306,8 @@ links_section = dbc.Container(dbc.Container(html.Div(
         ),
         dbc.Row(
             [
-                dbc.Col(dbc.ListGroupItem("Effective", href=f"{place_base}/esrh_shifted.txt"), width=2),
                 dbc.Col(dbc.ListGroupItem("NSE SRH"), style={'font-weight': 'bold', 'color':'white','border': '1px gray solid', 'font-size':'1.2em','text-align':'right'}, width=2),
+                dbc.Col(dbc.ListGroupItem("Effective", href=f"{place_base}/esrh_shifted.txt"), width=2),
                 dbc.Col(dbc.ListGroupItem("0-500m", href=f"{place_base}/srh500_shifted.txt"), style={'a:hover':{'color':'yellow'}},width=2),
                 dbc.Col(dbc.ListGroupItem("Blank"), width=2),
                 dbc.Col(dbc.ListGroupItem("Blank"), width=2),
@@ -347,26 +347,22 @@ simulation_clock = html.Div([
                 dbc.Card(step_sim_clock, color="secondary", inverse=True)],
                 style={'text-align':'center'},),
                 #simulation_clock_slider,
-            dcc.Interval(
-                id='playback-clock-component',
-                interval=30*1000, # in milliseconds
-                n_intervals=0
-                ),
+
         html.Div(id='clock-output', style=feedback),
 
-        ], id='clock-container', style={'display': 'none'}),
+        ], id='clock-container', style={'padding':'1em', 'vertical-align':'middle'}),
     ])
 
 
-toggle_simulation_clock = html.Div([
-        dbc.Row([
-            dbc.Col(
-                html.Div([
-                        dbc.Button('Enable Simulation Clock', size="lg", id='enable_sim_clock', n_clicks=0),
-                    ], className="d-grid gap-2"), style={'vertical-align':'middle'}
-                ),
-        ])
-            ], style={'padding':'1em', 'vertical-align':'middle'})
+# toggle_simulation_clock = html.Div([
+#         dbc.Row([
+#             dbc.Col(
+#                 html.Div([
+#                         dbc.Button('Enable Simulation Clock', size="lg", id='enable_sim_clock', n_clicks=0),
+#                     ], className="d-grid gap-2"), style={'vertical-align':'middle'}
+#                 ),
+#         ])
+#             ], style={'padding':'1em', 'vertical-align':'middle'})
 
 
 bottom_section = html.Div([ ], style={'height': '500px'})

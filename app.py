@@ -94,7 +94,7 @@ class RadarSimulator(Config):
         self.radar = None
         self.lat = None
         self.lon = None
-        self.new_radar = 'NONE'
+        self.new_radar = 'None'
         self.new_lat = None
         self.new_lon = None
         self.simulation_clock = None
@@ -293,7 +293,7 @@ class RadarSimulator(Config):
         making a standard name for NSE placefiles by removing the datetime info
         Example -- mlcape_2024050721-2024050722_shifted.txt -> mlcape_shifted.txt
         """
-        placefiles = list(PLACEFILES_DIR.glob('*txt'))
+        placefiles = list(PLACEFILES_DIR.glob('*_shifted.txt'))
         for file in placefiles:
             if '-' in file.name:
                 print(f'filename: {file.name}')
@@ -348,6 +348,7 @@ sim_day_selection =  dbc.Col(html.Div([
 app.layout = dbc.Container([
     # testing directory size monitoring
     dcc.Interval(id='directory_monitor', interval=1000),
+    dcc.Interval(id='playback-clock', interval=30*1000, n_intervals=0),
     dcc.Store(id='model_dir_size'),
     dcc.Store(id='radar_dir_size'),
     dcc.Store(id='tradar'),
@@ -440,14 +441,14 @@ def transpose_radar(value):
     Since we always evaluate "value" after every user selection, always set new_radar 
     initially to None.
     """
-    sa.new_radar = 'NONE'
+    sa.new_radar = 'None'
 
-    if value != 'NONE':
+    if value != 'None':
         sa.new_radar = value
         sa.new_lat = lc.df[lc.df['radar'] == sa.new_radar]['lat'].values[0]
         sa.new_lon = lc.df[lc.df['radar'] == sa.new_radar]['lon'].values[0]
         return f'{sa.new_radar}'
-    return 'NONE'
+    return 'None'
 
 @app.callback(
     Output('transpose_section', 'style'),
@@ -676,7 +677,7 @@ def enable_simulation_clock(n: int) -> dict:
 
 @app.callback(
     Output('clock-output', 'children'),
-    Input('playback-clock-component', 'n_intervals')
+    Input('playback-clock', 'n_intervals')
 )
 def update_time(_n) -> str:
     """

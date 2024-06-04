@@ -50,7 +50,7 @@ class Munger():
         self.seconds_shift = timeshift
         self.new_rda = new_rda
         self.this_radar_polling_dir = self.POLLING_DIR / self.original_rda
-        if self.new_rda != 'NONE':
+        if self.new_rda != 'None':
             self.this_radar_polling_dir = self.POLLING_DIR / self.new_rda.upper()
 
         os.makedirs(self.this_radar_polling_dir, exist_ok=True)
