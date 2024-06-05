@@ -538,18 +538,24 @@ def launch_simulation(n_clicks):
 
         sa.scripts_progress = 'Modifying radar data ...'
         for _r, radar in enumerate(sa.radar_list):
+            radar = radar.upper()
             try:
                 if sa.new_radar == 'None':
-                    new_radar = radar.upper()
+                    new_radar = radar
                 else:
                     new_radar = sa.new_radar.upper()
-                    
-                Munger(radar.upper(),sa.playback_start_str,sa.event_duration, sa.simulation_seconds_shift,
+                print(f"New radar: {new_radar}") 
+            except Exception as e:
+                print(f"Error running Munge for {radar}: ", e)                    
+            try:
+                print(f"Munge for {radar} ...")
+                Munger(radar,sa.playback_start_str,sa.event_duration, sa.simulation_seconds_shift,
                        new_radar, playback_speed=1.5)
                 print(f"Munge for {radar} completed ...")
-
             except Exception as e:
                 print(f"Error running Munge for {radar}: ", e)
+
+
 
         sa.scripts_progress = 'Creating obs placefiles ...'
         try:
