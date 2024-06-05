@@ -529,34 +529,32 @@ def launch_simulation(n_clicks):
         sa.scripts_progress = 'Downloading radar data ...'
         try:
             for _r, radar in enumerate(sa.radar_list):
-                print(f"Nexrad Downloader - {radar.upper()}, {sa.event_start_str}, {str(sa.event_duration)}")
-                _file_list = NexradDownloader(radar.upper(), sa.event_start_str, str(sa.event_duration))
-                #sa.radar_dict[radar]['file_list'] = file_list
-                time.sleep(10)
+                radar = radar.upper()
+                try:
+                    if sa.new_radar == 'None':
+                        new_radar = radar
+                    else:
+                        new_radar = sa.new_radar.upper()
+                except Exception as e:
+                    print("Error defining new radar: ", e)
+                try:
+                    print(f"Nexrad Downloader - {radar}, {sa.event_start_str}, {str(sa.event_duration)}")
+                    _file_list = NexradDownloader(radar, sa.event_start_str, str(sa.event_duration))
+                    #sa.radar_dict[radar]['file_list'] = file_list
+                    time.sleep(10)
+                except Exception as e:
+                    print("Error running nexrad script: ", e)
+                try:
+                    print(f"Munge from {radar} to {new_radar}...")
+                    Munger(radar,sa.playback_start_str,sa.event_duration, sa.simulation_seconds_shift,
+                           new_radar, playback_speed=1.5)
+                    print(f"Munge for {new_radar} completed ...")
+
+                except Exception as e:
+                    print("Error running Munge from {radar} to {new_radar}: ", e)
         except Exception as e:
-            print("Error running nexrad script: ", e)
-
-        sa.scripts_progress = 'Modifying radar data ...'
-        for _r, radar in enumerate(sa.radar_list):
-            radar = radar.upper()
-            try:
-                if sa.new_radar == 'None':
-                    new_radar = radar
-                else:
-                    new_radar = sa.new_radar.upper()
-                print(f"New radar: {new_radar}") 
-            except Exception as e:
-                print(f"Error running Munge for {radar}: ", e)                    
-            try:
-                print(f"Munge for {radar} ...")
-                Munger(radar,sa.playback_start_str,sa.event_duration, sa.simulation_seconds_shift,
-                       new_radar, playback_speed=1.5)
-                print(f"Munge for {radar} completed ...")
-            except Exception as e:
-                print(f"Error running Munge for {radar}: ", e)
-
-
-
+            print("Error running nexrad or munge scripts: ", e)
+            
         sa.scripts_progress = 'Creating obs placefiles ...'
         try:
             print("Running obs script...")
@@ -566,7 +564,7 @@ def launch_simulation(n_clicks):
             print("Error running obs script: ", e)
 
         sa.scripts_progress = 'Creating NSE placefiles ...'
-        # NSE placefiles 
+        # NSE placefiles
         try:
             print("Running NSE scripts...")
             Nse(sa.event_start_time, sa.event_duration, sa.scripts_path, sa.data_dir,

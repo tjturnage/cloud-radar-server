@@ -280,7 +280,7 @@ links_section = dbc.Container(dbc.Container(html.Div(
         ),
         dbc.Row(
             [
-                dbc.Col(dbc.ListGroupItem("Sfc obs"), style={'font-weight': 'bold', 'color':'white', 'border': '1px gray solid', 'font-size':'1.2em','text-align':'right'}, width=2),
+                dbc.Col(dbc.ListGroupItem("Sfc obs"), style={'font-weight': 'bold', 'color':'white', 'border': '1px gray solid', 'font-size':'1.2em','text-align':'left'}, width=2),
                 dbc.Col(dbc.ListGroupItem("Regular font", href=f"{place_base}/latest_surface_observations_shifted.txt"), width=2),
                 dbc.Col(dbc.ListGroupItem("Large font", href=f"{place_base}/latest_surface_observations_lg_shifted.txt"), width=2),
                 dbc.Col(dbc.ListGroupItem("Small font", href=f"{place_base}/latest_surface_observations_xlg_shifted.txt"), width=2),
