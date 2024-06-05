@@ -305,7 +305,7 @@ class RadarSimulator(Config):
                     new_filepath = PLACEFILES_DIR / new_filename
                     shutil.copy(file, new_filepath)
         
-        for ob_file in ('dwpt','temp','road','latest_surface_observations','latest_surface_observations_lg','latest_surface_observations_xlg'):
+        for ob_file in ('wind','dwpt','temp','road','latest_surface_observations','latest_surface_observations_lg','latest_surface_observations_xlg'):
             original_filename = PLACEFILES_DIR / f'{ob_file}.txt'
             new_filename =  PLACEFILES_DIR / f'{ob_file}_shifted.txt'
             try:
