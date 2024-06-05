@@ -266,6 +266,13 @@ links_section = dbc.Container(dbc.Container(html.Div(
         spacer_mini,
         dbc.Row(
             [
+                dbc.Col(dbc.ListGroupItem("Copy this polling address into GR2Analyst:"), style={'font-weight': 'bold', 'color':'white', 'border': '1px gray solid','font-size':'1.2em','text-align':'right'}, width=4),
+                dbc.Col(dbc.ListGroupItem("https://rssic.nws.noaa.gov/assets/polling"), width=8),
+            ],
+            style={"display": "flex", "flexWrap": "wrap"},
+        ),
+        dbc.Row(
+            [
                 dbc.Col(dbc.ListGroupItem("Graphics"), style={'font-weight': 'bold', 'color':'white', 'border': '1px gray solid','font-size':'1.2em','text-align':'right'}, width=2),
                 dbc.Col(dbc.ListGroupItem("Hodographs", href=f"{link_base}/hodographs.html"), width=2),
             ],

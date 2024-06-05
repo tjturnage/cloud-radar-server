@@ -121,8 +121,7 @@ class Mesowest():
         self.station_dict = station_dict
 
         # took out time stamp for purposes of simulation
-        place_text = \
-        '-- for radar simulation'
+        place_text = '-- for radar simulation'
         #f'{self.place_ts[0:4]}-{self.place_ts[4:6]}-{self.place_ts[6:8]}-{self.place_ts[-4:]}'
         self.all_title = f'All Elements {place_text}'
         self.place_title = f'Air Temperature {place_text}'

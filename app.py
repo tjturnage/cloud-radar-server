@@ -304,6 +304,16 @@ class RadarSimulator(Config):
                 if file.name != new_filename:
                     new_filepath = PLACEFILES_DIR / new_filename
                     shutil.copy(file, new_filepath)
+        
+        for ob_file in ('dwpt','temp','road','latest_surface_observations','latest_surface_observations_lg','latest_surface_observations_xlg'):
+            original_filename = PLACEFILES_DIR / f'{ob_file}.txt'
+            new_filename =  PLACEFILES_DIR / f'{ob_file}_shifted.txt'
+            try:
+                shutil.copy(original_filename, new_filename)
+            except Exception as e:
+                print(f"Error copying {original_filename} to {new_filename}: {e}")
+                
+                
 
 
     def datetime_object_from_timestring(self, file: str) -> datetime:
@@ -517,8 +527,8 @@ def launch_simulation(n_clicks):
         try:
             for _r, radar in enumerate(sa.radar_list):
                 print(f"Nexrad Downloader - {radar.upper()}, {sa.event_start_str}, {str(sa.event_duration)}")
-                file_list = NexradDownloader(radar.upper(), sa.event_start_str, str(sa.event_duration))
-                sa.radar_dict[radar]['file_list'] = file_list
+                _file_list = NexradDownloader(radar.upper(), sa.event_start_str, str(sa.event_duration))
+                #sa.radar_dict[radar]['file_list'] = file_list
                 time.sleep(10)
         except Exception as e:
             print("Error running nexrad script: ", e)
