@@ -17,6 +17,10 @@ from botocore.client import Config
 
 
 class NexradDownloader:
+    
+    BASE_DIRECTORY = Path('/data/cloud-radar-server')
+    RADAR_DATA_BASE_DIR = BASE_DIRECTORY / 'data' / 'radar'
+    
     def __init__(self, radar_id, start_tstr, duration):
         super().__init__()
         self.radar_id = radar_id
@@ -28,7 +32,7 @@ class NexradDownloader:
                                                          user_agent_extra='Resource')).Bucket('noaa-nexrad-level2')
      
         self.prefix_day_one, self.prefix_day_two = self.make_prefix()
-        self.download_directory = Path.cwd() / 'data' / 'radar' / self.radar_id / 'downloads'
+        self.download_directory = self.RADAR_DATA_BASE_DIR / self.radar_id / 'downloads'
         os.makedirs(self.download_directory, exist_ok=True)
         self.radar_files_list = []
         self.download_files()
