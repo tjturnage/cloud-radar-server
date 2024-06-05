@@ -36,7 +36,10 @@ class UpdateDirList():
         self.this_radar_polling_directory = self.POLLING_DIR / self.radar
         print(self.this_radar_polling_directory)
         self.dirlist_flle = self.this_radar_polling_directory / 'dir.list'
-        self.current_playback_time = datetime.strptime(current_playback_time,"%Y-%m-%d %H:%M:%S UTC").replace(tzinfo=pytz.UTC).timestamp()
+        try:
+            self.current_playback_time = datetime.strptime(current_playback_time,"%Y-%m-%d %H:%M:%S UTC").replace(tzinfo=pytz.UTC).timestamp()
+        except ValueError:
+            self.current_playback_time = 'None'
         print(self.current_playback_time)
         self.initialize = initialize
         self.filelist = sorted(list(self.this_radar_polling_directory.glob('*gz')))
