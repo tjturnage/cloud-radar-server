@@ -412,18 +412,21 @@ def display_click_data(clickData: dict) -> str:
             return 'No Website Available'
         else:
             sa.radar = the_link
-            if sa.radar not in sa.radar_list:
-                sa.radar_list.append(sa.radar)
-            else:
-                radar_list = ', '.join(sa.radar_list)
+            if sa.radar_list in sa.radar_list:
                 return f'{sa.radar} already selected'
-            if len(sa.radar_list) <= sa.number_of_radars:
+            if len(sa.radar_list) < sa.number_of_radars:
+                sa.radar_list.append(sa.radar)
+                print(sa.radar_list)
+                sa.create_radar_dict()
                 radar_list = ', '.join(sa.radar_list)
                 return f'{radar_list}'
-            sa.radar_list = sa.radar_list[1:]
-            sa.create_radar_dict()
-            radar_list = ', '.join(sa.radar_list)
-            return f'{radar_list}'
+            if len(sa.radar_list) == sa.number_of_radars:
+                sa.radar_list = sa.radar_list[1:]
+                sa.radar_list.append(sa.radar)
+                print(sa.radar_list)
+                sa.create_radar_dict()
+                radar_list = ', '.join(sa.radar_list)
+                return radar_list
 
 @app.callback(
     Output('graph-container', 'style'),
