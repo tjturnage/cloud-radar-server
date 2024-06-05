@@ -549,6 +549,8 @@ def launch_simulation(n_clicks):
                     Munger(radar,sa.playback_start_str,sa.event_duration, sa.simulation_seconds_shift,
                            new_radar, playback_speed=1.5)
                     print(f"Munge for {new_radar} completed ...")
+                    # this gives the user some radar data to poll while other scripts are running
+                    UpdateDirList(new_radar, current_playback_time='None', initialize=True)
 
                 except Exception as e:
                     print("Error running Munge from {radar} to {new_radar}: ", e)
@@ -715,7 +717,7 @@ def update_time(_n) -> str:
         playback_time_str = sa.playback_timer.strftime("%Y-%m-%d %H:%M:%S UTC")
         UpdateHodoHTML(playback_time_str).update_hodo_page()
         for _r, radar in enumerate(sa.radar_list):
-            UpdateDirList(radar, playback_time_str).update_dirlist()
+            UpdateDirList(radar, playback_time_str, initialize=False)
         return playback_time_str
 
 ################################################################################################
