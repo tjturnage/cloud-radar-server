@@ -145,6 +145,7 @@ class RadarSimulator(Config):
         os.makedirs(self.hodo_images, exist_ok=True)
         self.placefiles_dir = self.assets_dir / 'placefiles'
         os.makedirs(self.placefiles_dir, exist_ok=True)
+        UpdateHodoHTML('None', initialize=True)
 
     def make_simulation_times(self) -> None:
         """
@@ -715,7 +716,7 @@ def update_time(_n) -> str:
     while sa.playback_timer < sa.playback_end_time:
         sa.playback_timer += timedelta(seconds=45)
         playback_time_str = sa.playback_timer.strftime("%Y-%m-%d %H:%M:%S UTC")
-        UpdateHodoHTML(playback_time_str).update_hodo_page()
+        UpdateHodoHTML(playback_time_str, initialize=False)
         for _r, radar in enumerate(sa.radar_list):
             UpdateDirList(radar, playback_time_str, initialize=False)
         return playback_time_str
