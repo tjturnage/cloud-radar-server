@@ -20,7 +20,7 @@ import math
 import pytz
 #from time import sleep
 from dash import Dash, html, Input, Output, dcc #, ctx, callback
-#from dash.exceptions import PreventUpdate
+from dash.exceptions import PreventUpdate
 #from dash import diskcache, DiskcacheManager, CeleryManager
 #from uuid import uuid4
 #import diskcache
@@ -359,8 +359,8 @@ sim_day_selection =  dbc.Col(html.Div([
 
 app.layout = dbc.Container([
     # testing directory size monitoring
-    dcc.Interval(id='directory_monitor', interval=1000),
-    dcc.Interval(id='playback-clock', interval=30*1000, n_intervals=0),
+    dcc.Interval(id='directory_monitor', disabled=True, interval=60*60*1000),
+    dcc.Interval(id='playback-clock', disabled=True, interval=60*1000, n_intervals=0),
     dcc.Store(id='model_dir_size'),
     dcc.Store(id='radar_dir_size'),
     dcc.Store(id='tradar'),
@@ -503,13 +503,16 @@ def run_hodo_script(args):
         (Output('map_btn', 'disabled'), True, False),
         (Output('new_radar_selection', 'disabled'), True, False),
         (Output('run_scripts', 'disabled'), True, False),
-    ])
+        (Output('playback-clock', 'disabled'), True, False),
+        ])
 def launch_simulation(n_clicks):
     """
     This function is called when the "Run Scripts" button is clicked. It will execute the
     necessary scripts to simulate radar operations, create hodographs, and transpose placefiles.
     """
-    if n_clicks > 0:
+    if n_clicks == 0:
+        raise PreventUpdate
+    else:
         sa.scripts_progress = 'Setting up files and times'
         sa.make_simulation_times()  # determine actual event time, playback time, diff of these two
 
