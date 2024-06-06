@@ -6,11 +6,10 @@
 """
 #from flask import Flask, render_template
 import os
-#import shutil
+import shutil
 import re
 import subprocess
 from pathlib import Path
-import shutil
 from glob import glob
 import time
 from datetime import datetime, timedelta, timezone
@@ -130,6 +129,19 @@ class RadarSimulator(Config):
             for _i,radar in enumerate(self.radar_list):
                 f.write(f'Site: {radar.upper()}\n')
         f.close()
+
+    def copy_grlevel2_cfg_file(self) -> None:
+        """
+        Ensures a grlevel2.cfg file is copied into the polling directory. It's required for GR2Analyst to poll for radar data.
+        Only the radar sites used in the simulation are listed in this file instead of all available radars
+        """       
+        source = BASE_DIR / 'grlevel2.cfg'
+        destination = POLLING_DIR / 'grlevel2.cfg'
+        try:
+            shutil.copyfile(source, destination)
+        except Exception as e:
+            print(f"Error copying {source} to {destination}: {e}")
+
     
     def define_scripts_and_assets_directories(self) -> None:
         """
@@ -528,7 +540,8 @@ def launch_simulation(n_clicks):
         # based on list of selected radars, create a dictionary of radar metadata
         try:
             sa.create_radar_dict()
-            sa.create_grlevel2_cfg_file()
+            #sa.create_grlevel2_cfg_file()
+            sa.copy_grlevel2_cfg_file()
         except Exception as e:
             print("Error creating radar dict or config file: ", e)
 
