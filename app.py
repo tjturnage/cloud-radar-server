@@ -723,8 +723,11 @@ def update_time(_n) -> str:
         sa.playback_timer += timedelta(seconds=45)
         playback_time_str = sa.playback_timer.strftime("%Y-%m-%d %H:%M:%S UTC")
         UpdateHodoHTML(playback_time_str, initialize=False)
-        for _r, radar in enumerate(sa.radar_list):
-            UpdateDirList(radar, playback_time_str, initialize=False)
+        if sa.new_radar != 'None':
+            UpdateDirList(sa.new_radar, playback_time_str, initialize=False)
+        else:
+            for _r, radar in enumerate(sa.radar_list):
+                UpdateDirList(radar, playback_time_str, initialize=False)
         return playback_time_str
 
 ################################################################################################
