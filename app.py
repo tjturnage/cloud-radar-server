@@ -124,8 +124,11 @@ class RadarSimulator(Config):
         """
         f = open(POLLING_DIR / 'grlevel2.cfg', 'w', encoding='utf-8')
         f.write('ListFile: dir.list\n')
-        for _i,radar in enumerate(self.radar_list):
-            f.write(f'Site: {radar.upper()}\n')
+        if sa.new_radar != 'None':
+            f.write(f'Site: {sa.new_radar.upper()}\n')
+        else:
+            for _i,radar in enumerate(self.radar_list):
+                f.write(f'Site: {radar.upper()}\n')
         f.close()
     
     def define_scripts_and_assets_directories(self) -> None:
