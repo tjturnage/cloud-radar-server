@@ -15,7 +15,7 @@ import time
 from datetime import datetime, timedelta, timezone
 import calendar
 import math
-#import pandas as pd
+import pandas as pd
 import pytz
 #from time import sleep
 from dash import Dash, html, Input, Output, dcc #, ctx, callback
@@ -623,8 +623,8 @@ def launch_simulation(n_clicks):
         # NSE placefiles
         try:
             print("Running NSE scripts...")
-            #Nse(sa.event_start_time, sa.event_duration, sa.scripts_path, sa.data_dir,
-            #    sa.placefiles_dir)
+            Nse(sa.event_start_time, sa.event_duration, sa.scripts_path, sa.data_dir,
+                sa.placefiles_dir)
         except Exception as e:
             print("Error running NSE scripts: ", e)
 
@@ -660,6 +660,7 @@ def launch_simulation(n_clicks):
 @app.callback(
     Output('radar_status', 'value'),
     Output('hodo_status', 'value'),
+    Output('model_table', 'data'),
     [Input('directory_monitor', 'n_intervals')],
     prevent_initial_call=True)
 def monitor(n):
@@ -671,7 +672,10 @@ def monitor(n):
     hodograph_completion = 0
     if len(radar_files) > 0:
         hodograph_completion = 100 * (num_hodograph_images / (2*len(radar_files)))
-    return radar_dl_completion, hodograph_completion
+
+    # NSE placefiles 
+    model_list = nse_status_checker()
+    return radar_dl_completion, hodograph_completion, model_list
 
 def radar_monitor():
     """Reads radar_dict.json file(s) output from the NexradDownloader. Looks for associated 
@@ -691,6 +695,31 @@ def radar_monitor():
     if len(expected_files) > 0:
         output = 100 * (len(files_on_system) / len(expected_files))
     return output, files_on_system
+
+def nse_status_checker():
+    # Read in model status text file and query associated file sizes. 
+    filename = f"{sa.data_dir}/model_data/model_list.txt"
+    output = []
+    if os.path.exists(filename):
+        model_list = []
+        filesizes = []
+        with open(filename, 'r') as f: text_listing = f.readlines()
+        for line in text_listing:
+            filename = line[:-1]
+            model_list.append(filename.rsplit('/', 1)[1])
+            filesizes.append(round(file_stats(filename),2))
+
+        df = pd.DataFrame({'Model data': model_list,'Size (MB)': filesizes})
+        output = df.to_dict('records')
+
+    return output
+
+def file_stats(filename):
+    """Return the size of a specific file.  If it doesn't exist, returns 0"""
+    filesize = 0.
+    if os.path.exists(filename):
+        filesize = os.stat(filename).st_size / 1024000.
+    return filesize 
 
 # -------------------------------------
 # --- Transpose placefiles in time and space
