@@ -595,16 +595,16 @@ def launch_simulation(n_clicks):
                     _file_list = NexradDownloader(radar, sa.event_start_str, str(sa.event_duration), 
                                                   download=True)
                     #sa.radar_dict[radar]['file_list'] = file_list
-                    #time.sleep(10)
+                    time.sleep(10)
                 except Exception as e:
                     print("Error running nexrad script: ", e)
                 try:
                     print(f"Munge from {radar} to {new_radar}...")
-                    #Munger(radar,sa.playback_start_str,sa.event_duration, sa.simulation_seconds_shift,
-                    #       new_radar, playback_speed=1.5)
+                    Munger(radar,sa.playback_start_str,sa.event_duration, sa.simulation_seconds_shift,
+                           new_radar, playback_speed=1.5)
                     print(f"Munge for {new_radar} completed ...")
                     # this gives the user some radar data to poll while other scripts are running
-                    #UpdateDirList(new_radar, current_playback_time='None', initialize=True)
+                    UpdateDirList(new_radar, current_playback_time='None', initialize=True)
 
                 except Exception as e:
                     print("Error running Munge from {radar} to {new_radar}: ", e)
@@ -614,7 +614,7 @@ def launch_simulation(n_clicks):
         sa.scripts_progress = 'Creating obs placefiles ...'
         try:
             print("Running obs script...")
-            #Mesowest(str(sa.lat),str(sa.lon),sa.event_start_str,str(sa.event_duration))
+            Mesowest(str(sa.lat),str(sa.lon),sa.event_start_str,str(sa.event_duration))
             print("Obs script completed")
         except Exception as e:
             print("Error running obs script: ", e)
