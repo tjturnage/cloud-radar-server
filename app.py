@@ -25,6 +25,7 @@ from dash.exceptions import PreventUpdate
 #import diskcache
 import numpy as np
 from botocore.client import Config
+import json 
 
 # bootstrap is what helps styling for a better presentation
 import dash_bootstrap_components as dbc
@@ -377,10 +378,10 @@ sim_day_selection =  dbc.Col(html.Div([
 
 app.layout = dbc.Container([
     # testing directory size monitoring
-    dcc.Interval(id='directory_monitor', disabled=True, interval=60*60*1000),
+    dcc.Interval(id='directory_monitor', disabled=False, interval=1000),
     dcc.Interval(id='playback-clock', disabled=True, interval=60*1000, n_intervals=0),
-    dcc.Store(id='model_dir_size'),
-    dcc.Store(id='radar_dir_size'),
+    #dcc.Store(id='model_dir_size'),
+    #dcc.Store(id='radar_dir_size'),
     dcc.Store(id='tradar'),
     dcc.Store(id='sim_store'),
     lc.top_section, lc.top_banner,
@@ -501,6 +502,11 @@ def toggle_transpose_display(value):
 # -------------------------------------
 # ---  Run Scripts button ---
 # -------------------------------------
+def query_radar_files():
+    for _r, radar in enumerate(sa.radar_list):
+        radar = radar.upper()
+        NexradDownloader(radar, sa.event_start_str, str(sa.event_duration),
+                        download=False)
 
 def run_hodo_script(args):
     subprocess.run(["python", HODO_SCRIPT_PATH] + args, check=True)
@@ -553,11 +559,7 @@ def launch_simulation(n_clicks):
         try:
             # Initial for loop to gather all radar files. Not great, but not sure of a better
             # way to handle this. 
-            for _r, radar in enumerate(sa.radar_list):
-                radar = radar.upper()
-                _file_list = NexradDownloader(radar, sa.event_start_str, str(sa.event_duration),
-                                              download=False)
-
+            query_radar_files()
             for _r, radar in enumerate(sa.radar_list):
                 radar = radar.upper()
                 try:
@@ -622,7 +624,7 @@ def launch_simulation(n_clicks):
 
             try:
                 print(f'hodo script:  {radar}, {sa.new_radar}, {asos_one}, {asos_two}, {sa.simulation_seconds_shift}')
-                run_hodo_script([radar, sa.new_radar, asos_one, asos_two, str(sa.simulation_seconds_shift)])
+                #run_hodo_script([radar, sa.new_radar, asos_one, asos_two, str(sa.simulation_seconds_shift)])
                 print("Hodograph script completed ...")
             except Exception as e:
                 print("Error running hodo script: ", e)
@@ -631,6 +633,36 @@ def launch_simulation(n_clicks):
 
     return
 
+################################################################################################
+# ----------------------------- Monitoring and reporting script status  ------------------------
+################################################################################################
+@app.callback(
+    Output('radar_status', 'value'),
+    [Input('directory_monitor', 'n_intervals')],
+    prevent_initial_call=True)
+def monitor(n):
+    radar_percentage = radar_monitor()
+    return radar_percentage
+
+def radar_monitor():
+    """Reads radar_dict.json file(s) output from the NexradDownloader. Looks for associated 
+    radar files on the system and compares to the total expected number and broadcasts a 
+    percentage to the radar_status progress bar."""
+    expected_files = []
+    radar_dirs = glob(f"{sa.data_dir}/radar/**")
+    for d in radar_dirs:
+        json_file = glob(f"{d}/downloads/radar_dict.json")
+        if len(json_file) == 1:
+            with open(json_file[0], 'r') as f: 
+                radar_dictionary = json.load(f)
+                expected_files.extend(list(radar_dictionary.values()))
+    
+    files_on_system = [x for x in expected_files if os.path.exists(x)]
+    if len(expected_files) == 0:
+        output = 0 
+    else: 
+        output = 100 * (len(files_on_system) / len(expected_files))
+    return output
 
 # -------------------------------------
 # --- Transpose placefiles in time and space
