@@ -26,6 +26,7 @@ from dash.exceptions import PreventUpdate
 import numpy as np
 from botocore.client import Config
 import json 
+import logging 
 
 # bootstrap is what helps styling for a better presentation
 import dash_bootstrap_components as dbc
@@ -105,7 +106,23 @@ class RadarSimulator(Config):
         self.current_dir = Path.cwd()
         self.define_scripts_and_assets_directories()
         self.make_simulation_times()
+
+        # This will generate a logfile. Something we'll want to turn on in the future. 
+        #self.logfile = self.create_logfile()
+
         # self.get_radar_coordinates()
+
+    def create_logfile(self):
+        """
+        Creates an initial logfile. Stored in the data dir for now. Call is 
+        sa.logfile.info or sa.logfile.error or sa.logfile.warning
+        """
+        logging.basicConfig(filename=f"{self.data_dir}/logfile.txt",
+                            format='%(levelname)s %(asctime)s :: %(message)s',
+                            datefmt="%Y-%m-%d %H:%M:%S")
+        log = logging.getLogger()
+        log.setLevel(logging.INFO)
+        return log
 
     def create_radar_dict(self) -> None:
         """
