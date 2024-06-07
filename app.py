@@ -752,7 +752,8 @@ def update_time(_n) -> str:
 
 if __name__ == '__main__':
     if lc.cloud:
-        app.run_server(host="0.0.0.0", port=8050, threaded=True, debug=True, use_reloader=False)
+        app.run_server(host="0.0.0.0", port=8050, threaded=True, debug=True, use_reloader=False,
+                       dev_tools_hot_reload=False)
     else:
         # Add hot reload to False. As files update during a run, page updates, and 
         # simulation dates change back to defaults causing issues with time shifting. 
