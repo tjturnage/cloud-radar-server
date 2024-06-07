@@ -551,6 +551,13 @@ def launch_simulation(n_clicks):
         # acquire radar data for the event
         sa.scripts_progress = 'Downloading radar data ...'
         try:
+            # Initial for loop to gather all radar files. Not great, but not sure of a better
+            # way to handle this. 
+            for _r, radar in enumerate(sa.radar_list):
+                radar = radar.upper()
+                _file_list = NexradDownloader(radar, sa.event_start_str, str(sa.event_duration),
+                                              download=False)
+
             for _r, radar in enumerate(sa.radar_list):
                 radar = radar.upper()
                 try:
@@ -562,9 +569,10 @@ def launch_simulation(n_clicks):
                     print("Error defining new radar: ", e)
                 try:
                     print(f"Nexrad Downloader - {radar}, {sa.event_start_str}, {str(sa.event_duration)}")
-                    #_file_list = NexradDownloader(radar, sa.event_start_str, str(sa.event_duration))
+                    _file_list = NexradDownloader(radar, sa.event_start_str, str(sa.event_duration), 
+                                                  download=True)
                     #sa.radar_dict[radar]['file_list'] = file_list
-                    time.sleep(10)
+                    #time.sleep(10)
                 except Exception as e:
                     print("Error running nexrad script: ", e)
                 try:
