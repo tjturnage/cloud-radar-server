@@ -4,7 +4,7 @@ import pandas as pd
 import numpy as np
 import plotly.graph_objs as go
 import dash_bootstrap_components as dbc
-from dash import html, dcc
+from dash import html, dcc, dash_table
 from pathlib import Path
 
 
@@ -243,8 +243,19 @@ hodograph_status = dbc.Col(html.Div([hodo_status_header,
                     dbc.Progress(id='hodo_status',striped=True, value=0),]))
 
 nse_status_header = html.Div(children="NSE placefile status",style=status_headers)
-nse_status = dbc.Col(html.Div([nse_status_header,
-                    dbc.Progress(id='nse_status',striped=True, value=0),]))
+model_status_table = dash_table.DataTable(id='model_table', 
+                                          data=[],
+                                          style_cell={'fontSize': 9, 
+                                                      'text_align': 'center',
+                                                      'color':'black',
+                                                      'border': 'none',
+                                          },   
+                                          style_header={'backgroundColor':'black',
+                                                        'color':'white',
+                                                        'fontWeight':'bold',
+                                          },
+                    )
+nse_status = dbc.Col(html.Div([nse_status_header, model_status_table]))
 
 transpose_status_header = html.Div(children="Transpose status",style=status_headers)
 transpose_status = dbc.Col(html.Div([transpose_status_header,
