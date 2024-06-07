@@ -642,11 +642,19 @@ def launch_simulation(n_clicks):
 ################################################################################################
 @app.callback(
     Output('radar_status', 'value'),
+    Output('hodo_status', 'value'),
     [Input('directory_monitor', 'n_intervals')],
     prevent_initial_call=True)
 def monitor(n):
-    radar_dl_percentage = radar_monitor()
-    return radar_dl_percentage
+    # Radar file download status
+    radar_dl_completion, radar_files = radar_monitor()
+    
+    # Hodographs. Currently hard-coded to expect 2 files for every radar and radar file.
+    num_hodograph_images = len(glob(f"{sa.hodo_images}/*.png"))
+    hodograph_completion = 0
+    if len(radar_files) > 0:
+        hodograph_completion = 100 * (num_hodograph_images / (2*len(radar_files)))
+    return radar_dl_completion, hodograph_completion
 
 def radar_monitor():
     """Reads radar_dict.json file(s) output from the NexradDownloader. Looks for associated 
@@ -662,11 +670,10 @@ def radar_monitor():
                 expected_files.extend(list(radar_dictionary.values()))
     
     files_on_system = [x for x in expected_files if os.path.exists(x)]
-    if len(expected_files) == 0:
-        output = 0 
-    else: 
+    output = 0
+    if len(expected_files) > 0:
         output = 100 * (len(files_on_system) / len(expected_files))
-    return output
+    return output, files_on_system
 
 # -------------------------------------
 # --- Transpose placefiles in time and space
