@@ -256,7 +256,10 @@ class RadarSimulator(Config):
         return math.degrees(phi_out), math.degrees(lambda_out)
 
     def shift_placefiles(self):
-        filenames = glob(f"{self.placefiles_dir}/*[0-9].txt")
+        # While the _shifted placefiles should be purged for each run, just ensure we're
+        # only querying the "original" placefiles to shift (exclude any with _shifted.txt)
+        filenames = glob(f"{self.placefiles_dir}/*.txt")
+        filenames = [x for x in filenames if "shifted" not in x]
         for file_ in filenames:
             with open(file_, 'r', encoding='utf-8') as f: data = f.readlines()
             outfilename = f"{file_[0:file_.index('.txt')]}_shifted.txt"
@@ -304,30 +307,30 @@ class RadarSimulator(Config):
                                     f"{new_datestring_1} {new_datestring_2}")
         return new_line
 
-
-    def rename_shifted_nse_placefiles(self) -> None:
-        """
-        making a standard name for NSE placefiles by removing the datetime info
-        Example -- mlcape_2024050721-2024050722_shifted.txt -> mlcape_shifted.txt
-        """
-        placefiles = list(PLACEFILES_DIR.glob('*_shifted.txt'))
-        for file in placefiles:
-            if '-' in file.name:
-                print(f'filename: {file.name}')
-                parts = file.name.split('_')
-                new_parts = [p for p in parts if '-' not in p]
-                new_filename = '_'.join(new_parts)
-                if file.name != new_filename:
-                    new_filepath = PLACEFILES_DIR / new_filename
-                    shutil.copy(file, new_filepath)
-        
-        for ob_file in ('wind','dwpt','temp','road','latest_surface_observations','latest_surface_observations_lg','latest_surface_observations_xlg'):
-            original_filename = PLACEFILES_DIR / f'{ob_file}.txt'
-            new_filename =  PLACEFILES_DIR / f'{ob_file}_shifted.txt'
-            try:
-                shutil.copy(original_filename, new_filename)
-            except Exception as e:
-                print(f"Error copying {original_filename} to {new_filename}: {e}")
+    # Edited scripts/meso/plot/plots.py to remove datestring from end of filename
+    #def rename_shifted_nse_placefiles(self) -> None:
+    #    """
+    #    making a standard name for NSE placefiles by removing the datetime info
+    #    Example -- mlcape_2024050721-2024050722_shifted.txt -> mlcape_shifted.txt
+    #     """
+    #    placefiles = list(PLACEFILES_DIR.glob('*_shifted.txt'))
+    #    for file in placefiles:
+    #        if '-' in file.name:
+    #            print(f'filename: {file.name}')
+    #            parts = file.name.split('_')
+    #            new_parts = [p for p in parts if '-' not in p]
+    #            new_filename = '_'.join(new_parts)
+    #            if file.name != new_filename:
+    #                new_filepath = PLACEFILES_DIR / new_filename
+    #                shutil.copy(file, new_filepath)
+    #    
+    #    for ob_file in ('wind','dwpt','temp','road','latest_surface_observations','latest_surface_observations_lg','latest_surface_observations_xlg'):
+    #        original_filename = PLACEFILES_DIR / f'{ob_file}.txt'
+    #        new_filename =  PLACEFILES_DIR / f'{ob_file}_shifted.txt'
+    #        try:
+    #            shutil.copy(original_filename, new_filename)
+    #        except Exception as e:
+    #            print(f"Error copying {original_filename} to {new_filename}: {e}")
                 
                 
 
@@ -559,18 +562,18 @@ def launch_simulation(n_clicks):
                     print("Error defining new radar: ", e)
                 try:
                     print(f"Nexrad Downloader - {radar}, {sa.event_start_str}, {str(sa.event_duration)}")
-                    _file_list = NexradDownloader(radar, sa.event_start_str, str(sa.event_duration))
+                    #_file_list = NexradDownloader(radar, sa.event_start_str, str(sa.event_duration))
                     #sa.radar_dict[radar]['file_list'] = file_list
                     time.sleep(10)
                 except Exception as e:
                     print("Error running nexrad script: ", e)
                 try:
                     print(f"Munge from {radar} to {new_radar}...")
-                    Munger(radar,sa.playback_start_str,sa.event_duration, sa.simulation_seconds_shift,
-                           new_radar, playback_speed=1.5)
+                    #Munger(radar,sa.playback_start_str,sa.event_duration, sa.simulation_seconds_shift,
+                    #       new_radar, playback_speed=1.5)
                     print(f"Munge for {new_radar} completed ...")
                     # this gives the user some radar data to poll while other scripts are running
-                    UpdateDirList(new_radar, current_playback_time='None', initialize=True)
+                    #UpdateDirList(new_radar, current_playback_time='None', initialize=True)
 
                 except Exception as e:
                     print("Error running Munge from {radar} to {new_radar}: ", e)
@@ -580,7 +583,7 @@ def launch_simulation(n_clicks):
         sa.scripts_progress = 'Creating obs placefiles ...'
         try:
             print("Running obs script...")
-            Mesowest(str(sa.lat),str(sa.lon),sa.event_start_str,str(sa.event_duration))
+            #Mesowest(str(sa.lat),str(sa.lon),sa.event_start_str,str(sa.event_duration))
             print("Obs script completed")
         except Exception as e:
             print("Error running obs script: ", e)
@@ -589,8 +592,8 @@ def launch_simulation(n_clicks):
         # NSE placefiles
         try:
             print("Running NSE scripts...")
-            Nse(sa.event_start_time, sa.event_duration, sa.scripts_path, sa.data_dir,
-                sa.placefiles_dir)
+            #Nse(sa.event_start_time, sa.event_duration, sa.scripts_path, sa.data_dir,
+            #    sa.placefiles_dir)
         except Exception as e:
             print("Error running NSE scripts: ", e)
 
@@ -598,7 +601,7 @@ def launch_simulation(n_clicks):
         # script needs to execute every time, even if a user doesn't select a radar
         # to transpose to. 
         run_transpose_script()
-        sa.rename_shifted_nse_placefiles()
+        #sa.rename_shifted_nse_placefiles()
           
         sa.scripts_progress = 'Creating hodo plots ...'
         for radar, data in sa.radar_dict.items():
