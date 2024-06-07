@@ -283,12 +283,12 @@ def write_placefile(arrs, output_path, realtime=False):
     save_time = None
     for parm in out_dict.keys():
         output = out_dict[parm]
-        if not realtime:
-            save_time = "%s-%s" % (arrs[0]['valid_time'].strftime('%Y%m%d%H'),
-                                   arrs[-1]['valid_time'].strftime('%Y%m%d%H'))
-            out_file = '%s/%s_%s.txt' % (output_path, parm, save_time)
-        else:
-            out_file = '%s/%s.txt' % (output_path, parm)
+        #if not realtime:
+        #    save_time = "%s-%s" % (arrs[0]['valid_time'].strftime('%Y%m%d%H'),
+        #                           arrs[-1]['valid_time'].strftime('%Y%m%d%H'))
+        #    out_file = '%s/%s_%s.txt' % (output_path, parm, save_time)
+        #else:
+        out_file = '%s/%s.txt' % (output_path, parm)
         with open(out_file, 'w') as f: f.write("".join(output))
 
     # Write any bundled placefiles
@@ -317,8 +317,8 @@ def write_bundles(save_time, output_path):
     for bundle_name, parameters in BUNDLES.items():
         #log.info("Writing bundle: %s with components: %s" % (bundle_name, parameters))
         bundle_file = '%s/%s.txt' % (output_path, bundle_name)
-        if save_time:
-            bundle_file = '%s/%s_%s.txt' % (output_path, bundle_name, save_time)
+        #if save_time:
+        #    bundle_file = '%s/%s_%s.txt' % (output_path, bundle_name, save_time)
 
         with open(bundle_file, 'w') as f:
             for parm in parameters:

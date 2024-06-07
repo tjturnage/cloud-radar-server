@@ -15,7 +15,7 @@ import time
 from datetime import datetime, timedelta, timezone
 import calendar
 import math
-#import pandas as pd
+import pandas as pd
 import pytz
 #from time import sleep
 from dash import Dash, html, Input, Output, dcc #, ctx, callback
@@ -25,6 +25,8 @@ from dash.exceptions import PreventUpdate
 #import diskcache
 import numpy as np
 from botocore.client import Config
+import json 
+import logging 
 
 # bootstrap is what helps styling for a better presentation
 import dash_bootstrap_components as dbc
@@ -55,6 +57,7 @@ POLLING_DIR = ASSETS_DIR / 'polling'
 PLACEFILES_DIR = ASSETS_DIR / 'placefiles'
 HODOGRAPHS_DIR = ASSETS_DIR / 'hodographs'
 DATA_DIR = BASE_DIR / 'data'
+MODEL_DIR = DATA_DIR / 'model_data'
 RADAR_DIR = DATA_DIR / 'radar'
 CSV_PATH = BASE_DIR / 'radars.csv'
 SCRIPTS_DIR = BASE_DIR / 'scripts'
@@ -103,7 +106,23 @@ class RadarSimulator(Config):
         self.current_dir = Path.cwd()
         self.define_scripts_and_assets_directories()
         self.make_simulation_times()
+
+        # This will generate a logfile. Something we'll want to turn on in the future. 
+        #self.logfile = self.create_logfile()
+
         # self.get_radar_coordinates()
+
+    def create_logfile(self):
+        """
+        Creates an initial logfile. Stored in the data dir for now. Call is 
+        sa.logfile.info or sa.logfile.error or sa.logfile.warning
+        """
+        logging.basicConfig(filename=f"{self.data_dir}/logfile.txt",
+                            format='%(levelname)s %(asctime)s :: %(message)s',
+                            datefmt="%Y-%m-%d %H:%M:%S")
+        log = logging.getLogger()
+        log.setLevel(logging.INFO)
+        return log
 
     def create_radar_dict(self) -> None:
         """
@@ -256,7 +275,10 @@ class RadarSimulator(Config):
         return math.degrees(phi_out), math.degrees(lambda_out)
 
     def shift_placefiles(self):
-        filenames = glob(f"{self.placefiles_dir}/*[0-9].txt")
+        # While the _shifted placefiles should be purged for each run, just ensure we're
+        # only querying the "original" placefiles to shift (exclude any with _shifted.txt)
+        filenames = glob(f"{self.placefiles_dir}/*.txt")
+        filenames = [x for x in filenames if "shifted" not in x]
         for file_ in filenames:
             with open(file_, 'r', encoding='utf-8') as f: data = f.readlines()
             outfilename = f"{file_[0:file_.index('.txt')]}_shifted.txt"
@@ -304,30 +326,30 @@ class RadarSimulator(Config):
                                     f"{new_datestring_1} {new_datestring_2}")
         return new_line
 
-
-    def rename_shifted_nse_placefiles(self) -> None:
-        """
-        making a standard name for NSE placefiles by removing the datetime info
-        Example -- mlcape_2024050721-2024050722_shifted.txt -> mlcape_shifted.txt
-        """
-        placefiles = list(PLACEFILES_DIR.glob('*_shifted.txt'))
-        for file in placefiles:
-            if '-' in file.name:
-                print(f'filename: {file.name}')
-                parts = file.name.split('_')
-                new_parts = [p for p in parts if '-' not in p]
-                new_filename = '_'.join(new_parts)
-                if file.name != new_filename:
-                    new_filepath = PLACEFILES_DIR / new_filename
-                    shutil.copy(file, new_filepath)
-        
-        for ob_file in ('wind','dwpt','temp','road','latest_surface_observations','latest_surface_observations_lg','latest_surface_observations_xlg'):
-            original_filename = PLACEFILES_DIR / f'{ob_file}.txt'
-            new_filename =  PLACEFILES_DIR / f'{ob_file}_shifted.txt'
-            try:
-                shutil.copy(original_filename, new_filename)
-            except Exception as e:
-                print(f"Error copying {original_filename} to {new_filename}: {e}")
+    # Edited scripts/meso/plot/plots.py to remove datestring from end of filename
+    #def rename_shifted_nse_placefiles(self) -> None:
+    #    """
+    #    making a standard name for NSE placefiles by removing the datetime info
+    #    Example -- mlcape_2024050721-2024050722_shifted.txt -> mlcape_shifted.txt
+    #     """
+    #    placefiles = list(PLACEFILES_DIR.glob('*_shifted.txt'))
+    #    for file in placefiles:
+    #        if '-' in file.name:
+    #            print(f'filename: {file.name}')
+    #            parts = file.name.split('_')
+    #            new_parts = [p for p in parts if '-' not in p]
+    #            new_filename = '_'.join(new_parts)
+    #            if file.name != new_filename:
+    #                new_filepath = PLACEFILES_DIR / new_filename
+    #                shutil.copy(file, new_filepath)
+    #    
+    #    for ob_file in ('wind','dwpt','temp','road','latest_surface_observations','latest_surface_observations_lg','latest_surface_observations_xlg'):
+    #        original_filename = PLACEFILES_DIR / f'{ob_file}.txt'
+    #        new_filename =  PLACEFILES_DIR / f'{ob_file}_shifted.txt'
+    #        try:
+    #            shutil.copy(original_filename, new_filename)
+    #        except Exception as e:
+    #            print(f"Error copying {original_filename} to {new_filename}: {e}")
                 
                 
 
@@ -346,7 +368,7 @@ class RadarSimulator(Config):
         Cleans up files and directories from the previous simulation so these datasets
         are not included in the current simulation.
         """
-        dirs = [RADAR_DIR, POLLING_DIR, HODOGRAPHS_DIR]
+        dirs = [RADAR_DIR, POLLING_DIR, HODOGRAPHS_DIR, MODEL_DIR]
         for directory in dirs:
             for root, dirs, files in os.walk(directory, topdown=False):
                 for name in files:
@@ -374,10 +396,10 @@ sim_day_selection =  dbc.Col(html.Div([
 
 app.layout = dbc.Container([
     # testing directory size monitoring
-    dcc.Interval(id='directory_monitor', disabled=True, interval=60*60*1000),
+    dcc.Interval(id='directory_monitor', disabled=False, interval=1000),
     dcc.Interval(id='playback-clock', disabled=True, interval=60*1000, n_intervals=0),
-    dcc.Store(id='model_dir_size'),
-    dcc.Store(id='radar_dir_size'),
+    #dcc.Store(id='model_dir_size'),
+    #dcc.Store(id='radar_dir_size'),
     dcc.Store(id='tradar'),
     dcc.Store(id='sim_store'),
     lc.top_section, lc.top_banner,
@@ -498,8 +520,14 @@ def toggle_transpose_display(value):
 # -------------------------------------
 # ---  Run Scripts button ---
 # -------------------------------------
+def query_radar_files():
+    for _r, radar in enumerate(sa.radar_list):
+        radar = radar.upper()
+        NexradDownloader(radar, sa.event_start_str, str(sa.event_duration),
+                        download=False)
 
 def run_hodo_script(args):
+    print(args)
     subprocess.run(["python", HODO_SCRIPT_PATH] + args, check=True)
     return
 
@@ -548,6 +576,11 @@ def launch_simulation(n_clicks):
         # acquire radar data for the event
         sa.scripts_progress = 'Downloading radar data ...'
         try:
+            # Initial for loop to gather all radar files. Not great, but not sure of a better
+            # way to handle this. Calls NexradDownloader but passes download=False to only 
+            # query AWS for expected files
+            query_radar_files()
+
             for _r, radar in enumerate(sa.radar_list):
                 radar = radar.upper()
                 try:
@@ -559,7 +592,8 @@ def launch_simulation(n_clicks):
                     print("Error defining new radar: ", e)
                 try:
                     print(f"Nexrad Downloader - {radar}, {sa.event_start_str}, {str(sa.event_duration)}")
-                    _file_list = NexradDownloader(radar, sa.event_start_str, str(sa.event_duration))
+                    _file_list = NexradDownloader(radar, sa.event_start_str, str(sa.event_duration), 
+                                                  download=True)
                     #sa.radar_dict[radar]['file_list'] = file_list
                     time.sleep(10)
                 except Exception as e:
@@ -598,7 +632,7 @@ def launch_simulation(n_clicks):
         # script needs to execute every time, even if a user doesn't select a radar
         # to transpose to. 
         run_transpose_script()
-        sa.rename_shifted_nse_placefiles()
+        #sa.rename_shifted_nse_placefiles()
           
         sa.scripts_progress = 'Creating hodo plots ...'
         for radar, data in sa.radar_dict.items():
@@ -620,6 +654,72 @@ def launch_simulation(n_clicks):
 
     return
 
+################################################################################################
+# ----------------------------- Monitoring and reporting script status  ------------------------
+################################################################################################
+@app.callback(
+    Output('radar_status', 'value'),
+    Output('hodo_status', 'value'),
+    Output('model_table', 'data'),
+    [Input('directory_monitor', 'n_intervals')],
+    prevent_initial_call=True)
+def monitor(n):
+    # Radar file download status
+    radar_dl_completion, radar_files = radar_monitor()
+    
+    # Hodographs. Currently hard-coded to expect 2 files for every radar and radar file.
+    num_hodograph_images = len(glob(f"{sa.hodo_images}/*.png"))
+    hodograph_completion = 0
+    if len(radar_files) > 0:
+        hodograph_completion = 100 * (num_hodograph_images / (2*len(radar_files)))
+
+    # NSE placefiles 
+    model_list = nse_status_checker()
+    return radar_dl_completion, hodograph_completion, model_list
+
+def radar_monitor():
+    """Reads radar_dict.json file(s) output from the NexradDownloader. Looks for associated 
+    radar files on the system and compares to the total expected number and broadcasts a 
+    percentage to the radar_status progress bar."""
+    expected_files = []
+    radar_dirs = glob(f"{sa.data_dir}/radar/**")
+    for d in radar_dirs:
+        json_file = glob(f"{d}/downloads/radar_dict.json")
+        if len(json_file) == 1:
+            with open(json_file[0], 'r') as f: 
+                radar_dictionary = json.load(f)
+                expected_files.extend(list(radar_dictionary.values()))
+    
+    files_on_system = [x for x in expected_files if os.path.exists(x)]
+    output = 0
+    if len(expected_files) > 0:
+        output = 100 * (len(files_on_system) / len(expected_files))
+    return output, files_on_system
+
+def nse_status_checker():
+    # Read in model status text file and query associated file sizes. 
+    filename = f"{sa.data_dir}/model_data/model_list.txt"
+    output = []
+    if os.path.exists(filename):
+        model_list = []
+        filesizes = []
+        with open(filename, 'r') as f: text_listing = f.readlines()
+        for line in text_listing:
+            filename = line[:-1]
+            model_list.append(filename.rsplit('/', 1)[1])
+            filesizes.append(round(file_stats(filename),2))
+
+        df = pd.DataFrame({'Model data': model_list,'Size (MB)': filesizes})
+        output = df.to_dict('records')
+
+    return output
+
+def file_stats(filename):
+    """Return the size of a specific file.  If it doesn't exist, returns 0"""
+    filesize = 0.
+    if os.path.exists(filename):
+        filesize = os.stat(filename).st_size / 1024000.
+    return filesize 
 
 # -------------------------------------
 # --- Transpose placefiles in time and space
@@ -749,7 +849,8 @@ def update_time(_n) -> str:
 
 if __name__ == '__main__':
     if lc.cloud:
-        app.run_server(host="0.0.0.0", port=8050, threaded=True, debug=True, use_reloader=False)
+        app.run_server(host="0.0.0.0", port=8050, threaded=True, debug=True, use_reloader=False,
+                       dev_tools_hot_reload=False)
     else:
         # Add hot reload to False. As files update during a run, page updates, and 
         # simulation dates change back to defaults causing issues with time shifting. 
