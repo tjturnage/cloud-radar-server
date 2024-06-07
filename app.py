@@ -56,6 +56,7 @@ POLLING_DIR = ASSETS_DIR / 'polling'
 PLACEFILES_DIR = ASSETS_DIR / 'placefiles'
 HODOGRAPHS_DIR = ASSETS_DIR / 'hodographs'
 DATA_DIR = BASE_DIR / 'data'
+MODEL_DIR = DATA_DIR / 'model_data'
 RADAR_DIR = DATA_DIR / 'radar'
 CSV_PATH = BASE_DIR / 'radars.csv'
 SCRIPTS_DIR = BASE_DIR / 'scripts'
@@ -350,7 +351,7 @@ class RadarSimulator(Config):
         Cleans up files and directories from the previous simulation so these datasets
         are not included in the current simulation.
         """
-        dirs = [RADAR_DIR, POLLING_DIR, HODOGRAPHS_DIR]
+        dirs = [RADAR_DIR, POLLING_DIR, HODOGRAPHS_DIR, MODEL_DIR]
         for directory in dirs:
             for root, dirs, files in os.walk(directory, topdown=False):
                 for name in files:
@@ -509,6 +510,7 @@ def query_radar_files():
                         download=False)
 
 def run_hodo_script(args):
+    print(args)
     subprocess.run(["python", HODO_SCRIPT_PATH] + args, check=True)
     return
 
@@ -558,8 +560,10 @@ def launch_simulation(n_clicks):
         sa.scripts_progress = 'Downloading radar data ...'
         try:
             # Initial for loop to gather all radar files. Not great, but not sure of a better
-            # way to handle this. 
+            # way to handle this. Calls NexradDownloader but passes download=False to only 
+            # query AWS for expected files
             query_radar_files()
+
             for _r, radar in enumerate(sa.radar_list):
                 radar = radar.upper()
                 try:
@@ -624,7 +628,7 @@ def launch_simulation(n_clicks):
 
             try:
                 print(f'hodo script:  {radar}, {sa.new_radar}, {asos_one}, {asos_two}, {sa.simulation_seconds_shift}')
-                #run_hodo_script([radar, sa.new_radar, asos_one, asos_two, str(sa.simulation_seconds_shift)])
+                run_hodo_script([radar, sa.new_radar, asos_one, asos_two, str(sa.simulation_seconds_shift)])
                 print("Hodograph script completed ...")
             except Exception as e:
                 print("Error running hodo script: ", e)
@@ -641,8 +645,8 @@ def launch_simulation(n_clicks):
     [Input('directory_monitor', 'n_intervals')],
     prevent_initial_call=True)
 def monitor(n):
-    radar_percentage = radar_monitor()
-    return radar_percentage
+    radar_dl_percentage = radar_monitor()
+    return radar_dl_percentage
 
 def radar_monitor():
     """Reads radar_dict.json file(s) output from the NexradDownloader. Looks for associated 
