@@ -216,7 +216,7 @@ scripts_button = dbc.Container(html.Div([
         dbc.Row([
             dbc.Col(
                 html.Div([
-                    dbc.Button('Make Obs Placefile ... Download radar data ... Make hodo plots', size="lg", id='run_scripts', n_clicks=0),
+                    dbc.Button('Download and process radar data ... Make Obs/NSE Placefiles ... Make hodo plots', size="lg", id='run_scripts', n_clicks=0),
                     ], className="d-grid gap-2"), style={'vertical-align':'middle'}),
                     html.Div(id='show_script_progress',style=feedback)
         ])
@@ -342,7 +342,7 @@ links_section = dbc.Container(dbc.Container(html.Div(
 # Clock components
 #---------------------------------------------------------------
 
-step_sim_clock = [dbc.CardBody([html.H5("Simulation Progres", className="card-text")])]
+step_sim_clock = [dbc.CardBody([html.H5("Simulation Progress", className="card-text")])]
 
 simulation_clock_slider = dcc.Slider(id='sim_clock', min=0, max=1440, step=1, value=0,
                                      marks={0:'00:00', 240:'04:00'})
