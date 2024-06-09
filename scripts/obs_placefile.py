@@ -1,7 +1,4 @@
 """
-05 Jan 2020: Now importing API_TOKEN for privacy since data are proprietary
-25 Feb 2023: Included RWIS data
-
 Retrieves observations via the Mesowest API.
 Learn more about setting up your own account at: https://synopticdata.com/
 
@@ -9,6 +6,7 @@ Get latest obs: https://developers.synopticdata.com/mesonet/v2/stations/latest/
 Obs network/station providers: https://developers.synopticdata.com/about/station-providers
 Selecting stations: https://developers.synopticdata.com/mesonet/v2/station-selectors/
 
+09 Jun 2024: Made exception handling more robust 
 """
 
 import sys
@@ -275,8 +273,12 @@ class Mesowest():
                                 wgst_str, text_info = self.convert_met_values(scratch,short,this_dict)
                                 #wgst_txt = temp_txt + text_info
 
-                        except Exception as e:
-                            pass
+                        except ValueError as ve:
+                            print(f'ValueError: {ve}')
+                            continue
+                        except TypeError as te:
+                            print(f'TypeError: {te}')
+                            continue
 
 
                 obj_head = f'Object: {lat},{lon}\n'

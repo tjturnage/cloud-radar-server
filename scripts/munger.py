@@ -1,24 +1,27 @@
-"""_summary_
+"""
+This script is used to munge Nexrad Archive 2 files so they can be used in Displaced Real-Time
+(DRT) simulations using GR2Analyst.
 
-    Returns:
-        _type_: _description_
+09 June 2024
+-- older archived files are compressed with gzip, so we need to uncompress them first
+-- unclear if uncompressed gzip files then need bzip2 uncompression
+
 """
 
 from __future__ import print_function
 import os
 import sys
-from datetime import datetime, timedelta
-import pytz
 from pathlib import Path
 import bz2
 import gzip
 import struct
-
+from datetime import datetime, timedelta
+import pytz
 
 class Munger():
     """
-    Copies Nexrad Archive 2 files from a raw directory so Displaced Real-Time (DRT) simulations can be performed
-    using GR2Analyst.
+    Copies Nexrad Archive 2 files from a raw directory so Displaced Real-Time (DRT) simulations
+    can be performed using GR2Analyst.
 
     munge_data: Boolean
         uses l2munger to:
@@ -54,7 +57,7 @@ class Munger():
             self.this_radar_polling_dir = self.POLLING_DIR / self.new_rda.upper()
 
         os.makedirs(self.this_radar_polling_dir, exist_ok=True)
-        
+
         self.playback_speed = playback_speed
         self.copy_l2munger_executable()
         self.uncompress_files()
@@ -62,7 +65,7 @@ class Munger():
         # commence munging
         self.munge_files()
 
-    def copy_l2munger_executable(self):
+    def copy_l2munger_executable(self) -> None:
         """
         The compiled l2munger executable needs to be in the source
         radar files directory to work properly
@@ -71,23 +74,39 @@ class Munger():
         os.system(chmod_cmd)
         cp_cmd = f'cp {self.L2MUNGER_FILEPATH} {self.source_directory}'
         os.system(cp_cmd)
-        
-        return
-    
-    def uncompress_files(self):
+
+
+    def uncompress_files(self) -> None:
         """
+        recent archived files are compressed with bzip2
+        earlier files are compressed with gzip
         example command line: python debz.py KBRO20170825_195747_V06 KBRO20170825_195747_V06.uncompressed
         """
 
         os.chdir(self.source_directory)
-        self.source_files = list(self.source_directory.glob('*V06'))
-        for original_file in self.source_files:
-            command_string = f'python {self.DEBZ_FILEPATH} {str(original_file)} {str(original_file)}.uncompressed'
-            os.system(command_string)
-        print("uncompress complete!")
-        return
+        self.source_files = list(self.source_directory.glob('*'))
 
-    def datetime_object_from_timestring(self, file):
+        for original_file in self.source_files:
+            filename_str = str(original_file)
+            if original_file.suffix == '.gz':
+                # Use gunzip for .gz files
+                command_string = f'gunzip {filename_str}'
+                os.system(command_string)
+                # unsure if ungzip'ed file needs to be passed to debz.py
+                unzipped_filename = filename_str[:-3]
+                new_command = f'python {self.DEBZ_FILEPATH} {unzipped_filename} {unzipped_filename}.uncompressed'
+                os.system(new_command)
+            elif original_file.suffix in ['.V06', '.V08']:
+                # Keep existing logic for .V06 and .V08 files
+                command_string = f'python {self.DEBZ_FILEPATH} {filename_str} {filename_str}.uncompressed'
+            else:
+                print(f'File type not recognized: {filename_str}')
+                continue
+        print("uncompress complete!")
+
+
+
+    def datetime_object_from_timestring(self, file: str) -> datetime:
         """
         - extracts datetime info from the radar filename
         - converts it to a timezone aware datetime object in UTC
@@ -96,7 +115,8 @@ class Munger():
         utc_file_time = file_time.replace(tzinfo=pytz.UTC)
         return utc_file_time
 
-    def fake(self,filename, new_dt):
+
+    def fake(self,filename, new_dt) -> None:
         """Heavily borrow metpy's code!"""
         if filename.endswith('.bz2'):
             fobj = bz2.BZ2File(filename, 'rb')
@@ -108,8 +128,8 @@ class Munger():
         vol_num = struct.unpack('3s', fobj.read(3))[0]
         date = struct.unpack('>L', fobj.read(4))[0]
         time_ms = struct.unpack('>L', fobj.read(4))[0]
-        stid = struct.unpack('4s', fobj.read(4))[0]
-        orig_dt = datetime.utcfromtimestamp((date - 1) * 86400. +
+        _stid = struct.unpack('4s', fobj.read(4))[0]
+        _orig_dt = datetime.utcfromtimestamp((date - 1) * 86400. +
                                                     time_ms * 0.001)
 
         seconds = (new_dt - datetime(1970, 1, 1)).total_seconds()
@@ -132,7 +152,7 @@ class Munger():
         return
 
     
-    def munge_files(self):
+    def munge_files(self) -> None:
         """
         Sets reference time to two hours before current time
         munges radar files to start at the reference time
@@ -159,12 +179,11 @@ class Munger():
             else:
                 print(f'{gzip_filename} already exists!')
 
-        
         move_command = f'mv {self.source_directory}/{self.new_rda}*gz {self.this_radar_polling_dir}'
         #print(move_command)
         os.system(move_command)
-        return
-        
+
+
 #-------------------------------
 if __name__ == "__main__":
     #orig_rda = 'KGRR'
