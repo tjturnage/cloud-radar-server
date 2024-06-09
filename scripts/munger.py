@@ -18,6 +18,7 @@ import bz2
 import gzip
 import struct
 from datetime import datetime, timedelta, timezone
+import time
 import pytz
 
 class Munger():
@@ -92,16 +93,19 @@ class Munger():
             filename_str = str(original_file)
             print(f'Uncompressing {filename_str}')
             if original_file.suffix == '.gz':
+                gzip.decompress(original_file)
                 # Use gunzip for .gz files
-                command_string = f'gunzip {filename_str}'
-                os.system(command_string)
+                #command_string = f'gunzip {filename_str}'
+                #os.system(command_string)
                 # unsure if ungzip'ed file needs to be passed to debz.py
-                unzipped_filename = filename_str[:-3]
-                new_command = f'python {self.DEBZ_FILEPATH} {unzipped_filename} {unzipped_filename}.uncompressed'
-                os.system(new_command)
-            elif original_file.suffix in ['.V06', '.V08']:
+                time.sleep(1)
+                filename_str = filename_str[:-3]
+                command_string = f'python {self.DEBZ_FILEPATH} {filename_str} {filename_str}.uncompressed'
+                os.system(command_string)
+            if original_file.suffix in ['.V06', '.V08']:
                 # Keep existing logic for .V06 and .V08 files
                 command_string = f'python {self.DEBZ_FILEPATH} {filename_str} {filename_str}.uncompressed'
+                os.system(command_string)
             else:
                 print(f'File type not recognized: {filename_str}')
                 continue
@@ -193,7 +197,7 @@ class Munger():
 
 #-------------------------------
 if __name__ == "__main__":
-    MANUAL_RUN = True
+    MANUAL_RUN = False
     if MANUAL_RUN:
         ORIG_RDA = 'KGRR'
         NEW_RDA = 'KGRR'
@@ -203,7 +207,7 @@ if __name__ == "__main__":
         simulation_time_shift = playback_start_time - event_start_time
         seconds_shift = int(simulation_time_shift.total_seconds())
         playback_start_str = datetime.strftime(playback_start_time,"%Y-%m-%d %H:%M:%S UTC")
-        playback_end_time = playback_start_time + timedelta(minutes=int(duration))
+        playback_end_time = playback_start_time + timedelta(minutes=int(DURATION))
         Munger(ORIG_RDA, playback_start_str, DURATION, seconds_shift, NEW_RDA, playback_speed=1.5)
     else:
         Munger(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], playback_speed=1.5)

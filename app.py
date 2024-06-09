@@ -636,9 +636,9 @@ def launch_simulation(n_clicks) -> None:
                 except Exception as e:
                     print("Error running nexrad script: ", e)
                 try:
-                    print(f"Skipping Munge from {radar} to {new_radar}...")
-                    #Munger(radar, sa.playback_start_str, sa.event_duration, sa.simulation_seconds_shift,
-                    #       new_radar, playback_speed=1.5)
+                    print(f"Munge from {radar} to {new_radar}...")
+                    Munger(radar, sa.playback_start_str, sa.event_duration, sa.simulation_seconds_shift,
+                           new_radar, playback_speed=1.5)
                     print(f"Munge for {new_radar} completed ...")
                     # this gives the user some radar data to poll while other scripts are running
                     UpdateDirList(
