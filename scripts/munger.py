@@ -93,20 +93,24 @@ class Munger():
             filename_str = str(original_file)
             print(f'Uncompressing {filename_str}')
             if original_file.suffix == '.gz':
-                #gzip.decompress(original_file)
+                # #gzip.decompress(original_file)
 
-                with gzip.open(original_file, 'rb') as f_in:
-                    file_content = f_in.read()
+                # with gzip.open(original_file, 'rb') as f_in:
+                #     file_content = f_in.read()
                 
-                output_file = original_file.rstrip('.gz')
-                with open(output_file, 'wb') as f_out:
-                    f_out.write(file_content)                # Use gunzip for .gz files
+                # output_file = original_file.rstrip('.gz')
+                # with open(output_file, 'wb') as f_out:
+                #     f_out.write(file_content)                # Use gunzip for .gz files
 
-                #command_string = f'gunzip {filename_str}'
-                #os.system(command_string)
+                command_string = f'gunzip {filename_str}'
+                os.system(command_string)
                 # unsure if ungzip'ed file needs to be passed to debz.py
+                filename_str = filename_str[:-3]
+                new_filename = f'{filename_str}.uncompressed'
+                os.rename(filename_str, new_filename)
                 time.sleep(1)
-                #filename_str = filename_str[:-3]
+                
+
                 #command_string = f'python {self.DEBZ_FILEPATH} {filename_str} {filename_str}.uncompressed'
                 #os.system(command_string)
             if original_file.suffix in ['.V06', '.V08']:
