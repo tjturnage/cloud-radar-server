@@ -61,41 +61,47 @@ class NexradDownloader:
         return prefix_one, prefix_two
 
 
-    def identify_radar_files(self, filename) -> None:
+    def identify_radar_files(self, obj) -> None:
         """
         Filters out non-radar files that are in the bucket.
         Identifies those radar files that are within the time range specified by the user.
         This is done by comparing the filename datetime string with the simulation start/end time.
         """
+        key = obj.key
+        filename = Path(obj.key).name
         if filename.endswith('V06') or filename.endswith('V08') or filename.endswith('.gz'):
             file_dt = datetime.strptime(filename[4:19], '%Y%m%d_%H%M%S')
             if file_dt >= self.start_time and file_dt <= self.end_time:
                 this_file = str(self.download_directory / filename)
                 print(this_file)
-                self.radar_files_dict[filename] = this_file
+                self.bucket.download_file(key, this_file)
+                #self.radar_files_dict[filename] = this_file
 
-    def download_files(self):
+    def download_files(self) -> None:
         """
         Finds the radar files that are within the day(s) of concern.
         self.make_prefix() determined the filters and whether the simulation span two days.
         """
         for obj in self.bucket.objects.filter(Prefix=self.prefix_day_one):
-            filename = Path(obj.key).name
-            self.identify_radar_files(filename)
+            self.identify_radar_files(obj)
 
         if self.prefix_day_two is not None:
             for obj in self.bucket.objects.filter(Prefix=self.prefix_day_two):
-                filename = Path(obj.key).name
-                self.identify_radar_files(filename)
+                self.identify_radar_files(obj)
 
         if not self.download:
-            with open(f"{self.download_directory}/radar_dict.json", 'w', encoding='utf-8') as f:
-                json.dump(self.radar_files_dict, f)
+            try:
+                with open(f"{self.download_directory}/radar_dict.json", 'w', encoding='utf-8') as f:
+                    json.dump(self.radar_files_dict, f)
+            except:
+                print('No radar files found in the specified time range.')
         else:
-            with open(f"{self.download_directory}/radar_dict.json", 'r', encoding='utf-8') as f:
-                radar_files = json.load(f)
-            for key, this_file in radar_files.items():
-                self.bucket.download_file(key, this_file)
+            try:
+                print('Downloaded radar files:')
+                #with open(f"{self.download_directory}/radar_dict.json", 'r', encoding='utf-8') as f:
+                #    radar_files = json.load(f)
+            except:
+                print('No radar files found in the specified time range.')
 
 
 if __name__ == "__main__":
