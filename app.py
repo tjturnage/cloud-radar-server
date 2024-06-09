@@ -635,9 +635,9 @@ def launch_simulation(n_clicks) -> None:
                 except Exception as e:
                     print("Error running nexrad script: ", e)
                 try:
-                    print(f"Munge from {radar} to {new_radar}...")
-                    Munger(radar, sa.playback_start_str, sa.event_duration, sa.simulation_seconds_shift,
-                           new_radar, playback_speed=1.5)
+                    print(f"Skipping Munge from {radar} to {new_radar}...")
+                    #Munger(radar, sa.playback_start_str, sa.event_duration, sa.simulation_seconds_shift,
+                    #       new_radar, playback_speed=1.5)
                     print(f"Munge for {new_radar} completed ...")
                     # this gives the user some radar data to poll while other scripts are running
                     UpdateDirList(
@@ -651,19 +651,19 @@ def launch_simulation(n_clicks) -> None:
 
         sa.scripts_progress = 'Creating obs placefiles ...'
         try:
-            print("Running obs script...")
-            Mesowest(str(sa.lat), str(sa.lon),
-                     sa.event_start_str, str(sa.event_duration))
-            print("Obs script completed")
+            print("Skipping Running obs script...")
+            #Mesowest(str(sa.lat), str(sa.lon),
+            #         sa.event_start_str, str(sa.event_duration))
+            #print("Obs script completed")
         except Exception as e:
             print("Error running obs script: ", e)
 
         sa.scripts_progress = 'Creating NSE placefiles ...'
         # NSE placefiles
         try:
-            print("Running NSE scripts...")
-            Nse(sa.event_start_time, sa.event_duration, sa.scripts_path, sa.data_dir,
-                sa.placefiles_dir)
+            print("Skipping Running NSE scripts...")
+            #Nse(sa.event_start_time, sa.event_duration, sa.scripts_path, sa.data_dir,
+            #    sa.placefiles_dir)
         except Exception as e:
             print("Error running NSE scripts: ", e)
 
