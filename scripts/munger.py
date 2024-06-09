@@ -11,7 +11,7 @@ This script is used to munge Nexrad Archive 2 files so they can be used in Displ
 
 from __future__ import print_function
 import os
-#import sys
+import sys
 import shutil
 from pathlib import Path
 import bz2
@@ -193,18 +193,18 @@ class Munger():
 
 #-------------------------------
 if __name__ == "__main__":
-    orig_rda = 'KGRR'
-    new_rda = 'KGRR'
-    playback_start_time = datetime.now(tz=timezone.utc) - timedelta(hours=2)
-    event_start_time = datetime(2013, 5, 7, 21, 45, 0, tzinfo=timezone.utc)
-    duration = 30   # minutes
-
-    simulation_time_shift = playback_start_time - event_start_time
-    seconds_shift = int(simulation_time_shift.total_seconds())
-
-    playback_start_str = datetime.strftime(playback_start_time,"%Y-%m-%d %H:%M:%S UTC")
-    playback_end_time = playback_start_time + timedelta(minutes=int(duration))
-    Munger(orig_rda, playback_start_str, duration, seconds_shift, new_rda, playback_speed=1.5)
-
-    #Munger(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], playback_speed=1.5)
-    #original_rda, playback_start, duration, timeshift, new_rda, playback_speed=1.5
+    MANUAL_RUN = True
+    if MANUAL_RUN:
+        ORIG_RDA = 'KGRR'
+        NEW_RDA = 'KGRR'
+        playback_start_time = datetime.now(tz=timezone.utc) - timedelta(hours=2)
+        event_start_time = datetime(2013, 5, 7, 21, 45, 0, tzinfo=timezone.utc)
+        DURATION = 30
+        simulation_time_shift = playback_start_time - event_start_time
+        seconds_shift = int(simulation_time_shift.total_seconds())
+        playback_start_str = datetime.strftime(playback_start_time,"%Y-%m-%d %H:%M:%S UTC")
+        playback_end_time = playback_start_time + timedelta(minutes=int(duration))
+        Munger(ORIG_RDA, playback_start_str, DURATION, seconds_shift, NEW_RDA, playback_speed=1.5)
+    else:
+        Munger(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], playback_speed=1.5)
+        #original_rda, playback_start, duration, timeshift, new_rda, playback_speed=1.5
