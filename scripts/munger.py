@@ -5,17 +5,19 @@ This script is used to munge Nexrad Archive 2 files so they can be used in Displ
 09 June 2024
 -- older archived files are compressed with gzip, so we need to uncompress them first
 -- unclear if uncompressed gzip files then need bzip2 uncompression
+-- writes munged files directly to polling dir with python gzip library instead of os.system commands
 
 """
 
 from __future__ import print_function
 import os
-import sys
+#import sys
+import shutil
 from pathlib import Path
 import bz2
 import gzip
 import struct
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import pytz
 
 class Munger():
@@ -173,31 +175,36 @@ class Munger():
             os.system(command_line)
             new_filename = f'{self.new_rda}{new_filename_date_string}'
             #print(new_filename)
-            gzip_filename = f'{new_filename}.gz'
-            if gzip_filename not in os.listdir(self.source_directory):
-                gzip_command = f'gzip {new_filename}'
-                os.system(gzip_command)
-            else:
-                print(f'{gzip_filename} already exists!')
+            with open(new_filename, 'rb') as f_in:
+                with gzip.open(f'{self.this_radar_polling_dir}/{new_filename}.gz', 'wb') as f_out:
+                    shutil.copyfileobj(f_in, f_out)
+            #gzip_filename = f'{new_filename}.gz'
+            #if gzip_filename not in os.listdir(self.this_radar_polling_dir):
+            #    gzip_command = f"gzip -c {new_filename} > {self.this_radar_polling_dir}/{new_filename}.gz"
+                
+            #    os.system(gzip_command)
+            #else:
+            #    print(f'{gzip_filename} already exists!')
 
-        move_command = f'mv {self.source_directory}/{self.new_rda}*gz {self.this_radar_polling_dir}'
+        #move_command = f'mv {self.source_directory}/{self.new_rda}*gz {self.this_radar_polling_dir}'
         #print(move_command)
-        os.system(move_command)
+        #os.system(move_command)
 
 
 #-------------------------------
 if __name__ == "__main__":
-    #orig_rda = 'KGRR'
-    #target_rda = 'KGRR'
-    #playback_start_time = datetime.now(tz=timezone.utc) - timedelta(hours=2)
-    #event_start_time = datetime(2024, 5, 7, 21, 45, 0, tzinfo=timezone.utc)
-    #sim_duration = 30   # minutes
+    orig_rda = 'KGRR'
+    new_rda = 'KGRR'
+    playback_start_time = datetime.now(tz=timezone.utc) - timedelta(hours=2)
+    event_start_time = datetime(2013, 5, 7, 21, 45, 0, tzinfo=timezone.utc)
+    duration = 30   # minutes
 
-    #simulation_time_shift = playback_start_time - event_start_time
-    #seconds_shift = int(simulation_time_shift.total_seconds())
+    simulation_time_shift = playback_start_time - event_start_time
+    seconds_shift = int(simulation_time_shift.total_seconds())
 
-    #playback_start_str = datetime.strftime(playback_start_time,"%Y-%m-%d %H:%M:%S UTC")
-    #playback_end_time = playback_start_time + timedelta(minutes=int(event_duration))
+    playback_start_str = datetime.strftime(playback_start_time,"%Y-%m-%d %H:%M:%S UTC")
+    playback_end_time = playback_start_time + timedelta(minutes=int(duration))
+    Munger(orig_rda, playback_start_str, duration, seconds_shift, new_rda, playback_speed=1.5)
 
-    Munger(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], playback_speed=1.5)
+    #Munger(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], playback_speed=1.5)
     #original_rda, playback_start, duration, timeshift, new_rda, playback_speed=1.5
