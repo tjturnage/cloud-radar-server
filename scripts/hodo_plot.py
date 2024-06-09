@@ -37,8 +37,8 @@ except:
     asos_two = None
 
 timeshift_seconds = int(sys.argv[5])
-#BASE_DIR = Path('/data/cloud-radar-server')
-BASE_DIR = Path.cwd()
+BASE_DIR = Path('/data/cloud-radar-server')
+#BASE_DIR = Path.cwd()
 RADAR_DIR = BASE_DIR / 'data' / 'radar'
 HODO_IMAGES = BASE_DIR / 'assets'/ 'hodographs'
 
