@@ -88,6 +88,7 @@ class Munger():
 
         for original_file in self.source_files:
             filename_str = str(original_file)
+            print(f'Uncompressing {filename_str}')
             if original_file.suffix == '.gz':
                 # Use gunzip for .gz files
                 command_string = f'gunzip {filename_str}'

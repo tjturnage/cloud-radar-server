@@ -101,6 +101,7 @@ class RadarSimulator(Config):
         self.number_of_radars = 0
         self.radar_list = []
         self.radar_dict = {}
+        self.radar_files_dict = {}
         self.radar = None
         self.lat = None
         self.lon = None
