@@ -44,7 +44,21 @@ class UpdateHodoHTML():
     def __init__(self, playback_time: str, initialize: bool = False):
         self.playback_time = playback_time
         self.initialize = initialize
+        if initialize:
+            self.initialize_hodo_page()
+        else:
+            self.update_hodo_page()
 
+    def initialize_hodo_page(self) -> None:
+        """
+        Initializes the hodographs.html page with a message that graphics are not available
+        """
+        with open(HODOGRAPHS_HTML_PAGE, 'w', encoding='utf-8') as fout:
+            fout.write(HEAD_NOLIST)
+            fout.write('<h1>Graphics not available, check back later!</h1>\n')
+            fout.write(TAIL_NOLIST)
+        return
+    
     def update_hodo_page(self) -> None:
         """
         Updates the hodographs.html page with available hodographs based on the current playback time
@@ -52,23 +66,17 @@ class UpdateHodoHTML():
         """
         try:
             current_playback_time = datetime.strptime(self.playback_time,"%Y-%m-%d %H:%M:%S UTC").replace(tzinfo=pytz.UTC).timestamp()
-        except ValueError:
+            print(current_playback_time)
+        except ValueError as ve:
+            print(f'Could not decode current playback time: {ve}')
             current_playback_time = 'None'
-        
-        if self.initialize:
-            with open(HODOGRAPHS_HTML_PAGE, 'w', encoding='utf-8') as fout:
-                fout.write(HEAD_NOLIST)
-                fout.write('<h1>Graphics not available, check back later!</h1>\n')
-                fout.write(TAIL_NOLIST)
-            return
-        
+       
         with open(HODOGRAPHS_HTML_PAGE, 'w', encoding='utf-8') as fout:
             fout.write(HEAD)
             image_files = [f for f in os.listdir(HODOGRAPHS_DIR) if f.endswith('.png') or f.endswith('.jpg')]
             for filename in image_files:
                 file_time = datetime.strptime(filename[-19:-4], '%Y%m%d_%H%M%S').replace(tzinfo=pytz.UTC).timestamp()
-                #if file_time < current_playback_time:
-                if file_time < 999999999999999:
+                if file_time < current_playback_time:
                     print(filename)      
                     line = f'<li><a href="hodographs/{filename}">{filename}</a></li>\n'
                     fout.write(line)
@@ -77,4 +85,4 @@ class UpdateHodoHTML():
 
 if __name__ == "__main__":
     #this_playback_time = '2024-06-01 23:15:20 UTC'
-    UpdateHodoHTML(sys.argv[1])
+    UpdateHodoHTML(sys.argv[1], sys.argv[2])

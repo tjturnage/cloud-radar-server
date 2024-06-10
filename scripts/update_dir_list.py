@@ -37,17 +37,20 @@ class UpdateDirList():
         self.this_radar_polling_directory = self.POLLING_DIR / self.radar
         print(self.this_radar_polling_directory)
         self.dirlist_flle = self.this_radar_polling_directory / 'dir.list'
-        try:
-            self.current_playback_time = datetime.strptime(self.current_playback_timestr,"%Y-%m-%d %H:%M:%S UTC").replace(tzinfo=pytz.UTC).timestamp()
-        except ValueError:
-            self.current_playback_time = 'None'
+        self.current_playback_time = None
         print(self.current_playback_timestr)
         self.initialize = initialize
         self.filelist = sorted(list(self.this_radar_polling_directory.glob('*gz')))
         if initialize:
             self.dirlist_initialize()
         else:
-            self.update_dirlist()
+            try:
+                self.current_playback_time = datetime.strptime(self.current_playback_timestr,"%Y-%m-%d %H:%M:%S UTC").replace(tzinfo=pytz.UTC).timestamp()
+                self.update_dirlist()
+            except ValueError as ve:
+                print(f'Could not update dirlist: {ve}')
+                self.current_playback_time = 'None'
+
 
     def datetime_object_from_timestring(self, filename: str) -> float:
         """
@@ -81,11 +84,12 @@ class UpdateDirList():
         """
         output = ''
         for file in self.filelist:
-            print(file.parts[-1])
+            #print(file.parts[-1])
             file_timestamp = self.datetime_object_from_timestring(file.parts[-1])
             if file_timestamp < self.current_playback_time:
+                print(f'file: {file_timestamp} is older than {self.current_playback_time}')
                 line = f'{file.stat().st_size} {file.parts[-1]}\n'
-                #print(line)
+                print(f'adding: {line}')
                 output = output + line
         with open(self.dirlist_flle, mode='w', encoding='utf-8') as f:
             f.write(output)

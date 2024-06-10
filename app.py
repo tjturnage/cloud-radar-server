@@ -641,8 +641,7 @@ def launch_simulation(n_clicks) -> None:
                            new_radar, playback_speed=1.5)
                     print(f"Munge for {new_radar} completed ...")
                     # this gives the user some radar data to poll while other scripts are running
-                    UpdateDirList(
-                        new_radar, current_playback_time='None', initialize=True)
+                    UpdateDirList(new_radar, 'None', initialize=True)
 
                 except Exception as e:
                     print(
@@ -693,7 +692,7 @@ def launch_simulation(n_clicks) -> None:
             except Exception as e:
                 print("Error running hodo script: ", e)
             try:
-                UpdateHodoHTML('None', initialize=False)
+                UpdateHodoHTML('None', initialize=True)
             except Exception as e:
                 print("Error updating hodo html: ", e)
 
@@ -910,7 +909,7 @@ def update_time(_n) -> str:
 
     # sa.playback_timer += timedelta(seconds=90)
     while sa.playback_timer < sa.playback_end_time:
-        sa.playback_timer += timedelta(seconds=45)
+        sa.playback_timer += timedelta(seconds=90)
         playback_time_str = sa.playback_timer.strftime("%Y-%m-%d %H:%M:%S UTC")
         UpdateHodoHTML(playback_time_str, initialize=False)
         if sa.new_radar != 'None':
