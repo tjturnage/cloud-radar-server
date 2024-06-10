@@ -67,7 +67,8 @@ class UpdateHodoHTML():
             image_files = [f for f in os.listdir(HODOGRAPHS_DIR) if f.endswith('.png') or f.endswith('.jpg')]
             for filename in image_files:
                 file_time = datetime.strptime(filename[-19:-4], '%Y%m%d_%H%M%S').replace(tzinfo=pytz.UTC).timestamp()
-                if file_time < current_playback_time:
+                #if file_time < current_playback_time:
+                if file_time < 999999999999999:
                     print(filename)      
                     line = f'<li><a href="hodographs/{filename}">{filename}</a></li>\n'
                     fout.write(line)
