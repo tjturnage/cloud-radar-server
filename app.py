@@ -694,6 +694,8 @@ def launch_simulation(n_clicks) -> None:
                 print("Error running hodo script: ", e)
             try:
                 UpdateHodoHTML('None', initialize=False)
+            except Exception as e:
+                print("Error updating hodo html: ", e)
 
         sa.scripts_progress = 'Scripts completed!'
 
