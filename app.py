@@ -652,19 +652,19 @@ def launch_simulation(n_clicks) -> None:
 
         sa.scripts_progress = 'Creating obs placefiles ...'
         try:
-            print("Skipping Running obs script...")
-            #Mesowest(str(sa.lat), str(sa.lon),
-            #         sa.event_start_str, str(sa.event_duration))
-            #print("Obs script completed")
+            print("Running obs script...")
+            Mesowest(str(sa.lat), str(sa.lon),
+                     sa.event_start_str, str(sa.event_duration))
+            print("Obs script completed")
         except Exception as e:
             print("Error running obs script: ", e)
 
         sa.scripts_progress = 'Creating NSE placefiles ...'
         # NSE placefiles
         try:
-            print("Skipping Running NSE scripts...")
-            #Nse(sa.event_start_time, sa.event_duration, sa.scripts_path, sa.data_dir,
-            #    sa.placefiles_dir)
+            print("Running NSE scripts...")
+            Nse(sa.event_start_time, sa.event_duration, sa.scripts_path, sa.data_dir,
+                sa.placefiles_dir)
         except Exception as e:
             print("Error running NSE scripts: ", e)
 
@@ -692,6 +692,8 @@ def launch_simulation(n_clicks) -> None:
                 print("Hodograph script completed ...")
             except Exception as e:
                 print("Error running hodo script: ", e)
+            try:
+                UpdateHodoHTML('None', initialize=False)
 
         sa.scripts_progress = 'Scripts completed!'
 
