@@ -93,15 +93,6 @@ class Munger():
             filename_str = str(original_file)
             print(f'Uncompressing {filename_str}')
             if original_file.suffix == '.gz':
-                # #gzip.decompress(original_file)
-
-                # with gzip.open(original_file, 'rb') as f_in:
-                #     file_content = f_in.read()
-                
-                # output_file = original_file.rstrip('.gz')
-                # with open(output_file, 'wb') as f_out:
-                #     f_out.write(file_content)                # Use gunzip for .gz files
-
                 command_string = f'gunzip {filename_str}'
                 os.system(command_string)
                 # unsure if ungzip'ed file needs to be passed to debz.py
@@ -110,10 +101,7 @@ class Munger():
                 os.rename(filename_str, new_filename)
                 time.sleep(1)
                 
-
-                #command_string = f'python {self.DEBZ_FILEPATH} {filename_str} {filename_str}.uncompressed'
-                #os.system(command_string)
-            if original_file.suffix in ['.V06', '.V08']:
+            if 'V0' in filename_str:
                 # Keep existing logic for .V06 and .V08 files
                 command_string = f'python {self.DEBZ_FILEPATH} {filename_str} {filename_str}.uncompressed'
                 os.system(command_string)
@@ -185,7 +173,7 @@ class Munger():
             new_time_str = datetime.strftime(new_time_obj, '%Y/%m/%d %H:%M:%S')
             new_filename_date_string = datetime.strftime(new_time_obj, '%Y%m%d_%H%M%S')
             command_line = f'./l2munger {self.new_rda} {new_time_str} 1 {file_datetime_str}'
-            #print(command_line)
+            print(command_line)
             #print(f'     source file = {fn}')
             os.system(command_line)
             new_filename = f'{self.new_rda}{new_filename_date_string}'

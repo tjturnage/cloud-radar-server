@@ -25,6 +25,7 @@ spacer = html.Div([ ], style={'height': '30px'})
 spacer_mini = html.Div([ ], style={'height': '10px'})
 
 df = pd.read_csv('radars.csv', dtype={'lat': float, 'lon': float})
+#df = pd.read_csv('radars_no_tdwr.csv', dtype={'lat': float, 'lon': float})
 df['radar_id'] = df['radar']
 df.set_index('radar_id', inplace=True)
 
@@ -175,7 +176,7 @@ fig.update_layout(
 
 
 fig.update_layout(uirevision= 'foo', clickmode= 'event+select',
-                hovermode='closest', hoverdistance=3,
+                hovermode='closest', hoverdistance=10,
                 margin = {'r':0,'t':0,'l':0,'b':0},)
 
 

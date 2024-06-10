@@ -187,7 +187,7 @@ class RadarSimulator(Config):
         os.makedirs(self.hodo_images, exist_ok=True)
         self.placefiles_dir = self.assets_dir / 'placefiles'
         os.makedirs(self.placefiles_dir, exist_ok=True)
-        UpdateHodoHTML('None', initialize=True)
+
 
     def make_simulation_times(self) -> None:
         """
