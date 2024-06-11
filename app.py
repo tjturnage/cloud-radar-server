@@ -9,6 +9,9 @@ radar data generation, including the handling of time shifts and geographical co
 -- More docstrings and type hints added
 -- Pylinting checks and corrections
 
+11 Jun 2024
+- Trying to show Transpose radar section only if radar_quantity is 1 and radar is selected
+- need to account for the possibility of a user selecting fewer radars, including 3 --> 1
 """
 # from flask import Flask, render_template
 import os
@@ -511,8 +514,10 @@ def toggle_transpose_display(value):
     This function will hide the transpose section if the number of radars is > 1
     """
     sa.number_of_radars = value
-    while len(sa.radar_list) > sa.number_of_radars:
+    if len(sa.radar_list) > sa.number_of_radars:
         sa.radar_list = sa.radar_list[1:]
+        if len(sa.radar_list) > sa.number_of_radars:
+            sa.radar_list = sa.radar_list[1:]
     if sa.number_of_radars == 1 and len(sa.radar_list) == 1:
         return lc.section_box
     return {'display': 'none'}

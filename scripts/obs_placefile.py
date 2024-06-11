@@ -7,9 +7,9 @@ Obs network/station providers: https://developers.synopticdata.com/about/station
 Selecting stations: https://developers.synopticdata.com/mesonet/v2/station-selectors/
 
 09 Jun 2024: Made exception handling more robust 
+11 Jun 2024: Exceptions not robust enough! Added KeyError handling, since that was the main issue
 """
 
-import sys
 import os
 import math
 from datetime import datetime, timedelta
@@ -18,7 +18,6 @@ import requests
 from dotenv import load_dotenv
 load_dotenv()
 API_TOKEN = os.getenv("SYNOPTIC_API_TOKEN")
-
 PLACEFILES_DIR = os.path.join(os.getcwd(),'assets','placefiles')
 API_ROOT = "https://api.synopticdata.com/v2/"
 
@@ -279,7 +278,9 @@ class Mesowest():
                         except TypeError as te:
                             print(f'TypeError: {te}')
                             continue
-
+                        except KeyError as ke:
+                            print(f'KeyError {ke}')
+                            continue
 
                 obj_head = f'Object: {lat},{lon}\n'
 
@@ -519,4 +520,5 @@ class Mesowest():
 
 
 if __name__ == "__main__":
-    test = Mesowest(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])
+    #test = Mesowest(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])
+    test = Mesowest(42.9634, -85.6681, '2024-06-01 23:15:20 UTC', 60)
