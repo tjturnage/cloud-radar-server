@@ -19,7 +19,7 @@ def exec_script(script_path, args):
         return e
     
 
-def get_python_processes():
+def get_app_processes():
     """
     Reports back all running python processes as a list. Used by the monitoring 
     function and cancel button.
@@ -36,11 +36,15 @@ def get_python_processes():
     return processes 
 
 def cancel_all():
+    """
+    This function is invoked when the user clicks the Cancel button in the app. See
+    app.cancel_scripts.
+    """
     # Should move this somewhere else, maybe into the __init__ function? These are 
     # the cancelable scripts
     scripts_list = ["Nexrad.py", "nse.py", "get_data.py", "process.py", 
                     "hodo_plot.py", "munger.py"]
-    processes = get_python_processes()
+    processes = get_app_processes()
 
     # ******************************************************************************
     # POTENTIAL ISSUES - Race Conditions?
@@ -63,9 +67,11 @@ def cancel_all():
             #p.terminate()
 
 def radar_monitor(sa):
-    """Reads radar_dict.json file(s) output from the NexradDownloader. Looks for associated 
+    """
+    Reads radar_dict.json file(s) output from the NexradDownloader. Looks for associated 
     radar files on the system and compares to the total expected number and broadcasts a 
-    percentage to the radar_status progress bar."""
+    percentage to the radar_status progress bar.
+    """
     expected_files = []
     radar_dirs = glob(f"{sa.data_dir}/radar/**")
     for d in radar_dirs:
