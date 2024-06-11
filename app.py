@@ -518,7 +518,7 @@ def toggle_transpose_display(value):
         sa.radar_list = sa.radar_list[1:]
         if len(sa.radar_list) > sa.number_of_radars:
             sa.radar_list = sa.radar_list[1:]
-    if sa.number_of_radars == 1 and len(sa.radar_list) == 1:
+    if 0 < sa.number_of_radars < 2:
         return lc.section_box
     return {'display': 'none'}
 
@@ -526,8 +526,10 @@ def toggle_transpose_display(value):
 # ---  Run Scripts button ---
 # -------------------------------------
 
-
 def query_radar_files():
+    """
+    Get the radar files from the AWS bucket. This is a preliminary step to build the progess bar
+    """
     for _r, radar in enumerate(sa.radar_list):
         radar = radar.upper()
         NexradDownloader(radar, sa.event_start_str, str(sa.event_duration),
