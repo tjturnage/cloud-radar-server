@@ -218,6 +218,8 @@ scripts_button = dbc.Container(html.Div([
             dbc.Col(
                 html.Div([
                     dbc.Button('Download and process radar data ... Make Obs/NSE Placefiles ... Make hodo plots', size="lg", id='run_scripts', n_clicks=0),
+                    dbc.Button('Cancel all scripts', size="lg", id='cancel_scripts', n_clicks=0, disabled=True, 
+                                style={'background-color': '#e25050', 'border-color': '#e25050'}),
                     ], className="d-grid gap-2"), style={'vertical-align':'middle'}),
                     html.Div(id='show_script_progress',style=feedback)
         ])
