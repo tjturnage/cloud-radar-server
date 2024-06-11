@@ -181,7 +181,7 @@ class RadarSimulator(Config):
         self.data_dir = self.current_dir / 'data'
         os.makedirs(self.data_dir, exist_ok=True)
         self.scripts_path = self.current_dir / 'scripts'
-        self.obs_script_path = self.current_dir / 'obs_placefile.py'
+        self.obs_script_path = self.scripts_path / 'obs_placefile.py'
         self.hodo_script_path = self.scripts_path / 'hodo_plot.py'
         self.nexrad_script_path = self.scripts_path / 'Nexrad.py'
         self.l2munger_script_path = self.scripts_path / 'munger.py'
@@ -732,7 +732,7 @@ def run_with_cancel_button():
             e = utils.exec_script(sa.nexrad_script_path, args)
             # This section is what forces the callback to end if the cancel button was hit.
             # The returncode for the exception equals the SIGTERM value (usually 15).
-            if e and e.returncode == -1*signal.SIGTERM:
+            if e and e.returncode in [signal.SIGTERM, -1*signal.SIGTERM]:
                 return
             
             # Munger
@@ -740,7 +740,7 @@ def run_with_cancel_button():
             args = [radar, str(sa.playback_start_str), str(sa.event_duration), str(sa.simulation_seconds_shift),
                     new_radar]
             e = utils.exec_script(sa.l2munger_script_path, args)
-            if e and e.returncode == -1*signal.SIGTERM:
+            if e and e.returncode in [signal.SIGTERM, -1*signal.SIGTERM]:
                 return
             print(f"Munge for {new_radar} completed ...")
             
@@ -757,7 +757,7 @@ def run_with_cancel_button():
     print("Running obs script...")
     args = [str(sa.lat), str(sa.lon), sa.event_start_str, str(sa.event_duration)]
     e = utils.exec_script(sa.obs_script_path, args)
-    if e and e.returncode == -1*signal.SIGTERM:
+    if e and e.returncode in [signal.SIGTERM, -1*signal.SIGTERM]:
         return
 
     sa.scripts_progress = 'Creating NSE placefiles ...'
@@ -765,7 +765,7 @@ def run_with_cancel_button():
     args = [str(sa.event_start_time), str(sa.event_duration), str(sa.scripts_path), 
             str(sa.data_dir), str(sa.placefiles_dir)]
     #e = utils.exec_script(sa.nse_script_path, args)
-    if e and e.returncode == -1*signal.SIGTERM:
+    if e and e.returncode in [signal.SIGTERM, -1*signal.SIGTERM]:
         return
     
     # Since there will always be a timeshift associated with a simulation, this
@@ -791,7 +791,7 @@ def run_with_cancel_button():
         args = [radar, sa.new_radar, asos_one, asos_two, 
                 str(sa.simulation_seconds_shift)]
         e = utils.exec_script(sa.hodo_script_path, args)
-        if e and e.returncode == -1*signal.SIGTERM:
+        if e and e.returncode in [signal.SIGTERM, -1*signal.SIGTERM]:
             return
         print("Hodograph script completed ...")
 
@@ -919,8 +919,7 @@ def get_sim(_yr, _mo, _dy, _hr, _mn, _dur) -> str:
     object for use in scripts so don't need to be explicitly returned here.
     """
     sa.make_simulation_times()
-    line1 = f'Start: {sa.event_start_str[:-7]
-                      }Z ____ {sa.event_duration} minutes'
+    line1 = f'Start: {sa.event_start_str[:-7]}Z ____ {sa.event_duration} minutes'
     return line1
 
 

@@ -4,6 +4,7 @@ import psutil
 from glob import glob 
 import json 
 import pandas as pd 
+from pathlib import Path 
 
 def exec_script(script_path, args):
     """
@@ -12,8 +13,14 @@ def exec_script(script_path, args):
     by the user via the cancel button. Returns Exception object which is parsed to 
     determine exit code/status. 
     """
+    # Need to specify the PYTHON executable on the windows laptop. 
+    dir_parts = Path.cwd().parts
+    PYTHON = "python"
+    if 'C:\\' in dir_parts:
+        PYTHON = "C:\\Users\\lee.carlaw\\environments\\cloud-radar\\Scripts\python.exe"
+
     try:
-        subprocess.run(["python", script_path] + args, check=True)
+        subprocess.run([PYTHON, script_path] + args, check=True)
     except Exception as e:
         print(f"Error running {script_path}: {e}")
         return e
