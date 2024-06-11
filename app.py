@@ -651,7 +651,7 @@ def launch_simulation(n_clicks) -> None:
                 e = exec_script("Nexrad.py", args)
                 # This section is what forces the callback to end if the cancel button was hit.
                 # The returncode for the exception equals the SIGTERM value (usually 15).
-                if e and e.returncode == signal.SIGTERM:
+                if e and e.returncode == -1*signal.SIGTERM:
                     return
                 
                 # Munger
@@ -659,7 +659,7 @@ def launch_simulation(n_clicks) -> None:
                 args = [radar, str(sa.playback_start_str), str(sa.event_duration), str(sa.simulation_seconds_shift),
                         new_radar]
                 e = exec_script("munger.py", args)
-                if e and e.returncode == signal.SIGTERM:
+                if e and e.returncode == -1*signal.SIGTERM:
                     return
                 print(f"Munge for {new_radar} completed ...")
                 
@@ -676,7 +676,7 @@ def launch_simulation(n_clicks) -> None:
         print("Running obs script...")
         args = [str(sa.lat), str(sa.lon), sa.event_start_str, str(sa.event_duration)]
         e = exec_script("obs_placefile.py", args)
-        if e and e.returncode == signal.SIGTERM:
+        if e and e.returncode == -1*signal.SIGTERM:
             return
 
         sa.scripts_progress = 'Creating NSE placefiles ...'
@@ -684,8 +684,7 @@ def launch_simulation(n_clicks) -> None:
         args = [str(sa.event_start_time), str(sa.event_duration), str(sa.scripts_path), 
                 str(sa.data_dir), str(sa.placefiles_dir)]
         e = exec_script("nse.py", args)
-        print(e.returncode, signal.SIGTERM)
-        if e and e.returncode == signal.SIGTERM:
+        if e and e.returncode == -1*signal.SIGTERM:
             return
         
         # Since there will always be a timeshift associated with a simulation, this
@@ -711,7 +710,7 @@ def launch_simulation(n_clicks) -> None:
             args = [radar, sa.new_radar, asos_one, asos_two, 
                     str(sa.simulation_seconds_shift)]
             e = exec_script("hodo_plot.py", args)
-            if e and e.returncode == signal.SIGTERM:
+            if e and e.returncode == -1*signal.SIGTERM:
                 return
             print("Hodograph script completed ...")
 
@@ -885,7 +884,7 @@ def cancel_all(n_clicks):
     if n_clicks > 0:
         # Should move this somewhere else, maybe into the __init__ function? These are 
         # the cancelable scripts
-        scripts_list = ["Nexrad.py", "get_data.py", "process.py", "hodo_plot.py", "munger.py"]
+        scripts_list = ["Nexrad.py", "nse.py", "get_data.py", "process.py", "hodo_plot.py", "munger.py"]
         processes = get_python_processes()
         # POTENTIAL ISSUE:
         # There is a  chance a new process could spawn between the initial query above
