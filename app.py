@@ -829,8 +829,8 @@ def launch_simulation(n_clicks) -> None:
     if n_clicks == 0:
         raise PreventUpdate
     else:
-        #run_with_cancel_button()
-        run_TJ_original()
+        run_with_cancel_button()
+        #run_TJ_original()
         
 
 ################################################################################################
