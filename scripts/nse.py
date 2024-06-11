@@ -1,14 +1,14 @@
 """
 Wrapper to control processing of model data and nse placefile scripts 
 """
-
+import sys 
 import subprocess
 from datetime import datetime, timedelta
 
 class Nse:
     def __init__(self, sim_start, event_duration, scripts_path, data_path, output_path):
-        self.sim_start = sim_start
-        self.sim_end = sim_start + timedelta(minutes=int(event_duration))
+        self.sim_start = datetime.strptime(sim_start, '%Y-%m-%d %H:%M:%S+00:00')
+        self.sim_end = self.sim_start + timedelta(minutes=int(event_duration))
         self.start_string = datetime.strftime(self.sim_start,"%Y-%m-%d/%H")
         self.end_string = datetime.strftime(self.sim_end,"%Y-%m-%d/%H")
         self.output_path = output_path
@@ -42,3 +42,5 @@ class Nse:
         print('done')
         return
      
+if __name__ == '__main__':
+    Nse(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5])

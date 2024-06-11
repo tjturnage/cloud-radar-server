@@ -12,6 +12,7 @@ radar data generation, including the handling of time shifts and geographical co
 """
 # from flask import Flask, render_template
 import os
+import psutil, signal 
 import shutil
 import re
 import subprocess
@@ -426,6 +427,7 @@ app.layout = dbc.Container([
     # dcc.Store(id='model_dir_size'),
     # dcc.Store(id='radar_dir_size'),
     dcc.Store(id='tradar'),
+    dcc.Store(id='dummy'),
     dcc.Store(id='sim_store'),
     lc.top_section, lc.top_banner,
     dbc.Container([
@@ -566,6 +568,162 @@ def run_hodo_script(args) -> None:
     subprocess.run(["python", HODO_SCRIPT_PATH] + args, check=True)
 
 
+def exec_script(script_name, args):
+    """
+    Generalized function to run application scripts. subprocess.run() or similar is 
+    required for tracking of spawned python processes and termination if requested
+    by the user via the cancel button. Returns Exception object which is parsed to 
+    determine exit code/status. 
+    """
+    try:
+        subprocess.run(["python", f"{sa.scripts_path}/{script_name}"] + args, check=True)
+    except Exception as e:
+        print(f"Error running {script_name}: {e}")
+        return e
+
+@app.callback(
+    Output('show_script_progress', 'children'),
+    [Input('run_scripts', 'n_clicks')],
+    prevent_initial_call=True,
+    running=[
+        (Output('start_year', 'disabled'), True, False),
+        (Output('start_month', 'disabled'), True, False),
+        (Output('start_day', 'disabled'), True, False),
+        (Output('start_hour', 'disabled'), True, False),
+        (Output('start_minute', 'disabled'), True, False),
+        (Output('duration', 'disabled'), True, False),
+        (Output('radar_quantity', 'disabled'), True, False),
+        (Output('map_btn', 'disabled'), True, False),
+        (Output('new_radar_selection', 'disabled'), True, False),
+        (Output('run_scripts', 'disabled'), True, False),
+        (Output('playback-clock', 'disabled'), True, False),
+        (Output('cancel_scripts', 'disabled'), False, True),
+    ])
+def launch_simulation(n_clicks) -> None:
+    """
+    This function is called when the "Run Scripts" button is clicked. It will execute the
+    necessary scripts to simulate radar operations, create hodographs, and transpose placefiles.
+    """
+    if n_clicks == 0:
+        raise PreventUpdate
+    else:
+        sa.scripts_progress = 'Setting up files and times'
+        # determine actual event time, playback time, diff of these two
+        sa.make_simulation_times()
+
+        # clean out old files and directories
+        try:
+            sa.remove_files_and_dirs()
+        except Exception as e:
+            print("Error removing files and directories: ", e)
+
+        # based on list of selected radars, create a dictionary of radar metadata
+        try:
+            sa.create_radar_dict()
+            # sa.create_grlevel2_cfg_file()
+            sa.copy_grlevel2_cfg_file()
+        except Exception as e:
+            print("Error creating radar dict or config file: ", e)
+
+        # acquire radar data for the event
+        sa.scripts_progress = 'Downloading radar data ...'
+        try:
+            # Initial for loop to gather all radar files. Not great, but not sure of a better
+            # way to handle this. Calls NexradDownloader but passes download=False to only
+            # query AWS for expected files
+            query_radar_files()
+
+            for _r, radar in enumerate(sa.radar_list):
+                radar = radar.upper()
+                try:
+                    if sa.new_radar == 'None':
+                        new_radar = radar
+                    else:
+                        new_radar = sa.new_radar.upper()
+                except Exception as e:
+                    print("Error defining new radar: ", e)
+                
+                # Radar download
+                print(
+                    f"Nexrad Downloader - {radar}, {sa.event_start_str}, {str(sa.event_duration)}"
+                )
+                args = [radar, f'{sa.event_start_str}', str(sa.event_duration), str(True)]
+                e = exec_script("Nexrad.py", args)
+                # This section is what forces the callback to end if the cancel button was hit.
+                # The returncode for the exception equals the SIGTERM value (usually 15).
+                if e and e.returncode == signal.SIGTERM:
+                    return
+                
+                # Munger
+                print(f"Munge from {radar} to {new_radar}...")
+                args = [radar, str(sa.playback_start_str), str(sa.event_duration), str(sa.simulation_seconds_shift),
+                        new_radar]
+                e = exec_script("munger.py", args)
+                if e and e.returncode == signal.SIGTERM:
+                    return
+                print(f"Munge for {new_radar} completed ...")
+                
+                # this gives the user some radar data to poll while other scripts are running
+                try:
+                    UpdateDirList(new_radar, 'None', initialize=True)
+                except Exception as e:
+                    print(f"Error with UpdateDirList ", e)
+                                
+        except Exception as e:
+            print("Error running nexrad or munge scripts: ", e)
+
+        sa.scripts_progress = 'Creating obs placefiles ...'
+        print("Running obs script...")
+        args = [str(sa.lat), str(sa.lon), sa.event_start_str, str(sa.event_duration)]
+        e = exec_script("obs_placefile.py", args)
+        if e and e.returncode == signal.SIGTERM:
+            return
+
+        sa.scripts_progress = 'Creating NSE placefiles ...'
+        print("Running NSE scripts...")
+        args = [str(sa.event_start_time), str(sa.event_duration), str(sa.scripts_path), 
+                str(sa.data_dir), str(sa.placefiles_dir)]
+        e = exec_script("nse.py", args)
+        print(e.returncode, signal.SIGTERM)
+        if e and e.returncode == signal.SIGTERM:
+            return
+        
+        # Since there will always be a timeshift associated with a simulation, this
+        # script needs to execute every time, even if a user doesn't select a radar
+        # to transpose to.
+        run_transpose_script()
+        # sa.rename_shifted_nse_placefiles()
+
+        # Hodographs 
+        sa.scripts_progress = 'Creating hodo plots ...'
+        for radar, data in sa.radar_dict.items():
+            try:
+                asos_one = data['asos_one']
+                asos_two = data['asos_two']
+                print(asos_one, asos_two, radar)
+            except KeyError as e:
+                print("Error getting radar metadata: ", e)
+            
+            info = f'hodo script:{radar},{sa.new_radar},{asos_one},{asos_two},{sa.simulation_seconds_shift}'
+            print(info)
+            
+            # Execute hodograph script
+            args = [radar, sa.new_radar, asos_one, asos_two, 
+                    str(sa.simulation_seconds_shift)]
+            e = exec_script("hodo_plot.py", args)
+            if e and e.returncode == signal.SIGTERM:
+                return
+            print("Hodograph script completed ...")
+
+            try:
+                UpdateHodoHTML('None', initialize=True)
+            except Exception as e:
+                print("Error updating hodo html: ", e)
+        
+        sa.scripts_progress = 'Scripts completed!'
+
+'''
+# Original launch_simulation function
 @app.callback(
     Output('show_script_progress', 'children'),
     [Input('run_scripts', 'n_clicks')],
@@ -697,10 +855,49 @@ def launch_simulation(n_clicks) -> None:
                 print("Error updating hodo html: ", e)
 
         sa.scripts_progress = 'Scripts completed!'
-
+'''
 ################################################################################################
 # ----------------------------- Monitoring and reporting script status  ------------------------
 ################################################################################################
+
+
+def get_python_processes():
+    """
+    Reports back all running python processes as a list. Used by the monitoring 
+    function and cancel button.
+    """
+    processes = []
+    for proc in psutil.process_iter(['pid', 'cmdline', 'name', 'username']):
+        try:
+            info = proc.info
+            if 'python' in info['name'] and len(info['cmdline']) > 1: 
+                processes.append(info)
+        except:
+            pass
+    return processes 
+
+
+@app.callback(
+    Output('dummy', 'data'),
+    [Input('cancel_scripts', 'n_clicks')],   
+    prevent_initial_call=True)
+def cancel_all(n_clicks):
+    if n_clicks > 0:
+        # Should move this somewhere else, maybe into the __init__ function? These are 
+        # the cancelable scripts
+        scripts_list = ["Nexrad.py", "get_data.py", "process.py", "hodo_plot.py", "munger.py"]
+        processes = get_python_processes()
+        # POTENTIAL ISSUE:
+        # There is a  chance a new process could spawn between the initial query above
+        # and process(es) being terminated below. 
+        for process in processes:
+            if any(x in process['cmdline'][1] for x in scripts_list):
+                print(f"Killing process: {process['cmdline'][1]} with pid: {process['pid']}")
+                # Can't use process.terminate() as the original process object from 
+                # process_monitor is no longer active
+                os.kill(process['pid'], signal.SIGTERM)
+                #p = psutil.Process(process['pid'])
+                #p.terminate()
 
 
 @app.callback(
