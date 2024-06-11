@@ -884,16 +884,21 @@ def cancel_all(n_clicks):
     if n_clicks > 0:
         # Should move this somewhere else, maybe into the __init__ function? These are 
         # the cancelable scripts
-        scripts_list = ["Nexrad.py", "nse.py", "get_data.py", "process.py", "hodo_plot.py", "munger.py"]
+        scripts_list = ["Nexrad.py", "nse.py", "get_data.py", "process.py", 
+                        "hodo_plot.py", "munger.py"]
         processes = get_python_processes()
-        # POTENTIAL ISSUE:
-        # There is a  chance a new process could spawn between the initial query above
-        # and process(es) being terminated below. 
+
+        # ******************************************************************************
+        # POTENTIAL ISSUES - Race Conditions?
+        # There is a chance a new process could spawn between the initial query above
+        # and process(es) being terminated below. Also, a process could end before 
+        # getting into the loop. In that case, is it gauranteed that "old" pid isn't 
+        # re-used somewhere else, and we end up accidentally terminating something we 
+        # shouldn't be?
+        # ******************************************************************************
         for process in processes:
             if any(x in process['cmdline'][1] for x in scripts_list):
                 print(f"Killing process: {process['cmdline'][1]} with pid: {process['pid']}")
-                # Can't use process.terminate() as the original process object from 
-                # process_monitor is no longer active
                 os.kill(process['pid'], signal.SIGTERM)
                 #p = psutil.Process(process['pid'])
                 #p.terminate()
