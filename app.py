@@ -144,19 +144,19 @@ class RadarSimulator(Config):
             self.radar_dict[radar.upper()] = {'lat': self.lat, 'lon': self.lon, 'asos_one': asos_one,
                                               'asos_two': asos_two, 'radar': radar.upper(), 'file_list': []}
 
-    def create_grlevel2_cfg_file(self) -> None:
-        """
-        Ensures a grlevel2.cfg file is created in the polling directory. It's required for GR2Analyst to poll for radar data.
-        Only the radar sites used in the simulation are listed in this file instead of all available radars
-        """
-        f = open(POLLING_DIR / 'grlevel2.cfg', 'w', encoding='utf-8')
-        f.write('ListFile: dir.list\n')
-        if sa.new_radar != 'None':
-            f.write(f'Site: {sa.new_radar.upper()}\n')
-        else:
-            for _i, radar in enumerate(self.radar_list):
-                f.write(f'Site: {radar.upper()}\n')
-        f.close()
+    # def create_grlevel2_cfg_file(self) -> None:
+    #     """
+    #     Ensures a grlevel2.cfg file is created in the polling directory. It's required for GR2Analyst to poll for radar data.
+    #     Only the radar sites used in the simulation are listed in this file instead of all available radars
+    #     """
+    #     f = open(POLLING_DIR / 'grlevel2.cfg', 'w', encoding='utf-8')
+    #     f.write('ListFile: dir.list\n')
+    #     if sa.new_radar != 'None':
+    #         f.write(f'Site: {sa.new_radar.upper()}\n')
+    #     else:
+    #         for _i, radar in enumerate(self.radar_list):
+    #             f.write(f'Site: {radar.upper()}\n')
+    #     f.close()
 
     def copy_grlevel2_cfg_file(self) -> None:
         """
@@ -352,30 +352,6 @@ class RadarSimulator(Config):
                                     f"{new_datestring_1} {new_datestring_2}")
         return new_line
 
-    # Edited scripts/meso/plot/plots.py to remove datestring from end of filename
-    # def rename_shifted_nse_placefiles(self) -> None:
-    #    """
-    #    making a standard name for NSE placefiles by removing the datetime info
-    #    Example -- mlcape_2024050721-2024050722_shifted.txt -> mlcape_shifted.txt
-    #     """
-    #    placefiles = list(PLACEFILES_DIR.glob('*_shifted.txt'))
-    #    for file in placefiles:
-    #        if '-' in file.name:
-    #            print(f'filename: {file.name}')
-    #            parts = file.name.split('_')
-    #            new_parts = [p for p in parts if '-' not in p]
-    #            new_filename = '_'.join(new_parts)
-    #            if file.name != new_filename:
-    #                new_filepath = PLACEFILES_DIR / new_filename
-    #                shutil.copy(file, new_filepath)
-    #
-    #    for ob_file in ('wind','dwpt','temp','road','latest_surface_observations','latest_surface_observations_lg','latest_surface_observations_xlg'):
-    #        original_filename = PLACEFILES_DIR / f'{ob_file}.txt'
-    #        new_filename =  PLACEFILES_DIR / f'{ob_file}_shifted.txt'
-    #        try:
-    #            shutil.copy(original_filename, new_filename)
-    #        except Exception as e:
-    #            print(f"Error copying {original_filename} to {new_filename}: {e}")
 
     def datetime_object_from_timestring(self, file: str) -> datetime:
         """
@@ -537,7 +513,7 @@ def toggle_transpose_display(value):
     sa.number_of_radars = value
     while len(sa.radar_list) > sa.number_of_radars:
         sa.radar_list = sa.radar_list[1:]
-    if sa.number_of_radars == 1:
+    if sa.number_of_radars == 1 and len(sa.radar_list) == 1:
         return lc.section_box
     return {'display': 'none'}
 
