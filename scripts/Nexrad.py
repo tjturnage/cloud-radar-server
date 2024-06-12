@@ -10,6 +10,7 @@ Leverages AWS to download NEXRAD radar data from the NOAA NEXRAD Level 2 or TDWR
 """
 import sys
 import os
+import ast
 from datetime import datetime, timedelta
 from pathlib import Path
 #import json
@@ -126,4 +127,7 @@ class NexradDownloader:
 if __name__ == "__main__":
 
     #NexradDownloader('KDTX', '2013-05-20 22:45:00 UTC', 30, False)
-    NexradDownloader(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])
+    download_flag = sys.argv[4]
+    if type(download_flag) == str:
+        download_flag = ast.literal_eval(download_flag)
+    NexradDownloader(sys.argv[1], sys.argv[2], sys.argv[3], download_flag)

@@ -37,8 +37,14 @@ except:
     asos_two = None
 
 timeshift_seconds = int(sys.argv[5])
+
 BASE_DIR = Path('/data/cloud-radar-server')
-#BASE_DIR = Path.cwd()
+# In order to get this work on my dev and work laptop
+if sys.platform.startswith('darwin') or sys.platform.startswith('win'):
+  parts = Path.cwd().parts
+  idx = parts.index('cloud-radar-server')
+  BASE_DIR =  Path(*parts[0:idx+1])
+
 RADAR_DIR = BASE_DIR / 'data' / 'radar'
 HODO_IMAGES = BASE_DIR / 'assets'/ 'hodographs'
 

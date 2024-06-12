@@ -28,8 +28,16 @@ class UpdateDirList():
         False: will update the dir.list file with all files in the polling directory that are older than the current playback time
 
     """
-    SCRIPTS_DIR = Path('/data/cloud-radar-server/scripts')
-    POLLING_DIR = Path('/data/cloud-radar-server/assets/polling')
+    BASE_DIR = Path('/data/cloud-radar-server')
+    if sys.platform.startswith('darwin') or sys.platform.startswith('win'):
+        parts = Path.cwd().parts
+        idx = parts.index('cloud-radar-server')
+        BASE_DIR =  Path(*parts[0:idx+1])
+
+    SCRIPTS_DIR = BASE_DIR / 'scripts'
+    POLLING_DIR = BASE_DIR / 'assets' / 'polling'
+    #SCRIPTS_DIR = Path('/data/cloud-radar-server/scripts')
+    #POLLING_DIR = Path('/data/cloud-radar-server/assets/polling')
 
     def __init__(self, radar: str, current_playback_timestr: str, initialize: bool = False):
         self.radar = radar.upper()
