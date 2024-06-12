@@ -555,8 +555,10 @@ def toggle_transpose_display(value):
 def query_radar_files():
     for _r, radar in enumerate(sa.radar_list):
         radar = radar.upper()
-        NexradDownloader(radar, sa.event_start_str, str(sa.event_duration),
-                         download=False)
+        args = [radar, f'{sa.event_start_str}', str(sa.event_duration), str(False)]
+        e = utils.exec_script(sa.nexrad_script_path, args)
+        if e and e.returncode in [signal.SIGTERM, -1*signal.SIGTERM]:
+            return e
 
 
 def run_hodo_script(args) -> None:
@@ -712,7 +714,9 @@ def run_with_cancel_button():
         # Initial for loop to gather all radar files. Not great, but not sure of a better
         # way to handle this. Calls NexradDownloader but passes download=False to only
         # query AWS for expected files
-        query_radar_files()
+        e = query_radar_files()
+        if e and e.returncode in [signal.SIGTERM, -1*signal.SIGTERM]:
+            return
 
         for _r, radar in enumerate(sa.radar_list):
             radar = radar.upper()
@@ -728,7 +732,7 @@ def run_with_cancel_button():
             print(
                 f"Nexrad Downloader - {radar}, {sa.event_start_str}, {str(sa.event_duration)}"
             )
-            args = [radar, f'{sa.event_start_str}', str(sa.event_duration), str(True)]
+            args = [radar, str(sa.event_start_str), str(sa.event_duration), str(True)]
             e = utils.exec_script(sa.nexrad_script_path, args)
             # This section is what forces the callback to end if the cancel button was hit.
             # The returncode for the exception equals the SIGTERM value (usually 15).
