@@ -17,7 +17,7 @@ def exec_script(script_path, args):
     dir_parts = Path.cwd().parts
     PYTHON = "python"
     if 'C:\\' in dir_parts:
-        PYTHON = "C:\\Users\\lee.carlaw\\environments\\cloud-radar\\Scripts\python.exe"
+        PYTHON = r"C:\\Users\\lee.carlaw\\environments\\cloud-radar\\Scripts\python.exe"
 
     try:
         subprocess.run([PYTHON, script_path] + args, check=True)
