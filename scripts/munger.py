@@ -55,6 +55,12 @@ class Munger():
     RADAR_DATA_BASE_DIR = BASE_DIR / 'data' / 'radar' #/KGRR/downloads'
     POLLING_DIR = BASE_DIR / 'assets' / 'polling'
 
+    #SCRIPTS_DIR = Path('/data/cloud-radar-server/scripts')
+    #L2MUNGER_FILEPATH = SCRIPTS_DIR / 'l2munger'	    
+    #DEBZ_FILEPATH = SCRIPTS_DIR / 'debz.py'	    
+    #RADAR_DATA_BASE_DIR = Path('/data/cloud-radar-server/data/radar') #/KGRR/downloads'	
+    #POLLING_DIR = Path('/data/cloud-radar-server/assets/polling')
+
     def __init__(self, original_rda, playback_start, duration, timeshift, new_rda, playback_speed=1.5):
         self.original_rda = original_rda.upper()
         self.source_directory = self.RADAR_DATA_BASE_DIR / self.original_rda / 'downloads'
