@@ -9,7 +9,7 @@ Selecting stations: https://developers.synopticdata.com/mesonet/v2/station-selec
 09 Jun 2024: Made exception handling more robust 
 11 Jun 2024: Exceptions not robust enough! Added KeyError handling, since that was the main issue
 """
-
+import sys
 import os
 import math
 from datetime import datetime, timedelta
@@ -89,7 +89,7 @@ class Mesowest():
         self.var_str = 'air_temp,dew_point_temperature,wind_speed,wind_direction,wind_gust,visibility,road_temp'
         self.unit_str = 'temp|F,speed|kts,precip|in'
         self.api = 'mesowest'
-        self.bbox = f'{self.lon-0.5},{self.lat-0.5},{self.lon+0.5},{self.lat+0.5}'
+        self.bbox = f'{self.lon-4},{self.lat-4},{self.lon+4},{self.lat+4}'
         self.api_args = {"token":API_TOKEN,
                 "bbox":self.bbox,
                 "status":"active",
@@ -520,5 +520,5 @@ class Mesowest():
 
 
 if __name__ == "__main__":
-    #test = Mesowest(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])
-    test = Mesowest(42.9634, -85.6681, '2024-06-01 23:15:20 UTC', 60)
+    test = Mesowest(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])
+    #test = Mesowest(42.9634, -85.6681, '2024-06-01 23:15:20 UTC', 60)
