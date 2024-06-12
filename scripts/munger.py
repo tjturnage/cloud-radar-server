@@ -67,7 +67,7 @@ class Munger():
         os.makedirs(self.source_directory, exist_ok=True)
         self.playback_start = datetime.strptime(playback_start,"%Y-%m-%d %H:%M:%S UTC").replace(tzinfo=pytz.UTC)
         self.duration = duration
-        self.seconds_shift = timeshift
+        self.seconds_shift = int(timeshift)    # Needed for data passed in via command line. 
         self.new_rda = new_rda
         self.this_radar_polling_dir = self.POLLING_DIR / self.original_rda
         if self.new_rda != 'None':
