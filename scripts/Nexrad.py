@@ -130,4 +130,4 @@ if __name__ == "__main__":
     download_flag = sys.argv[4]
     if type(download_flag) == str:
         download_flag = ast.literal_eval(download_flag)
-    NexradDownloader(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])
+    NexradDownloader(sys.argv[1], sys.argv[2], sys.argv[3], download_flag)
