@@ -861,16 +861,20 @@ def monitor(_n):
     # similar. Finds running processes, determines if they're associated with this app, 
     # and outputs text at the bottom. 
     scripts_list = ["Nexrad.py", "nse.py", "get_data.py", "process.py", 
-                    "hodo_plot.py", "munger.py"]
+                    "hodo_plot.py", "munger.py", "wgrib2"]
     processes = utils.get_app_processes()
     screen_output = ""
+    seen_scripts = []
     for p in processes:
         name = p['cmdline'][1].rsplit('/', 1)
         if len(name) > 1: name = name[1]
+        if p['name'] == 'wgrib2':
+            name = 'wgrib2'
         
-        if name in scripts_list:
+        if name in scripts_list and name not in seen_scripts:
             runtime = time.time() - p['create_time']
-            screen_output += f"{name} has been running for {round(runtime,1)} seconds.  "
+            screen_output += f"{name} has been {p['status']} for {round(runtime,1)} seconds. "
+        seen_scripts.append(name)
 
     # Radar file download status
     radar_dl_completion, radar_files = utils.radar_monitor(sa)
