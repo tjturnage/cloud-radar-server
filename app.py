@@ -764,7 +764,7 @@ def run_with_cancel_button():
     print("Running NSE scripts...")
     args = [str(sa.event_start_time), str(sa.event_duration), str(sa.scripts_path), 
             str(sa.data_dir), str(sa.placefiles_dir)]
-    #e = utils.exec_script(sa.nse_script_path, args)
+    e = utils.exec_script(sa.nse_script_path, args)
     if e and e.returncode in [signal.SIGTERM, -1*signal.SIGTERM]:
         return
     
