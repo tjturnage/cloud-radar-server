@@ -425,7 +425,7 @@ sim_day_selection = dbc.Col(html.Div([
 
 app.layout = dbc.Container([
     # testing directory size monitoring
-    dcc.Interval(id='directory_monitor', disabled=False, interval=1000),
+    dcc.Interval(id='directory_monitor', disabled=False, interval=2*1000),
     dcc.Interval(id='playback-clock', disabled=True,
                  interval=60*1000, n_intervals=0),
     # dcc.Store(id='model_dir_size'),
@@ -708,8 +708,6 @@ def run_with_cancel_button():
     except Exception as e:
         print("Error creating radar dict or config file: ", e)
 
-    # acquire radar data for the event
-    sa.scripts_progress = 'Downloading radar data ...'
     try:
         # Initial for loop to gather all radar files. Not great, but not sure of a better
         # way to handle this. Calls NexradDownloader but passes download=False to only
@@ -757,14 +755,12 @@ def run_with_cancel_button():
     except Exception as e:
         print("Error running nexrad or munge scripts: ", e)
 
-    sa.scripts_progress = 'Creating obs placefiles ...'
     print("Running obs script...")
     args = [str(sa.lat), str(sa.lon), sa.event_start_str, str(sa.event_duration)]
     e = utils.exec_script(sa.obs_script_path, args)
     if e and e.returncode in [signal.SIGTERM, -1*signal.SIGTERM]:
         return
 
-    sa.scripts_progress = 'Creating NSE placefiles ...'
     print("Running NSE scripts...")
     args = [str(sa.event_start_time), str(sa.event_duration), str(sa.scripts_path), 
             str(sa.data_dir), str(sa.placefiles_dir)]
@@ -779,7 +775,6 @@ def run_with_cancel_button():
     # sa.rename_shifted_nse_placefiles()
 
     # Hodographs 
-    sa.scripts_progress = 'Creating hodo plots ...'
     for radar, data in sa.radar_dict.items():
         try:
             asos_one = data['asos_one']
@@ -804,8 +799,6 @@ def run_with_cancel_button():
         except Exception as e:
             print("Error updating hodo html: ", e)
     
-        sa.scripts_progress = 'Scripts completed!'
-
 
 @app.callback(
     Output('show_script_progress', 'children'),
@@ -855,6 +848,7 @@ def cancel_scripts(n_clicks):
     Output('radar_status', 'value'),
     Output('hodo_status', 'value'),
     Output('model_table', 'data'),
+    Output('status-output', 'children'),
     [Input('directory_monitor', 'n_intervals')],
     prevent_initial_call=True)
 def monitor(_n):
@@ -862,6 +856,18 @@ def monitor(_n):
     This function is called every second by the directory_monitor interval. It checks the
     status of the radar and hodograph scripts and reports the status to the user.
     """
+    scripts_list = ["Nexrad.py", "nse.py", "get_data.py", "process.py", 
+                    "hodo_plot.py", "munger.py"]
+    processes = utils.get_app_processes()
+    screen_output = ""
+    for p in processes:
+        name = p['cmdline'][1].rsplit('/', 1)
+        if len(name) > 1: name = name[1]
+        
+        if name in scripts_list:
+            runtime = time.time() - p['create_time']
+            screen_output += f"{name} has been {p['status']} for {round(runtime,1)} seconds.  "
+
     # Radar file download status
     radar_dl_completion, radar_files = utils.radar_monitor(sa)
 
@@ -874,7 +880,7 @@ def monitor(_n):
 
     # NSE placefiles
     model_list = utils.nse_status_checker(sa)
-    return radar_dl_completion, hodograph_completion, model_list
+    return radar_dl_completion, hodograph_completion, model_list, screen_output
 
 
 # -------------------------------------

@@ -31,8 +31,9 @@ def get_app_processes():
     Reports back all running python processes as a list. Used by the monitoring 
     function and cancel button.
     """
+    variables = ['pid', 'cmdline', 'name', 'username', 'cwd', 'status', 'create_time']
     processes = []
-    for proc in psutil.process_iter(['pid', 'cmdline', 'name', 'username', 'cwd']):
+    for proc in psutil.process_iter(variables):
         try:
             info = proc.info
             if ('python' in info['name'] or 'wgrib2' in info['name']) and \

@@ -369,6 +369,7 @@ simulation_clock = html.Div([
                 style={'text-align':'center'},),
                 #simulation_clock_slider,
 
+        html.Div(id='status-output', style=feedback),
         html.Div(id='clock-output', style=feedback),
 
         ], id='clock-container', style={'padding':'1em', 'vertical-align':'middle'}),
