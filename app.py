@@ -856,6 +856,10 @@ def monitor(_n):
     This function is called every second by the directory_monitor interval. It checks the
     status of the radar and hodograph scripts and reports the status to the user.
     """
+
+    # Need to put this list and utils.cancel_all scripts_list into __init__ or somewhere
+    # similar. Finds running processes, determines if they're associated with this app, 
+    # and outputs text at the bottom. 
     scripts_list = ["Nexrad.py", "nse.py", "get_data.py", "process.py", 
                     "hodo_plot.py", "munger.py"]
     processes = utils.get_app_processes()
@@ -866,7 +870,7 @@ def monitor(_n):
         
         if name in scripts_list:
             runtime = time.time() - p['create_time']
-            screen_output += f"{name} has been {p['status']} for {round(runtime,1)} seconds.  "
+            screen_output += f"{name} has been running for {round(runtime,1)} seconds.  "
 
     # Radar file download status
     radar_dl_completion, radar_files = utils.radar_monitor(sa)
