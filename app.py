@@ -784,7 +784,7 @@ def run_with_cancel_button():
     
 
 @app.callback(
-    Output('show_script_progress', 'children'),
+    Output('show_script_progress', 'children', allow_duplicate=True),
     [Input('run_scripts', 'n_clicks')],
     prevent_initial_call=True,
     running=[
@@ -831,9 +831,10 @@ def cancel_scripts(n_clicks):
     Output('radar_status', 'value'),
     Output('hodo_status', 'value'),
     Output('model_table', 'data'),
-    Output('status-output', 'children'),
+    Output('show_script_progress', 'children', allow_duplicate=True),
     [Input('directory_monitor', 'n_intervals')],
-    prevent_initial_call=True)
+    prevent_initial_call=True
+)
 def monitor(_n):
     """
     This function is called every second by the directory_monitor interval. It checks the
