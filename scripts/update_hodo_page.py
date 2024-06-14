@@ -57,7 +57,6 @@ class UpdateHodoHTML():
             fout.write(HEAD_NOLIST)
             fout.write('<h1>Graphics not available, check back later!</h1>\n')
             fout.write(TAIL_NOLIST)
-        return
     
     def update_hodo_page(self) -> None:
         """
@@ -77,11 +76,10 @@ class UpdateHodoHTML():
             for filename in image_files:
                 file_time = datetime.strptime(filename[-19:-4], '%Y%m%d_%H%M%S').replace(tzinfo=pytz.UTC).timestamp()
                 if file_time < current_playback_time:
-                    print(filename)      
+                    print(filename)
                     line = f'<li><a href="hodographs/{filename}">{filename}</a></li>\n'
                     fout.write(line)
             fout.write(TAIL)
-        return
 
 if __name__ == "__main__":
     #this_playback_time = '2024-06-01 23:15:20 UTC'
