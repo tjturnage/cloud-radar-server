@@ -695,7 +695,6 @@ def run_with_cancel_button():
         # way to handle this. Calls NexradDownloader but passes download=False to only
         # query AWS for expected files
         e = query_radar_files()
-
         if e['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
             return
 
@@ -714,9 +713,8 @@ def run_with_cancel_button():
                 f"Nexrad Downloader - {radar}, {sa.event_start_str}, {str(sa.event_duration)}"
             )
             args = [radar, str(sa.event_start_str), str(sa.event_duration), str(True)]
+            
             e = utils.exec_script(sa.nexrad_script_path, args)
-            # This section is what forces the callback to end if the cancel button was hit.
-            # The returncode for the exception equals the SIGTERM value (usually 15).
             if e['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
                 return
             
@@ -724,9 +722,11 @@ def run_with_cancel_button():
             print(f"Munge from {radar} to {new_radar}...")
             args = [radar, str(sa.playback_start_str), str(sa.event_duration), str(sa.simulation_seconds_shift),
                     new_radar]
+            
             e = utils.exec_script(sa.l2munger_script_path, args)
             if e['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
                 return
+            
             print(f"Munge for {new_radar} completed ...")
             
             # this gives the user some radar data to poll while other scripts are running
@@ -740,6 +740,7 @@ def run_with_cancel_button():
 
     print("Running obs script...")
     args = [str(sa.lat), str(sa.lon), sa.event_start_str, str(sa.event_duration)]
+
     e = utils.exec_script(sa.obs_script_path, args)
     if e['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
         return
@@ -747,6 +748,7 @@ def run_with_cancel_button():
     print("Running NSE scripts...")
     args = [str(sa.event_start_time), str(sa.event_duration), str(sa.scripts_path), 
             str(sa.data_dir), str(sa.placefiles_dir)]
+    
     e = utils.exec_script(sa.nse_script_path, args)
     if e['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
         return
@@ -772,9 +774,11 @@ def run_with_cancel_button():
         # Execute hodograph script
         args = [radar, sa.new_radar, asos_one, asos_two, 
                 str(sa.simulation_seconds_shift)]
+        
         e = utils.exec_script(sa.hodo_script_path, args)
         if e['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
             return
+        
         print("Hodograph script completed ...")
 
         try:
