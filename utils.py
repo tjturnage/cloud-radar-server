@@ -19,11 +19,14 @@ def exec_script(script_path, args):
     if 'C:\\' in dir_parts:
         PYTHON = r"C:\\Users\\lee.carlaw\\environments\\cloud-radar\\Scripts\python.exe"
 
+    error_dict = {'returncode': -9999}
     try:
         subprocess.run([PYTHON, script_path] + args, check=True)
     except Exception as e:
         print(f"Error running {script_path}: {e}")
-        return e
+        error_dict['returncode'] = e.returncode
+
+    return error_dict
     
 
 def get_app_processes():
