@@ -540,8 +540,7 @@ def query_radar_files():
         radar = radar.upper()
         args = [radar, f'{sa.event_start_str}', str(sa.event_duration), str(False)]
         e = utils.exec_script(sa.nexrad_script_path, args)
-        if e and e.returncode in [signal.SIGTERM, -1*signal.SIGTERM]:
-            return e
+        return e
 
 
 def run_hodo_script(args) -> None:
@@ -696,7 +695,7 @@ def run_with_cancel_button():
         # way to handle this. Calls NexradDownloader but passes download=False to only
         # query AWS for expected files
         e = query_radar_files()
-        if e and e.returncode in [signal.SIGTERM, -1*signal.SIGTERM]:
+        if e['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
             return
 
         for _r, radar in enumerate(sa.radar_list):
@@ -714,19 +713,20 @@ def run_with_cancel_button():
                 f"Nexrad Downloader - {radar}, {sa.event_start_str}, {str(sa.event_duration)}"
             )
             args = [radar, str(sa.event_start_str), str(sa.event_duration), str(True)]
+            
             e = utils.exec_script(sa.nexrad_script_path, args)
-            # This section is what forces the callback to end if the cancel button was hit.
-            # The returncode for the exception equals the SIGTERM value (usually 15).
-            if e and e.returncode in [signal.SIGTERM, -1*signal.SIGTERM]:
+            if e['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
                 return
             
             # Munger
             print(f"Munge from {radar} to {new_radar}...")
             args = [radar, str(sa.playback_start_str), str(sa.event_duration), str(sa.simulation_seconds_shift),
                     new_radar]
+            
             e = utils.exec_script(sa.l2munger_script_path, args)
-            if e and e.returncode in [signal.SIGTERM, -1*signal.SIGTERM]:
+            if e['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
                 return
+            
             print(f"Munge for {new_radar} completed ...")
             
             # this gives the user some radar data to poll while other scripts are running
@@ -740,15 +740,17 @@ def run_with_cancel_button():
 
     print("Running obs script...")
     args = [str(sa.lat), str(sa.lon), sa.event_start_str, str(sa.event_duration)]
+
     e = utils.exec_script(sa.obs_script_path, args)
-    if e and e.returncode in [signal.SIGTERM, -1*signal.SIGTERM]:
+    if e['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
         return
 
     print("Running NSE scripts...")
     args = [str(sa.event_start_time), str(sa.event_duration), str(sa.scripts_path), 
             str(sa.data_dir), str(sa.placefiles_dir)]
+    
     e = utils.exec_script(sa.nse_script_path, args)
-    if e and e.returncode in [signal.SIGTERM, -1*signal.SIGTERM]:
+    if e['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
         return
     
     # Since there will always be a timeshift associated with a simulation, this
@@ -772,9 +774,11 @@ def run_with_cancel_button():
         # Execute hodograph script
         args = [radar, sa.new_radar, asos_one, asos_two, 
                 str(sa.simulation_seconds_shift)]
+        
         e = utils.exec_script(sa.hodo_script_path, args)
-        if e and e.returncode in [signal.SIGTERM, -1*signal.SIGTERM]:
+        if e['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
             return
+        
         print("Hodograph script completed ...")
 
         try:
@@ -784,7 +788,7 @@ def run_with_cancel_button():
     
 
 @app.callback(
-    Output('show_script_progress', 'children'),
+    Output('show_script_progress', 'children', allow_duplicate=True),
     [Input('run_scripts', 'n_clicks')],
     prevent_initial_call=True,
     running=[
@@ -831,9 +835,10 @@ def cancel_scripts(n_clicks):
     Output('radar_status', 'value'),
     Output('hodo_status', 'value'),
     Output('model_table', 'data'),
-    Output('status-output', 'children'),
+    Output('show_script_progress', 'children', allow_duplicate=True),
     [Input('directory_monitor', 'n_intervals')],
-    prevent_initial_call=True)
+    prevent_initial_call=True
+)
 def monitor(_n):
     """
     This function is called every second by the directory_monitor interval. It checks the
