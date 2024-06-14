@@ -715,7 +715,6 @@ def run_with_cancel_button():
             )
             args = [radar, str(sa.event_start_str), str(sa.event_duration), str(True)]
             e = utils.exec_script(sa.nexrad_script_path, args)
-            print('HERERER', e)
             # This section is what forces the callback to end if the cancel button was hit.
             # The returncode for the exception equals the SIGTERM value (usually 15).
             if e['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
