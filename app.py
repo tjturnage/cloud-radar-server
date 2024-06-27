@@ -534,13 +534,16 @@ def toggle_transpose_display(value):
 
 def query_radar_files():
     """
-    Get the radar files from the AWS bucket. This is a preliminary step to build the progess bar
+    Get the radar files from the AWS bucket. This is a preliminary step to build the progess bar.
+    CURRENTLY: User cannot kill this process. 
     """
     for _r, radar in enumerate(sa.radar_list):
         radar = radar.upper()
         args = [radar, f'{sa.event_start_str}', str(sa.event_duration), str(False)]
-        e = utils.exec_script(sa.nexrad_script_path, args)
-        return e
+        #res = utils.exec_script(sa.nexrad_script_path, args)
+        res = subprocess.run(["python", sa.nexrad_script_path] + args, stdout=subprocess.PIPE, 
+                             check=True)
+        sa.radar_files_dict.update(json.loads(res.stdout))
 
 
 def run_hodo_script(args) -> None:
@@ -694,9 +697,10 @@ def run_with_cancel_button():
         # Initial for loop to gather all radar files. Not great, but not sure of a better
         # way to handle this. Calls NexradDownloader but passes download=False to only
         # query AWS for expected files
-        e = query_radar_files()
-        if e['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
-            return
+        query_radar_files()
+        #e = query_radar_files()
+        #if e['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
+        #    return
 
         for _r, radar in enumerate(sa.radar_list):
             radar = radar.upper()
@@ -740,7 +744,6 @@ def run_with_cancel_button():
 
     print("Running obs script...")
     args = [str(sa.lat), str(sa.lon), sa.event_start_str, str(sa.event_duration)]
-
     e = utils.exec_script(sa.obs_script_path, args)
     if e['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
         return
@@ -748,7 +751,6 @@ def run_with_cancel_button():
     print("Running NSE scripts...")
     args = [str(sa.event_start_time), str(sa.event_duration), str(sa.scripts_path), 
             str(sa.data_dir), str(sa.placefiles_dir)]
-    
     e = utils.exec_script(sa.nse_script_path, args)
     if e['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
         return
@@ -757,7 +759,6 @@ def run_with_cancel_button():
     # script needs to execute every time, even if a user doesn't select a radar
     # to transpose to.
     run_transpose_script()
-    # sa.rename_shifted_nse_placefiles()
 
     # Hodographs 
     for radar, data in sa.radar_dict.items():

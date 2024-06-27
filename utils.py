@@ -79,18 +79,11 @@ def cancel_all():
 
 def radar_monitor(sa):
     """
-    Reads radar_dict.json file(s) output from the NexradDownloader. Looks for associated 
+    Reads in dictionary of radar files passed from Nexrad.py. Looks for associated 
     radar files on the system and compares to the total expected number and broadcasts a 
     percentage to the radar_status progress bar.
     """
-    expected_files = []
-    radar_dirs = glob(f"{sa.data_dir}/radar/**")
-    for d in radar_dirs:
-        json_file = glob(f"{d}/downloads/radar_dict.json")
-        if len(json_file) == 1:
-            with open(json_file[0], 'r', encoding='utf-8') as f:
-                radar_dictionary = json.load(f)
-                expected_files.extend(list(radar_dictionary.values()))
+    expected_files = list(sa.radar_files_dict.values())
 
     files_on_system = [x for x in expected_files if os.path.exists(x)]
     output = 0

@@ -13,7 +13,7 @@ import os
 import ast
 from datetime import datetime, timedelta
 from pathlib import Path
-#import json
+import json
 import boto3
 import botocore
 from botocore.client import Config
@@ -43,6 +43,7 @@ class NexradDownloader:
         self.download_directory = self.RADAR_DATA_BASE_DIR / self.radar_id / 'downloads'
         os.makedirs(self.download_directory, exist_ok=True)
         self.process_files()
+        sys.stdout.write(json.dumps(self.radar_files_dict))
 
     def make_prefix(self):
         """
@@ -92,7 +93,9 @@ class NexradDownloader:
             file_dt = datetime.strptime(filename[4:19], '%Y%m%d_%H%M%S')
             if self.start_time <= file_dt <= self.end_time:
                 this_file = str(self.download_directory / filename)
-                print(this_file)
+                # Any print statement is caught by sys.stdout which is being used to pass
+                # radar_files_dict back to app.py
+                #print(this_file)
                 if self.download:
                     self.bucket.download_file(key, this_file)
                 else:
