@@ -79,6 +79,13 @@ def cancel_all():
             #p = psutil.Process(process['pid'])
             #p.terminate()
 
+def calc_completion_percentage(expected_files, files_on_system):
+    percent_complete = 0
+    if len(expected_files) > 0:
+        percent_complete = 100 * (len(files_on_system) / len(expected_files))
+
+    return percent_complete
+
 def radar_monitor(sa):
     """
     Reads in dictionary of radar files passed from Nexrad.py. Looks for associated 
@@ -88,10 +95,8 @@ def radar_monitor(sa):
     expected_files = list(sa.radar_files_dict.values())
     files_on_system = [x for x in expected_files if os.path.exists(x)]
           
-    output = 0
-    if len(expected_files) > 0:
-        output = 100 * (len(files_on_system) / len(expected_files))
-    return output, files_on_system
+    percent_complete = calc_completion_percentage(expected_files, files_on_system)
+    return percent_complete, files_on_system
 
 def munger_monitor(sa):
     expected_files = list(sa.radar_files_dict.values())
@@ -99,10 +104,8 @@ def munger_monitor(sa):
     # Are the mungered files always .gz?
     files_on_system = glob(f"{sa.polling_dir}/**/*.gz", recursive=True)
 
-    output = 0
-    if len(expected_files) > 0:
-        output = 100 * (len(files_on_system) / len(expected_files))
-    return output
+    percent_complete = calc_completion_percentage(expected_files, files_on_system)
+    return percent_complete
 
 
 def nse_status_checker(sa):
