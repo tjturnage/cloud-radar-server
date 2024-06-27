@@ -535,15 +535,21 @@ def toggle_transpose_display(value):
 def query_radar_files():
     """
     Get the radar files from the AWS bucket. This is a preliminary step to build the progess bar.
-    CURRENTLY: User cannot kill this process. 
     """
+    # Need to reset the expected files dictionary with each call. Otherwise, if a user
+    # cancels a request, the previously-requested files will still be in the dictionary.
+    sa.radar_files_dict = {}
     for _r, radar in enumerate(sa.radar_list):
         radar = radar.upper()
         args = [radar, f'{sa.event_start_str}', str(sa.event_duration), str(False)]
-        #res = utils.exec_script(sa.nexrad_script_path, args)
-        res = subprocess.run(["python", sa.nexrad_script_path] + args, stdout=subprocess.PIPE, 
-                             check=True)
-        sa.radar_files_dict.update(json.loads(res.stdout))
+        results = utils.exec_script(sa.nexrad_script_path, args)
+        if results['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
+            break
+
+        json_data = results['stdout'].decode('utf-8')
+        sa.radar_files_dict.update(json.loads(json_data))
+    
+    return results
 
 
 def run_hodo_script(args) -> None:
@@ -697,10 +703,9 @@ def run_with_cancel_button():
         # Initial for loop to gather all radar files. Not great, but not sure of a better
         # way to handle this. Calls NexradDownloader but passes download=False to only
         # query AWS for expected files
-        query_radar_files()
-        #e = query_radar_files()
-        #if e['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
-        #    return
+        e = query_radar_files()
+        if e['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
+            return
 
         for _r, radar in enumerate(sa.radar_list):
             radar = radar.upper()
