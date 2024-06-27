@@ -56,7 +56,7 @@ def cancel_all():
     # Should move this somewhere else, maybe into the __init__ function? These are 
     # the cancelable scripts
     scripts_list = ["Nexrad.py", "nse.py", "get_data.py", "process.py", 
-                    "hodo_plot.py", "munger.py"]
+                    "hodo_plot.py", "munger.py", "obs_placefile.py"]
     processes = get_app_processes()
 
     # ******************************************************************************
@@ -107,6 +107,16 @@ def munger_monitor(sa):
     percent_complete = calc_completion_percentage(expected_files, files_on_system)
     return percent_complete
 
+def surface_placefile_monitor(sa):
+    filenames = [
+        'wind.txt', 'temp.txt', 'road.txt', 'latest_surface_observations.txt',
+        'latest_surface_observations_lg.txt', 'latest_surface_observations_xlg.txt'
+    ]
+    expected_files =  [f"{sa.placefiles_dir}/{i}" for i in filenames]
+    files_on_system = [x for x in expected_files if os.path.exists(x)]
+
+    percent_complete = calc_completion_percentage(expected_files, files_on_system)
+    return percent_complete
 
 def nse_status_checker(sa):
     """

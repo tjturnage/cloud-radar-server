@@ -747,7 +747,7 @@ def run_with_cancel_button():
                             
     except Exception as e:
         print("Error running nexrad or munge scripts: ", e)
-
+    
     print("Running obs script...")
     args = [str(sa.lat), str(sa.lon), sa.event_start_str, str(sa.event_duration)]
     e = utils.exec_script(sa.obs_script_path, args)
@@ -842,6 +842,7 @@ def cancel_scripts(n_clicks):
     Output('radar_status', 'value'),
     Output('hodo_status', 'value'),
     Output('transpose_status', 'value'),
+    Output('obs_placefile_status', 'value'),
     Output('model_table', 'data'),
     Output('show_script_progress', 'children', allow_duplicate=True),
     [Input('directory_monitor', 'n_intervals')],
@@ -857,7 +858,7 @@ def monitor(_n):
     # similar. Finds running processes, determines if they're associated with this app, 
     # and outputs text at the bottom. 
     scripts_list = ["Nexrad.py", "nse.py", "get_data.py", "process.py", 
-                    "hodo_plot.py", "munger.py", "wgrib2"]
+                    "hodo_plot.py", "munger.py", "wgrib2", "obs_placefile.py"]
     processes = utils.get_app_processes()
     screen_output = ""
     seen_scripts = []
@@ -878,6 +879,9 @@ def monitor(_n):
     # Radar mungering/transposing status
     munger_completion = utils.munger_monitor(sa)
 
+    # Surface placefile status 
+    surface_placefile_completion = utils.surface_placefile_monitor(sa)
+
     # Hodographs. Currently hard-coded to expect 2 files for every radar and radar file.
     num_hodograph_images = len(glob(f"{sa.hodo_images}/*.png"))
     hodograph_completion = 0
@@ -887,7 +891,7 @@ def monitor(_n):
 
     # NSE placefiles
     model_list = utils.nse_status_checker(sa)
-    return radar_dl_completion, hodograph_completion, munger_completion, model_list, screen_output
+    return radar_dl_completion, hodograph_completion, munger_completion, surface_placefile_completion, model_list, screen_output
 
 
 # -------------------------------------
