@@ -86,12 +86,23 @@ def radar_monitor(sa):
     percentage to the radar_status progress bar.
     """
     expected_files = list(sa.radar_files_dict.values())
-
     files_on_system = [x for x in expected_files if os.path.exists(x)]
+          
     output = 0
     if len(expected_files) > 0:
         output = 100 * (len(files_on_system) / len(expected_files))
     return output, files_on_system
+
+def munger_monitor(sa):
+    expected_files = list(sa.radar_files_dict.values())
+
+    # Are the mungered files always .gz?
+    files_on_system = glob(f"{sa.polling_dir}/**/*.gz", recursive=True)
+
+    output = 0
+    if len(expected_files) > 0:
+        output = 100 * (len(files_on_system) / len(expected_files))
+    return output
 
 
 def nse_status_checker(sa):

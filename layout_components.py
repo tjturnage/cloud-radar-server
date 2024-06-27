@@ -265,7 +265,7 @@ transpose_status = dbc.Col(html.Div([transpose_status_header,
                     dbc.Progress(id='transpose_status',striped=True, value=0),]))
 
 status_section = dbc.Container(dbc.Container(
-    html.Div([dbc.Row([obs_placefile_status, radar_status, hodograph_status, nse_status, transpose_status])] )
+    html.Div([dbc.Row([radar_status, transpose_status, obs_placefile_status, nse_status, hodograph_status])] )
     ))
 
 placefiles_banner_text = "Placefile and graphics links"

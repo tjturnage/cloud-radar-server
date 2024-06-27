@@ -193,6 +193,7 @@ class RadarSimulator(Config):
         self.assets_dir = self.current_dir / 'assets'
         self.hodo_images = self.assets_dir / 'hodographs'
         os.makedirs(self.hodo_images, exist_ok=True)
+        self.polling_dir = self.assets_dir / 'polling'
         self.placefiles_dir = self.assets_dir / 'placefiles'
         os.makedirs(self.placefiles_dir, exist_ok=True)
 
@@ -840,6 +841,7 @@ def cancel_scripts(n_clicks):
 @app.callback(
     Output('radar_status', 'value'),
     Output('hodo_status', 'value'),
+    Output('transpose_status', 'value'),
     Output('model_table', 'data'),
     Output('show_script_progress', 'children', allow_duplicate=True),
     [Input('directory_monitor', 'n_intervals')],
@@ -873,6 +875,9 @@ def monitor(_n):
     # Radar file download status
     radar_dl_completion, radar_files = utils.radar_monitor(sa)
 
+    # Radar mungering/transposing status
+    munger_completion = utils.munger_monitor(sa)
+
     # Hodographs. Currently hard-coded to expect 2 files for every radar and radar file.
     num_hodograph_images = len(glob(f"{sa.hodo_images}/*.png"))
     hodograph_completion = 0
@@ -882,7 +887,7 @@ def monitor(_n):
 
     # NSE placefiles
     model_list = utils.nse_status_checker(sa)
-    return radar_dl_completion, hodograph_completion, model_list, screen_output
+    return radar_dl_completion, hodograph_completion, munger_completion, model_list, screen_output
 
 
 # -------------------------------------
