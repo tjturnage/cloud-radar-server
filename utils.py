@@ -26,7 +26,6 @@ def exec_script(script_path, args):
         output['stdout'], output['stderr'] = process.communicate()
         output['returncode'] = process.returncode
     except Exception as e:
-        print(f"Error running {script_path}: {e}")
         output['exception'] = e
 
     return output
@@ -48,7 +47,7 @@ def get_app_processes():
             pass
     return processes 
 
-def cancel_all():
+def cancel_all(sa):
     """
     This function is invoked when the user clicks the Cancel button in the app. See
     app.cancel_scripts.
@@ -70,14 +69,15 @@ def cancel_all():
     for process in processes:
         if any(x in process['cmdline'][1] for x in scripts_list) or \
             ('wgrib2' in process['cmdline'][0]):
-            print(f"Killing process: {process['cmdline'][1]} with pid: {process['pid']}")
+            print(f"Killing process: {process['cmdline'][1]} with pid: {process['pid']}") 
+            sa.log.info(f"Killing process: {process['cmdline'][1]} with pid: {process['pid']}") 
             os.kill(process['pid'], signal.SIGTERM)
         
         if len(process['cmdline']) >= 3 and 'multiprocessing' in process['cmdline'][2]:
             print(f"Killing process: {process['cmdline'][1]} with pid: {process['pid']}")
+            sa.log.info(f"Killing process: {process['cmdline'][1]} with pid: {process['pid']}") 
             os.kill(process['pid'], signal.SIGTERM)
-            #p = psutil.Process(process['pid'])
-            #p.terminate()
+            
 
 def calc_completion_percentage(expected_files, files_on_system):
     percent_complete = 0

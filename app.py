@@ -122,16 +122,16 @@ class RadarSimulator(Config):
         self.make_simulation_times()
 
         # This will generate a logfile. Something we'll want to turn on in the future.
-        # self.logfile = self.create_logfile()
+        self.log = self.create_logfile()
 
         # self.get_radar_coordinates()
 
     def create_logfile(self):
         """
         Creates an initial logfile. Stored in the data dir for now. Call is 
-        sa.logfile.info or sa.logfile.error or sa.logfile.warning
+        sa.log.info or sa.log.error or sa.log.warning
         """
-        logging.basicConfig(filename=f"{self.data_dir}/logfile.txt",
+        logging.basicConfig(filename=f"{self.data_dir}/logs/logfile.txt",
                             format='%(levelname)s %(asctime)s :: %(message)s',
                             datefmt="%Y-%m-%d %H:%M:%S")
         log = logging.getLogger()
@@ -543,11 +543,14 @@ def query_radar_files():
     for _r, radar in enumerate(sa.radar_list):
         radar = radar.upper()
         args = [radar, f'{sa.event_start_str}', str(sa.event_duration), str(False)]
+        sa.log.info(f"Passing {args} to Nexrad.py")
         results = utils.exec_script(sa.nexrad_script_path, args)
         if results['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
+            sa.log.warning(f"User cancelled query_radar_files()")
             break
 
         json_data = results['stdout'].decode('utf-8')
+        sa.log.info(f"Nexrad.py returned with {json_data}")
         sa.radar_files_dict.update(json.loads(json_data))
     
     return results
@@ -678,6 +681,19 @@ def run_TJ_original():
     sa.scripts_progress = 'Scripts completed!'
 
 
+def call_function(func, *args, **kwargs):
+    if len(args) > 0: 
+        sa.log.info(f"Sending {args[1]} to {args[0]}")
+    
+    result = func(*args, **kwargs)
+
+    if len(result['stderr']) > 0: 
+        sa.log.error(result['stderr'].decode('utf-8'))
+    if 'exception' in result:
+        sa.log.error(f"Exception {result['exception']} occurred in {func.__name__}")
+    return result
+    
+    
 def run_with_cancel_button():
     """
     This version of the script-launcher trying to work in cancel button
@@ -690,80 +706,67 @@ def run_with_cancel_button():
     try:
         sa.remove_files_and_dirs()
     except Exception as e:
-        print("Error removing files and directories: ", e)
+        sa.log.error("Error removing files and directories: ", e)
 
     # based on list of selected radars, create a dictionary of radar metadata
     try:
         sa.create_radar_dict()
-        # sa.create_grlevel2_cfg_file()
         sa.copy_grlevel2_cfg_file()
     except Exception as e:
-        print("Error creating radar dict or config file: ", e)
+        sa.log.error("Error creating radar dict or config file: ", e)
 
-    try:
-        # Initial for loop to gather all radar files. Not great, but not sure of a better
-        # way to handle this. Calls NexradDownloader but passes download=False to only
-        # query AWS for expected files
-        e = query_radar_files()
-        if e['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
-            return
-
-        for _r, radar in enumerate(sa.radar_list):
-            radar = radar.upper()
-            try:
-                if sa.new_radar == 'None':
-                    new_radar = radar
-                else:
-                    new_radar = sa.new_radar.upper()
-            except Exception as e:
-                print("Error defining new radar: ", e)
-            
-            # Radar download
-            print(
-                f"Nexrad Downloader - {radar}, {sa.event_start_str}, {str(sa.event_duration)}"
-            )
-            args = [radar, str(sa.event_start_str), str(sa.event_duration), str(True)]
-            
-            e = utils.exec_script(sa.nexrad_script_path, args)
-            if e['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
-                return
-            
-            # Munger
-            print(f"Munge from {radar} to {new_radar}...")
-            args = [radar, str(sa.playback_start_str), str(sa.event_duration), str(sa.simulation_seconds_shift),
-                    new_radar]
-            
-            e = utils.exec_script(sa.l2munger_script_path, args)
-            if e['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
-                return
-            
-            print(f"Munge for {new_radar} completed ...")
-            
-            # this gives the user some radar data to poll while other scripts are running
-            try:
-                UpdateDirList(new_radar, 'None', initialize=True)
-            except Exception as e:
-                print(f"Error with UpdateDirList ", e)
-                            
-    except Exception as e:
-        print("Error running nexrad or munge scripts: ", e)
+    # Create initial dictionary of expected radar files
+    res = call_function(query_radar_files)
+    if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
+        return
     
-    print("Running obs script...")
+    for _r, radar in enumerate(sa.radar_list):
+        radar = radar.upper()
+        try:
+            if sa.new_radar == 'None':
+                new_radar = radar
+            else:
+                new_radar = sa.new_radar.upper()
+        except Exception as e:
+            sa.log.error("Error defining new radar: ", e)
+        
+        # Radar download
+        args = [radar, str(sa.event_start_str), str(sa.event_duration), str(True)]
+        res = call_function(utils.exec_script, sa.nexrad_script_path, args)
+        if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
+            return
+        
+        # Munger
+        args = [radar, str(sa.playback_start_str), str(sa.event_duration), 
+                str(sa.simulation_seconds_shift), new_radar]
+        res = call_function(utils.exec_script, sa.l2munger_script_path, args)
+        if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]: 
+            return
+        
+        # this gives the user some radar data to poll while other scripts are running
+        try:
+            UpdateDirList(new_radar, 'None', initialize=True)
+        except Exception as e:
+            print(f"Error with UpdateDirList ", e)
+            sa.log.error(f"Error with UpdateDirList ", e)
+    
+    # Surface observations
     args = [str(sa.lat), str(sa.lon), sa.event_start_str, str(sa.event_duration)]
-    e = utils.exec_script(sa.obs_script_path, args)
-    if e['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
+    res = call_function(utils.exec_script, sa.obs_script_path, args)
+    if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
         return
 
-    print("Running NSE scripts...")
+    # NSE placefiles
     args = [str(sa.event_start_time), str(sa.event_duration), str(sa.scripts_path), 
             str(sa.data_dir), str(sa.placefiles_dir)]
-    e = utils.exec_script(sa.nse_script_path, args)
-    if e['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
+    res = call_function(utils.exec_script, sa.nse_script_path, args)
+    if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
         return
     
     # Since there will always be a timeshift associated with a simulation, this
     # script needs to execute every time, even if a user doesn't select a radar
     # to transpose to.
+    sa.log.info(f"Entering function run_transpose_script")
     run_transpose_script()
 
     # Hodographs 
@@ -771,22 +774,15 @@ def run_with_cancel_button():
         try:
             asos_one = data['asos_one']
             asos_two = data['asos_two']
-            print(asos_one, asos_two, radar)
+            sa.log.info(asos_one, asos_two, radar)
         except KeyError as e:
-            print("Error getting radar metadata: ", e)
-        
-        info = f'hodo script:{radar},{sa.new_radar},{asos_one},{asos_two},{sa.simulation_seconds_shift}'
-        print(info)
+            sa.log.error("Error getting radar metadata: ", e)
         
         # Execute hodograph script
-        args = [radar, sa.new_radar, asos_one, asos_two, 
-                str(sa.simulation_seconds_shift)]
-        
-        e = utils.exec_script(sa.hodo_script_path, args)
-        if e['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
+        args = [radar, sa.new_radar, asos_one, asos_two, str(sa.simulation_seconds_shift)]
+        res = call_function(utils.exec_script, sa.hodo_script_path, args)
+        if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
             return
-        
-        print("Hodograph script completed ...")
 
         try:
             UpdateHodoHTML('None', initialize=True)
@@ -835,7 +831,7 @@ def launch_simulation(n_clicks) -> None:
     prevent_initial_call=True)
 def cancel_scripts(n_clicks):
     if n_clicks > 0:
-        utils.cancel_all()
+        utils.cancel_all(sa)
 
 
 @app.callback(

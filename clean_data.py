@@ -5,7 +5,8 @@ This prevents the data from being stored in the git repository
 import os
 
 
-dirs = ['data/radar', 'data/model_data', 'assets/hodographs', 'assets/placefiles']
+dirs = ['data/radar', 'data/model_data', 'data/logs', 'assets/hodographs', 
+        'assets/placefiles']
 
 for directory in dirs:
     for root, dirs, files in os.walk(directory, topdown=False):
