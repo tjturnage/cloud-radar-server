@@ -69,15 +69,17 @@ def cancel_all(sa):
     for process in processes:
         if any(x in process['cmdline'][1] for x in scripts_list) or \
             ('wgrib2' in process['cmdline'][0]):
-            print(f"Killing process: {process['cmdline'][1]} with pid: {process['pid']}") 
-            sa.log.info(f"Killing process: {process['cmdline'][1]} with pid: {process['pid']}") 
+            sa.log.info(
+                f"Killing process: {process['cmdline'][1]} with pid: {process['pid']}"
+            ) 
             os.kill(process['pid'], signal.SIGTERM)
         
         if len(process['cmdline']) >= 3 and 'multiprocessing' in process['cmdline'][2]:
-            print(f"Killing process: {process['cmdline'][1]} with pid: {process['pid']}")
-            sa.log.info(f"Killing process: {process['cmdline'][1]} with pid: {process['pid']}") 
+            sa.log.info(
+                f"Killing process: {process['cmdline'][1]} with pid: {process['pid']}"
+            ) 
             os.kill(process['pid'], signal.SIGTERM)
-            
+
 
 def calc_completion_percentage(expected_files, files_on_system):
     percent_complete = 0
