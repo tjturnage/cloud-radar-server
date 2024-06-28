@@ -107,12 +107,13 @@ class Munger():
             filename_str = str(original_file)
             print(f'Uncompressing {filename_str}')
             if original_file.suffix == '.gz':
-                command_string = f'gunzip {filename_str}'
-                os.system(command_string)
                 # unsure if ungzip'ed file needs to be passed to debz.py
+                # Edit 6/28: keep original compressed file used for radar status tracking.
                 filename_str = filename_str[:-3]
                 new_filename = f'{filename_str}.uncompressed'
-                os.rename(filename_str, new_filename)
+                command_string = f'gunzip -c {filename_str} > {new_filename}'
+                os.system(command_string)
+                #os.rename(filename_str, new_filename)
                 time.sleep(1)
                 
             if 'V0' in filename_str:

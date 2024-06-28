@@ -246,6 +246,10 @@ hodograph_status = dbc.Col(html.Div([hodo_status_header,
                     dbc.Progress(id='hodo_status',striped=True, value=0),]))
 
 nse_status_header = html.Div(children="NSE placefile status",style=status_headers)
+model_status_text = html.P(id='model_status_warning', 
+                           style={'color':'red', 
+                                  'font-weight':'bold',
+                                  'textAlign':'center'})
 model_status_table = dash_table.DataTable(id='model_table', 
                                           data=[],
                                           style_cell={'fontSize': 9, 
@@ -258,14 +262,14 @@ model_status_table = dash_table.DataTable(id='model_table',
                                                         'fontWeight':'bold',
                                           },
                     )
-nse_status = dbc.Col(html.Div([nse_status_header, model_status_table]))
+nse_status = dbc.Col(html.Div([nse_status_header, model_status_table, model_status_text]))
 
 transpose_status_header = html.Div(children="Transpose status",style=status_headers)
 transpose_status = dbc.Col(html.Div([transpose_status_header,
                     dbc.Progress(id='transpose_status',striped=True, value=0),]))
 
 status_section = dbc.Container(dbc.Container(
-    html.Div([dbc.Row([obs_placefile_status, radar_status, hodograph_status, nse_status, transpose_status])] )
+    html.Div([dbc.Row([radar_status, transpose_status, obs_placefile_status, nse_status, hodograph_status])] )
     ))
 
 placefiles_banner_text = "Placefile and graphics links"

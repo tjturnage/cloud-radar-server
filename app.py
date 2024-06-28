@@ -122,20 +122,20 @@ class RadarSimulator(Config):
         self.make_simulation_times()
 
         # This will generate a logfile. Something we'll want to turn on in the future.
-        # self.logfile = self.create_logfile()
+        self.log = self.create_logfile()
 
         # self.get_radar_coordinates()
 
     def create_logfile(self):
         """
         Creates an initial logfile. Stored in the data dir for now. Call is 
-        sa.logfile.info or sa.logfile.error or sa.logfile.warning
+        sa.log.info or sa.log.error or sa.log.warning or sa.log.exception
         """
-        logging.basicConfig(filename=f"{self.data_dir}/logfile.txt",
+        logging.basicConfig(filename=f"{self.log_dir}/logfile.txt",
                             format='%(levelname)s %(asctime)s :: %(message)s',
                             datefmt="%Y-%m-%d %H:%M:%S")
         log = logging.getLogger()
-        log.setLevel(logging.INFO)
+        log.setLevel(logging.DEBUG)
         return log
 
     def create_radar_dict(self) -> None:
@@ -183,6 +183,8 @@ class RadarSimulator(Config):
         self.csv_file = self.current_dir / 'radars.csv'
         self.data_dir = self.current_dir / 'data'
         os.makedirs(self.data_dir, exist_ok=True)
+        self.log_dir = self.data_dir / 'logs'
+        os.makedirs(self.log_dir, exist_ok=True)
         self.scripts_path = self.current_dir / 'scripts'
         self.obs_script_path = self.scripts_path / 'obs_placefile.py'
         self.hodo_script_path = self.scripts_path / 'hodo_plot.py'
@@ -193,6 +195,7 @@ class RadarSimulator(Config):
         self.assets_dir = self.current_dir / 'assets'
         self.hodo_images = self.assets_dir / 'hodographs'
         os.makedirs(self.hodo_images, exist_ok=True)
+        self.polling_dir = self.assets_dir / 'polling'
         self.placefiles_dir = self.assets_dir / 'placefiles'
         os.makedirs(self.placefiles_dir, exist_ok=True)
 
@@ -534,13 +537,25 @@ def toggle_transpose_display(value):
 
 def query_radar_files():
     """
-    Get the radar files from the AWS bucket. This is a preliminary step to build the progess bar
+    Get the radar files from the AWS bucket. This is a preliminary step to build the progess bar.
     """
+    # Need to reset the expected files dictionary with each call. Otherwise, if a user
+    # cancels a request, the previously-requested files will still be in the dictionary.
+    sa.radar_files_dict = {}
     for _r, radar in enumerate(sa.radar_list):
         radar = radar.upper()
         args = [radar, f'{sa.event_start_str}', str(sa.event_duration), str(False)]
-        e = utils.exec_script(sa.nexrad_script_path, args)
-        return e
+        sa.log.info(f"Passing {args} to Nexrad.py")
+        results = utils.exec_script(sa.nexrad_script_path, args)
+        if results['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
+            sa.log.warning(f"User cancelled query_radar_files()")
+            break
+
+        json_data = results['stdout'].decode('utf-8')
+        sa.log.info(f"Nexrad.py returned with {json_data}")
+        sa.radar_files_dict.update(json.loads(json_data))
+    
+    return results
 
 
 def run_hodo_script(args) -> None:
@@ -668,6 +683,19 @@ def run_TJ_original():
     sa.scripts_progress = 'Scripts completed!'
 
 
+def call_function(func, *args, **kwargs):
+    if len(args) > 0: 
+        sa.log.info(f"Sending {args[1]} to {args[0]}")
+    
+    result = func(*args, **kwargs)
+
+    if len(result['stderr']) > 0: 
+        sa.log.error(result['stderr'].decode('utf-8'))
+    if 'exception' in result:
+        sa.log.error(f"Exception {result['exception']} occurred in {func.__name__}")
+    return result
+    
+    
 def run_with_cancel_button():
     """
     This version of the script-launcher trying to work in cancel button
@@ -680,111 +708,88 @@ def run_with_cancel_button():
     try:
         sa.remove_files_and_dirs()
     except Exception as e:
-        print("Error removing files and directories: ", e)
+        sa.log.exception("Error removing files and directories: ", exc_info=True)
 
     # based on list of selected radars, create a dictionary of radar metadata
     try:
         sa.create_radar_dict()
-        # sa.create_grlevel2_cfg_file()
         sa.copy_grlevel2_cfg_file()
     except Exception as e:
-        print("Error creating radar dict or config file: ", e)
+        sa.log.exception("Error creating radar dict or config file: ", exc_info=True)
 
-    try:
-        # Initial for loop to gather all radar files. Not great, but not sure of a better
-        # way to handle this. Calls NexradDownloader but passes download=False to only
-        # query AWS for expected files
-        e = query_radar_files()
-        if e['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
+    # Create initial dictionary of expected radar files
+    res = call_function(query_radar_files)
+    if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
+        return
+    
+    for _r, radar in enumerate(sa.radar_list):
+        radar = radar.upper()
+        try:
+            if sa.new_radar == 'None':
+                new_radar = radar
+            else:
+                new_radar = sa.new_radar.upper()
+        except Exception as e:
+            sa.log.exception("Error defining new radar: ", exc_info=True)
+        
+        # Radar download
+        args = [radar, str(sa.event_start_str), str(sa.event_duration), str(True)]
+        res = call_function(utils.exec_script, sa.nexrad_script_path, args)
+        if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
             return
-
-        for _r, radar in enumerate(sa.radar_list):
-            radar = radar.upper()
-            try:
-                if sa.new_radar == 'None':
-                    new_radar = radar
-                else:
-                    new_radar = sa.new_radar.upper()
-            except Exception as e:
-                print("Error defining new radar: ", e)
-            
-            # Radar download
-            print(
-                f"Nexrad Downloader - {radar}, {sa.event_start_str}, {str(sa.event_duration)}"
-            )
-            args = [radar, str(sa.event_start_str), str(sa.event_duration), str(True)]
-            
-            e = utils.exec_script(sa.nexrad_script_path, args)
-            if e['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
-                return
-            
-            # Munger
-            print(f"Munge from {radar} to {new_radar}...")
-            args = [radar, str(sa.playback_start_str), str(sa.event_duration), str(sa.simulation_seconds_shift),
-                    new_radar]
-            
-            e = utils.exec_script(sa.l2munger_script_path, args)
-            if e['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
-                return
-            
-            print(f"Munge for {new_radar} completed ...")
-            
-            # this gives the user some radar data to poll while other scripts are running
-            try:
-                UpdateDirList(new_radar, 'None', initialize=True)
-            except Exception as e:
-                print(f"Error with UpdateDirList ", e)
-                            
-    except Exception as e:
-        print("Error running nexrad or munge scripts: ", e)
-
-    print("Running obs script...")
+        
+        # Munger
+        args = [radar, str(sa.playback_start_str), str(sa.event_duration), 
+                str(sa.simulation_seconds_shift), new_radar]
+        res = call_function(utils.exec_script, sa.l2munger_script_path, args)
+        if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]: 
+            return
+        
+        # this gives the user some radar data to poll while other scripts are running
+        try:
+            UpdateDirList(new_radar, 'None', initialize=True)
+        except Exception as e:
+            print(f"Error with UpdateDirList ", e)
+            sa.log.exception(f"Error with UpdateDirList ", exc_info=True)
+    
+    # Surface observations
     args = [str(sa.lat), str(sa.lon), sa.event_start_str, str(sa.event_duration)]
-
-    e = utils.exec_script(sa.obs_script_path, args)
-    if e['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
+    res = call_function(utils.exec_script, sa.obs_script_path, args)
+    if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
         return
 
-    print("Running NSE scripts...")
+    # NSE placefiles
     args = [str(sa.event_start_time), str(sa.event_duration), str(sa.scripts_path), 
             str(sa.data_dir), str(sa.placefiles_dir)]
-    
-    e = utils.exec_script(sa.nse_script_path, args)
-    if e['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
+    res = call_function(utils.exec_script, sa.nse_script_path, args)
+    if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
         return
     
     # Since there will always be a timeshift associated with a simulation, this
     # script needs to execute every time, even if a user doesn't select a radar
     # to transpose to.
+    sa.log.info(f"Entering function run_transpose_script")
     run_transpose_script()
-    # sa.rename_shifted_nse_placefiles()
 
     # Hodographs 
     for radar, data in sa.radar_dict.items():
         try:
             asos_one = data['asos_one']
             asos_two = data['asos_two']
-            print(asos_one, asos_two, radar)
         except KeyError as e:
-            print("Error getting radar metadata: ", e)
-        
-        info = f'hodo script:{radar},{sa.new_radar},{asos_one},{asos_two},{sa.simulation_seconds_shift}'
-        print(info)
+            sa.log.exception("Error getting radar metadata: ", exc_info=True)
         
         # Execute hodograph script
-        args = [radar, sa.new_radar, asos_one, asos_two, 
-                str(sa.simulation_seconds_shift)]
-        
-        e = utils.exec_script(sa.hodo_script_path, args)
-        if e['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
+        args = [radar, sa.new_radar, asos_one, asos_two, str(sa.simulation_seconds_shift)]
+        res = call_function(utils.exec_script, sa.hodo_script_path, args)
+        if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
             return
-        
-        print("Hodograph script completed ...")
 
         try:
             UpdateHodoHTML('None', initialize=True)
         except Exception as e:
             print("Error updating hodo html: ", e)
+            sa.log.exception("Error updating hodo html: ", exc_info=True)
     
 
 @app.callback(
@@ -828,13 +833,16 @@ def launch_simulation(n_clicks) -> None:
     prevent_initial_call=True)
 def cancel_scripts(n_clicks):
     if n_clicks > 0:
-        utils.cancel_all()
+        utils.cancel_all(sa)
 
 
 @app.callback(
     Output('radar_status', 'value'),
     Output('hodo_status', 'value'),
+    Output('transpose_status', 'value'),
+    Output('obs_placefile_status', 'value'),
     Output('model_table', 'data'),
+    Output('model_status_warning', 'children'),
     Output('show_script_progress', 'children', allow_duplicate=True),
     [Input('directory_monitor', 'n_intervals')],
     prevent_initial_call=True
@@ -849,7 +857,7 @@ def monitor(_n):
     # similar. Finds running processes, determines if they're associated with this app, 
     # and outputs text at the bottom. 
     scripts_list = ["Nexrad.py", "nse.py", "get_data.py", "process.py", 
-                    "hodo_plot.py", "munger.py", "wgrib2"]
+                    "hodo_plot.py", "munger.py", "wgrib2", "obs_placefile.py"]
     processes = utils.get_app_processes()
     screen_output = ""
     seen_scripts = []
@@ -861,11 +869,18 @@ def monitor(_n):
         
         if name in scripts_list and name not in seen_scripts:
             runtime = time.time() - p['create_time']
-            screen_output += f"{name} has been {p['status']} for {round(runtime,1)} seconds. "
+            #screen_output += f"{name}: {p['status']} for {round(runtime,1)} s. "
+            screen_output += f"{name}: running for {round(runtime,1)} s. "
         seen_scripts.append(name)
 
     # Radar file download status
     radar_dl_completion, radar_files = utils.radar_monitor(sa)
+
+    # Radar mungering/transposing status
+    munger_completion = utils.munger_monitor(sa)
+
+    # Surface placefile status 
+    placefile_completion = utils.surface_placefile_monitor(sa)
 
     # Hodographs. Currently hard-coded to expect 2 files for every radar and radar file.
     num_hodograph_images = len(glob(f"{sa.hodo_images}/*.png"))
@@ -875,8 +890,9 @@ def monitor(_n):
             (num_hodograph_images / (2*len(radar_files)))
 
     # NSE placefiles
-    model_list = utils.nse_status_checker(sa)
-    return radar_dl_completion, hodograph_completion, model_list, screen_output
+    model_list, model_warning = utils.nse_status_checker(sa)
+    return (radar_dl_completion, hodograph_completion, munger_completion, 
+            placefile_completion, model_list, model_warning, screen_output)
 
 
 # -------------------------------------
