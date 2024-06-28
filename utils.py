@@ -140,11 +140,11 @@ def nse_status_checker(sa):
         df = pd.DataFrame({'Model data': model_list, 'Size (MB)': filesizes})
         output = df.to_dict('records')
 
-    if len(output) == 0: 
-        warning_text = (
-            f"Warning: No RAP data was found for this request. NSE placefiles "
-            f"will be unavailable."
-        )
+        if len(output) == 0: 
+            warning_text = (
+                f"Warning: No RAP data was found for this request. NSE placefiles "
+                f"will be unavailable."
+            )
 
     return output, warning_text 
 
