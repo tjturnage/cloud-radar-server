@@ -246,6 +246,10 @@ hodograph_status = dbc.Col(html.Div([hodo_status_header,
                     dbc.Progress(id='hodo_status',striped=True, value=0),]))
 
 nse_status_header = html.Div(children="NSE placefile status",style=status_headers)
+model_status_text = html.P(id='model_status_warning', 
+                           style={'color':'red', 
+                                  'font-weight':'bold',
+                                  'textAlign':'center'})
 model_status_table = dash_table.DataTable(id='model_table', 
                                           data=[],
                                           style_cell={'fontSize': 9, 
@@ -258,7 +262,7 @@ model_status_table = dash_table.DataTable(id='model_table',
                                                         'fontWeight':'bold',
                                           },
                     )
-nse_status = dbc.Col(html.Div([nse_status_header, model_status_table]))
+nse_status = dbc.Col(html.Div([nse_status_header, model_status_table, model_status_text]))
 
 transpose_status_header = html.Div(children="Transpose status",style=status_headers)
 transpose_status = dbc.Col(html.Div([transpose_status_header,

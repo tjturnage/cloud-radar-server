@@ -840,6 +840,7 @@ def cancel_scripts(n_clicks):
     Output('transpose_status', 'value'),
     Output('obs_placefile_status', 'value'),
     Output('model_table', 'data'),
+    Output('model_status_warning', 'children'),
     Output('show_script_progress', 'children', allow_duplicate=True),
     [Input('directory_monitor', 'n_intervals')],
     prevent_initial_call=True
@@ -876,7 +877,7 @@ def monitor(_n):
     munger_completion = utils.munger_monitor(sa)
 
     # Surface placefile status 
-    surface_placefile_completion = utils.surface_placefile_monitor(sa)
+    placefile_completion = utils.surface_placefile_monitor(sa)
 
     # Hodographs. Currently hard-coded to expect 2 files for every radar and radar file.
     num_hodograph_images = len(glob(f"{sa.hodo_images}/*.png"))
@@ -886,8 +887,9 @@ def monitor(_n):
             (num_hodograph_images / (2*len(radar_files)))
 
     # NSE placefiles
-    model_list = utils.nse_status_checker(sa)
-    return radar_dl_completion, hodograph_completion, munger_completion, surface_placefile_completion, model_list, screen_output
+    model_list, model_warning = utils.nse_status_checker(sa)
+    return (radar_dl_completion, hodograph_completion, munger_completion, 
+            placefile_completion, model_list, model_warning, screen_output)
 
 
 # -------------------------------------

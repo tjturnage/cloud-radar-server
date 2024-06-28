@@ -126,6 +126,7 @@ def nse_status_checker(sa):
     """
     filename = f"{sa.data_dir}/model_data/model_list.txt"
     output = []
+    warning_text = ""
     if os.path.exists(filename):
         model_list = []
         filesizes = []
@@ -139,7 +140,13 @@ def nse_status_checker(sa):
         df = pd.DataFrame({'Model data': model_list, 'Size (MB)': filesizes})
         output = df.to_dict('records')
 
-    return output
+    if len(output) == 0: 
+        warning_text = (
+            f"Warning: No RAP data was found for this request. NSE placefiles "
+            f"will be unavailable."
+        )
+
+    return output, warning_text 
 
 
 def file_stats(filename):
