@@ -94,23 +94,24 @@ def contour(lon, lat, data, time_str, timerange_str, **kwargs):
 
             # Each area
             for element in contour_level: 
-                clabs = defaultdict(list)
-                out.append(f'Color: {color[0]} {color[1]} {color[2]} 255\n')
-                out.append(f'Line: {linewidths[i]}, 0, "{plotinfo}: {level}"\n')
-                
-                knt = 0
-                for coord in element: 
-                    out.append(f' {coord[1]}, {coord[0]}\n')
-                    if knt % 30 == 0: clabs[levels[i]].append([coord[1], coord[0]])
-                    knt += 1
-                out.append('End:\n\n')
+                if len(element) > 0:
+                    clabs = defaultdict(list)
+                    out.append(f'Color: {color[0]} {color[1]} {color[2]} 255\n')
+                    out.append(f'Line: {linewidths[i]}, 0, "{plotinfo}: {level}"\n')
+                    
+                    knt = 0
+                    for coord in element: 
+                        out.append(f' {coord[1]}, {coord[0]}\n')
+                        if knt % 30 == 0: clabs[levels[i]].append([coord[1], coord[0]])
+                        knt += 1
+                    out.append('End:\n\n')
 
-                for lev in clabs.keys():
-                    for val in clabs[lev]:
-                        if float(lev) >= 9: lev = int(float(lev))
-                        out.append('Text: %s, %s, 1, "%s", ""\n' % (val[0], val[1], lev))
-                        out.append(f'Text: {val[0]}, {val[1]}, 1, {lev}, ""\n')
-                out.append('\n')
+                    for lev in clabs.keys():
+                        for val in clabs[lev]:
+                            if float(lev) >= 9: lev = int(float(lev))
+                            out.append('Text: %s, %s, 1, "%s", ""\n' % (val[0], val[1], lev))
+                            out.append(f'Text: {val[0]}, {val[1]}, 1, {lev}, ""\n')
+                    out.append('\n')
 
     # No contour values found. Would otherwise result in a
     # UserWarning: No contour levels were found within the data range
