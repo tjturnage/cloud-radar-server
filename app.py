@@ -869,7 +869,8 @@ def monitor(_n):
         
         if name in scripts_list and name not in seen_scripts:
             runtime = time.time() - p['create_time']
-            screen_output += f"{name}: {p['status']} for {round(runtime,1)} s. "
+            #screen_output += f"{name}: {p['status']} for {round(runtime,1)} s. "
+            screen_output += f"{name}: running for {round(runtime,1)} s. "
         seen_scripts.append(name)
 
     # Radar file download status
