@@ -6,7 +6,7 @@ import os
 
 
 dirs = ['data/radar', 'data/model_data', 'data/logs', 'assets/hodographs', 
-        'assets/placefiles']
+        'assets/placefiles', 'assets/polling']
 
 for directory in dirs:
     for root, dirs, files in os.walk(directory, topdown=False):
