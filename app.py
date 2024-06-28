@@ -131,7 +131,7 @@ class RadarSimulator(Config):
         Creates an initial logfile. Stored in the data dir for now. Call is 
         sa.log.info or sa.log.error or sa.log.warning
         """
-        logging.basicConfig(filename=f"{self.data_dir}/logs/logfile.txt",
+        logging.basicConfig(filename=f"{self.log_dir}/logfile.txt",
                             format='%(levelname)s %(asctime)s :: %(message)s',
                             datefmt="%Y-%m-%d %H:%M:%S")
         log = logging.getLogger()
@@ -183,6 +183,8 @@ class RadarSimulator(Config):
         self.csv_file = self.current_dir / 'radars.csv'
         self.data_dir = self.current_dir / 'data'
         os.makedirs(self.data_dir, exist_ok=True)
+        self.log_dir = self.data_dir / 'logs'
+        os.makedirs(self.log_dir, exist_ok=True)
         self.scripts_path = self.current_dir / 'scripts'
         self.obs_script_path = self.scripts_path / 'obs_placefile.py'
         self.hodo_script_path = self.scripts_path / 'hodo_plot.py'
