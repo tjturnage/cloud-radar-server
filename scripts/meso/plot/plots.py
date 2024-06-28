@@ -54,9 +54,113 @@ def contour(lon, lat, data, time_str, timerange_str, **kwargs):
     fig = plt.figure()
     ax = fig.add_subplot(111)
 
+    levels = list(kwargs.get('levels'))
+    colors = list(kwargs.get('colors'))
+    plotinfo = kwargs.get('varname', 'None')
+    linewidths = kwargs.get('linewidths')
+    try:
+        linewidths = list(linewidths)
+    except TypeError: 
+        linewidths = [linewidths]
+    
+    # Extend linewidths to match the length of the levels. 
+    diff = len(levels) - len(colors)
+    if diff > 0: linewidths.extend([linewidths[-1]] * diff)
+
+    if levels is not None and colors is not None:
+        c = None
+        if np.nanmax(data) >= np.min(levels):
+            c = ax.contour(lon, lat, data, levels, colors=colors)
+    else:
+        c = ax.contour(lon, lat, data)
+    
+    segments = c.allsegs
+    # Get the full range of colors from the collections object 
+    collections = c.collections 
+    colors = [rgba_to_rgb_255(i.get_edgecolor()[0][:3]) for i in collections]
+
+    out = []
+    out.append('Title: %s | %s\n' % (plotinfo, time_str))
+    out.append('RefreshSeconds: 60\n')
+    out.append('Font: 1, 14, 1, "Arial"\n')
+    out.append('TimeRange: %s\n' % (timerange_str))
+
+    # Max of data array is greater than minimum contour threshold
+    if c is not None:
+        # Each contour level 
+        for i, contour_level in enumerate(segments):
+            level = levels[i] 
+            color = colors[i] 
+
+            # Each area
+            for element in contour_level: 
+                clabs = defaultdict(list)
+                out.append(f'Color: {color[0]} {color[1]} {color[2]} 255\n')
+                out.append(f'Line: {linewidths[i]}, 0, "{plotinfo}: {level}"\n')
+                
+                knt = 0
+                for coord in element: 
+                    out.append(f' {coord[1]}, {coord[0]}\n')
+                    if knt % 30 == 0: clabs[levels[i]].append([coord[1], coord[0]])
+                    knt += 1
+                out.append('End:\n\n')
+
+                for lev in clabs.keys():
+                    for val in clabs[lev]:
+                        if float(lev) >= 9: lev = int(float(lev))
+                        out.append('Text: %s, %s, 1, "%s", ""\n' % (val[0], val[1], lev))
+                        out.append(f'Text: {val[0]}, {val[1]}, 1, {lev}, ""\n')
+                out.append('\n')
+
+    # No contour values found. Would otherwise result in a
+    # UserWarning: No contour levels were found within the data range
+    #else:
+    #    out = ["\n"]
+    return out
+
+'''
+def contour(lon, lat, data, time_str, timerange_str, **kwargs):
+    """
+    Contour plot using geojsoncontour.
+
+    Parameters:
+    -----------
+    lon : array_like
+        2-D array of longitudes. Must be same shape as data
+    lat : array_like
+        2-D array of latitudes. Must be same shape as data
+    data : array_like [N, M]
+        Values over which contour is drawn.
+    time_str : string
+        Valid time for this plot. Included in the placefile title.
+    timerange_str : string
+        Valid time range over which to display in GR
+
+    Other Parameters:
+    -----------------
+    levels : list, array
+        Contour levels to plot.
+    linewidths: list, array
+        Linewidths corresponding to each contour level
+    colors : color string (hexademicals)
+        Colors corresponding to each contour level
+    plotinfo : string
+        Brief description of the plot
+
+    Returns:
+    --------
+    out : list
+        List of strings, each corresponding to a new line for the placefile
+
+    """
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+
     levels = kwargs.get('levels')
     colors = kwargs.get('colors')
     plotinfo = kwargs.get('varname', 'None')
+    linewidths = kwargs.get('linewidths')
 
     if levels is not None and colors is not None:
         c = None
@@ -116,6 +220,7 @@ def contour(lon, lat, data, time_str, timerange_str, **kwargs):
     #    out = ["\n"]
 
     return out
+'''
 
 def contourf(lon, lat, data, time_str, timerange_str, **kwargs):
     """Contour-filled plot. Updates to attempt to limit "cross-over" lines when plotting
@@ -467,6 +572,9 @@ def barbs_devtor(lon, lat, U, V, deviance, time_str, timerange_str, **kwargs):
                 out.append(f"  Icon: 0,0,{wdir},1,{numref},{infostring}\n")
                 out.append('End:\n\n')
     return out
+
+def rgba_to_rgb_255(rgba):
+    return tuple(int(rgba[i] * 255) for i in range(3))
 
 def hex2rgb(hex):
     """Convert hexadecimal string to rgb tuple
