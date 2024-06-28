@@ -129,13 +129,13 @@ class RadarSimulator(Config):
     def create_logfile(self):
         """
         Creates an initial logfile. Stored in the data dir for now. Call is 
-        sa.log.info or sa.log.error or sa.log.warning
+        sa.log.info or sa.log.error or sa.log.warning or sa.log.exception
         """
         logging.basicConfig(filename=f"{self.log_dir}/logfile.txt",
                             format='%(levelname)s %(asctime)s :: %(message)s',
                             datefmt="%Y-%m-%d %H:%M:%S")
         log = logging.getLogger()
-        log.setLevel(logging.INFO)
+        log.setLevel(logging.DEBUG)
         return log
 
     def create_radar_dict(self) -> None:
@@ -708,14 +708,14 @@ def run_with_cancel_button():
     try:
         sa.remove_files_and_dirs()
     except Exception as e:
-        sa.log.error("Error removing files and directories: ", e)
+        sa.log.exception("Error removing files and directories: ", exc_info=True)
 
     # based on list of selected radars, create a dictionary of radar metadata
     try:
         sa.create_radar_dict()
         sa.copy_grlevel2_cfg_file()
     except Exception as e:
-        sa.log.error("Error creating radar dict or config file: ", e)
+        sa.log.exception("Error creating radar dict or config file: ", exc_info=True)
 
     # Create initial dictionary of expected radar files
     res = call_function(query_radar_files)
@@ -730,7 +730,7 @@ def run_with_cancel_button():
             else:
                 new_radar = sa.new_radar.upper()
         except Exception as e:
-            sa.log.error("Error defining new radar: ", e)
+            sa.log.exception("Error defining new radar: ", exc_info=True)
         
         # Radar download
         args = [radar, str(sa.event_start_str), str(sa.event_duration), str(True)]
@@ -750,7 +750,7 @@ def run_with_cancel_button():
             UpdateDirList(new_radar, 'None', initialize=True)
         except Exception as e:
             print(f"Error with UpdateDirList ", e)
-            sa.log.error(f"Error with UpdateDirList ", e)
+            sa.log.exception(f"Error with UpdateDirList ", exc_info=True)
     
     # Surface observations
     args = [str(sa.lat), str(sa.lon), sa.event_start_str, str(sa.event_duration)]
@@ -776,9 +776,8 @@ def run_with_cancel_button():
         try:
             asos_one = data['asos_one']
             asos_two = data['asos_two']
-            sa.log.info(asos_one, asos_two, radar)
         except KeyError as e:
-            sa.log.error("Error getting radar metadata: ", e)
+            sa.log.exception("Error getting radar metadata: ", exc_info=True)
         
         # Execute hodograph script
         args = [radar, sa.new_radar, asos_one, asos_two, str(sa.simulation_seconds_shift)]
@@ -790,6 +789,7 @@ def run_with_cancel_button():
             UpdateHodoHTML('None', initialize=True)
         except Exception as e:
             print("Error updating hodo html: ", e)
+            sa.log.exception("Error updating hodo html: ", exc_info=True)
     
 
 @app.callback(
