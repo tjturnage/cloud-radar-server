@@ -256,9 +256,10 @@ def download_data(dts, data_path, model='RAP', num_hours=1,
                 idx = url.index('//') + 2
                 url = url[0:idx] + url[idx:].replace('//', '/')
                 status = test_url(url)
+                log.info(f"{url} returned {status}")
                 if status:
-                    log.info("Download source: %s" % (source))
-                    log.info("URL: %s" % (url))
+                    log.info("  [GOOD STATUS]: Download source: %s" % (source))
+                    log.info("  [GOOD STATUS]: URL: %s" % (url))
                     downloads[full_name] = url
                     break
 
