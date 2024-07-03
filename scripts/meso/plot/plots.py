@@ -74,11 +74,6 @@ def contour(lon, lat, data, time_str, timerange_str, **kwargs):
     else:
         c = ax.contour(lon, lat, data)
     
-    segments = c.allsegs
-    # Get the full range of colors from the collections object 
-    collections = c.collections 
-    colors = [rgba_to_rgb_255(i.get_edgecolor()[0][:3]) for i in collections]
-
     out = []
     out.append('Title: %s | %s\n' % (plotinfo, time_str))
     out.append('RefreshSeconds: 60\n')
@@ -87,6 +82,10 @@ def contour(lon, lat, data, time_str, timerange_str, **kwargs):
 
     # Max of data array is greater than minimum contour threshold
     if c is not None:
+        segments = c.allsegs
+        # Get the full range of colors from the collections object 
+        collections = c.collections 
+        colors = [rgba_to_rgb_255(i.get_edgecolor()[0][:3]) for i in collections]
         # Each contour level 
         for i, contour_level in enumerate(segments):
             level = levels[i] 
@@ -112,7 +111,10 @@ def contour(lon, lat, data, time_str, timerange_str, **kwargs):
                             out.append('Text: %s, %s, 1, "%s", ""\n' % (val[0], val[1], lev))
                             out.append(f'Text: {val[0]}, {val[1]}, 1, {lev}, ""\n')
                     out.append('\n')
-
+    
+    # Close the plotting figure
+    plt.close(fig)
+    
     # No contour values found. Would otherwise result in a
     # UserWarning: No contour levels were found within the data range
     #else:
