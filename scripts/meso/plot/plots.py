@@ -112,7 +112,10 @@ def contour(lon, lat, data, time_str, timerange_str, **kwargs):
                             out.append('Text: %s, %s, 1, "%s", ""\n' % (val[0], val[1], lev))
                             out.append(f'Text: {val[0]}, {val[1]}, 1, {lev}, ""\n')
                     out.append('\n')
-
+    
+    # Close the plotting figure
+    plt.close(fig)
+    
     # No contour values found. Would otherwise result in a
     # UserWarning: No contour levels were found within the data range
     #else:

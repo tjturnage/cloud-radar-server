@@ -20,9 +20,9 @@ from collections import OrderedDict
 #LOG_DIR = '/Users/leecarlaw/scripts/cloud-radar-server/scripts/meso/logs/'
 
 # URL or local path to wind icon files
-WIND_ICONS = 'https://raw.githubusercontent.com/lcarlaw/meso/master/output/windicons.png'
-SHEAR1_ICONS = 'https://raw.githubusercontent.com/lcarlaw/meso/master/output/shr1icons.png'
-DEVTOR_ICONS = 'https://raw.githubusercontent.com/lcarlaw/meso/deviant-motion/output/devtor.png'
+WIND_ICONS = 'https://rssic.nws.noaa.gov/assets/iconfiles/windicons.png'
+SHEAR1_ICONS = 'https://rssic.nws.noaa.gov/assets/iconfiles/shr1icons.png'
+DEVTOR_ICONS = 'https://rssic.nws.noaa.gov/assets/iconfiles/devtor.png'
 
 NUM_THREADS = 8     # Maximum number of threads for numba to use. 
 

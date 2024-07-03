@@ -18,10 +18,11 @@ from plot.hodographs import parse_vector, compute_parameters, plot_hodograph
 
 import IO.read as read
 from utils.cmd import execute
-#from utils.logs import logfile
+from utils.logs import logfile
+from pathlib import Path
 
 script_path = os.path.dirname(os.path.realpath(__file__))
-#log = logfile('process')
+log = logfile("nse", f"{Path(__file__).parents[2]}/data/logs")
 
 def import_for_testing(testfile):
     import pickle
@@ -69,6 +70,7 @@ def create_hodograph(data, point, storm_motion='right-mover', sfc_wind=None,
 
 @timeit
 def create_placefiles(data, output_path, realtime=False):
+    log.info("Heading into sharppy_calcs and jitting functions")
     plot_arrays = []
     for i in range(len(data)):
         arr = data[i]
@@ -86,13 +88,14 @@ def create_placefiles(data, output_path, realtime=False):
     #plot_arrays = import_for_testing('tests/sharppy.pickle')
 
     # Final filter (smoothing and masking logic) and plotting/placefiles.
-    #info("Entering filtering code")
+    log.info("Entering filtering code")
     plot_arrays = filtering.filter(plot_arrays)
 
     #export_for_testing('tests/sharppy.pickle', plot_arrays)
     #export_for_testing('tests/standard.pickle', prof_data)
 
     # Writing to placefiles
+    log.info("Writing placefiles")
     write_placefile(plot_arrays, output_path, realtime=realtime)
 
 def query_files(filepath):
@@ -108,10 +111,10 @@ def query_files(filepath):
     """
     files = glob(filepath + '/*.reduced')
     if len(files) >= 1:
-        #if len(files) > 1: log.warning("More than 1 model file in %s" % (filepath))
+        if len(files) > 1: log.warning("More than 1 model file in %s" % (filepath))
         return files[0]
     else:
-        #log.warning("No model data found in %s" % (filepath))
+        log.warning("No model data found in %s" % (filepath))
         #sys.exit(1)
         return None
 
@@ -136,11 +139,11 @@ def parse_logic(args):
             dt_end = datetime.strptime(args.end_time, timestr_fmt)
             dt_end = dt_end - timedelta(hours=1)
         else:
-            #error("Missing one of -rt, -t, or -start/-end flags")
+            log.error("Missing one of -rt, -t, or -start/-end flags")
             sys.exit(1)
 
     if args.hodo is None and args.meso is None:
-        #log.error("Missing one of -hodo, -meso")
+        log.error("Missing one of -hodo, -meso")
         sys.exit(1)
 
     #if args.data_path is None:
@@ -202,6 +205,8 @@ def main():
     ap.add_argument('-outputpath', dest='output_path', help='Where to output placefiles.')
     ap.add_argument('-logfilepath', dest='logfile_path', help='Where to store log files.')
     args = ap.parse_args()
+    log.info("============================== process.py ==============================\n")
+    log.info(args)
     parse_logic(args)   # Set and QC user inputs. Pass for downloading
 
 if __name__ == '__main__':
