@@ -1,7 +1,4 @@
 """
-05 Jan 2020: Now importing API_TOKEN for privacy since data are proprietary
-25 Feb 2023: Included RWIS data
-
 Retrieves observations via the Mesowest API.
 Learn more about setting up your own account at: https://synopticdata.com/
 
@@ -9,8 +6,9 @@ Get latest obs: https://developers.synopticdata.com/mesonet/v2/stations/latest/
 Obs network/station providers: https://developers.synopticdata.com/about/station-providers
 Selecting stations: https://developers.synopticdata.com/mesonet/v2/station-selectors/
 
+09 Jun 2024: Made exception handling more robust 
+11 Jun 2024: Exceptions not robust enough! Added KeyError handling, since that was the main issue
 """
-
 import sys
 import os
 import math
@@ -20,7 +18,6 @@ import requests
 from dotenv import load_dotenv
 load_dotenv()
 API_TOKEN = os.getenv("SYNOPTIC_API_TOKEN")
-
 PLACEFILES_DIR = os.path.join(os.getcwd(),'assets','placefiles')
 API_ROOT = "https://api.synopticdata.com/v2/"
 
@@ -92,7 +89,7 @@ class Mesowest():
         self.var_str = 'air_temp,dew_point_temperature,wind_speed,wind_direction,wind_gust,visibility,road_temp'
         self.unit_str = 'temp|F,speed|kts,precip|in'
         self.api = 'mesowest'
-        self.bbox = f'{self.lon-0.5},{self.lat-0.5},{self.lon+0.5},{self.lat+0.5}'
+        self.bbox = f'{self.lon-4},{self.lat-4},{self.lon+4},{self.lat+4}'
         self.api_args = {"token":API_TOKEN,
                 "bbox":self.bbox,
                 "status":"active",
@@ -120,8 +117,9 @@ class Mesowest():
         self.var_list = list(short_dict.keys())
         self.station_dict = station_dict
 
-        place_text = \
-        f'{self.place_ts[0:4]}-{self.place_ts[4:6]}-{self.place_ts[6:8]}-{self.place_ts[-4:]}'
+        # took out time stamp for purposes of simulation
+        place_text = '-- for radar simulation'
+        #f'{self.place_ts[0:4]}-{self.place_ts[4:6]}-{self.place_ts[6:8]}-{self.place_ts[-4:]}'
         self.all_title = f'All Elements {place_text}'
         self.place_title = f'Air Temperature {place_text}'
         self.wind_place_title = f'Wind and Gust {place_text}'
@@ -274,9 +272,15 @@ class Mesowest():
                                 wgst_str, text_info = self.convert_met_values(scratch,short,this_dict)
                                 #wgst_txt = temp_txt + text_info
 
-                        except Exception as e:
-                            pass
-
+                        except ValueError as ve:
+                            print(f'ValueError: {ve}')
+                            continue
+                        except TypeError as te:
+                            print(f'TypeError: {te}')
+                            continue
+                        except KeyError as ke:
+                            print(f'KeyError {ke}')
+                            continue
 
                 obj_head = f'Object: {lat},{lon}\n'
 
@@ -516,5 +520,5 @@ class Mesowest():
 
 
 if __name__ == "__main__":
-    #test = Mesowest(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])
-    test = Mesowest('40.3', '-84.4', '2023-02-25 23:45:00 UTC', 30)
+    test = Mesowest(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])
+    #test = Mesowest(42.9634, -85.6681, '2024-06-01 23:15:20 UTC', 60)

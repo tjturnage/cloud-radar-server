@@ -7,16 +7,121 @@ import json
 import os
 from datetime import datetime, timedelta
 from collections import defaultdict
-import logging as log
+#import logging as log
 
 import sharptab.winds as winds
-from configs import ALPHA, OUTPUT_DIR
+from configs import ALPHA
 from plotconfigs import (SCALAR_PARAMS, VECTOR_PARAMS, BUNDLES, PLOTCONFIGS, barbconfigs,
                          contourconfigs)
 
 PARAMS = {**SCALAR_PARAMS, **VECTOR_PARAMS}
-if not os.path.exists(OUTPUT_DIR): os.makedirs(OUTPUT_DIR)
 
+def contour(lon, lat, data, time_str, timerange_str, **kwargs):
+    """
+    Contour plot using geojsoncontour.
+
+    Parameters:
+    -----------
+    lon : array_like
+        2-D array of longitudes. Must be same shape as data
+    lat : array_like
+        2-D array of latitudes. Must be same shape as data
+    data : array_like [N, M]
+        Values over which contour is drawn.
+    time_str : string
+        Valid time for this plot. Included in the placefile title.
+    timerange_str : string
+        Valid time range over which to display in GR
+
+    Other Parameters:
+    -----------------
+    levels : list, array
+        Contour levels to plot.
+    linewidths: list, array
+        Linewidths corresponding to each contour level
+    colors : color string (hexademicals)
+        Colors corresponding to each contour level
+    plotinfo : string
+        Brief description of the plot
+
+    Returns:
+    --------
+    out : list
+        List of strings, each corresponding to a new line for the placefile
+
+    """
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+
+    levels = list(kwargs.get('levels'))
+    colors = list(kwargs.get('colors'))
+    plotinfo = kwargs.get('varname', 'None')
+    linewidths = kwargs.get('linewidths')
+    try:
+        linewidths = list(linewidths)
+    except TypeError: 
+        linewidths = [linewidths]
+    
+    # Extend linewidths to match the length of the levels. 
+    diff = len(levels) - len(colors)
+    if diff > 0: linewidths.extend([linewidths[-1]] * diff)
+
+    if levels is not None and colors is not None:
+        c = None
+        if np.nanmax(data) >= np.min(levels):
+            c = ax.contour(lon, lat, data, levels, colors=colors)
+    else:
+        c = ax.contour(lon, lat, data)
+    
+    out = []
+    out.append('Title: %s | %s\n' % (plotinfo, time_str))
+    out.append('RefreshSeconds: 60\n')
+    out.append('Font: 1, 14, 1, "Arial"\n')
+    out.append('TimeRange: %s\n' % (timerange_str))
+
+    # Max of data array is greater than minimum contour threshold
+    if c is not None:
+        segments = c.allsegs
+        # Get the full range of colors from the collections object 
+        collections = c.collections 
+        colors = [rgba_to_rgb_255(i.get_edgecolor()[0][:3]) for i in collections]
+        # Each contour level 
+        for i, contour_level in enumerate(segments):
+            level = levels[i] 
+            color = colors[i] 
+
+            # Each area
+            for element in contour_level: 
+                if len(element) > 0:
+                    clabs = defaultdict(list)
+                    out.append(f'Color: {color[0]} {color[1]} {color[2]} 255\n')
+                    out.append(f'Line: {linewidths[i]}, 0, "{plotinfo}: {level}"\n')
+                    
+                    knt = 0
+                    for coord in element: 
+                        out.append(f' {coord[1]}, {coord[0]}\n')
+                        if knt % 30 == 0: clabs[levels[i]].append([coord[1], coord[0]])
+                        knt += 1
+                    out.append('End:\n\n')
+
+                    for lev in clabs.keys():
+                        for val in clabs[lev]:
+                            if float(lev) >= 9: lev = int(float(lev))
+                            out.append('Text: %s, %s, 1, "%s", ""\n' % (val[0], val[1], lev))
+                            out.append(f'Text: {val[0]}, {val[1]}, 1, {lev}, ""\n')
+                    out.append('\n')
+    
+    # Close the plotting figure
+    plt.close(fig)
+    
+    # No contour values found. Would otherwise result in a
+    # UserWarning: No contour levels were found within the data range
+    #else:
+    #    out = ["\n"]
+    return out
+
+'''
 def contour(lon, lat, data, time_str, timerange_str, **kwargs):
     """
     Contour plot using geojsoncontour.
@@ -58,6 +163,7 @@ def contour(lon, lat, data, time_str, timerange_str, **kwargs):
     levels = kwargs.get('levels')
     colors = kwargs.get('colors')
     plotinfo = kwargs.get('varname', 'None')
+    linewidths = kwargs.get('linewidths')
 
     if levels is not None and colors is not None:
         c = None
@@ -117,6 +223,7 @@ def contour(lon, lat, data, time_str, timerange_str, **kwargs):
     #    out = ["\n"]
 
     return out
+'''
 
 def contourf(lon, lat, data, time_str, timerange_str, **kwargs):
     """Contour-filled plot. Updates to attempt to limit "cross-over" lines when plotting
@@ -183,7 +290,7 @@ def contourf(lon, lat, data, time_str, timerange_str, **kwargs):
     plt.close(fig)
     return out
 
-def write_placefile(arrs, realtime=False):
+def write_placefile(arrs, output_path, realtime=False):
     """
     Main function controlling the plotting of GR2/Analyst-readable placefiles. Called
     by the primary run.py script.
@@ -194,7 +301,8 @@ def write_placefile(arrs, realtime=False):
         List of dictionaries storing values necessary for plotting. This includes
         longitudes, latitudes, valid times, and any 2-d arrays. Each list entry
         corresponds to a new forecast time.
-    plotinfo : string
+    output_path : string
+        Full path describing where to save placefiles. 
 
     Other Parameters:
     -----------------
@@ -283,18 +391,18 @@ def write_placefile(arrs, realtime=False):
     save_time = None
     for parm in out_dict.keys():
         output = out_dict[parm]
-        if not realtime:
-            save_time = "%s-%s" % (arrs[0]['valid_time'].strftime('%Y%m%d%H'),
-                                   arrs[-1]['valid_time'].strftime('%Y%m%d%H'))
-            out_file = '%s/%s_%s.txt' % (OUTPUT_DIR, parm, save_time)
-        else:
-            out_file = '%s/%s.txt' % (OUTPUT_DIR, parm)
+        #if not realtime:
+        #    save_time = "%s-%s" % (arrs[0]['valid_time'].strftime('%Y%m%d%H'),
+        #                           arrs[-1]['valid_time'].strftime('%Y%m%d%H'))
+        #    out_file = '%s/%s_%s.txt' % (output_path, parm, save_time)
+        #else:
+        out_file = '%s/%s.txt' % (output_path, parm)
         with open(out_file, 'w') as f: f.write("".join(output))
 
     # Write any bundled placefiles
-    write_bundles(save_time)
+    write_bundles(save_time, output_path)
 
-def write_bundles(save_time):
+def write_bundles(save_time, output_path):
     """
     Write out bundled placefiles. Works for archived runs.
 
@@ -315,23 +423,24 @@ def write_bundles(save_time):
 
     # If entries exist in the BUNDLES dictionary, output bundled placefiles
     for bundle_name, parameters in BUNDLES.items():
-        log.info("Writing bundle: %s with components: %s" % (bundle_name, parameters))
-        bundle_file = '%s/%s.txt' % (OUTPUT_DIR, bundle_name)
-        if save_time:
-            bundle_file = '%s/%s_%s.txt' % (OUTPUT_DIR, bundle_name, save_time)
+        #log.info("Writing bundle: %s with components: %s" % (bundle_name, parameters))
+        bundle_file = '%s/%s.txt' % (output_path, bundle_name)
+        #if save_time:
+        #    bundle_file = '%s/%s_%s.txt' % (output_path, bundle_name, save_time)
 
         with open(bundle_file, 'w') as f:
             for parm in parameters:
-                filename = '%s/%s.txt' % (OUTPUT_DIR, parm)
+                filename = '%s/%s.txt' % (output_path, parm)
                 if save_time:
-                    filename = '%s/%s_%s.txt' % (OUTPUT_DIR, parm, save_time)
+                    filename = '%s/%s_%s.txt' % (output_path, parm, save_time)
                 try:
                     in_file = open(filename, 'r')
                     lines = in_file.readlines()
                     lines = replace_title_lines()
                     f.write("".join(lines))
                 except IOError:
-                    log.error("%s not found. Skipped during bundling step" % (in_file))
+                    pass
+                    #log.error("%s not found. Skipped during bundling step" % (in_file))
 
 def barbs(lon, lat, U, V, time_str, timerange_str, **kwargs):
     """
@@ -466,6 +575,9 @@ def barbs_devtor(lon, lat, U, V, deviance, time_str, timerange_str, **kwargs):
                 out.append(f"  Icon: 0,0,{wdir},1,{numref},{infostring}\n")
                 out.append('End:\n\n')
     return out
+
+def rgba_to_rgb_255(rgba):
+    return tuple(int(rgba[i] * 255) for i in range(3))
 
 def hex2rgb(hex):
     """Convert hexadecimal string to rgb tuple

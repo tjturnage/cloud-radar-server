@@ -7,7 +7,7 @@ import pyart
 import numpy as np
 from metpy.plots import Hodograph
 import metpy.calc as mpcalc
-from datetime import datetime
+from datetime import datetime, timedelta
 import matplotlib.colors as colors
 from pint import UnitRegistry
 import math
@@ -25,14 +25,27 @@ from multiprocessing import Pool, freeze_support
 
 #Time and Time Zone
 timezone = 'UTC'
+radar_id = sys.argv[1].upper()
+new_radar = sys.argv[2]
+radar_label = radar_id
+if new_radar != 'None':
+    radar_label = new_radar
 
-radar_id = sys.argv[1]
-BASE_DIR = Path(sys.argv[2])
+  
 asos_one = sys.argv[3].lower()
 try:
-  asos_two = sys.argv[4].lower()
+    asos_two = sys.argv[4].lower()
 except:
-  asos_two = None
+    asos_two = None
+
+timeshift_seconds = int(sys.argv[5])
+
+BASE_DIR = Path('/data/cloud-radar-server')
+# In order to get this work on my dev and work laptop
+if sys.platform.startswith('darwin') or sys.platform.startswith('win'):
+  parts = Path.cwd().parts
+  idx = parts.index('cloud-radar-server')
+  BASE_DIR =  Path(*parts[0:idx+1])
 
 RADAR_DIR = BASE_DIR / 'data' / 'radar'
 HODO_IMAGES = BASE_DIR / 'assets'/ 'hodographs'
@@ -61,10 +74,13 @@ data_ceiling = 8000 #Max Data Height in Feet AGL
 range_type = 'Static' #Enter Dynamic For Changing Range From Values or Static for Constant Range Value
 static_value = 70 # Enter Static Hodo Range or 999 To Not Use
 
-
 # presumes you have the radar files downloaded already
-radar_files = [f.name for f in DOWNLOADS.iterdir()]
-radar_filepaths = [p for p in DOWNLOADS.iterdir()]
+# fixed to account for V08 files
+radar_files = [f.name for f in DOWNLOADS.iterdir() if f.name.endswith('V06')]
+radar_filepaths = [p for p in DOWNLOADS.iterdir() if p.name.endswith('V06')]
+if len(radar_files) == 0:
+  radar_files = [f.name for f in DOWNLOADS.iterdir() if f.name.endswith('V08')]
+  radar_filepaths = [p for p in DOWNLOADS.iterdir() if p.name.endswith('V08')]
 
 #Surface Winds
 sfc_status = 'Preset'

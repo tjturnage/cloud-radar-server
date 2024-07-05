@@ -18,7 +18,7 @@ from utils.timing import timeit
 
 float_array = types.float64[:,:] # No type expressions allowed in jitted functions
 @timeit
-@njit(parallel=True)
+@njit(parallel=True, cache=True)
 def worker(pres, tmpc, hght, dwpc, wspd, wdir, vort, SCALARS, VECTORS):
     """
     While numba massively speeds up our computations, we're limited in how we store and

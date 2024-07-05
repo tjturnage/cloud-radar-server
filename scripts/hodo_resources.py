@@ -3,10 +3,34 @@
 Returns:
     _type_: _description_
 """
+import os
 import numpy as np
 import metpy.calc as mpcalc
 from metpy.units import units
-from pint import UnitRegistry
+
+HODOGRAPHS_DIR = '/data/cloud-radar-server/assets/hodographs'
+HODOGRAPHS_HTML_PAGE = '/data/cloud-radar-server/assets/hodographs.html'
+
+def update_hodo_page() -> None:
+    head = """<!DOCTYPE html>
+    <html>
+    <head>
+    <title>Hodographs</title>
+    </head>
+    <body>
+    <ul>"""
+    tail = """</ul>
+    </body>
+    </html>"""
+    with open(HODOGRAPHS_HTML_PAGE, 'w', encoding='utf-8') as fout:
+        fout.write(head)
+        image_files = [f for f in os.listdir(HODOGRAPHS_DIR) if f.endswith('.png') or f.endswith('.jpg')]
+        for image in image_files:
+            print(image[-19:-4])
+            line = f'<li><a href="hodographs/{image}">{image}</a></li>\n'
+            fout.write(line)
+        fout.write(tail)
+    return
 
 def calc_components(speed, direction):
     u_comp = speed * np.cos(np.deg2rad(direction))
@@ -15,8 +39,8 @@ def calc_components(speed, direction):
 
 def calc_vector(u_comp, v_comp):
     mag = np.sqrt(u_comp**2 + v_comp**2)
-    dir = np.rad2deg(np.arctan2(u_comp, v_comp)) % 360
-    return mag, dir
+    direction = np.rad2deg(np.arctan2(u_comp, v_comp)) % 360
+    return mag, direction
 
 def calc_shear(u_layer, v_layer, height, zlevels):
     layer_top = np.where(zlevels == (height*1000))[0][0]
@@ -58,12 +82,12 @@ def calc_corfidi(u_layer, v_layer, zlevels, u_mean, v_mean):
     llj_u = u_layer[:llj_top]
     llj_v = v_layer[:llj_top]
 
-    mag, dir = calc_vector(llj_u, llj_v)
+    mag, _dir = calc_vector(llj_u, llj_v)
     max=0
     i=0
     for a in mag:
-      if mag[i] >= mag[i-1]:
-        max = i
+        if mag[i] >= mag[i-1]:
+            max = i
 
     u_max = llj_u[i]
     v_max = llj_v[i]
@@ -79,17 +103,17 @@ def calc_corfidi(u_layer, v_layer, zlevels, u_mean, v_mean):
 def conv_angle_param(ang):
     ang +=180
     if ang < 0:
-      ang += 360
+        ang += 360
     if ang > 360:
-      ang -= 360
+        ang -= 360
     return ang
 
 def conv_angle_enter(ang):
     ang = 270 - ang
     if ang < 0:
-      ang += 360
+        ang += 360
     if ang > 360:
-      ang -= 360
+        ang -= 360
     return ang
 
 def calc_dtm(u_300, v_300, rmu, rmv):
@@ -99,54 +123,54 @@ def calc_dtm(u_300, v_300, rmu, rmv):
 
 def calc_bulk_shear(data_ceiling, this_ceiling, u,v, zlevels):
     if data_ceiling >= this_ceiling:
-      shr = calc_shear(u, v, this_ceiling/1000, zlevels)
-      if np.isnan(shr):
-        return '--'
-      else:
-        return round(shr)
+        shr = calc_shear(u, v, this_ceiling/1000, zlevels)
+        if np.isnan(shr):
+            return '--'
+        else:
+            return round(shr)
     else:
         return '--'
 
 def calc_srh_from_rm(data_ceiling, this_ceiling, u_avg, v_avg, rmu, rmv, zlevels):
     if data_ceiling >= this_ceiling:
-      height = this_ceiling/1000
-      storm_relative_helicity = (mpcalc.storm_relative_helicity(height = zlevels * units.m, u = u_avg * units.kts, v = v_avg*units.kts, depth = height*units.km, storm_u=rmu*units.kts, storm_v=rmv*units.kts))[0]
-      if np.isnan(storm_relative_helicity):
-        return '--'
-      else:
-        return round(storm_relative_helicity)
+        height = this_ceiling/1000
+        storm_relative_helicity = (mpcalc.storm_relative_helicity(height = zlevels * units.m, u = u_avg * units.kts, v = v_avg*units.kts, depth = height*units.km, storm_u=rmu*units.kts, storm_v=rmv*units.kts))[0]
+        if np.isnan(storm_relative_helicity):
+            return '--'
+        else:
+            return round(storm_relative_helicity)
     else:
-      return '--'
+        return '--'
 
 def calc_storm_relative_wind(data_ceiling, this_ceiling, sr_u, sr_v, zlevels):
-  if data_ceiling >= this_ceiling:
-    SR_U, SR_V = calc_meanwind(sr_u, sr_v, zlevels, this_ceiling)
-    SR = calc_vector(SR_U, SR_V)[0]
-    if np.isnan(SR):
-      return '--'
+    if data_ceiling >= this_ceiling:
+        SR_U, SR_V = calc_meanwind(sr_u, sr_v, zlevels, this_ceiling)
+        SR = calc_vector(SR_U, SR_V)[0]
+        if np.isnan(SR):
+            return '--'
+        else:
+            return round(SR)
     else:
-      return round(SR)
-  else:
-    return '--'
+        return '--'
 
 
 def calc_streamwise_vorticity(data_ceiling, this_ceiling, swvper, total_swvort):
-  cig_index = int(this_ceiling/100)
-  if data_ceiling >= this_ceiling:
-    swper  = np.mean(swvper[0:cig_index])
-    swvort = np.mean(total_swvort[0:cig_index])
-    if np.isnan(swvort):
-      swper = '--'
+    cig_index = int(this_ceiling/100)
+    if data_ceiling >= this_ceiling:
+        swper  = np.mean(swvper[0:cig_index])
+        swvort = np.mean(total_swvort[0:cig_index])
+        if np.isnan(swvort):
+            swper = '--'
+        else:
+            swper = round(swper)
+        if np.isnan(swvort):
+            swvort = '---'
+        else:
+            swvort = round(swvort, 3)
     else:
-      swper = round(swper)
-    if np.isnan(swvort):
-      swvort = '---'
-    else:
-      swvort = round(swvort, 3)
-  else:
-    swper = '--'
-    swvort = '---'
-  return swper, swvort
+        swper = '--'
+        swvort = '---'
+    return swper, swvort
 
 
 

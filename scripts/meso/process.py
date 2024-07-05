@@ -14,14 +14,15 @@ from utils.timing import timeit
 
 from plot.plots import write_placefile
 from plot.hodographs import parse_vector, compute_parameters, plot_hodograph
-from configs import MODEL_DIR
+#from configs import MODEL_DIR
 
 import IO.read as read
 from utils.cmd import execute
 from utils.logs import logfile
+from pathlib import Path
 
 script_path = os.path.dirname(os.path.realpath(__file__))
-log = logfile('process')
+log = logfile("nse", f"{Path(__file__).parents[2]}/data/logs")
 
 def import_for_testing(testfile):
     import pickle
@@ -68,7 +69,8 @@ def create_hodograph(data, point, storm_motion='right-mover', sfc_wind=None,
         plot_hodograph(hodo_data, params, storm_relative=storm_relative)
 
 @timeit
-def create_placefiles(data, realtime=False):
+def create_placefiles(data, output_path, realtime=False):
+    log.info("Heading into sharppy_calcs and jitting functions")
     plot_arrays = []
     for i in range(len(data)):
         arr = data[i]
@@ -93,7 +95,8 @@ def create_placefiles(data, realtime=False):
     #export_for_testing('tests/standard.pickle', prof_data)
 
     # Writing to placefiles
-    write_placefile(plot_arrays, realtime=realtime)
+    log.info("Writing placefiles")
+    write_placefile(plot_arrays, output_path, realtime=realtime)
 
 def query_files(filepath):
     """
@@ -121,7 +124,7 @@ def parse_logic(args):
 
     """
 
-    log.info("----> New processing run")
+    #info("----> New processing run")
 
     timestr_fmt = '%Y-%m-%d/%H'
     dt_end = None
@@ -143,8 +146,8 @@ def parse_logic(args):
         log.error("Missing one of -hodo, -meso")
         sys.exit(1)
 
-    if args.data_path is None:
-        args.data_path = MODEL_DIR
+    #if args.data_path is None:
+    #    args.data_path = MODEL_DIR
 
     # Logic for reading data. Updated to allow for cases with partial data to proceed.
     # Notification of partial downloads or failed downloads likley handled in get_data
@@ -168,8 +171,8 @@ def parse_logic(args):
         point = [[float(point[1]), float(point[0])]]
         create_hodograph(data, point, storm_motion=args.storm_motion,
                          sfc_wind=args.sfc_wind, storm_relative=args.storm_relative)
-    if args.meso: create_placefiles(data, realtime=args.realtime)
-    log.info("===================================================================\n")
+    if args.meso: create_placefiles(data, args.output_path, realtime=args.realtime)
+    #info("===================================================================\n")
 
 def main():
     ap = argparse.ArgumentParser()
@@ -199,7 +202,11 @@ def main():
                           the speed in knots (e.g. 240/25).', default='right-mover')
     ap.add_argument('-statuspath', dest='status_path', help='Where to output status      \
                     tracking files.')
+    ap.add_argument('-outputpath', dest='output_path', help='Where to output placefiles.')
+    ap.add_argument('-logfilepath', dest='logfile_path', help='Where to store log files.')
     args = ap.parse_args()
+    log.info("============================== process.py ==============================\n")
+    log.info(args)
     parse_logic(args)   # Set and QC user inputs. Pass for downloading
 
 if __name__ == '__main__':

@@ -4,7 +4,20 @@ import pandas as pd
 import numpy as np
 import plotly.graph_objs as go
 import dash_bootstrap_components as dbc
-from dash import html, dcc
+from dash import html, dcc, dash_table
+from pathlib import Path
+
+
+dir_parts = Path.cwd().parts
+if 'C:\\' in dir_parts:
+    link_base = "http://localhost:8050/assets"
+    cloud = False
+
+else:
+    link_base = "https://rssic.nws.noaa.gov/assets"
+    cloud = True
+
+place_base = f"{link_base}/placefiles"
 
 now = datetime.now(pytz.utc)
 
@@ -12,6 +25,7 @@ spacer = html.Div([ ], style={'height': '30px'})
 spacer_mini = html.Div([ ], style={'height': '10px'})
 
 df = pd.read_csv('radars.csv', dtype={'lat': float, 'lon': float})
+#df = pd.read_csv('radars_no_tdwr.csv', dtype={'lat': float, 'lon': float})
 df['radar_id'] = df['radar']
 df.set_index('radar_id', inplace=True)
 
@@ -30,6 +44,8 @@ steps_center = {'padding':'0.4em', 'border': '0.3em', 'border-radius': '15px',
                 'font-weight': 'bold', 'color':'#06DB42','background':'#555555', 'font-size':'1.4em',
                 'text-align':'center', 'height':'vh5'}
 
+
+column_label = {'font-weight': 'bold','text-align':'right'}
 
 section_box = {'background-color': '#333333', 'border': '2.5px gray solid'}
 
@@ -107,7 +123,7 @@ sim_minute_section =  dbc.Col(html.Div([
                     step_minute, dcc.Dropdown([0,15,30,45],45,id='start_minute',clearable=False),]))
 
 sim_duration_section = dbc.Col(html.Div([
-                    step_duration,dcc.Dropdown(np.arange(0,240,30),30,id='duration',clearable=False),]))
+                    step_duration,dcc.Dropdown(np.arange(0,240,15),30,id='duration',clearable=False),]))
 
 CONFIRM_TIMES_TEXT = "Confirm start time and duration -->"
 confirm_times_section = dbc.Col(html.Div(children=CONFIRM_TIMES_TEXT,style=steps_right))
@@ -160,7 +176,7 @@ fig.update_layout(
 
 
 fig.update_layout(uirevision= 'foo', clickmode= 'event+select',
-                hovermode='closest', hoverdistance=3,
+                hovermode='closest', hoverdistance=10,
                 margin = {'r':0,'t':0,'l':0,'b':0},)
 
 
@@ -188,16 +204,26 @@ transpose_list.insert(0, 'None')
 STEP_TRANSPOSE_TEXT = "Optional: selected radar site to transpose to -->"
 step_transpose_radar = dbc.Col(html.Div(children=STEP_TRANSPOSE_TEXT,style=steps_right))
 
-transpose_radar_dropdown = dbc.Col(html.Div([spacer_mini,dcc.Dropdown(transpose_list,'None',id='tradar',
+transpose_radar_dropdown = dbc.Col(html.Div([spacer_mini,dcc.Dropdown(transpose_list,'None',id='new_radar_selection',
                                                 clearable=False)],className="d-grid gap-2 col-10 mx-auto",style={'vertical-align':'top'}))
-transpose_section = dbc.Container(
-    dbc.Container(html.Div([dbc.Row([step_transpose_radar, transpose_radar_dropdown],id='transpose_section')])))
+transpose_section = dbc.Container(dbc.Container(
+    dbc.Container(html.Div([dbc.Row([step_transpose_radar, transpose_radar_dropdown],id='transpose_section')]))))
 
 #---------------------------------------------------------------
 # Run script button
 #---------------------------------------------------------------
 
-
+scripts_button = dbc.Container(html.Div([
+        dbc.Row([
+            dbc.Col(
+                html.Div([
+                    dbc.Button('Download and process radar data ... Make Obs/NSE Placefiles ... Make hodo plots', size="lg", id='run_scripts', n_clicks=0),
+                    dbc.Button('Cancel all scripts', size="lg", id='cancel_scripts', n_clicks=0, disabled=True, 
+                                style={'background-color': '#e25050', 'border-color': '#e25050'}),
+                    ], className="d-grid gap-2"), style={'vertical-align':'middle'}),
+                    html.Div(id='show_script_progress',style=feedback)
+        ])
+            ], style={'padding':'1em', 'vertical-align':'middle'}))
 
 
 #---------------------------------------------------------------
@@ -220,21 +246,121 @@ hodograph_status = dbc.Col(html.Div([hodo_status_header,
                     dbc.Progress(id='hodo_status',striped=True, value=0),]))
 
 nse_status_header = html.Div(children="NSE placefile status",style=status_headers)
-nse_status = dbc.Col(html.Div([nse_status_header,
-                    dbc.Progress(id='nse_status',striped=True, value=0),]))
+model_status_text = html.P(id='model_status_warning', 
+                           style={'color':'red', 
+                                  'font-weight':'bold',
+                                  'textAlign':'center'})
+model_status_table = dash_table.DataTable(id='model_table', 
+                                          data=[],
+                                          style_cell={'fontSize': 9, 
+                                                      'text_align': 'center',
+                                                      'color':'black',
+                                                      'border': 'none',
+                                          },   
+                                          style_header={'backgroundColor':'black',
+                                                        'color':'white',
+                                                        'fontWeight':'bold',
+                                          },
+                    )
+nse_status = dbc.Col(html.Div([nse_status_header, model_status_table, model_status_text]))
 
 transpose_status_header = html.Div(children="Transpose status",style=status_headers)
 transpose_status = dbc.Col(html.Div([transpose_status_header,
                     dbc.Progress(id='transpose_status',striped=True, value=0),]))
 
 status_section = dbc.Container(dbc.Container(
-    html.Div([dbc.Row([obs_placefile_status, radar_status, hodograph_status, nse_status, transpose_status])] )
+    html.Div([dbc.Row([radar_status, transpose_status, obs_placefile_status, nse_status, hodograph_status])] )
     ))
+
+placefiles_banner_text = "Placefile and graphics links"
+placefiles_banner = dbc.Row(dbc.Col(html.Div(children=placefiles_banner_text,style=steps_center)))
+
+links_section = dbc.Container(dbc.Container(html.Div(
+    [
+        spacer_mini,
+        spacer_mini,
+        placefiles_banner,
+        spacer_mini,
+        spacer_mini,
+        dbc.Row(
+            [
+                dbc.Col(dbc.ListGroupItem("Copy this polling address into GR2Analyst:"), style={'font-weight': 'bold', 'color':'white', 'border': '1px gray solid','font-size':'1.2em','text-align':'right'}, width=4),
+                dbc.Col(dbc.ListGroupItem("https://rssic.nws.noaa.gov/assets/polling"), style={'font-weight': 'bold', 'color':'white', 'border': '1px gray solid','font-size':'1.2em','text-align':'left'}, width=8),
+            ],
+            style={"display": "flex", "flexWrap": "wrap"},
+        ),
+        dbc.Row(
+            [
+                dbc.Col(dbc.ListGroupItem("Graphics"), style={'font-weight': 'bold', 'color':'white', 'border': '1px gray solid','font-size':'1.2em','text-align':'right'}, width=2),
+                dbc.Col(dbc.ListGroupItem("Hodographs", href=f"{link_base}/hodographs.html"), width=2),
+            ],
+            style={"display": "flex", "flexWrap": "wrap"},
+        ),
+        dbc.Row(
+            [
+                dbc.Col(dbc.ListGroupItem("Sfc obs"), style={'font-weight': 'bold', 'color':'white', 'border': '1px gray solid', 'font-size':'1.2em','text-align':'right'}, width=2),
+                dbc.Col(dbc.ListGroupItem("Regular font", href=f"{place_base}/latest_surface_observations_shifted.txt"), width=2),
+                dbc.Col(dbc.ListGroupItem("Large font", href=f"{place_base}/latest_surface_observations_lg_shifted.txt"), width=2),
+                dbc.Col(dbc.ListGroupItem("Small font", href=f"{place_base}/latest_surface_observations_xlg_shifted.txt"), width=2),
+            ],
+            style={"display": "flex", "flexWrap": "wrap"},
+        ),
+        dbc.Row(
+            [
+                dbc.Col(dbc.ListGroupItem("Sfc obs parts"), style={'font-weight': 'bold', 'color':'white','border': '1px gray solid', 'font-size':'1.2em','text-align':'right'}, width=2),
+                dbc.Col(dbc.ListGroupItem("Wind", href=f"{place_base}/wind_shifted.txt"), style={'a:hover':{'color':'yellow'}},width=2),
+                dbc.Col(dbc.ListGroupItem("Temp", href=f"{place_base}/temp_shifted.txt"), width=2),
+                dbc.Col(dbc.ListGroupItem("Dwpt", href=f"{place_base}/dwpt_shifted.txt"), width=2),
+                dbc.Col(dbc.ListGroupItem("Road obs", href=f"{place_base}/road_shifted.txt"), width=2),
+            ],
+            style={"display": "flex", "flexWrap": "wrap"},
+        
+        ),
+        dbc.Row(
+            [
+                dbc.Col(dbc.ListGroupItem("NSE Shear"), style={'font-weight': 'bold', 'color':'white','border': '1px gray solid', 'font-size':'1.2em','text-align':'right'}, width=2),
+                dbc.Col(dbc.ListGroupItem("Effective", href=f"{place_base}/ebwd_shifted.txt"), width=2),
+                dbc.Col(dbc.ListGroupItem("0-1 SHR", href=f"{place_base}/shr1_shifted.txt"), style={'a:hover':{'color':'yellow'}},width=2),
+                dbc.Col(dbc.ListGroupItem("0-3 SHR", href=f"{place_base}/shr3_shifted.txt"), width=2),
+                dbc.Col(dbc.ListGroupItem("0-6 SHR", href=f"{place_base}/shr6_shifted.txt"), width=2),
+                dbc.Col(dbc.ListGroupItem("0-8 SHR", href=f"{place_base}/shr8_shifted.txt"), width=2),
+
+            ],
+            style={"display": "flex", "flexWrap": "wrap"},
+        
+        ),
+        dbc.Row(
+            [
+                dbc.Col(dbc.ListGroupItem("NSE SRH"), style={'font-weight': 'bold', 'color':'white','border': '1px gray solid', 'font-size':'1.2em','text-align':'right'}, width=2),
+                dbc.Col(dbc.ListGroupItem("Effective", href=f"{place_base}/esrh_shifted.txt"), width=2),
+                dbc.Col(dbc.ListGroupItem("0-500m", href=f"{place_base}/srh500_shifted.txt"), style={'a:hover':{'color':'yellow'}},width=2),
+                dbc.Col(dbc.ListGroupItem("Blank"), width=2),
+                dbc.Col(dbc.ListGroupItem("Blank"), width=2),
+
+            ],
+            style={"display": "flex", "flexWrap": "wrap"},
+        
+        ),
+        dbc.Row(
+            [
+                dbc.Col(dbc.ListGroupItem("NSE Thermo"), style={'font-weight': 'bold', 'color':'white','border': '1px gray solid', 'font-size':'1.2em','text-align':'right'}, width=2),
+                dbc.Col(dbc.ListGroupItem("MLCAPE", href=f"{place_base}/mlcape_shifted.txt"), style={'a:hover':{'color':'yellow'}},width=2),
+                dbc.Col(dbc.ListGroupItem("MLCIN", href=f"{place_base}/mlcin_shifted.txt"), style={'a:hover':{'color':'yellow'}},width=2),
+                dbc.Col(dbc.ListGroupItem("0-3 MLCP", href=f"{place_base}/cape3km_shifted.txt"), style={'a:hover':{'color':'yellow'}},width=2),
+                dbc.Col(dbc.ListGroupItem("0-3 LR", href=f"{place_base}/lr03km_shifted.txt"), style={'a:hover':{'color':'yellow'}},width=2),
+                dbc.Col(dbc.ListGroupItem("MUCAPE", href=f"{place_base}/mucape_shifted.txt"), style={'a:hover':{'color':'yellow'}},width=2),
+            ],
+            style={"display": "flex", "flexWrap": "wrap"},
+        
+        ), 
+        html.P(id="counter"),
+    ]
+)))
 #---------------------------------------------------------------
 # Clock components
 #---------------------------------------------------------------
 
-step_sim_clock = [dbc.CardBody([html.H5("Simulation Clock", className="card-text")])]
+step_sim_clock = [dbc.CardBody([html.H5("Simulation Progress", className="card-text")])]
 
 simulation_clock_slider = dcc.Slider(id='sim_clock', min=0, max=1440, step=1, value=0,
                                      marks={0:'00:00', 240:'04:00'})
@@ -245,27 +371,23 @@ simulation_clock = html.Div([
         html.Div([
                 dbc.Card(step_sim_clock, color="secondary", inverse=True)],
                 style={'text-align':'center'},),
-                simulation_clock_slider,
-            dcc.Interval(
-                id='interval-component',
-                interval=999*1000, # in milliseconds
-                n_intervals=0
-                ),
+                #simulation_clock_slider,
+
         html.Div(id='clock-output', style=feedback),
 
-        ], id='clock-container', style={'display': 'none'}), 
+        ], id='clock-container', style={'padding':'1em', 'vertical-align':'middle'}),
     ])
 
 
-toggle_simulation_clock = html.Div([
-        dbc.Row([
-            dbc.Col(
-                html.Div([
-                        dbc.Button('Enable Simulation Clock', size="lg", id='enable_sim_clock', n_clicks=0),
-                    ], className="d-grid gap-2"), style={'vertical-align':'middle'}
-                ),
-        ])
-            ], style={'padding':'1em', 'vertical-align':'middle'})
+# toggle_simulation_clock = html.Div([
+#         dbc.Row([
+#             dbc.Col(
+#                 html.Div([
+#                         dbc.Button('Enable Simulation Clock', size="lg", id='enable_sim_clock', n_clicks=0),
+#                     ], className="d-grid gap-2"), style={'vertical-align':'middle'}
+#                 ),
+#         ])
+#             ], style={'padding':'1em', 'vertical-align':'middle'})
 
 
 bottom_section = html.Div([ ], style={'height': '500px'})

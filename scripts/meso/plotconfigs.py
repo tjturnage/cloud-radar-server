@@ -34,8 +34,8 @@ VECTOR_PARAMS = {
 }
 
 BUNDLES = {
-    'QLCS Tornado': ['cape3km_cf', 'cape3km', 'estp', 'shr3'],
-    'ML CAPE-CIN': ['mlcin_cf', 'mlcin', 'mlcape'],
+#    'QLCS Tornado': ['cape3km_cf', 'cape3km', 'estp', 'shr3'],
+#    'ML CAPE-CIN': ['mlcin_cf', 'mlcin', 'mlcape'],
 #    'bundle_1': ['cape3km', 'shr3'],
 #    'low-level-lapse-rates': ['lr03km', 'lr03km_cf']
 }
