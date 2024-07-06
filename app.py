@@ -114,11 +114,12 @@ class RadarSimulator(Config):
         self.new_radar = 'None'
         self.new_lat = None
         self.new_lon = None
-        self.simulation_clock = None
-        self.simulation_running = False
         self.scripts_progress = 'Scripts not started'
         self.current_dir = Path.cwd()
         self.define_scripts_and_assets_directories()
+        self.simulation_clock = None
+        self.simulation_running = False
+        self.playback_timer = None
         self.make_simulation_times()
 
         # This will generate a logfile. Something we'll want to turn on in the future.
@@ -150,19 +151,6 @@ class RadarSimulator(Config):
             self.radar_dict[radar.upper()] = {'lat': self.lat, 'lon': self.lon, 'asos_one': asos_one,
                                               'asos_two': asos_two, 'radar': radar.upper(), 'file_list': []}
 
-    # def create_grlevel2_cfg_file(self) -> None:
-    #     """
-    #     Ensures a grlevel2.cfg file is created in the polling directory. It's required for GR2Analyst to poll for radar data.
-    #     Only the radar sites used in the simulation are listed in this file instead of all available radars
-    #     """
-    #     f = open(POLLING_DIR / 'grlevel2.cfg', 'w', encoding='utf-8')
-    #     f.write('ListFile: dir.list\n')
-    #     if sa.new_radar != 'None':
-    #         f.write(f'Site: {sa.new_radar.upper()}\n')
-    #     else:
-    #         for _i, radar in enumerate(self.radar_list):
-    #             f.write(f'Site: {radar.upper()}\n')
-    #     f.close()
 
     def copy_grlevel2_cfg_file(self) -> None:
         """
@@ -215,11 +203,11 @@ class RadarSimulator(Config):
 
         Variables ending with "_str" are the string representations of the datetime objects
         """
-        self.playback_start_time = datetime.now(
-            tz=timezone.utc) - timedelta(hours=2)
+        self.playback_start_time = datetime.now(tz=timezone.utc) - timedelta(hours=2)
         self.playback_timer = self.playback_start_time + timedelta(seconds=360)
-        self.event_start_time = datetime(self.event_start_year, self.event_start_month, self.event_start_day,
-                                         self.event_start_hour, self.event_start_minute, second=0,
+        self.event_start_time = datetime(self.event_start_year, self.event_start_month,
+                                         self.event_start_day, self.event_start_hour,
+                                         self.event_start_minute, second=0,
                                          tzinfo=timezone.utc)
         self.simulation_time_shift = self.playback_start_time - self.event_start_time
         self.simulation_seconds_shift = round(
@@ -234,7 +222,7 @@ class RadarSimulator(Config):
 
     def get_days_in_month(self) -> None:
         """
-        This is a helper function for knowing how many days to list in the dropdown for the day selection
+        Helper function to determine number of days to display in the dropdown
         """
         self.days_in_month = calendar.monthrange(
             self.event_start_year, self.event_start_month)[1]
@@ -298,8 +286,8 @@ class RadarSimulator(Config):
         phi_out = math.asin((math.sin(phi_new) * math.cos(d/R)) + (math.cos(phi_new) *
                             math.sin(d/R) * math.cos(math.radians(bearing))))
         lambda_out = lambda_new + math.atan2(math.sin(math.radians(bearing)) *
-                                             math.sin(d/R) * math.cos(phi_new), math.cos(d/R) - math.sin(phi_new) *
-                                             math.sin(phi_out))
+                                             math.sin(d/R) * math.cos(phi_new),
+                                             math.cos(d/R) - math.sin(phi_new) * math.sin(phi_out))
         return math.degrees(phi_out), math.degrees(lambda_out)
 
     def shift_placefiles(self) -> None:
@@ -408,8 +396,7 @@ sim_day_selection = dbc.Col(html.Div([
 app.layout = dbc.Container([
     # testing directory size monitoring
     dcc.Interval(id='directory_monitor', disabled=False, interval=2*1000),
-    dcc.Interval(id='playback-clock', disabled=True,
-                 interval=60*1000, n_intervals=0),
+    dcc.Interval(id='playback-clock', disabled=True, interval=2*60*1000),
     # dcc.Store(id='model_dir_size'),
     # dcc.Store(id='radar_dir_size'),
     dcc.Store(id='tradar'),
@@ -419,15 +406,16 @@ app.layout = dbc.Container([
     dbc.Container([
         dbc.Container([
             html.Div([html.Div([lc.step_select_time_section, lc.spacer,
-                                dbc.Row([
-                                    lc.sim_year_section, lc.sim_month_section, sim_day_selection,
-                                    lc.sim_hour_section, lc.sim_minute_section, lc.sim_duration_section,
-                                    lc.spacer, lc.step_time_confirm])], style={'padding': '1em'}),
+                            dbc.Row([
+                                lc.sim_year_section, lc.sim_month_section, sim_day_selection,
+                                lc.sim_hour_section, lc.sim_minute_section, lc.sim_duration_section,
+                                lc.spacer, lc.step_time_confirm])], style={'padding': '1em'}),
                       ], style=lc.section_box)])
     ]), lc.spacer, lc.spacer,
     dbc.Container([
         dbc.Container([html.Div([lc.radar_select_section],
-                                style={'background-color': '#333333', 'border': '2.5px gray solid', 'padding': '1em'})]),
+                                style={'background-color': '#333333',
+                                       'border': '2.5px gray solid', 'padding': '1em'})]),
     ]),
     lc.spacer,
     lc.map_section, lc.transpose_section, lc.spacer_mini,
@@ -460,19 +448,13 @@ def display_click_data(click_data: dict) -> str:
     sa.radar = the_link
     if sa.radar_list in sa.radar_list:
         return f'{sa.radar} already selected'
-    if len(sa.radar_list) < sa.number_of_radars:
-        sa.radar_list.append(sa.radar)
-        print(sa.radar_list)
-        sa.create_radar_dict()
-        radar_list = ', '.join(sa.radar_list)
-        return f'{radar_list}'
     if len(sa.radar_list) == sa.number_of_radars:
         sa.radar_list = sa.radar_list[1:]
-        sa.radar_list.append(sa.radar)
-        print(sa.radar_list)
-        sa.create_radar_dict()
-        radar_list = ', '.join(sa.radar_list)
-        return radar_list
+    sa.radar_list.append(sa.radar)
+    print(sa.radar_list)
+    sa.create_radar_dict()
+    radar_list = ', '.join(sa.radar_list)
+    return f'{radar_list}'
 
 
 @app.callback(
@@ -523,11 +505,13 @@ def toggle_transpose_display(value):
     This function will hide the transpose section if the number of radars is > 1
     """
     sa.number_of_radars = value
+    if sa.radar is None:
+        return {'display': 'none'}
     if len(sa.radar_list) > sa.number_of_radars:
         sa.radar_list = sa.radar_list[1:]
         if len(sa.radar_list) > sa.number_of_radars:
             sa.radar_list = sa.radar_list[1:]
-    if 0 < sa.number_of_radars < 2:
+    if sa.number_of_radars == 1:
         return lc.section_box
     return {'display': 'none'}
 
@@ -571,118 +555,6 @@ def run_hodo_script(args) -> None:
     subprocess.run(["python", HODO_SCRIPT_PATH] + args, check=True)
 
 
-def run_TJ_original():
-    """
-    This is the "OG" script-launcher. 
-    """
-    sa.scripts_progress = 'Setting up files and times'
-    # determine actual event time, playback time, diff of these two
-    sa.make_simulation_times()
-
-    # clean out old files and directories
-    try:
-        sa.remove_files_and_dirs()
-    except Exception as e:
-        print("Error removing files and directories: ", e)
-
-    # based on list of selected radars, create a dictionary of radar metadata
-    try:
-        sa.create_radar_dict()
-        # sa.create_grlevel2_cfg_file()
-        sa.copy_grlevel2_cfg_file()
-    except Exception as e:
-        print("Error creating radar dict or config file: ", e)
-
-    # acquire radar data for the event
-    sa.scripts_progress = 'Downloading radar data ...'
-    try:
-        # Initial for loop to gather all radar files. Not great, but not sure of a better
-        # way to handle this. Calls NexradDownloader but passes download=False to only
-        # query AWS for expected files
-        query_radar_files()
-
-        for _r, radar in enumerate(sa.radar_list):
-            radar = radar.upper()
-            try:
-                if sa.new_radar == 'None':
-                    new_radar = radar
-                else:
-                    new_radar = sa.new_radar.upper()
-            except Exception as e:
-                print("Error defining new radar: ", e)
-            try:
-                print(
-                    f"Nexrad Downloader - {radar}, {sa.event_start_str}, {str(sa.event_duration)}")
-                _file_list = NexradDownloader(radar, sa.event_start_str, str(sa.event_duration),
-                                                download=True)
-                # sa.radar_dict[radar]['file_list'] = file_list
-                time.sleep(10)
-            except Exception as e:
-                print("Error running nexrad script: ", e)
-            try:
-                print(f"Munge from {radar} to {new_radar}...")
-                Munger(radar, sa.playback_start_str, sa.event_duration, sa.simulation_seconds_shift,
-                        new_radar, playback_speed=1.5)
-                print(f"Munge for {new_radar} completed ...")
-                # this gives the user some radar data to poll while other scripts are running
-                UpdateDirList(new_radar, 'None', initialize=True)
-
-            except Exception as e:
-                print(
-                    "Error running Munge from {radar} to {new_radar}: ", e)
-    except Exception as e:
-        print("Error running nexrad or munge scripts: ", e)
-
-    sa.scripts_progress = 'Creating obs placefiles ...'
-    try:
-        print("Running obs script...")
-        Mesowest(str(sa.lat), str(sa.lon),
-                    sa.event_start_str, str(sa.event_duration))
-        print("Obs script completed")
-    except Exception as e:
-        print("Error running obs script: ", e)
-
-    sa.scripts_progress = 'Creating NSE placefiles ...'
-    # NSE placefiles
-    try:
-        print("Running NSE scripts...")
-        Nse(str(sa.event_start_time), sa.event_duration, sa.scripts_path, sa.data_dir,
-            sa.placefiles_dir)
-    except Exception as e:
-        print("Error running NSE scripts: ", e)
-
-    # Since there will always be a timeshift associated with a simulation, this
-    # script needs to execute every time, even if a user doesn't select a radar
-    # to transpose to.
-    run_transpose_script()
-    # sa.rename_shifted_nse_placefiles()
-
-    sa.scripts_progress = 'Creating hodo plots ...'
-
-    for radar, data in sa.radar_dict.items():
-        try:
-            asos_one = data['asos_one']
-            asos_two = data['asos_two']
-            print(asos_one, asos_two, radar)
-        except KeyError as e:
-            print("Error getting radar metadata: ", e)
-
-        try:
-            info = f'hodo script:{radar},{sa.new_radar},{asos_one},{asos_two},{sa.simulation_seconds_shift}'
-            print(info)
-            run_hodo_script([radar, sa.new_radar, asos_one,
-                            asos_two, str(sa.simulation_seconds_shift)])
-            print("Hodograph script completed ...")
-        except Exception as e:
-            print("Error running hodo script: ", e)
-        try:
-            UpdateHodoHTML('None', initialize=True)
-        except Exception as e:
-            print("Error updating hodo html: ", e)
-
-    sa.scripts_progress = 'Scripts completed!'
-
-
 def call_function(func, *args, **kwargs):
     if len(args) > 0: 
         sa.log.info(f"Sending {args[1]} to {args[0]}")
@@ -718,39 +590,40 @@ def run_with_cancel_button():
         sa.log.exception("Error creating radar dict or config file: ", exc_info=True)
 
     # Create initial dictionary of expected radar files
-    res = call_function(query_radar_files)
-    if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
-        return
-    
-    for _r, radar in enumerate(sa.radar_list):
-        radar = radar.upper()
-        try:
-            if sa.new_radar == 'None':
-                new_radar = radar
-            else:
-                new_radar = sa.new_radar.upper()
-        except Exception as e:
-            sa.log.exception("Error defining new radar: ", exc_info=True)
-        
-        # Radar download
-        args = [radar, str(sa.event_start_str), str(sa.event_duration), str(True)]
-        res = call_function(utils.exec_script, sa.nexrad_script_path, args)
+    if len(sa.radar_list) > 0:
+        res = call_function(query_radar_files)
         if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
             return
         
-        # Munger
-        args = [radar, str(sa.playback_start_str), str(sa.event_duration), 
-                str(sa.simulation_seconds_shift), new_radar]
-        res = call_function(utils.exec_script, sa.l2munger_script_path, args)
-        if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]: 
-            return
-        
-        # this gives the user some radar data to poll while other scripts are running
-        try:
-            UpdateDirList(new_radar, 'None', initialize=True)
-        except Exception as e:
-            print(f"Error with UpdateDirList ", e)
-            sa.log.exception(f"Error with UpdateDirList ", exc_info=True)
+        for _r, radar in enumerate(sa.radar_list):
+            radar = radar.upper()
+            try:
+                if sa.new_radar == 'None':
+                    new_radar = radar
+                else:
+                    new_radar = sa.new_radar.upper()
+            except Exception as e:
+                sa.log.exception("Error defining new radar: ", exc_info=True)
+            
+            # Radar download
+            args = [radar, str(sa.event_start_str), str(sa.event_duration), str(True)]
+            res = call_function(utils.exec_script, sa.nexrad_script_path, args)
+            if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
+                return
+            
+            # Munger
+            args = [radar, str(sa.playback_start_str), str(sa.event_duration), 
+                    str(sa.simulation_seconds_shift), new_radar]
+            res = call_function(utils.exec_script, sa.l2munger_script_path, args)
+            if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]: 
+                return
+            
+            # this gives the user some radar data to poll while other scripts are running
+            try:
+                UpdateDirList(new_radar, 'None', initialize=True)
+            except Exception as e:
+                print(f"Error with UpdateDirList ", e)
+                sa.log.exception(f"Error with UpdateDirList ", exc_info=True)
     
     # Surface observations
     args = [str(sa.lat), str(sa.lon), sa.event_start_str, str(sa.event_duration)]
@@ -909,16 +782,6 @@ def run_transpose_script() -> None:
     """
     sa.shift_placefiles()
 
-# @app.callback(
-#    Output('transpose_status', 'value'),
-#    Input('run_transpose_script', 'n_clicks'))
-# def run_transpose_script(n_clicks):
-#    if sa.new_radar == None:
-#        return 100
-#    if n_clicks > 0:
-#        sa.shift_placefiles()
-#        return 100
-#    return 0
 
 ################################################################################################
 # ---------------------------------------- Time Selection Summary and Callbacks ----------------
@@ -1023,7 +886,7 @@ def update_time(_n) -> str:
     if sa.scripts_progress != 'Scripts completed!':
         return sa.scripts_progress
 
-    # sa.playback_timer += timedelta(seconds=90)
+    sa.playback_timer += timedelta(seconds=90)
     while sa.playback_timer < sa.playback_end_time:
         sa.playback_timer += timedelta(seconds=90)
         playback_time_str = sa.playback_timer.strftime("%Y-%m-%d %H:%M:%S UTC")
@@ -1103,4 +966,116 @@ def monitor(n):
     #     output = df.to_dict('records')
 
     return model_dir[0], radar_dir[0]
+
+def run_TJ_original():
+    """
+    This is the "OG" script-launcher. 
+    """
+    sa.scripts_progress = 'Setting up files and times'
+    # determine actual event time, playback time, diff of these two
+    sa.make_simulation_times()
+
+    # clean out old files and directories
+    try:
+        sa.remove_files_and_dirs()
+    except Exception as e:
+        print("Error removing files and directories: ", e)
+
+    # based on list of selected radars, create a dictionary of radar metadata
+    try:
+        sa.create_radar_dict()
+        # sa.create_grlevel2_cfg_file()
+        sa.copy_grlevel2_cfg_file()
+    except Exception as e:
+        print("Error creating radar dict or config file: ", e)
+
+    # acquire radar data for the event
+    sa.scripts_progress = 'Downloading radar data ...'
+    try:
+        # Initial for loop to gather all radar files. Not great, but not sure of a better
+        # way to handle this. Calls NexradDownloader but passes download=False to only
+        # query AWS for expected files
+        query_radar_files()
+
+        for _r, radar in enumerate(sa.radar_list):
+            radar = radar.upper()
+            try:
+                if sa.new_radar == 'None':
+                    new_radar = radar
+                else:
+                    new_radar = sa.new_radar.upper()
+            except Exception as e:
+                print("Error defining new radar: ", e)
+            try:
+                print(
+                    f"Nexrad Downloader - {radar}, {sa.event_start_str}, {str(sa.event_duration)}")
+                _file_list = NexradDownloader(radar, sa.event_start_str, str(sa.event_duration),
+                                                download=True)
+                # sa.radar_dict[radar]['file_list'] = file_list
+                time.sleep(10)
+            except Exception as e:
+                print("Error running nexrad script: ", e)
+            try:
+                print(f"Munge from {radar} to {new_radar}...")
+                Munger(radar, sa.playback_start_str, sa.event_duration, sa.simulation_seconds_shift,
+                        new_radar, playback_speed=1.5)
+                print(f"Munge for {new_radar} completed ...")
+                # this gives the user some radar data to poll while other scripts are running
+                UpdateDirList(new_radar, 'None', initialize=True)
+
+            except Exception as e:
+                print(
+                    "Error running Munge from {radar} to {new_radar}: ", e)
+    except Exception as e:
+        print("Error running nexrad or munge scripts: ", e)
+
+    sa.scripts_progress = 'Creating obs placefiles ...'
+    try:
+        print("Running obs script...")
+        Mesowest(str(sa.lat), str(sa.lon),
+                    sa.event_start_str, str(sa.event_duration))
+        print("Obs script completed")
+    except Exception as e:
+        print("Error running obs script: ", e)
+
+    sa.scripts_progress = 'Creating NSE placefiles ...'
+    # NSE placefiles
+    try:
+        print("Running NSE scripts...")
+        Nse(str(sa.event_start_time), sa.event_duration, sa.scripts_path, sa.data_dir,
+            sa.placefiles_dir)
+    except Exception as e:
+        print("Error running NSE scripts: ", e)
+
+    # Since there will always be a timeshift associated with a simulation, this
+    # script needs to execute every time, even if a user doesn't select a radar
+    # to transpose to.
+    run_transpose_script()
+    # sa.rename_shifted_nse_placefiles()
+
+    sa.scripts_progress = 'Creating hodo plots ...'
+
+    for radar, data in sa.radar_dict.items():
+        try:
+            asos_one = data['asos_one']
+            asos_two = data['asos_two']
+            print(asos_one, asos_two, radar)
+        except KeyError as e:
+            print("Error getting radar metadata: ", e)
+
+        try:
+            info = f'hodo script:{radar},{sa.new_radar},{asos_one},{asos_two},{sa.simulation_seconds_shift}'
+            print(info)
+            run_hodo_script([radar, sa.new_radar, asos_one,
+                            asos_two, str(sa.simulation_seconds_shift)])
+            print("Hodograph script completed ...")
+        except Exception as e:
+            print("Error running hodo script: ", e)
+        try:
+            UpdateHodoHTML('None', initialize=True)
+        except Exception as e:
+            print("Error updating hodo html: ", e)
+
+    sa.scripts_progress = 'Scripts completed!'
+
 '''
