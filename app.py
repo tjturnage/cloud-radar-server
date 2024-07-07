@@ -451,6 +451,7 @@ def display_click_data(click_data: dict, number_of_radars: int) -> str:
     if click_data is None:
         return 'No radars selected ...'
     sa.number_of_radars = number_of_radars
+    print(f'number of radars: {sa.number_of_radars}')
     the_link = click_data['points'][0]['customdata']
     print(the_link)
     if the_link is None:
@@ -458,7 +459,10 @@ def display_click_data(click_data: dict, number_of_radars: int) -> str:
     sa.radar = the_link
     if sa.radar_list in sa.radar_list:
         return f'{sa.radar} already selected'
-    sa.adjust_radar_list()
+    if len(sa.radar_list) >= sa.number_of_radars:
+        sa.radar_list = sa.radar_list[1:]
+        if len(sa.radar_list) >= sa.number_of_radars:
+            sa.radar_list = sa.radar_list[1:]
     sa.radar_list.append(sa.radar)
     print(sa.radar_list)
     sa.create_radar_dict()
