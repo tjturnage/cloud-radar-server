@@ -152,6 +152,13 @@ class RadarSimulator(Config):
                                               'asos_one': asos_one, 'asos_two': asos_two,
                                               'radar': radar.upper(), 'file_list': []}
 
+    def adjust_radar_list(self) -> None:
+        """_summary_
+        """
+        if len(self.radar_list) > self.number_of_radars:
+            self.radar_list = self.radar_list[1:]
+        if len(self.radar_list) > self.number_of_radars:
+            self.radar_list = self.radar_list[1:]
 
     def copy_grlevel2_cfg_file(self) -> None:
         """
@@ -434,15 +441,16 @@ app.layout = dbc.Container([
 # -------------------------------------
 
 @app.callback(
-    Output('show_radar_selections', 'children', allow_duplicate=True),
-    [Input('graph', 'clickData')])
-def display_click_data(click_data: dict) -> str:
+    Output('show_radar_selections', 'children'),
+    Input('graph', 'clickData'),
+    Input('radar_quantity', 'value'))
+def display_click_data(click_data: dict, number_of_radars: int) -> str:
     """
     When a user clicks on a radar site, this function will display the radar site name
     """
     if click_data is None:
         return 'No radars selected ...'
-
+    sa.number_of_radars = number_of_radars
     the_link = click_data['points'][0]['customdata']
     print(the_link)
     if the_link is None:
@@ -450,10 +458,7 @@ def display_click_data(click_data: dict) -> str:
     sa.radar = the_link
     if sa.radar_list in sa.radar_list:
         return f'{sa.radar} already selected'
-    if len(sa.radar_list) >= sa.number_of_radars:
-        sa.radar_list = sa.radar_list[1:]
-    if len(sa.radar_list) >= sa.number_of_radars:
-        sa.radar_list = sa.radar_list[1:]
+    sa.adjust_radar_list()
     sa.radar_list.append(sa.radar)
     print(sa.radar_list)
     sa.create_radar_dict()
@@ -510,21 +515,6 @@ def toggle_transpose_display(value):
     if sa.number_of_radars == 1:
         return lc.section_box
     return {'display': 'none'}
-
-
-@app.callback(
-    Output('show_radar_selections', 'children'),
-    Input('radar_quantity', 'value'))
-def update_selected_radar_list(value):
-    """
-    This function will update the list of selected radars based on the number of radars
-    """
-    sa.number_of_radars = value
-    if len(sa.radar_list) > sa.number_of_radars:
-        sa.radar_list = sa.radar_list[1:]
-        if len(sa.radar_list) > sa.number_of_radars:
-            sa.radar_list = sa.radar_list[1:]
-    return str(sa.radar_list)
 
 
 # -------------------------------------
