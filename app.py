@@ -141,21 +141,22 @@ class RadarSimulator(Config):
 
     def create_radar_dict(self) -> None:
         """
-        Creates a dictionary of radar sites and their associated metadata that will be used in the simulation.
+        Creates dictionary of radar sites and their metadata to be used in the simulation.
         """
         for _i, radar in enumerate(self.radar_list):
             self.lat = lc.df[lc.df['radar'] == radar]['lat'].values[0]
             self.lon = lc.df[lc.df['radar'] == radar]['lon'].values[0]
             asos_one = lc.df[lc.df['radar'] == radar]['asos_one'].values[0]
             asos_two = lc.df[lc.df['radar'] == radar]['asos_two'].values[0]
-            self.radar_dict[radar.upper()] = {'lat': self.lat, 'lon': self.lon, 'asos_one': asos_one,
-                                              'asos_two': asos_two, 'radar': radar.upper(), 'file_list': []}
+            self.radar_dict[radar.upper()] = {'lat': self.lat, 'lon': self.lon,
+                                              'asos_one': asos_one, 'asos_two': asos_two,
+                                              'radar': radar.upper(), 'file_list': []}
 
 
     def copy_grlevel2_cfg_file(self) -> None:
         """
-        Ensures a grlevel2.cfg file is copied into the polling directory. It's required for GR2Analyst to poll for radar data.
-        Only the radar sites used in the simulation are listed in this file instead of all available radars
+        Ensures a grlevel2.cfg file is copied into the polling directory.
+        This file is required for GR2Analyst to poll for radar data.
         """
         source = BASE_DIR / 'grlevel2.cfg'
         destination = POLLING_DIR / 'grlevel2.cfg'
@@ -191,11 +192,13 @@ class RadarSimulator(Config):
     def make_simulation_times(self) -> None:
         """
         playback_start_time: datetime object
-            the time the simulation starts. It's arbitrarily set to 2 hours prior to current real time so GR2Analyst can poll for data
+            - the time the simulation starts.
+            - set to (current UTC time - 2hrs), "recent enough" for GR2Analyst to poll data
         playback_timer: datetime object
-            the "current" displaced realtime during the playback
+            - the "current" displaced realtime during the playback
         event_start_time: datetime object
-            the historical time the actual event started. This is based on user inputs of the event start time
+            - the historical time the actual event started.
+            - based on user inputs of the event start time
         simulation_time_shift: timedelta object
             the difference between the playback start time and the event start time
         simulation_seconds_shift: int
@@ -444,18 +447,18 @@ def display_click_data(click_data: dict) -> str:
     print(the_link)
     if the_link is None:
         return 'No Website Available'
-
     sa.radar = the_link
     if sa.radar_list in sa.radar_list:
         return f'{sa.radar} already selected'
-    if len(sa.radar_list) == sa.number_of_radars:
+    if len(sa.radar_list) >= sa.number_of_radars:
+        sa.radar_list = sa.radar_list[1:]
+    if len(sa.radar_list) >= sa.number_of_radars:
         sa.radar_list = sa.radar_list[1:]
     sa.radar_list.append(sa.radar)
     print(sa.radar_list)
     sa.create_radar_dict()
     radar_list = ', '.join(sa.radar_list)
     return f'{radar_list}'
-
 
 @app.callback(
     Output('graph-container', 'style'),
@@ -495,6 +498,22 @@ def transpose_radar(value):
         return f'{sa.new_radar}'
     return 'None'
 
+@app.callback(
+    Output('show_radar_selections', 'children'),
+    Input('radar_quantity', 'value'))
+def update_selected_radar_list(value):
+    """
+    This function will update the list of selected radars based on the number of radars
+    """
+    sa.number_of_radars = value
+    
+    if sa.radar is None or sa.number_of_radars != 1:
+        return {'display': 'none'}
+    if len(sa.radar_list) > sa.number_of_radars:
+        sa.radar_list = sa.radar_list[1:]
+        if len(sa.radar_list) > sa.number_of_radars:
+            sa.radar_list = sa.radar_list[1:]
+        return lc.section_box
 
 @app.callback(
     Output('transpose_section', 'style'),
@@ -505,15 +524,14 @@ def toggle_transpose_display(value):
     This function will hide the transpose section if the number of radars is > 1
     """
     sa.number_of_radars = value
-    if sa.radar is None:
+    if sa.radar is None or sa.number_of_radars != 1:
         return {'display': 'none'}
     if len(sa.radar_list) > sa.number_of_radars:
         sa.radar_list = sa.radar_list[1:]
         if len(sa.radar_list) > sa.number_of_radars:
             sa.radar_list = sa.radar_list[1:]
-    if sa.number_of_radars == 1:
         return lc.section_box
-    return {'display': 'none'}
+
 
 # -------------------------------------
 # ---  Run Scripts button ---
@@ -549,7 +567,8 @@ def run_hodo_script(args) -> None:
     sa.new_radar: str - Either 'None' or the new radar to transpose to
     asos_one: str - the first ASOS station to use for hodographs
     asos_two: str - the second ASOS station to use for hodographs as a backup
-    sa.simulation_seconds_shift: str - time shift (seconds) between the event start and playback start
+    sa.simulation_seconds_shift: str - time shift (seconds) between the event
+    start and playback start
     """
     print(args)
     subprocess.run(["python", HODO_SCRIPT_PATH] + args, check=True)
@@ -558,7 +577,7 @@ def run_hodo_script(args) -> None:
 def call_function(func, *args, **kwargs):
     if len(args) > 0: 
         sa.log.info(f"Sending {args[1]} to {args[0]}")
-    
+
     result = func(*args, **kwargs)
 
     if len(result['stderr']) > 0: 
@@ -566,8 +585,8 @@ def call_function(func, *args, **kwargs):
     if 'exception' in result:
         sa.log.error(f"Exception {result['exception']} occurred in {func.__name__}")
     return result
-    
-    
+
+
 def run_with_cancel_button():
     """
     This version of the script-launcher trying to work in cancel button
@@ -810,6 +829,9 @@ def get_sim(_yr, _mo, _dy, _hr, _mn, _dur) -> str:
 
 @app.callback(Output('start_year', 'value'), Input('start_year', 'value'))
 def get_year(start_year) -> int:
+    """
+    Updates the start year variable in the sa object
+    """
     sa.event_start_year = start_year
     return sa.event_start_year
 
@@ -818,6 +840,9 @@ def get_year(start_year) -> int:
     Output('start_day', 'options'),
     [Input('start_year', 'value'), Input('start_month', 'value')])
 def update_day_dropdown(selected_year, selected_month):
+    """
+    Updates the day dropdown based on the selected year and month
+    """
     _, num_days = calendar.monthrange(selected_year, selected_month)
     day_options = [{'label': str(day), 'value': day}
                    for day in range(1, num_days+1)]
@@ -826,30 +851,45 @@ def update_day_dropdown(selected_year, selected_month):
 
 @app.callback(Output('start_month', 'value'), Input('start_month', 'value'))
 def get_month(start_month) -> int:
+    """
+    Updates the start month variable in the sa object
+    """
     sa.event_start_month = start_month
     return sa.event_start_month
 
 
 @app.callback(Output('start_day', 'value'), Input('start_day', 'value'))
 def get_day(start_day) -> int:
+    """
+    Updates the start day variable in the sa object
+    """
     sa.event_start_day = start_day
     return sa.event_start_day
 
 
 @app.callback(Output('start_hour', 'value'), Input('start_hour', 'value'))
 def get_hour(start_hour) -> int:
+    """
+    Updates the start hour variable in the sa object
+    """
     sa.event_start_hour = start_hour
     return sa.event_start_hour
 
 
 @app.callback(Output('start_minute', 'value'), Input('start_minute', 'value'))
 def get_minute(start_minute) -> int:
+    """
+    Updates the start minute variable in the sa object
+    """
     sa.event_start_minute = start_minute
     return sa.event_start_minute
 
 
 @app.callback(Output('duration', 'value'), Input('duration', 'value'))
 def get_duration(duration) -> int:
+    """
+    Updates the event duration (in minutes) in the sa object
+    """
     sa.event_duration = duration
     return sa.event_duration
 
@@ -884,7 +924,7 @@ def update_time(_n) -> str:
        - assets/polling/KXXX/dir.list files
     """
     if sa.scripts_progress != 'Scripts completed!':
-        return sa.scripts_progress
+        return str(sa.scripts_progress)
 
     sa.playback_timer += timedelta(seconds=90)
     while sa.playback_timer < sa.playback_end_time:
