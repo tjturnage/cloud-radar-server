@@ -434,7 +434,7 @@ app.layout = dbc.Container([
 # -------------------------------------
 
 @app.callback(
-    Output('show_radar_selections', 'children'),
+    Output('show_radar_selections', 'children', allow_duplicate=True),
     [Input('graph', 'clickData')])
 def display_click_data(click_data: dict) -> str:
     """
@@ -499,23 +499,6 @@ def transpose_radar(value):
     return 'None'
 
 @app.callback(
-    Output('show_radar_selections', 'children'),
-    Input('radar_quantity', 'value'))
-def update_selected_radar_list(value):
-    """
-    This function will update the list of selected radars based on the number of radars
-    """
-    sa.number_of_radars = value
-    
-    if sa.radar is None or sa.number_of_radars != 1:
-        return {'display': 'none'}
-    if len(sa.radar_list) > sa.number_of_radars:
-        sa.radar_list = sa.radar_list[1:]
-        if len(sa.radar_list) > sa.number_of_radars:
-            sa.radar_list = sa.radar_list[1:]
-        return lc.section_box
-
-@app.callback(
     Output('transpose_section', 'style'),
     Input('radar_quantity', 'value'))
 def toggle_transpose_display(value):
@@ -524,13 +507,24 @@ def toggle_transpose_display(value):
     This function will hide the transpose section if the number of radars is > 1
     """
     sa.number_of_radars = value
-    if sa.radar is None or sa.number_of_radars != 1:
-        return {'display': 'none'}
+    if sa.number_of_radars == 1:
+        return lc.section_box
+    return {'display': 'none'}
+
+
+@app.callback(
+    Output('show_radar_selections', 'children'),
+    Input('radar_quantity', 'value'))
+def update_selected_radar_list(value):
+    """
+    This function will update the list of selected radars based on the number of radars
+    """
+    sa.number_of_radars = value
     if len(sa.radar_list) > sa.number_of_radars:
         sa.radar_list = sa.radar_list[1:]
         if len(sa.radar_list) > sa.number_of_radars:
             sa.radar_list = sa.radar_list[1:]
-        return lc.section_box
+    return str(sa.radar_list)
 
 
 # -------------------------------------

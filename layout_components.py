@@ -224,7 +224,7 @@ transpose_radar_dropdown = dbc.Col(html.Div([spacer_mini,dcc.Dropdown(transpose_
                                             style={'vertical-align': 'top'}))
 transpose_section = dbc.Container(dbc.Container(
     dbc.Container(html.Div([dbc.Row([step_transpose_radar, transpose_radar_dropdown],
-                                    id='transpose_section')]))))
+                                    id='transpose_section')], style={'display': 'none'}))))
 
 # ---------------------------------------------------------------
 # Run script button
