@@ -38,13 +38,17 @@ feedback = {'border': '1px gray solid', 'padding': '0.4em', 'font-weight': 'bold
             'font-size': '1.4em', 'text-align': 'center', 'vertical-align': 'center',
             'height': '6vh'}
 
+feedback_smaller = {'border': '1px gray solid', 'padding': '0.4em', 'font-weight': 'bold',
+            'font-size': '1.1em', 'text-align': 'center', 'vertical-align': 'center',
+            'height': '6vh'}
+
 steps = {'padding': '0.4em', 'border': '0.3em', 'border-radius': '15px', 'font-weight': 'bold',
          'color': 'yellow', 'background': '#555555', 'font-size': '1.4em', 'text-align': 'left',
          'height': 'vh5'}
 
-steps_right = {'padding': '0.4em', 'border': '0.3em', 'border-radius': '15px', 'font-weight': 'bold',
-               'color': '#06DB42', 'background': '#555555', 'font-size': '1.4em',
-               'text-align': 'right', 'height': 'vh5'}
+steps_right = {'padding': '0.4em', 'border': '0.3em', 'border-radius': '15px',
+               'font-weight': 'bold', 'color': '#06DB42', 'background': '#555555',
+               'font-size': '1.4em', 'text-align': 'right', 'height': 'vh5'}
 
 steps_center = {'padding': '0.4em', 'border': '0.3em', 'border-radius': '15px',
                 'font-weight': 'bold', 'color': '#06DB42', 'background': '#555555',
@@ -97,10 +101,9 @@ top_banner = html.Div([
         style={"padding": "1.7em", "text-align": "center"}),
 ])
 
-
-# ---------------------------------------------------------------
-# Time/duration components
-# ---------------------------------------------------------------
+################################################################################################
+# ----------------------------- Time/duration components  --------------------------------------
+################################################################################################
 
 STEP_SELECT_TIME = "Select Simulation Start Date, Time, and Duration (in Minutes)"
 
@@ -109,6 +112,10 @@ step_select_time_section = dbc.Container(
 
 time_headers = {'padding': '0.05em', 'border': '1em', 'border-radius': '12px',
                 'background': '#555555','font-size': '1.4em', 'color': 'white',
+                'text-align': 'center', 'vertical-align': 'top', 'height': '4vh'}
+
+smaller_headers = {'padding': '0.05em', 'border': '1em', 'border-radius': '12px',
+                'background': '#555555','font-size': '1.2em', 'color': 'white',
                 'text-align': 'center', 'vertical-align': 'top', 'height': '4vh'}
 
 step_year = html.Div(children="Year", style=time_headers)
@@ -143,32 +150,44 @@ step_time_confirm = dbc.Container(html.Div([dbc.Row([confirm_times_section, time
 
 radar_id = html.Div(id='radar', style={'display': 'none'})
 
-# ---------------------------------------------------------------
-# Radar map components
-# ---------------------------------------------------------------
+################################################################################################
+# ----------------------------- Radar selection components  ------------------------------------
+################################################################################################
 
-radar_quantity = html.Div(children="Number of radars", style=time_headers)
-radar_quantity_section = dbc.Col(html.Div([radar_quantity, spacer_mini,
-                                           dcc.Slider(1, 3, 1, value=1, id='radar_quantity'),]))
-
+radar_quantity = html.Div(children="Number of radars", style=smaller_headers)
+radar_quantity_section = dbc.Col(html.Div([#radar_quantity, spacer_mini,
+                                           dcc.Dropdown(['1 radar','2 radars','3 radars'],
+                                                        '1 radar', id='radar_quantity',
+                                                        clearable=False)]), width=2,
+                                                        style={'vertical-align': 'middle'})
 
 STEP_CHOOSE_FROM_MAP = "Use button at right to display map of radars"
 
 # step_radar_section = dbc.Col(html.Div(children=STEP_CHOOSE_FROM_MAP,style=steps_right))
-map_toggle_button = dbc.Col(html.Div([dbc.Button('Click to toggle radar map on/off', size="lg",
+map_toggle_button = dbc.Col(html.Div([dbc.Button('Show radar map', size="lg",
                                                 id='map_btn', n_clicks=0)],
                                                 className="d-grid gap-2 col-12 mx-auto"))
 
-# map_reset_radars = dbc.Col(html.Div([dbc.Button('Reset', size="lg", id='radar_reset_btn', n_clicks=0)],
-#                                   className="d-grid gap-2 col-12 mx-auto"))
-MAP_INSTRUCTIONS = "Select up to 3 radars for simulation. Most recent selections will be used."
+confirm_radars = dbc.Col(html.Div([dbc.Button('Make selections', size="lg",
+                                     id='confirm_radars_btn', n_clicks=0, disabled=True)],
+                                  className="d-grid gap-2 col-12 mx-auto"))
+MAP_INSTRUCTIONS = "Choose number of radars, use map to make selection(s), click button to confirm."
 map_instructions_component = dbc.Row(
     dbc.Col(html.Div(children=MAP_INSTRUCTIONS, style=steps_center)))
-radar_selections_readout = dbc.Col(
-    html.Div(id='show_radar_selections', style=feedback))
+radar_feedback_readout = dbc.Col(html.Div(id='show_radar_selection_feedback',
+                                          style=feedback_smaller), width=4,
+                                        style={'vertical-align': 'top'})
+
 radar_select_section = dbc.Container(html.Div([map_instructions_component, spacer,
                                                dbc.Row([radar_quantity_section,
-                                                map_toggle_button, radar_selections_readout])]))
+                                                        map_toggle_button,
+                                                        radar_feedback_readout,
+                                                        confirm_radars
+                                                        ])]))
+
+################################################################################################
+# ----------------------------- Radar map components  ------------------------------------------
+################################################################################################
 
 fig = go.Figure(go.Scattermapbox(
     mode='markers',
@@ -186,8 +205,8 @@ fig = go.Figure(go.Scattermapbox(
 fig.update_layout(
     mapbox={  # 'accesstoken': TOKEN,
         'style': "carto-darkmatter",
-        'center': {'lon': -93.945155, 'lat': 38.80105},
-        'zoom': 3.5})
+        'center': {'lon': -94.4, 'lat': 38.2},
+        'zoom': 3.8})
 
 
 fig.update_layout(uirevision='foo', clickmode='event+select',
@@ -195,20 +214,19 @@ fig.update_layout(uirevision='foo', clickmode='event+select',
                   margin={'r': 0, 't': 0, 'l': 0, 'b': 0},)
 
 
+map_section_style = {'padding-bottom': '2px', 'padding-left': '2px',
+                       'height': '72vh', 'width': '100%'}
 map_section = html.Div([
-
     html.Div([dcc.Graph(
         id='graph',
         config={'displayModeBar': False, 'scrollZoom': True},
-        style={'padding-bottom': '2px', 'padding-left': '2px',
-               'height': '73vh', 'width': '100%'},
+        style=map_section_style,
         figure=fig)]),
 ], id='graph-container', style={'display': 'none'})
 
-
-# ---------------------------------------------------------------
-# Transpose component
-# ---------------------------------------------------------------
+################################################################################################
+# ----------------------------- Transpose component  -------------------------------------------
+################################################################################################
 
 transpose_list = sorted(list(df.index))
 transpose_list.insert(0, 'None')
@@ -226,9 +244,9 @@ transpose_section = dbc.Container(dbc.Container(
     dbc.Container(html.Div([dbc.Row([step_transpose_radar, transpose_radar_dropdown],
                                     id='transpose_section')], style={'display': 'none'}))))
 
-# ---------------------------------------------------------------
-# Run script button
-# ---------------------------------------------------------------
+################################################################################################
+# ----------------------------- Run Script button  ---------------------------------------------
+################################################################################################
 
 scripts_button = dbc.Container(html.Div([
     dbc.Row([dbc.Col(
@@ -244,10 +262,10 @@ scripts_button = dbc.Container(html.Div([
             ])
 ], style={'padding': '1em', 'vertical-align': 'middle'}))
 
+################################################################################################
+# ----------------------------- Script status components  --------------------------------------
+################################################################################################
 
-# ---------------------------------------------------------------
-# Script status components
-# ---------------------------------------------------------------
 status_headers = {'padding': '0.05em', 'border': '1em', 'border-radius': '12px',
                   'background': '#555555', 'font-size': '1.3em', 'color': 'white', 
                   'text-align': 'center', 'vertical-align': 'top', 'height': '4vh'}
@@ -426,11 +444,13 @@ links_section = dbc.Container(dbc.Container(html.Div(
 
         ),
         html.P(id="counter"),
+        html.P(id="radar_quantity_holder", style={'display': 'none'}),
     ]
 )))
-# ---------------------------------------------------------------
-# Clock components
-# ---------------------------------------------------------------
+
+################################################################################################
+# ----------------------------- Clock components  ----------------------------------------------
+################################################################################################
 
 step_sim_clock = [dbc.CardBody(
     [html.H5("Simulation Progress", className="card-text")])]

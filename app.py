@@ -30,7 +30,7 @@ import logging
 import pandas as pd
 import pytz
 # from time import sleep
-from dash import Dash, html, Input, Output, dcc  # , ctx, callback
+from dash import Dash, html, Input, Output, dcc , ctx #, callback
 from dash.exceptions import PreventUpdate
 # from dash import diskcache, DiskcacheManager, CeleryManager
 # from uuid import uuid4
@@ -57,9 +57,9 @@ R = 6_378_137
 LAT_LON_REGEX = "[0-9]{1,2}.[0-9]{1,100},[ ]{0,1}[|\\s-][0-9]{1,3}.[0-9]{1,100}"
 TIME_REGEX = "[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z"
 
-# ----------------------------------------
-#        Attempt to set up environment
-# ----------------------------------------
+################################################################################################
+# ----------------------------- Attempt to set up environment  ---------------------------------
+################################################################################################
 TOKEN = 'INSERT YOUR MAPBOX TOKEN HERE'
 
 BASE_DIR = Path.cwd()
@@ -79,10 +79,8 @@ NEXRAD_SCRIPT_PATH = SCRIPTS_DIR / 'Nexrad.py'
 L2MUNGER_FILEPATH = SCRIPTS_DIR / 'l2munger'
 
 ################################################################################################
-#       Define class RadarSimulator
+# ----------------------------- Define class RadarSimulator  -----------------------------------
 ################################################################################################
-
-
 class RadarSimulator(Config):
     """
     A class to simulate radar operations, inheriting configurations from a base Config class.
@@ -104,7 +102,7 @@ class RadarSimulator(Config):
         self.event_start_minute = 45
         self.event_duration = 30
         self.timestring = None
-        self.number_of_radars = 0
+        self.number_of_radars = 1
         self.radar_list = []
         self.radar_dict = {}
         self.radar_files_dict = {}
@@ -151,14 +149,6 @@ class RadarSimulator(Config):
             self.radar_dict[radar.upper()] = {'lat': self.lat, 'lon': self.lon,
                                               'asos_one': asos_one, 'asos_two': asos_two,
                                               'radar': radar.upper(), 'file_list': []}
-
-    def adjust_radar_list(self) -> None:
-        """_summary_
-        """
-        if len(self.radar_list) > self.number_of_radars:
-            self.radar_list = self.radar_list[1:]
-        if len(self.radar_list) > self.number_of_radars:
-            self.radar_list = self.radar_list[1:]
 
     def copy_grlevel2_cfg_file(self) -> None:
         """
@@ -385,7 +375,7 @@ class RadarSimulator(Config):
                     os.rmdir(os.path.join(root, name))
 
 ################################################################################################
-#      Initialize the app
+# ----------------------------- Initialize the app  --------------------------------------------
 ################################################################################################
 
 
@@ -395,7 +385,7 @@ app = Dash(__name__, external_stylesheets=[dbc.themes.CYBORG],
 app.title = "Radar Simulator"
 
 ################################################################################################
-#     Build the layout
+# ----------------------------- Build the layout  ---------------------------------------------
 ################################################################################################
 
 sim_day_selection = dbc.Col(html.Div([
@@ -435,42 +425,56 @@ app.layout = dbc.Container([
     lc.simulation_clock, lc.radar_id, lc.bottom_section
 ])  # end of app.layout
 
-
-# -------------------------------------
-# ---  Radar Map section  ---
-# -------------------------------------
+################################################################################################
+# ----------------------------- Radar map section  ---------------------------------------------
+################################################################################################
 
 @app.callback(
-    Output('show_radar_selections', 'children'),
+    [Output('show_radar_selection_feedback', 'children'),
+    Output('confirm_radars_btn', 'children'),
+    Output('confirm_radars_btn', 'disabled'),
+    Output('transpose_section', 'style')],
+    Input('radar_quantity', 'value'),
     Input('graph', 'clickData'),
-    Input('radar_quantity', 'value'))
-def display_click_data(click_data: dict, number_of_radars: int) -> str:
+    prevent_initial_call=True
+    )
+def display_click_data(quant_str: str, click_data: dict):
     """
-    When a user clicks on a radar site, this function will display the radar site name
+    Any time a radar site is clicked, 
+    this function will trigger and update the radar list.
     """
-    if click_data is None:
-        return 'No radars selected ...'
-    sa.number_of_radars = number_of_radars
-    print(f'number of radars: {sa.number_of_radars}')
-    the_link = click_data['points'][0]['customdata']
-    print(the_link)
-    if the_link is None:
-        return 'No Website Available'
-    sa.radar = the_link
-    if sa.radar_list in sa.radar_list:
-        return f'{sa.radar} already selected'
-    if len(sa.radar_list) >= sa.number_of_radars:
-        sa.radar_list = sa.radar_list[1:]
-        if len(sa.radar_list) >= sa.number_of_radars:
-            sa.radar_list = sa.radar_list[1:]
-    sa.radar_list.append(sa.radar)
-    print(sa.radar_list)
-    sa.create_radar_dict()
-    radar_list = ', '.join(sa.radar_list)
-    return f'{radar_list}'
+    transpose_section_style = {'display': 'none'}
+    triggered_id = ctx.triggered_id
+    if triggered_id == 'radar_quantity':
+        sa.number_of_radars = int(quant_str[0:1])
+        sa.radar_list = []
+        sa.radar_dict = {}
+        return f'Use map to select {quant_str}', 'Make selections', True, transpose_section_style
+    if triggered_id == 'graph':
+        try:
+            sa.radar = click_data['points'][0]['customdata']
+            print(f"Selected radar: {sa.radar}")
+        except (KeyError, IndexError, TypeError):
+            return 'No radar selected ...', 'Make selections', True, transpose_section_style
+            
+        sa.radar_list.append(sa.radar)
+        if len(sa.radar_list) > sa.number_of_radars:
+            sa.radar_list = sa.radar_list[-sa.number_of_radars:]
+            print(f"Radar list: {sa.radar_list}")
+            if len(sa.radar_list) == 1 and sa.number_of_radars == 1:
+                transpose_section_style = {'vertical-align': 'top'}
+            return ', '.join(sa.radar_list), 'Finalize selections', False, transpose_section_style
+        if len(sa.radar_list) == sa.number_of_radars:
+            print(f"Radar list: {sa.radar_list}")
+            if len(sa.radar_list) == 1:
+                transpose_section_style = {'vertical-align': 'top'}
+            return ', '.join(sa.radar_list), 'Finalize selections', False, transpose_section_style
+        else:
+            return ', '.join(sa.radar_list), 'Make selections', True, transpose_section_style
 
 @app.callback(
-    Output('graph-container', 'style'),
+    [Output('graph-container', 'style'),
+     Output('map_btn', 'children')],
     Input('map_btn', 'n_clicks'))
 def toggle_map_display(n) -> dict:
     """
@@ -478,14 +482,13 @@ def toggle_map_display(n) -> dict:
     to modify the associated html element
     """
     if n % 2 == 0:
-        return {'display': 'none'}
-    return {'padding-bottom': '2px', 'padding-left': '2px', 'height': '80vh', 'width': '100%'}
+        return {'display': 'none'}, 'Show Radar Map'
+    return lc.map_section_style, 'Hide Radar Map'
 
-# -------------------------------------
-# ---  Transpose radar section  ---
-# -------------------------------------
-# Added tradar as a dcc.Store as this callback didn't seem to execute otherwise. The
-# tradar store value is not used (currently), as everything is stored in sa.whatever.
+
+################################################################################################
+# ----------------------------- Transpose radar section  ---------------------------------------
+################################################################################################
 
 
 @app.callback(
@@ -497,6 +500,9 @@ def transpose_radar(value):
     will not update sa.new_radar to None. Instead, it'll be the previous selection.
     Since we always evaluate "value" after every user selection, always set new_radar 
     initially to None.
+    
+    Added tradar as a dcc.Store as this callback didn't seem to execute otherwise. The
+    tradar store value is not used (currently), as everything is stored in sa.whatever.
     """
     sa.new_radar = 'None'
 
@@ -507,23 +513,9 @@ def transpose_radar(value):
         return f'{sa.new_radar}'
     return 'None'
 
-@app.callback(
-    Output('transpose_section', 'style'),
-    Input('radar_quantity', 'value'))
-def toggle_transpose_display(value):
-    """
-    Transposing is an option only if the number of selected radars = 1
-    This function will hide the transpose section if the number of radars is > 1
-    """
-    sa.number_of_radars = value
-    if sa.number_of_radars == 1:
-        return lc.section_box
-    return {'display': 'none'}
-
-
-# -------------------------------------
-# ---  Run Scripts button ---
-# -------------------------------------
+################################################################################################
+# ----------------------------- Run Scripts button  --------------------------------------------
+################################################################################################
 
 def query_radar_files():
     """
@@ -544,7 +536,7 @@ def query_radar_files():
         json_data = results['stdout'].decode('utf-8')
         sa.log.info(f"Nexrad.py returned with {json_data}")
         sa.radar_files_dict.update(json.loads(json_data))
-    
+
     return results
 
 
@@ -601,7 +593,7 @@ def run_with_cancel_button():
         res = call_function(query_radar_files)
         if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
             return
-        
+
         for _r, radar in enumerate(sa.radar_list):
             radar = radar.upper()
             try:
@@ -611,27 +603,27 @@ def run_with_cancel_button():
                     new_radar = sa.new_radar.upper()
             except Exception as e:
                 sa.log.exception("Error defining new radar: ", exc_info=True)
-            
+   
             # Radar download
             args = [radar, str(sa.event_start_str), str(sa.event_duration), str(True)]
             res = call_function(utils.exec_script, sa.nexrad_script_path, args)
             if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
                 return
-            
+
             # Munger
             args = [radar, str(sa.playback_start_str), str(sa.event_duration), 
                     str(sa.simulation_seconds_shift), new_radar]
             res = call_function(utils.exec_script, sa.l2munger_script_path, args)
             if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]: 
                 return
-            
+      
             # this gives the user some radar data to poll while other scripts are running
             try:
                 UpdateDirList(new_radar, 'None', initialize=True)
             except Exception as e:
                 print(f"Error with UpdateDirList ", e)
                 sa.log.exception(f"Error with UpdateDirList ", exc_info=True)
-    
+
     # Surface observations
     args = [str(sa.lat), str(sa.lon), sa.event_start_str, str(sa.event_duration)]
     res = call_function(utils.exec_script, sa.obs_script_path, args)
@@ -644,7 +636,7 @@ def run_with_cancel_button():
     res = call_function(utils.exec_script, sa.nse_script_path, args)
     if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
         return
-    
+
     # Since there will always be a timeshift associated with a simulation, this
     # script needs to execute every time, even if a user doesn't select a radar
     # to transpose to.
@@ -658,7 +650,7 @@ def run_with_cancel_button():
             asos_two = data['asos_two']
         except KeyError as e:
             sa.log.exception("Error getting radar metadata: ", exc_info=True)
-        
+    
         # Execute hodograph script
         args = [radar, sa.new_radar, asos_one, asos_two, str(sa.simulation_seconds_shift)]
         res = call_function(utils.exec_script, sa.hodo_script_path, args)
@@ -670,7 +662,6 @@ def run_with_cancel_button():
         except Exception as e:
             print("Error updating hodo html: ", e)
             sa.log.exception("Error updating hodo html: ", exc_info=True)
-    
 
 @app.callback(
     Output('show_script_progress', 'children', allow_duplicate=True),
@@ -700,18 +691,21 @@ def launch_simulation(n_clicks) -> None:
     else:
         run_with_cancel_button()
         #run_TJ_original()
-        
 
 ################################################################################################
 # ----------------------------- Monitoring and reporting script status  ------------------------
 ################################################################################################
 
-
 @app.callback(
     Output('dummy', 'data'),
-    [Input('cancel_scripts', 'n_clicks')],   
+    [Input('cancel_scripts', 'n_clicks')],
     prevent_initial_call=True)
-def cancel_scripts(n_clicks):
+def cancel_scripts(n_clicks) -> None:
+    """
+    This function is called when the "Cancel Scripts" button is clicked. It will cancel all
+    Args:
+        n_clicks (int): incremented whenever the "Cancel Scripts" button is clicked
+    """
     if n_clicks > 0:
         utils.cancel_all(sa)
 
@@ -746,7 +740,7 @@ def monitor(_n):
         if len(name) > 1: name = name[1]
         if p['name'] == 'wgrib2':
             name = 'wgrib2'
-        
+      
         if name in scripts_list and name not in seen_scripts:
             runtime = time.time() - p['create_time']
             #screen_output += f"{name}: {p['status']} for {round(runtime,1)} s. "
@@ -759,7 +753,7 @@ def monitor(_n):
     # Radar mungering/transposing status
     munger_completion = utils.munger_monitor(sa)
 
-    # Surface placefile status 
+    # Surface placefile status
     placefile_completion = utils.surface_placefile_monitor(sa)
 
     # Hodographs. Currently hard-coded to expect 2 files for every radar and radar file.
@@ -774,14 +768,12 @@ def monitor(_n):
     return (radar_dl_completion, hodograph_completion, munger_completion, 
             placefile_completion, model_list, model_warning, screen_output)
 
-
-# -------------------------------------
-# --- Transpose placefiles in time and space
-# -------------------------------------
+################################################################################################
+# ----------------------------- Transpose placefiles in time and space  ------------------------
+################################################################################################
 # A time shift will always be applied in the case of a simulation. Determination of
 # whether to also perform a spatial shift occurrs within self.shift_placefiles where
 # a check for sa.new_radar != None takes place.
-
 
 def run_transpose_script() -> None:
     """
@@ -789,11 +781,9 @@ def run_transpose_script() -> None:
     """
     sa.shift_placefiles()
 
-
 ################################################################################################
-# ---------------------------------------- Time Selection Summary and Callbacks ----------------
+# ----------------------------- Time Selection Summary and Callbacks  --------------------------
 ################################################################################################
-
 
 @app.callback(
     Output('show_time_data', 'children'),
@@ -882,9 +872,8 @@ def get_duration(duration) -> int:
     return sa.event_duration
 
 ################################################################################################
-# ---------------------------------------- Clock Callbacks ----------------
+# ----------------------------- Clock Callbacks  -----------------------------------------------
 ################################################################################################
-
 
 @app.callback(
     Output('clock-container', 'style'),
@@ -927,9 +916,8 @@ def update_time(_n) -> str:
         return playback_time_str
 
 ################################################################################################
-# ---------------------------------------- Call app ----------------
+# ----------------------------- Start app  -----------------------------------------------------
 ################################################################################################
-
 
 if __name__ == '__main__':
     if lc.cloud:
