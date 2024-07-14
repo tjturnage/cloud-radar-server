@@ -1,10 +1,11 @@
-import subprocess 
-import os, signal
-import psutil 
-from glob import glob 
-import json 
-import pandas as pd 
-from pathlib import Path 
+import subprocess
+import os
+import signal
+from pathlib import Path
+from glob import glob
+import psutil
+import pandas as pd
+import json
 
 def exec_script(script_path, args):
     """
@@ -41,11 +42,11 @@ def get_app_processes():
         try:
             info = proc.info
             if ('python' in info['name'] or 'wgrib2' in info['name']) and \
-                len(info['cmdline']) > 1: 
+                len(info['cmdline']) > 1:
                 processes.append(info)
         except:
             pass
-    return processes 
+    return processes
 
 def cancel_all(sa):
     """
@@ -54,7 +55,7 @@ def cancel_all(sa):
     """
     # Should move this somewhere else, maybe into the __init__ function? These are 
     # the cancelable scripts
-    scripts_list = ["Nexrad.py", "nse.py", "get_data.py", "process.py", 
+    scripts_list = ["Nexrad.py", "nse.py", "get_data.py", "process.py",
                     "hodo_plot.py", "munger.py", "obs_placefile.py"]
     processes = get_app_processes()
 
@@ -143,11 +144,11 @@ def nse_status_checker(sa):
 
         if len(output) == 0: 
             warning_text = (
-                f"Warning: No RAP data was found for this request. NSE placefiles "
-                f"will be unavailable."
+                "Warning: No RAP data was found for this request. NSE placefiles "
+                "will be unavailable."
             )
 
-    return output, warning_text 
+    return output, warning_text
 
 
 def file_stats(filename):

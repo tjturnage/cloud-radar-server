@@ -390,13 +390,12 @@ app.title = "Radar Simulator"
 
 sim_day_selection = dbc.Col(html.Div([
     lc.step_day,
-    dcc.Dropdown(np.arange(1, sa.days_in_month+1), 7, id='start_day', clearable=False
-                 )]))
+    dcc.Dropdown(np.arange(1, sa.days_in_month+1), 7, id='start_day', clearable=False)]))
 
 app.layout = dbc.Container([
     # testing directory size monitoring
     dcc.Interval(id='directory_monitor', disabled=False, interval=2*1000),
-    dcc.Interval(id='playback-clock', disabled=True, interval=2*60*1000),
+    dcc.Interval(id='playback-clock', disabled=True, interval=60*1000),
     # dcc.Store(id='model_dir_size'),
     # dcc.Store(id='radar_dir_size'),
     dcc.Store(id='tradar'),
@@ -411,17 +410,13 @@ app.layout = dbc.Container([
                                 lc.sim_hour_section, lc.sim_minute_section, lc.sim_duration_section,
                                 lc.spacer, lc.step_time_confirm])], style={'padding': '1em'}),
                       ], style=lc.section_box)])
-    ]), lc.spacer, lc.spacer,
-    dbc.Container([
-        dbc.Container([html.Div([lc.radar_select_section],
-                                style={'background-color': '#333333',
-                                       'border': '2.5px gray solid', 'padding': '1em'})]),
-    ]),
-    lc.spacer,
-    lc.map_section, lc.transpose_section, lc.spacer_mini,
+    ]), lc.spacer,
+    lc.full_radar_select_section, lc.spacer,
+    lc.map_section,
+    lc.full_transpose_section, lc.spacer_mini,
     lc.scripts_button,
     lc.status_section,
-    lc.links_section,
+    lc.polling_section, lc.links_section,
     lc.simulation_clock, lc.radar_id, lc.bottom_section
 ])  # end of app.layout
 
@@ -432,8 +427,7 @@ app.layout = dbc.Container([
 @app.callback(
     [Output('show_radar_selection_feedback', 'children'),
     Output('confirm_radars_btn', 'children'),
-    Output('confirm_radars_btn', 'disabled'),
-    Output('transpose_section', 'style')],
+    Output('confirm_radars_btn', 'disabled')],
     Input('radar_quantity', 'value'),
     Input('graph', 'clickData'),
     prevent_initial_call=True
@@ -443,53 +437,71 @@ def display_click_data(quant_str: str, click_data: dict):
     Any time a radar site is clicked, 
     this function will trigger and update the radar list.
     """
-    transpose_section_style = {'display': 'none'}
+    # initially have to make radar selections and can't finalize
+    select_action = 'Make'
+    btn_deactivated = True
+
     triggered_id = ctx.triggered_id
     if triggered_id == 'radar_quantity':
         sa.number_of_radars = int(quant_str[0:1])
         sa.radar_list = []
         sa.radar_dict = {}
-        return f'Use map to select {quant_str}', 'Make selections', True, transpose_section_style
-    if triggered_id == 'graph':
-        try:
-            sa.radar = click_data['points'][0]['customdata']
-            print(f"Selected radar: {sa.radar}")
-        except (KeyError, IndexError, TypeError):
-            return 'No radar selected ...', 'Make selections', True, transpose_section_style
-            
-        sa.radar_list.append(sa.radar)
-        if len(sa.radar_list) > sa.number_of_radars:
-            sa.radar_list = sa.radar_list[-sa.number_of_radars:]
-            print(f"Radar list: {sa.radar_list}")
-            if len(sa.radar_list) == 1 and sa.number_of_radars == 1:
-                transpose_section_style = {'vertical-align': 'top'}
-            return ', '.join(sa.radar_list), 'Finalize selections', False, transpose_section_style
-        if len(sa.radar_list) == sa.number_of_radars:
-            print(f"Radar list: {sa.radar_list}")
-            if len(sa.radar_list) == 1:
-                transpose_section_style = {'vertical-align': 'top'}
-            return ', '.join(sa.radar_list), 'Finalize selections', False, transpose_section_style
-        else:
-            return ', '.join(sa.radar_list), 'Make selections', True, transpose_section_style
+        return f'Use map to select {quant_str}', f'{select_action} selections', True
+    try:
+        sa.radar = click_data['points'][0]['customdata']
+        print(f"Selected radar: {sa.radar}")
+    except (KeyError, IndexError, TypeError):
+        return 'No radar selected ...', f'{select_action} selections', True
+
+    sa.radar_list.append(sa.radar)
+    if len(sa.radar_list) > sa.number_of_radars:
+        sa.radar_list = sa.radar_list[-sa.number_of_radars:]
+    if len(sa.radar_list) == sa.number_of_radars:
+        select_action = 'Finalize'
+        btn_deactivated = False
+
+    print(f"Radar list: {sa.radar_list}")
+    listed_radars = ', '.join(sa.radar_list)
+    return listed_radars, f'{select_action} selections', btn_deactivated
+
 
 @app.callback(
     [Output('graph-container', 'style'),
      Output('map_btn', 'children')],
-    Input('map_btn', 'n_clicks'))
-def toggle_map_display(n) -> dict:
+    Input('map_btn', 'n_clicks'),
+    Input('confirm_radars_btn', 'n_clicks'))
+def toggle_map_display(map_n, confirm_n) -> dict:
     """
     based on button click, show or hide the map by returning a css style dictionary
     to modify the associated html element
     """
-    if n % 2 == 0:
+    total_clicks = map_n + confirm_n
+    if total_clicks % 2 == 0:
         return {'display': 'none'}, 'Show Radar Map'
     return lc.map_section_style, 'Hide Radar Map'
 
+@app.callback(
+    [Output('full_transpose_section_id', 'style'),
+    Output('skip_transpose_id', 'style'),
+    Output('allow_transpose_id', 'style'),
+    ], Input('confirm_radars_btn', 'n_clicks'),
+    Input('radar_quantity', 'value'),
+    prevent_initial_call=True)
+def finalize_radar_selections(clicks: int, _quant_str: str) -> dict:
+    """
+    This will display the transpose section on the page if the user has selected a single radar.
+    """
+    triggered_id = ctx.triggered_id
+    if triggered_id == 'radar_quantity':
+        return {'display': 'none'}, {'display': 'none'}, {'display': 'none'}
+    if clicks > 0:
+        if sa.number_of_radars == 1 and len(sa.radar_list) == 1:
+            return lc.section_box_pad, {'display': 'none'}, {'display': 'block'}
+    return lc.section_box_pad, {'display': 'block'}, {'display': 'none'}
 
 ################################################################################################
 # ----------------------------- Transpose radar section  ---------------------------------------
 ################################################################################################
-
 
 @app.callback(
     Output('tradar', 'data'),
@@ -542,7 +554,7 @@ def query_radar_files():
 
 def run_hodo_script(args) -> None:
     """
-    Run sthe hodo script with the necessary arguments. 
+    Runs the hodo script with the necessary arguments. 
     radar: str - the original radar, tells script where to find raw radar data
     sa.new_radar: str - Either 'None' or the new radar to transpose to
     asos_one: str - the first ASOS station to use for hodographs
@@ -679,6 +691,7 @@ def run_with_cancel_button():
         (Output('new_radar_selection', 'disabled'), True, False),
         (Output('run_scripts', 'disabled'), True, False),
         (Output('playback-clock', 'disabled'), True, False),
+        (Output('confirm_radars_btn', 'disabled'), True, False), # added radar confirm btn
         (Output('cancel_scripts', 'disabled'), False, True),
     ])
 def launch_simulation(n_clicks) -> None:
@@ -690,8 +703,7 @@ def launch_simulation(n_clicks) -> None:
         raise PreventUpdate
     else:
         run_with_cancel_button()
-        #run_TJ_original()
-
+ 
 ################################################################################################
 # ----------------------------- Monitoring and reporting script status  ------------------------
 ################################################################################################
@@ -780,6 +792,51 @@ def run_transpose_script() -> None:
     Wrapper function to the shift_placefiles script
     """
     sa.shift_placefiles()
+
+################################################################################################
+# ----------------------------- Clock Callbacks  -----------------------------------------------
+################################################################################################
+
+@app.callback(
+    Output('clock-container', 'style'),
+    Input('start_simulation_btn_id', 'n_clicks'))
+def enable_simulation_clock(n: int) -> dict:
+    """
+    Toggles the simulation clock display on/off by returning a css style dictionary to modify
+    Disabled this for now
+    """
+    if n > 0:
+        return {'display': 'none'}
+    return {'padding-bottom': '2px', 'padding-left': '2px', 'height': '80vh', 'width': '100%'}
+
+
+@app.callback(
+    Output('clock-output', 'children'),
+    Input('playback-clock', 'n_intervals')
+)
+def update_time(_n) -> str:
+    """
+    If scripts are still running, provides a text status update.
+    After scripts are done:
+       - counter updates the playback time, and this used to update:
+       - assets/hodographs.html page
+       - assets/polling/KXXX/dir.list files
+    """
+    if sa.scripts_progress != 'Scripts completed!':
+        return str(sa.scripts_progress)
+
+    sa.playback_timer += timedelta(seconds=90)
+    while sa.playback_timer < sa.playback_end_time:
+        sa.playback_timer += timedelta(seconds=90)
+        playback_time_str = sa.playback_timer.strftime("%Y-%m-%d %H:%M:%S UTC")
+        UpdateHodoHTML(playback_time_str, initialize=False)
+        if sa.new_radar != 'None':
+            UpdateDirList(sa.new_radar, playback_time_str, initialize=False)
+        else:
+            for _r, radar in enumerate(sa.radar_list):
+                UpdateDirList(radar, playback_time_str, initialize=False)
+        return playback_time_str
+
 
 ################################################################################################
 # ----------------------------- Time Selection Summary and Callbacks  --------------------------
@@ -872,50 +929,6 @@ def get_duration(duration) -> int:
     return sa.event_duration
 
 ################################################################################################
-# ----------------------------- Clock Callbacks  -----------------------------------------------
-################################################################################################
-
-@app.callback(
-    Output('clock-container', 'style'),
-    Input('enable_sim_clock', 'n_clicks'))
-def enable_simulation_clock(n: int) -> dict:
-    """
-    Toggles the simulation clock display on/off by returning a css style dictionary to modify
-    Disabled this for now
-    """
-    if n < 0:
-        return {'display': 'none'}
-    return {'padding-bottom': '2px', 'padding-left': '2px', 'height': '80vh', 'width': '100%'}
-
-
-@app.callback(
-    Output('clock-output', 'children'),
-    Input('playback-clock', 'n_intervals')
-)
-def update_time(_n) -> str:
-    """
-    If scripts are still running, provides a text status update.
-    After scripts are done:
-       - counter updates the playback time, and this used to update:
-       - assets/hodographs.html page
-       - assets/polling/KXXX/dir.list files
-    """
-    if sa.scripts_progress != 'Scripts completed!':
-        return str(sa.scripts_progress)
-
-    sa.playback_timer += timedelta(seconds=90)
-    while sa.playback_timer < sa.playback_end_time:
-        sa.playback_timer += timedelta(seconds=90)
-        playback_time_str = sa.playback_timer.strftime("%Y-%m-%d %H:%M:%S UTC")
-        UpdateHodoHTML(playback_time_str, initialize=False)
-        if sa.new_radar != 'None':
-            UpdateDirList(sa.new_radar, playback_time_str, initialize=False)
-        else:
-            for _r, radar in enumerate(sa.radar_list):
-                UpdateDirList(radar, playback_time_str, initialize=False)
-        return playback_time_str
-
-################################################################################################
 # ----------------------------- Start app  -----------------------------------------------------
 ################################################################################################
 
@@ -982,116 +995,5 @@ def monitor(n):
     #     output = df.to_dict('records')
 
     return model_dir[0], radar_dir[0]
-
-def run_TJ_original():
-    """
-    This is the "OG" script-launcher. 
-    """
-    sa.scripts_progress = 'Setting up files and times'
-    # determine actual event time, playback time, diff of these two
-    sa.make_simulation_times()
-
-    # clean out old files and directories
-    try:
-        sa.remove_files_and_dirs()
-    except Exception as e:
-        print("Error removing files and directories: ", e)
-
-    # based on list of selected radars, create a dictionary of radar metadata
-    try:
-        sa.create_radar_dict()
-        # sa.create_grlevel2_cfg_file()
-        sa.copy_grlevel2_cfg_file()
-    except Exception as e:
-        print("Error creating radar dict or config file: ", e)
-
-    # acquire radar data for the event
-    sa.scripts_progress = 'Downloading radar data ...'
-    try:
-        # Initial for loop to gather all radar files. Not great, but not sure of a better
-        # way to handle this. Calls NexradDownloader but passes download=False to only
-        # query AWS for expected files
-        query_radar_files()
-
-        for _r, radar in enumerate(sa.radar_list):
-            radar = radar.upper()
-            try:
-                if sa.new_radar == 'None':
-                    new_radar = radar
-                else:
-                    new_radar = sa.new_radar.upper()
-            except Exception as e:
-                print("Error defining new radar: ", e)
-            try:
-                print(
-                    f"Nexrad Downloader - {radar}, {sa.event_start_str}, {str(sa.event_duration)}")
-                _file_list = NexradDownloader(radar, sa.event_start_str, str(sa.event_duration),
-                                                download=True)
-                # sa.radar_dict[radar]['file_list'] = file_list
-                time.sleep(10)
-            except Exception as e:
-                print("Error running nexrad script: ", e)
-            try:
-                print(f"Munge from {radar} to {new_radar}...")
-                Munger(radar, sa.playback_start_str, sa.event_duration, sa.simulation_seconds_shift,
-                        new_radar, playback_speed=1.5)
-                print(f"Munge for {new_radar} completed ...")
-                # this gives the user some radar data to poll while other scripts are running
-                UpdateDirList(new_radar, 'None', initialize=True)
-
-            except Exception as e:
-                print(
-                    "Error running Munge from {radar} to {new_radar}: ", e)
-    except Exception as e:
-        print("Error running nexrad or munge scripts: ", e)
-
-    sa.scripts_progress = 'Creating obs placefiles ...'
-    try:
-        print("Running obs script...")
-        Mesowest(str(sa.lat), str(sa.lon),
-                    sa.event_start_str, str(sa.event_duration))
-        print("Obs script completed")
-    except Exception as e:
-        print("Error running obs script: ", e)
-
-    sa.scripts_progress = 'Creating NSE placefiles ...'
-    # NSE placefiles
-    try:
-        print("Running NSE scripts...")
-        Nse(str(sa.event_start_time), sa.event_duration, sa.scripts_path, sa.data_dir,
-            sa.placefiles_dir)
-    except Exception as e:
-        print("Error running NSE scripts: ", e)
-
-    # Since there will always be a timeshift associated with a simulation, this
-    # script needs to execute every time, even if a user doesn't select a radar
-    # to transpose to.
-    run_transpose_script()
-    # sa.rename_shifted_nse_placefiles()
-
-    sa.scripts_progress = 'Creating hodo plots ...'
-
-    for radar, data in sa.radar_dict.items():
-        try:
-            asos_one = data['asos_one']
-            asos_two = data['asos_two']
-            print(asos_one, asos_two, radar)
-        except KeyError as e:
-            print("Error getting radar metadata: ", e)
-
-        try:
-            info = f'hodo script:{radar},{sa.new_radar},{asos_one},{asos_two},{sa.simulation_seconds_shift}'
-            print(info)
-            run_hodo_script([radar, sa.new_radar, asos_one,
-                            asos_two, str(sa.simulation_seconds_shift)])
-            print("Hodograph script completed ...")
-        except Exception as e:
-            print("Error running hodo script: ", e)
-        try:
-            UpdateHodoHTML('None', initialize=True)
-        except Exception as e:
-            print("Error updating hodo html: ", e)
-
-    sa.scripts_progress = 'Scripts completed!'
 
 '''

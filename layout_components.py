@@ -58,6 +58,7 @@ steps_center = {'padding': '0.4em', 'border': '0.3em', 'border-radius': '15px',
 column_label = {'font-weight': 'bold', 'text-align': 'right'}
 
 section_box = {'background-color': '#333333', 'border': '2.5px gray solid'}
+section_box_pad = {'background-color': '#333333', 'border': '2.5px gray solid', 'padding': '1em'}
 
 url_rename = html.Div([
     dcc.Location(id='url', refresh=False),
@@ -171,11 +172,11 @@ map_toggle_button = dbc.Col(html.Div([dbc.Button('Show radar map', size="lg",
 confirm_radars = dbc.Col(html.Div([dbc.Button('Make selections', size="lg",
                                      id='confirm_radars_btn', n_clicks=0, disabled=True)],
                                   className="d-grid gap-2 col-12 mx-auto"))
-MAP_INSTRUCTIONS = "Choose number of radars, use map to make selection(s), click button to confirm."
+MAP_INSTRUCTIONS = "Select number of radars, use radar map to make selection(s), click Finalize to confirm."
 map_instructions_component = dbc.Row(
     dbc.Col(html.Div(children=MAP_INSTRUCTIONS, style=steps_center)))
 radar_feedback_readout = dbc.Col(html.Div(id='show_radar_selection_feedback',
-                                          style=feedback_smaller), width=4,
+                                          style=feedback), width=4,
                                         style={'vertical-align': 'top'})
 
 radar_select_section = dbc.Container(html.Div([map_instructions_component, spacer,
@@ -185,6 +186,9 @@ radar_select_section = dbc.Container(html.Div([map_instructions_component, space
                                                         confirm_radars
                                                         ])]))
 
+full_radar_select_section = dbc.Container([
+        dbc.Container([html.Div([radar_select_section],
+                                style=section_box_pad)])])
 ################################################################################################
 # ----------------------------- Radar map components  ------------------------------------------
 ################################################################################################
@@ -231,19 +235,40 @@ map_section = html.Div([
 transpose_list = sorted(list(df.index))
 transpose_list.insert(0, 'None')
 
+STEP_TRANSPOSE_TEXT = "Optional -- Select a radar site to transpose to"
+# step_transpose_radar = dbc.Col(html.Div(children=STEP_TRANSPOSE_TEXT, style=steps_right))
+# transpose_radar_dropdown = dbc.Col(html.Div([spacer_mini,dcc.Dropdown(transpose_list, 'None',
+#                                             id='new_radar_selection', clearable=False)],
+#                                             className="d-grid gap-2 col-10 mx-auto",
+#                                             style={'vertical-align': 'top'}))
 
-STEP_TRANSPOSE_TEXT = "Optional: selected radar site to transpose to -->"
-step_transpose_radar = dbc.Col(
-    html.Div(children=STEP_TRANSPOSE_TEXT, style=steps_right))
-
+step_transpose_radar = dbc.Col(children=STEP_TRANSPOSE_TEXT, style=steps_center)
 transpose_radar_dropdown = dbc.Col(html.Div([spacer_mini,dcc.Dropdown(transpose_list, 'None',
                                             id='new_radar_selection', clearable=False)],
                                             className="d-grid gap-2 col-10 mx-auto",
                                             style={'vertical-align': 'top'}))
-transpose_section = dbc.Container(dbc.Container(
-    dbc.Container(html.Div([dbc.Row([step_transpose_radar, transpose_radar_dropdown],
-                                    id='transpose_section')], style={'display': 'none'}))))
 
+allow_transpose_section = dbc.Container(dbc.Container(
+    dbc.Container(html.Div([dbc.Row([step_transpose_radar, transpose_radar_dropdown],
+                                    id='allow_transpose_id', style={'display': 'none'})]))))
+
+# ----------------------------------------------------------------------------------------------
+# Skip transpose notificiation section displayed when more than one radar is selected
+# ----------------------------------------------------------------------------------------------
+STEP_SKIP_TRANSPOSE_TEXT = "Radar Transpose option skipped since more than one radar selected ..."
+skip_transpose = dbc.Col(
+    html.Div(children=STEP_SKIP_TRANSPOSE_TEXT, style=steps_center))
+skip_transpose_section = dbc.Container(dbc.Container(
+    dbc.Container(html.Div([dbc.Row([skip_transpose],
+                                    id='skip_transpose_id', style={'display': 'none'})]))))
+
+
+
+full_transpose_section = dbc.Container([
+        dbc.Container([html.Div([skip_transpose_section, allow_transpose_section],
+                                id='full_transpose_section_id',
+                                style={'display': 'none'})]),])
+# style= section_box_pad
 ################################################################################################
 # ----------------------------- Run Script button  ---------------------------------------------
 ################################################################################################
@@ -322,7 +347,12 @@ PLACEFILES_BANNER_TEXT = "Placefile and graphics links"
 placefiles_banner = dbc.Row(
     dbc.Col(html.Div(children=PLACEFILES_BANNER_TEXT, style=steps_center)))
 
-links_section = dbc.Container(dbc.Container(html.Div(
+group_item_style = {'font-weight': 'bold', 'color': 'white', 'border': '1px gray solid',
+                    'font-size': '1.2em', 'text-align': 'right'}
+group_item_style_center = {'font-weight': 'bold', 'color': 'white', 'border': '1px gray solid',
+                    'font-size': '1.2em', 'text-align': 'center'}
+
+polling_section = dbc.Container(dbc.Container(html.Div(
     [
         spacer_mini,
         spacer_mini,
@@ -332,29 +362,28 @@ links_section = dbc.Container(dbc.Container(html.Div(
         dbc.Row(
             [
             dbc.Col(dbc.ListGroupItem("Copy this polling address into GR2Analyst:"),
-            style={'font-weight': 'bold', 'color': 'white', 'border': '1px gray solid',
-                   'font-size': '1.2em', 'text-align': 'right'}, width=4),
+            style=group_item_style, width=4),
             dbc.Col(dbc.ListGroupItem("https://rssic.nws.noaa.gov/assets/polling"),
-            style={'font-weight': 'bold', 'color': 'white', 'border': '1px gray solid',
-                   'font-size': '1.2em', 'text-align': 'left'}, width=8),
-            ],
+            style=group_item_style_center, width=8)],
             style={"display": "flex", "flexWrap": "wrap"},
+        )])))
+
+links_section = dbc.Container(dbc.Container(html.Div(
+    [
+        spacer_mini,
+        spacer_mini,
+        spacer_mini,
+        spacer_mini,
+        dbc.Row(
+            [
+            dbc.Col(dbc.ListGroupItem("Graphics"), style=group_item_style, width=2),
+            dbc.Col(dbc.ListGroupItem("Hodographs", href=f"{link_base}/hodographs.html"), width=2)
+            ],
+            style={"display": "flex", "flexWrap": "wrap"}
         ),
         dbc.Row(
             [
-                dbc.Col(dbc.ListGroupItem("Graphics"), style={
-                        'font-weight': 'bold', 'color': 'white', 'border': '1px gray solid',
-                        'font-size': '1.2em', 'text-align': 'right'}, width=2),
-                dbc.Col(dbc.ListGroupItem("Hodographs", href=f"{
-                        link_base}/hodographs.html"), width=2),
-            ],
-            style={"display": "flex", "flexWrap": "wrap"},
-        ),
-        dbc.Row(
-            [
-                dbc.Col(dbc.ListGroupItem("Sfc obs"), style={
-                        'font-weight': 'bold', 'color': 'white', 'border': '1px gray solid',
-                        'font-size': '1.2em', 'text-align': 'right'}, width=2),
+            dbc.Col(dbc.ListGroupItem("Sfc obs"), style=group_item_style, width=2),
                 dbc.Col(dbc.ListGroupItem("Regular font",
                         href=f"{place_base}/latest_surface_observations_shifted.txt"), width=2),
                 dbc.Col(dbc.ListGroupItem("Large font",
@@ -362,56 +391,44 @@ links_section = dbc.Container(dbc.Container(html.Div(
                 dbc.Col(dbc.ListGroupItem("Small font",
                         href=f"{place_base}/latest_surface_observations_xlg_shifted.txt"), width=2),
             ],
-            style={"display": "flex", "flexWrap": "wrap"},
+            style={"display": "flex", "flexWrap": "wrap"}
         ),
         dbc.Row(
             [
-                dbc.Col(dbc.ListGroupItem("Sfc obs parts"), style={
-                        'font-weight': 'bold', 'color': 'white', 'border': '1px gray solid',
-                        'font-size': '1.2em', 'text-align': 'right'}, width=2),
-                dbc.Col(dbc.ListGroupItem("Wind",
-                        href=f"{place_base}/wind_shifted.txt"),
-                        style={'a:hover': {'color': 'yellow'}}, width=2),
-                dbc.Col(dbc.ListGroupItem("Temp", href=f"{place_base}/temp_shifted.txt"),
-                        width=2),
-                dbc.Col(dbc.ListGroupItem("Dwpt", href=f"{place_base}/dwpt_shifted.txt"),
-                        width=2),
-                dbc.Col(dbc.ListGroupItem("Road obs", href=f"{place_base}/road_shifted.txt"),
-                        width=2),
+            dbc.Col(dbc.ListGroupItem("Sfc obs parts"), style=group_item_style, width=2),
+            dbc.Col(dbc.ListGroupItem("Wind",
+                        href=f"{place_base}/wind_shifted.txt"),width=2),
+            dbc.Col(dbc.ListGroupItem("Temp", href=f"{place_base}/temp_shifted.txt"),width=2),
+            dbc.Col(dbc.ListGroupItem("Dwpt", href=f"{place_base}/dwpt_shifted.txt"),width=2),
+            dbc.Col(dbc.ListGroupItem("Road obs", href=f"{place_base}/road_shifted.txt"),width=2),
             ],
             style={"display": "flex", "flexWrap": "wrap"},
 
         ),
         dbc.Row(
             [
-                dbc.Col(dbc.ListGroupItem("NSE Shear"),
-                        style={'font-weight': 'bold', 'color': 'white',
-                        'border': '1px gray solid', 'font-size': '1.2em',
-                        'text-align': 'right'}, width=2),
-                dbc.Col(dbc.ListGroupItem("Effective",
-                        href=f"{place_base}/ebwd_shifted.txt"), width=2),
-                dbc.Col(dbc.ListGroupItem("0-1 SHR", href=f"{place_base}/shr1_shifted.txt"),
-                        style={'a:hover': {'color': 'yellow'}}, width=2),
-                dbc.Col(dbc.ListGroupItem(
+            dbc.Col(dbc.ListGroupItem("NSE Shear"), style=group_item_style, width=2),
+            dbc.Col(dbc.ListGroupItem("Effective", href=f"{place_base}/ebwd_shifted.txt"),
+                    width=2),
+            dbc.Col(dbc.ListGroupItem("0-1 SHR", href=f"{place_base}/shr1_shifted.txt"),
+                    width=2),
+            dbc.Col(dbc.ListGroupItem(
                     "0-3 SHR", href=f"{place_base}/shr3_shifted.txt"), width=2),
-                dbc.Col(dbc.ListGroupItem(
+            dbc.Col(dbc.ListGroupItem(
                     "0-6 SHR", href=f"{place_base}/shr6_shifted.txt"), width=2),
-                dbc.Col(dbc.ListGroupItem(
+            dbc.Col(dbc.ListGroupItem(
                     "0-8 SHR", href=f"{place_base}/shr8_shifted.txt"), width=2),
-
             ],
             style={"display": "flex", "flexWrap": "wrap"},
 
         ),
         dbc.Row(
             [
-                dbc.Col(dbc.ListGroupItem("NSE SRH"), style={
-                        'font-weight': 'bold', 'color': 'white', 'border': '1px gray solid',
-                        'font-size': '1.2em', 'text-align': 'right'}, width=2),
+                dbc.Col(dbc.ListGroupItem("NSE SRH"), style=group_item_style, width=2),
                 dbc.Col(dbc.ListGroupItem("Effective",
                         href=f"{place_base}/esrh_shifted.txt"), width=2),
                 dbc.Col(dbc.ListGroupItem("0-500m", href=f"{place_base}/srh500_shifted.txt"),
-                        style={'a:hover': {'color': 'yellow'}}, width=2),
+                        width=2),
                 dbc.Col(dbc.ListGroupItem("Blank"), width=2),
                 dbc.Col(dbc.ListGroupItem("Blank"), width=2),
 
@@ -421,24 +438,17 @@ links_section = dbc.Container(dbc.Container(html.Div(
         ),
         dbc.Row(
             [
-                dbc.Col(dbc.ListGroupItem("NSE Thermo"), style={
-                        'font-weight': 'bold', 'color': 'white', 'border': '1px gray solid',
-                        'font-size': '1.2em', 'text-align': 'right'}, width=2),
+                dbc.Col(dbc.ListGroupItem("NSE Thermo"), style=group_item_style, width=2),
                 dbc.Col(dbc.ListGroupItem("MLCAPE",
-                        href=f"{place_base}/mlcape_shifted.txt"),
-                        style={'a:hover': {'color': 'yellow'}}, width=2),
+                        href=f"{place_base}/mlcape_shifted.txt"), width=2),
                 dbc.Col(dbc.ListGroupItem("MLCIN", 
-                        href=f"{place_base}/mlcin_shifted.txt"),
-                        style={'a:hover': {'color': 'yellow'}}, width=2),
+                        href=f"{place_base}/mlcin_shifted.txt"), width=2),
                 dbc.Col(dbc.ListGroupItem("0-3 MLCP",
-                        href=f"{place_base}/cape3km_shifted.txt"),
-                        style={'a:hover': {'color': 'yellow'}}, width=2),
+                        href=f"{place_base}/cape3km_shifted.txt"), width=2),
                 dbc.Col(dbc.ListGroupItem("0-3 LR",
-                        href=f"{place_base}/lr03km_shifted.txt"),
-                        style={'a:hover': {'color': 'yellow'}}, width=2),
+                        href=f"{place_base}/lr03km_shifted.txt"), width=2),
                 dbc.Col(dbc.ListGroupItem("MUCAPE",
-                        href=f"{place_base}/mucape_shifted.txt"),
-                        style={'a:hover': {'color': 'yellow'}}, width=2),
+                        href=f"{place_base}/mucape_shifted.txt"), width=2),
             ],
             style={"display": "flex", "flexWrap": "wrap"},
 
@@ -455,8 +465,9 @@ links_section = dbc.Container(dbc.Container(html.Div(
 step_sim_clock = [dbc.CardBody(
     [html.H5("Simulation Progress", className="card-text")])]
 
-simulation_clock_slider = dcc.Slider(id='sim_clock', min=0, max=1440, step=1, value=0,
-                                     marks={0: '00:00', 240: '04:00'})
+start_simulation_btn = dbc.Col(html.Div([dbc.Button('Show radar map', size="lg",
+                                                id='start_simulation_btn_id', n_clicks=0)],
+                                                className="d-grid gap-2 col-12 mx-auto"))
 
 
 simulation_clock = html.Div([
