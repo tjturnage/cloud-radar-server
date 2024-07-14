@@ -172,7 +172,9 @@ map_toggle_button = dbc.Col(html.Div([dbc.Button('Show radar map', size="lg",
 confirm_radars = dbc.Col(html.Div([dbc.Button('Make selections', size="lg",
                                      id='confirm_radars_btn', n_clicks=0, disabled=True)],
                                   className="d-grid gap-2 col-12 mx-auto"))
-MAP_INSTRUCTIONS = "Select number of radars, use radar map to make selection(s), click Finalize to confirm."
+MAP_INSTRUCT_ONE = "Select number of radars, use radar map to make selection(s), "
+MAP_INSTRUCT_TWO = "click Finalize to confirm."
+MAP_INSTRUCTIONS = MAP_INSTRUCT_ONE + MAP_INSTRUCT_TWO
 map_instructions_component = dbc.Row(
     dbc.Col(html.Div(children=MAP_INSTRUCTIONS, style=steps_center)))
 radar_feedback_readout = dbc.Col(html.Div(id='show_radar_selection_feedback',
@@ -362,9 +364,9 @@ polling_section = dbc.Container(dbc.Container(html.Div(
         dbc.Row(
             [
             dbc.Col(dbc.ListGroupItem("Copy this polling address into GR2Analyst:"),
-            style=group_item_style, width=4),
+            style=group_item_style, width=6),
             dbc.Col(dbc.ListGroupItem("https://rssic.nws.noaa.gov/assets/polling"),
-            style=group_item_style_center, width=8)],
+            style=group_item_style_center, width=6)],
             style={"display": "flex", "flexWrap": "wrap"},
         )])))
 
@@ -475,12 +477,12 @@ simulation_clock = html.Div([
         html.Div([
             dbc.Card(step_sim_clock, color="secondary", inverse=True)],
             style={'text-align': 'center'},),
-        # simulation_clock_slider,
 
         html.Div(id='clock-output', style=feedback),
 
-    ], id='clock-container', style={'padding': '1em', 'vertical-align': 'middle'}),
+    ], id='clock-container', style={'display': 'none'}),
 ])
+
 
 
 bottom_section = html.Div([], style={'height': '500px'})

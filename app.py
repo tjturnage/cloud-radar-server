@@ -15,7 +15,6 @@ radar data generation, including the handling of time shifts and geographical co
 """
 # from flask import Flask, render_template
 import os
-import psutil, signal 
 import shutil
 import re
 import subprocess
@@ -27,8 +26,10 @@ import calendar
 import math
 import json
 import logging
-import pandas as pd
+import psutil, signal
 import pytz
+#import pandas as pd
+
 # from time import sleep
 from dash import Dash, html, Input, Output, dcc , ctx #, callback
 from dash.exceptions import PreventUpdate
@@ -692,6 +693,7 @@ def run_with_cancel_button():
         (Output('run_scripts', 'disabled'), True, False),
         (Output('playback-clock', 'disabled'), True, False),
         (Output('confirm_radars_btn', 'disabled'), True, False), # added radar confirm btn
+        (Output('start_simulation_btn_id', 'disabled'), True, False), # add start sim btn
         (Output('cancel_scripts', 'disabled'), False, True),
     ])
 def launch_simulation(n_clicks) -> None:
@@ -805,9 +807,9 @@ def enable_simulation_clock(n: int) -> dict:
     Toggles the simulation clock display on/off by returning a css style dictionary to modify
     Disabled this for now
     """
-    if n > 0:
+    if n == 0:
         return {'display': 'none'}
-    return {'padding-bottom': '2px', 'padding-left': '2px', 'height': '80vh', 'width': '100%'}
+    return {'padding': '1em', 'vertical-align': 'middle'}
 
 
 @app.callback(
@@ -822,8 +824,6 @@ def update_time(_n) -> str:
        - assets/hodographs.html page
        - assets/polling/KXXX/dir.list files
     """
-    if sa.scripts_progress != 'Scripts completed!':
-        return str(sa.scripts_progress)
 
     sa.playback_timer += timedelta(seconds=90)
     while sa.playback_timer < sa.playback_end_time:

@@ -87,121 +87,117 @@ sfc_status = 'Preset'
 
 def create_hodos(filename):
 	for p in radar_filepaths:
-	  file = p.name
-	  fout = CF_DIR / f'{file}.nc'  
-	  radar_time = datetime.strptime(file[4:19], '%Y%m%d_%H%M%S')
-	  api_tstr = datetime.strftime(radar_time, '%Y%m%d%H%M')
-	  if radar_id.startswith('K') or radar_id.startswith('P'):
-
-	    radar = pyart.io.read(p)
-	    radar
+		file = p.name
+		fout = CF_DIR / f'{file}.nc'  
+		radar_time = datetime.strptime(file[4:19], '%Y%m%d_%H%M%S')
+		api_tstr = datetime.strftime(radar_time, '%Y%m%d%H%M')
+		if radar_id.startswith('K') or radar_id.startswith('P'):
+			radar = pyart.io.read(p)
+			radar
 
 	    # create a gate filter which specifies gates to exclude from dealiasing
-	    gatefilter = pyart.filters.GateFilter(radar)
-	    gatefilter.exclude_transition()
-	    gatefilter.exclude_invalid("velocity")
-	    gatefilter.exclude_invalid("reflectivity")
-	    gatefilter.exclude_outside("reflectivity", 0, 80)
+		gatefilter = pyart.filters.GateFilter(radar)
+		gatefilter.exclude_transition()
+		gatefilter.exclude_invalid("velocity")
+		gatefilter.exclude_invalid("reflectivity")
+		gatefilter.exclude_outside("reflectivity", 0, 80)
 
 	    # perform dealiasing
-	    dealias_data = pyart.correct.dealias_region_based(radar, gatefilter=gatefilter)
-	    radar.add_field("corrected_velocity", dealias_data)
+		dealias_data = pyart.correct.dealias_region_based(radar, gatefilter=gatefilter)
+		radar.add_field("corrected_velocity", dealias_data)
 
-	    pyart.io.write_cfradial(fout, radar, format='NETCDF4')
+		pyart.io.write_cfradial(fout, radar, format='NETCDF4')
 
-	  if radar_id.startswith('T'):
-	    radar = pyart.io.read(p)
-	    radar
+		if radar_id.startswith('T'):
+			radar = pyart.io.read(p)
+			radar
 
-	    pyart.io.write_cfradial(fout, radar, format='NETCDF4')
+		pyart.io.write_cfradial(fout, radar, format='NETCDF4')
 
-	  if radar_id.startswith('K') or radar_id.startswith('P'):
-	    ncrad = pyart.io.read_cfradial(fout)
+		if radar_id.startswith('K') or radar_id.startswith('P'):
+			ncrad = pyart.io.read_cfradial(fout)
 
 	    # Loop on all sweeps and compute VAD
-	    zlevels = np.arange(0, data_ceiling+100, 100)  # height above radar
-	    u_allsweeps = []
-	    v_allsweeps = []
+		zlevels = np.arange(0, data_ceiling+100, 100)  # height above radar
+		u_allsweeps = []
+		v_allsweeps = []
 
-	    for idx in range(ncrad.nsweeps):
-		radar_1sweep = ncrad.extract_sweeps([idx])
-		vad = pyart.retrieve.vad_browning(
-		    radar_1sweep, "corrected_velocity", z_want=zlevels
-		)
+		for idx in range(ncrad.nsweeps):
+			radar_1sweep = ncrad.extract_sweeps([idx])
+			vad = pyart.retrieve.vad_browning(
+			radar_1sweep, "corrected_velocity", z_want=zlevels)
 		u_allsweeps.append(vad.u_wind)
 		v_allsweeps.append(vad.v_wind)
 
 	    # Average U and V over all sweeps and compute magnitude and angle
-	    u_avg = np.nanmean(np.array(u_allsweeps), axis=0)
-	    v_avg = np.nanmean(np.array(v_allsweeps), axis=0)
-	    orientation = np.rad2deg(np.arctan2(-u_avg, -v_avg)) % 360
-	    speed = np.sqrt(u_avg**2 + v_avg**2)
-	    u_avg *= 1.944
-	    v_avg *= 1.944
+		u_avg = np.nanmean(np.array(u_allsweeps), axis=0)
+		v_avg = np.nanmean(np.array(v_allsweeps), axis=0)
+		orientation = np.rad2deg(np.arctan2(-u_avg, -v_avg)) % 360
+		speed = np.sqrt(u_avg**2 + v_avg**2)
+		u_avg *= 1.944
+		v_avg *= 1.944
 
-	  if radar_id.startswith('T'):
-	    ncrad = pyart.io.read_cfradial(fout)
+		if radar_id.startswith('T'):
+			ncrad = pyart.io.read_cfradial(fout)
 
 	    # Loop on all sweeps and compute VAD
-	    zlevels = np.arange(0, 8100, 100)  # height above radar
-	    u_allsweeps = []
-	    v_allsweeps = []
+		zlevels = np.arange(0, 8100, 100)  # height above radar
+		u_allsweeps = []
+		v_allsweeps = []
 
-	    for idx in range(ncrad.nsweeps):
-		radar_1sweep = ncrad.extract_sweeps([idx])
-		vad = pyart.retrieve.vad_browning(
+		for idx in range(ncrad.nsweeps):
+			radar_1sweep = ncrad.extract_sweeps([idx])
+			vad = pyart.retrieve.vad_browning(
 		    radar_1sweep, "velocity", z_want=zlevels
 		)
 		u_allsweeps.append(vad.u_wind)
 		v_allsweeps.append(vad.v_wind)
 
 	    # Average U and V over all sweeps and compute magnitude and angle
-	    u_avg = np.nanmean(np.array(u_allsweeps), axis=0)
-	    v_avg = np.nanmean(np.array(v_allsweeps), axis=0)
-	    orientation = np.rad2deg(np.arctan2(-u_avg, -v_avg)) % 360
-	    speed = np.sqrt(u_avg**2 + v_avg**2)
-	    u_avg *= 1.944
-	    v_avg *= 1.944
+		u_avg = np.nanmean(np.array(u_allsweeps), axis=0)
+		v_avg = np.nanmean(np.array(v_allsweeps), axis=0)
+		orientation = np.rad2deg(np.arctan2(-u_avg, -v_avg)) % 360
+		speed = np.sqrt(u_avg**2 + v_avg**2)
+		u_avg *= 1.944
+		v_avg *= 1.944
 
-	  nancount=0
-	  for entry in u_avg[0:62]:
-	      if np.isnan(entry):
-		nancount +=1
+		nancount=0
+		for entry in u_avg[0:62]:
+			if np.isnan(entry):
+				nancount +=1
 
-	  if nancount != 0:
-	      storm_motion_method = 'User Selected' #Choose Mean Wind, Bunkers Left, Bunkers Right, User Selected, Corfidi Downshear, Corfidi Upshear
+		if nancount != 0:
+			storm_motion_method = 'User Selected' #Choose Mean Wind, Bunkers Left, Bunkers Right, User Selected, Corfidi Downshear, Corfidi Upshear
 
-	      sm_dir = 308
-	      sm_speed = 21
+			sm_dir = 308
+			sm_speed = 21
 
-	  else:
-	      storm_motion_method = 'Bunkers Right' #Choose Mean Wind, Bunkers Left, Bunkers Right, User Selected, Corfidi Downshear, Corfidi Upshear
+		else:
+			storm_motion_method = 'Bunkers Right' #Choose Mean Wind, Bunkers Left, Bunkers Right, User Selected, Corfidi Downshear, Corfidi Upshear
 
-	  API_TOKEN = '86eac26a58a647e69b8c69feaef76bae'
-	  API_ROOT = "https://api.synopticdata.com/v2/"
+		API_TOKEN = '86eac26a58a647e69b8c69feaef76bae'
+		API_ROOT = "https://api.synopticdata.com/v2/"
 
-	  def mesowest_get_sfcwind(api_args):
-	      """
-	      For each station in a list of stations, retrieves all observational data
-	      within a defined time range using mesowest API. Writes the retrieved data
-	      and associated observation times to a destination file. API documentation:
+		def mesowest_get_sfcwind(api_args):
+		"""
+		For each station in a list of stations, retrieves all observational data
+		within a defined time range using mesowest API. Writes the retrieved data
+		and associated observation times to a destination file. API documentation:
 
-		  https://api.synopticdata.com/v2/stations/nearesttime
+		https://api.synopticdata.com/v2/stations/nearesttime
 
-	      Parameters
-	      ----------
+		Parameters
+		----------
 		api_args  : dictionary
 
-
-	      Returns
-	      -------
-		  jas_ts  : json file
-		          dictionary of all observations for a given station.
-		          What is most significant, however, is writing the
-		          observed data to a file that then can be manipulated
-		          for plotting.
-
-	      """
+		Returns
+		-------
+		jas_ts  : json file
+		dictionary of all observations for a given station.
+		What is most significant, however, is writing the
+		observed data to a file that then can be manipulated
+		for plotting.
+		"""
 	      station = api_args["stid"]
 	      api_request_url = os.path.join(API_ROOT, "stations/nearesttime")
 	      req = requests.get(api_request_url, params=api_args)
@@ -218,23 +214,23 @@ def create_hodos(filename):
 	      return wnspd, wndir
 	  if sfc_status == 'Preset':
 	    track = radar_id
-	    nearest_asos = asos_one
-	    api_args = {"token":API_TOKEN, "stid": f"{nearest_asos}", "attime":api_tstr, "within": 60,"status":"active", "units":"speed|kts",  "hfmetars":'1'}
-	    wnspd, wndir = mesowest_get_sfcwind(api_args)
-	    if wndir == ''or wnspd  == '':
-	      nearest_asos = asos_two
-	      newapi_args = {"token":API_TOKEN, "stid": f"{nearest_asos}", "attime": api_tstr, "within": 60,"status":"active", "units":"speed|kts",  "hfmetars":'1'}
-	      wnspd, wndir = mesowest_get_sfcwind(newapi_args)
-	    sfc_dir = wndir
-	    sfc_spd = wnspd
+		nearest_asos = asos_one
+		api_args = {"token":API_TOKEN, "stid": f"{nearest_asos}", "attime":api_tstr, "within": 60,"status":"active", "units":"speed|kts",  "hfmetars":'1'}
+		wnspd, wndir = mesowest_get_sfcwind(api_args)
+		if wndir == ''or wnspd  == '':
+			nearest_asos = asos_two
+			newapi_args = {"token":API_TOKEN, "stid": f"{nearest_asos}", "attime": api_tstr, "within": 60,"status":"active", "units":"speed|kts",  "hfmetars":'1'}
+			wnspd, wndir = mesowest_get_sfcwind(newapi_args)
+		sfc_dir = wndir
+		sfc_spd = wnspd
 
 
 
-	  shr005 = hr.calc_bulk_shear(data_ceiling, 500, u_avg, v_avg, zlevels)
-	  shr01 = hr.calc_bulk_shear(data_ceiling, 1000, u_avg, v_avg, zlevels)
-	  shr03 = hr.calc_bulk_shear(data_ceiling, 3000, u_avg, v_avg, zlevels)
-	  shr06 = hr.calc_bulk_shear(data_ceiling, 6000, u_avg, v_avg, zlevels)
-	  shr08 = hr.calc_bulk_shear(data_ceiling, 8000, u_avg, v_avg, zlevels)
+	shr005 = hr.calc_bulk_shear(data_ceiling, 500, u_avg, v_avg, zlevels)
+ 	shr01 = hr.calc_bulk_shear(data_ceiling, 1000, u_avg, v_avg, zlevels)
+  	shr03 = hr.calc_bulk_shear(data_ceiling, 3000, u_avg, v_avg, zlevels)
+	shr06 = hr.calc_bulk_shear(data_ceiling, 6000, u_avg, v_avg, zlevels)
+	shr08 = hr.calc_bulk_shear(data_ceiling, 8000, u_avg, v_avg, zlevels)
 
 	  #Calculate Storm Motions
 	  if data_ceiling >= 6000:

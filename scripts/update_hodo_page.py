@@ -2,6 +2,7 @@
 UpdateHoooHTML Class
 updated: 2021-06-02
 """
+from pathlib import Path
 import os
 import sys
 from datetime import datetime
@@ -9,6 +10,13 @@ import pytz
 
 HODOGRAPHS_DIR = '/data/cloud-radar-server/assets/hodographs'
 HODOGRAPHS_HTML_PAGE = '/data/cloud-radar-server/assets/hodographs.html'
+dir_parts = Path.cwd().parts
+if 'C:\\' in dir_parts:
+    HODOGRAPHS_DIR = 'C:/data/scripts/cloud-radar-server/assets/hodographs'
+    HODOGRAPHS_HTML_PAGE = 'C:/data/scripts/cloud-radar-server/assets/hodographs.html'
+    #link_base = "http://localhost:8050/assets"
+    #cloud = False
+
 
 HEAD = """<!DOCTYPE html>
 <html>
