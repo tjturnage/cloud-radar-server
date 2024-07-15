@@ -171,9 +171,9 @@ def slow_process_4(set_progress):
 # Long callback 1 for mesowest placefiles
 @app.callback(
     Output("dummy1", "data"),
-    Input("run_scripts", "n_clicks"),
+    Input("run_scripts_btn", "n_clicks"),
     running=[
-        (Output("run_scripts", "disabled"), True, False),
+        (Output("run_scripts_btn", "disabled"), True, False),
         (Output("cancel_button_id", "disabled"), False, True),
     ],
     cancel=[Input("cancel_button_id", "n_clicks")],
@@ -194,9 +194,9 @@ def launch_mesowest(set_progress, n_clicks):
 # Long callback 2 for radar downloads
 @app.callback(
     Output("dummy2", "data"),
-    Input("run_scripts", "n_clicks"),
+    Input("run_scripts_btn", "n_clicks"),
     running=[
-        (Output("run_scripts", "disabled"), True, False),
+        (Output("run_scripts_btn", "disabled"), True, False),
         (Output("cancel_button_id", "disabled"), False, True),
     ],
     cancel=[Input("cancel_button_id", "n_clicks")],
@@ -217,9 +217,9 @@ def get_nexrad(set_progress, n_clicks):
 # Long callback 3 for hodographs
 @app.callback(
     Output("dummy3", "data"),
-    Input("run_scripts", "n_clicks"),
+    Input("run_scripts_btn", "n_clicks"),
     running=[
-        (Output("run_scripts", "disabled"), True, False),
+        (Output("run_scripts_btn", "disabled"), True, False),
         (Output("cancel_button_id", "disabled"), False, True),
     ],
     cancel=[Input("cancel_button_id", "n_clicks")],
@@ -240,9 +240,9 @@ def create_hodographs(set_progress, n_clicks):
 # Long callback 4 for NSE placefiles
 @app.callback(
     Output("dummy4", "data"),
-    Input("run_scripts", "n_clicks"),
+    Input("run_scripts_btn", "n_clicks"),
     running=[
-        (Output("run_scripts", "disabled"), True, False),
+        (Output("run_scripts_btn", "disabled"), True, False),
         (Output("cancel_button_id", "disabled"), False, True),
     ],
     cancel=[Input("cancel_button_id", "n_clicks")],

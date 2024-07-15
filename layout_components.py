@@ -267,7 +267,7 @@ skip_transpose_section = dbc.Container(dbc.Container(
 
 
 full_transpose_section = dbc.Container([
-        dbc.Container([html.Div([skip_transpose_section, allow_transpose_section],
+        dbc.Container([html.Div([skip_transpose_section, allow_transpose_section,spacer_mini],
                                 id='full_transpose_section_id',
                                 style={'display': 'none'})]),])
 # style= section_box_pad
@@ -280,14 +280,14 @@ scripts_button = dbc.Container(html.Div([
             html.Div([
                 dbc.Button(
                 'Download and process radar data ... Make Obs/NSE Placefiles ... Make hodo plots',
-                size="lg", id='run_scripts', n_clicks=0),
+                size="lg", id='run_scripts_btn', n_clicks=0, disabled=True),
                 dbc.Button(
                 'Cancel all scripts', size="lg", id='cancel_scripts', n_clicks=0, disabled=True,
                 style={'background-color': '#e25050', 'border-color': '#e25050'}),
                 ], className="d-grid gap-2"), style={'vertical-align': 'middle'}),
             html.Div(id='show_script_progress', style=feedback)
             ])
-], style={'padding': '1em', 'vertical-align': 'middle'}))
+], id='run_scripts_section', style={'padding': '1em', 'vertical-align': 'middle'}))
 
 ################################################################################################
 # ----------------------------- Script status components  --------------------------------------

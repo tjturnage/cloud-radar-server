@@ -412,9 +412,9 @@ app.layout = dbc.Container([
                                 lc.spacer, lc.step_time_confirm])], style={'padding': '1em'}),
                       ], style=lc.section_box)])
     ]), lc.spacer,
-    lc.full_radar_select_section, lc.spacer,
+    lc.full_radar_select_section, lc.spacer_mini,
     lc.map_section,
-    lc.full_transpose_section, lc.spacer_mini,
+    lc.full_transpose_section,
     lc.scripts_button,
     lc.status_section,
     lc.polling_section, lc.links_section,
@@ -485,6 +485,7 @@ def toggle_map_display(map_n, confirm_n) -> dict:
     [Output('full_transpose_section_id', 'style'),
     Output('skip_transpose_id', 'style'),
     Output('allow_transpose_id', 'style'),
+    Output('run_scripts_btn', 'disabled')
     ], Input('confirm_radars_btn', 'n_clicks'),
     Input('radar_quantity', 'value'),
     prevent_initial_call=True)
@@ -492,13 +493,15 @@ def finalize_radar_selections(clicks: int, _quant_str: str) -> dict:
     """
     This will display the transpose section on the page if the user has selected a single radar.
     """
+    disp_none = {'display': 'none'}
+    #script_style = {'padding': '1em', 'vertical-align': 'middle'}
     triggered_id = ctx.triggered_id
     if triggered_id == 'radar_quantity':
-        return {'display': 'none'}, {'display': 'none'}, {'display': 'none'}
+        return disp_none, disp_none, disp_none, True
     if clicks > 0:
         if sa.number_of_radars == 1 and len(sa.radar_list) == 1:
-            return lc.section_box_pad, {'display': 'none'}, {'display': 'block'}
-    return lc.section_box_pad, {'display': 'block'}, {'display': 'none'}
+            return lc.section_box_pad, disp_none, {'display': 'block'}, False
+    return lc.section_box_pad, {'display': 'block'}, disp_none, False
 
 ################################################################################################
 # ----------------------------- Transpose radar section  ---------------------------------------
@@ -678,7 +681,7 @@ def run_with_cancel_button():
 
 @app.callback(
     Output('show_script_progress', 'children', allow_duplicate=True),
-    [Input('run_scripts', 'n_clicks')],
+    [Input('run_scripts_btn', 'n_clicks')],
     prevent_initial_call=True,
     running=[
         (Output('start_year', 'disabled'), True, False),
@@ -690,7 +693,7 @@ def run_with_cancel_button():
         (Output('radar_quantity', 'disabled'), True, False),
         (Output('map_btn', 'disabled'), True, False),
         (Output('new_radar_selection', 'disabled'), True, False),
-        (Output('run_scripts', 'disabled'), True, False),
+        (Output('run_scripts_btn', 'disabled'), True, False),
         (Output('playback-clock', 'disabled'), True, False),
         (Output('confirm_radars_btn', 'disabled'), True, False), # added radar confirm btn
         (Output('start_simulation_btn_id', 'disabled'), True, False), # add start sim btn
