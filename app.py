@@ -695,8 +695,8 @@ def run_with_cancel_button():
         (Output('new_radar_selection', 'disabled'), True, False),
         (Output('run_scripts_btn', 'disabled'), True, False),
         (Output('playback-clock', 'disabled'), True, False),
-        (Output('confirm_radars_btn', 'disabled'), True, False), # added radar confirm btn
-        (Output('start_simulation_btn_id', 'disabled'), True, False), # add start sim btn
+        #(Output('confirm_radars_btn', 'disabled'), True, False), # added radar confirm btn
+        #(Output('start_simulation_btn_id', 'disabled'), True, False), # add start sim btn
         (Output('cancel_scripts', 'disabled'), False, True),
     ])
 def launch_simulation(n_clicks) -> None:
