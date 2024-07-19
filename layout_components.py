@@ -84,8 +84,18 @@ top_content = [
         "Project funded by FY2024 NOAA Cloud Compute Grant",
         className="card-text"
     ),
+        spacer_mini,
+        dbc.Row([
+            html.Hr(style={"borderWidth": "0.5vh", "width": "90%", "margin": "auto", "color": "#cccccc"}),
+        ]),
+        spacer_mini,
         html.Div([
-            dbc.CardLink("GitHub", href="https://github.com/tjturnage/cloud-radar-server")]),
+            dbc.Row([
+            dbc.Col(dbc.CardLink("User Guide", href="")),
+            dbc.Col(dbc.CardLink("Feedback Form", href="https://docs.google.com/forms/d/e/1FAIpQLScoQhdYa6uoR1sD1f3PUYmNVMLgOn5UDvSkUJXHu4_gpWZ9pw/viewform")),
+            dbc.Col(dbc.CardLink("GitHub", href="https://github.com/tjturnage/cloud-radar-server"))
+            ]),
+        ])
     ])
 ]
 
@@ -96,8 +106,8 @@ top_banner = html.Div([
                     html.Div(dbc.Card(top_content, color="secondary", inverse=True)), width=9),
                 dbc.Col(html.Div(html.Img(src="/assets/radar-web.svg",
                                           style={'display': 'block', 'margin-left': 'auto',
-                                                 'margin-right': 'auto', 'margin-top': '10px',
-                                                 'verticalAlign': 'middle', 'width': '70%'})), width=3),
+                                                 'margin-right': 'auto', 'margin-top': '28px',
+                                                 'verticalAlign': 'middle', 'width': '80%'})), width=3),
                 ], id='test', style={"padding": "1em", 'border': '3px gray solid'})],
         style={"padding": "1.7em", "text-align": "center"}),
 ])
