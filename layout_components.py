@@ -165,7 +165,7 @@ radar_quantity_section = dbc.Col(html.Div([#radar_quantity, spacer_mini,
 STEP_CHOOSE_FROM_MAP = "Use button at right to display map of radars"
 
 # step_radar_section = dbc.Col(html.Div(children=STEP_CHOOSE_FROM_MAP,style=steps_right))
-map_toggle_button = dbc.Col(html.Div([dbc.Button('Show radar map', size="lg",
+map_toggle_button = dbc.Col(html.Div([dbc.Button('Show Radar Map', size="lg",
                                                 id='map_btn', n_clicks=0)],
                                                 className="d-grid gap-2 col-12 mx-auto"))
 
@@ -467,7 +467,7 @@ links_section = dbc.Container(dbc.Container(html.Div(
 step_sim_clock = [dbc.CardBody(
     [html.H5("Simulation Progress", className="card-text")])]
 
-start_simulation_btn = dbc.Col(html.Div([dbc.Button('Show radar map', size="lg",
+start_simulation_btn = dbc.Col(html.Div([dbc.Button('Show Simulation Clock', size="lg",
                                                 id='start_simulation_btn_id', n_clicks=0)],
                                                 className="d-grid gap-2 col-12 mx-auto"))
 
@@ -478,9 +478,9 @@ simulation_clock = html.Div([
             dbc.Card(step_sim_clock, color="secondary", inverse=True)],
             style={'text-align': 'center'},),
 
-        html.Div(id='clock-output', style=feedback),
+        html.Div(id='clock_output', style=feedback),
 
-    ], id='clock-container', style={'display': 'none'}),
+    ], id='clock_container', style={'display': 'none'}),
 ])
 
 

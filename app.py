@@ -371,7 +371,8 @@ class RadarSimulator(Config):
         for directory in dirs:
             for root, dirs, files in os.walk(directory, topdown=False):
                 for name in files:
-                    os.remove(os.path.join(root, name))
+                    if name != 'grlevel2.cfg':
+                        os.remove(os.path.join(root, name))
                 for name in dirs:
                     os.rmdir(os.path.join(root, name))
 
@@ -417,7 +418,7 @@ app.layout = dbc.Container([
     lc.full_transpose_section,
     lc.scripts_button,
     lc.status_section,
-    lc.polling_section, lc.links_section,
+    lc.polling_section, lc.links_section, lc.start_simulation_btn,
     lc.simulation_clock, lc.radar_id, lc.bottom_section
 ])  # end of app.layout
 
@@ -810,7 +811,7 @@ def enable_simulation_clock(n: int) -> dict:
     Toggles the simulation clock display on/off by returning a css style dictionary to modify
     Disabled this for now
     """
-    if n == 0:
+    if n%2 == 0:
         return {'display': 'none'}
     return {'padding': '1em', 'vertical-align': 'middle'}
 
