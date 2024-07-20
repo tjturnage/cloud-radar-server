@@ -86,7 +86,7 @@ top_content = [
     ),
         spacer_mini,
         dbc.Row([
-            html.Hr(style={"borderWidth": "0.5vh", "width": "90%", "margin": "auto", "color": "#cccccc"}),
+            html.Hr(style={"borderWidth": "0.4vh", "width": "90%", "margin": "auto", "color": "#cccccc"}),
         ]),
         spacer_mini,
         html.Div([
@@ -473,25 +473,33 @@ links_section = dbc.Container(dbc.Container(html.Div(
 ################################################################################################
 # ----------------------------- Clock components  ----------------------------------------------
 ################################################################################################
+sim_controls_title = dbc.Col(
+    html.Div(children="Simulation Controls", style=steps_center))
 
-step_sim_clock = [dbc.CardBody(
-    [html.H5("Simulation Progress", className="card-text")])]
+toggle_sim_btn = dbc.Container(dbc.Row(dbc.Col(html.Div([dbc.Button('Start Playback',
+                                            size="lg", id='toggle_sim_btn_id',n_clicks=0)],
+                                            className="d-grid gap-2 col-12 mx-auto"))
+))
 
-start_simulation_btn = dbc.Col(html.Div([dbc.Button('Show Simulation Clock', size="lg",
-                                                id='start_simulation_btn_id', n_clicks=0)],
-                                                className="d-grid gap-2 col-12 mx-auto"))
+playback_times_display = dbc.Container(html.Div([
+    dbc.Row([dbc.Col(html.Div(id='playback_start_time_disp', children="Awaiting Playback Start",
+                              style=feedback_smaller)),
+            dbc.Col(html.Div(id='playback_end_time_disp', children="Awaiting Playback End",
+                             style=feedback_smaller)),]),
+             ]))
 
-
-simulation_clock = html.Div([
-    html.Div([
+simulation_clock =dbc.Container(html.Div([
         html.Div([
-            dbc.Card(step_sim_clock, color="secondary", inverse=True)],
-            style={'text-align': 'center'},),
-
+            sim_controls_title,
+            spacer_mini,
+            playback_times_display,
+            spacer_mini,
+            toggle_sim_btn,
+            spacer_mini,
         html.Div(id='clock_output', style=feedback),
 
-    ], id='clock_container', style={'display': 'none'}),
-])
+    ], id='clock_container', style=section_box_pad),
+]))
 
 
 

@@ -220,6 +220,8 @@ class RadarSimulator(Config):
             self.playback_start_time, "%Y-%m-%d %H:%M:%S UTC")
         self.playback_end_time = self.playback_start_time + \
             timedelta(minutes=int(self.event_duration))
+        self.playback_end_str = datetime.strftime(
+            self.playback_end_time, "%Y-%m-%d %H:%M:%S UTC")
 
     def get_days_in_month(self) -> None:
         """
@@ -397,7 +399,7 @@ sim_day_selection = dbc.Col(html.Div([
 app.layout = dbc.Container([
     # testing directory size monitoring
     dcc.Interval(id='directory_monitor', disabled=False, interval=2*1000),
-    dcc.Interval(id='playback-clock', disabled=True, interval=60*1000),
+    dcc.Interval(id='playback_clock', disabled=True, interval=60*1000),
     # dcc.Store(id='model_dir_size'),
     # dcc.Store(id='radar_dir_size'),
     dcc.Store(id='tradar'),
@@ -418,8 +420,10 @@ app.layout = dbc.Container([
     lc.full_transpose_section,
     lc.scripts_button,
     lc.status_section,
-    lc.polling_section, lc.links_section, lc.start_simulation_btn,
-    lc.simulation_clock, lc.radar_id, lc.bottom_section
+    lc.polling_section, lc.links_section,
+    lc.simulation_clock,
+    lc.radar_id,    # testing radar id, just a dummy storage location
+    lc.bottom_section
 ])  # end of app.layout
 
 ################################################################################################
@@ -481,28 +485,37 @@ def toggle_map_display(map_n, confirm_n) -> dict:
     if total_clicks % 2 == 0:
         return {'display': 'none'}, 'Show Radar Map'
     return lc.map_section_style, 'Hide Radar Map'
+    #if triggered_id == 'confirm_radars_btn':
+    #    
+    #    return {'display': 'none'}, 'Show Radar Map'
 
 @app.callback(
     [Output('full_transpose_section_id', 'style'),
     Output('skip_transpose_id', 'style'),
     Output('allow_transpose_id', 'style'),
-    Output('run_scripts_btn', 'disabled')
+    Output('run_scripts_btn', 'disabled'),
+    Output('playback_start_time_disp', 'children'),
+    Output('playback_end_time_disp', 'children')
     ], Input('confirm_radars_btn', 'n_clicks'),
     Input('radar_quantity', 'value'),
     prevent_initial_call=True)
-def finalize_radar_selections(clicks: int, _quant_str: str) -> dict:
+def finalize_radar_selections(_clicks: int, _quant_str: str):
     """
     This will display the transpose section on the page if the user has selected a single radar.
     """
     disp_none = {'display': 'none'}
+    disp_block = {'display': 'block'}
     #script_style = {'padding': '1em', 'vertical-align': 'middle'}
     triggered_id = ctx.triggered_id
     if triggered_id == 'radar_quantity':
-        return disp_none, disp_none, disp_none, True
-    if clicks > 0:
+        return disp_none, disp_none, disp_none, True, '', ''
+    if triggered_id == 'confirm_radars_btn':
+        sa.make_simulation_times()
+        play_start = f"Playback start:\n{sa.playback_start_str}"
+        play_end = f"Playback end:\n{sa.playback_end_str}"
         if sa.number_of_radars == 1 and len(sa.radar_list) == 1:
-            return lc.section_box_pad, disp_none, {'display': 'block'}, False
-    return lc.section_box_pad, {'display': 'block'}, disp_none, False
+            return lc.section_box_pad, disp_none, disp_block, False, play_start, play_end
+    return lc.section_box_pad, disp_block, disp_none, False, play_start, play_end
 
 ################################################################################################
 # ----------------------------- Transpose radar section  ---------------------------------------
@@ -589,8 +602,10 @@ def run_with_cancel_button():
     This version of the script-launcher trying to work in cancel button
     """
     sa.scripts_progress = 'Setting up files and times'
+    
     # determine actual event time, playback time, diff of these two
-    sa.make_simulation_times()
+    # !! moved line below to finalize_radar_selections callback for testing !!
+    # sa.make_simulation_times()
 
     # clean out old files and directories
     try:
@@ -803,22 +818,24 @@ def run_transpose_script() -> None:
 # ----------------------------- Clock Callbacks  -----------------------------------------------
 ################################################################################################
 
-@app.callback(
-    Output('clock-container', 'style'),
-    Input('start_simulation_btn_id', 'n_clicks'))
-def enable_simulation_clock(n: int) -> dict:
-    """
-    Toggles the simulation clock display on/off by returning a css style dictionary to modify
-    Disabled this for now
-    """
-    if n%2 == 0:
-        return {'display': 'none'}
-    return {'padding': '1em', 'vertical-align': 'middle'}
-
 
 @app.callback(
-    Output('clock-output', 'children'),
-    Input('playback-clock', 'n_intervals')
+    [Output('toggle_sim_btn_id', 'children'),
+    Output('playback_clock', 'disabled')],
+    Input('toggle_sim_btn_id', 'n_clicks'))
+def toggle_simulation_clock(n: int) -> dict:
+    """
+    Toggles the simulation clock
+    """
+    if n > 0:
+        if n%2 == 1:
+            return 'Pause Playback', False
+        return 'Start Playback', True
+    return 'Start Playback', True
+
+@app.callback(
+    Output('clock_output', 'children'),
+    Input('playback_clock', 'n_intervals')
 )
 def update_time(_n) -> str:
     """
