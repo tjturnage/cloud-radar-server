@@ -474,7 +474,7 @@ links_section = dbc.Container(dbc.Container(html.Div(
 # ----------------------------- Clock components  ----------------------------------------------
 ################################################################################################
 sim_controls_title = dbc.Col(
-    html.Div(children="Simulation Controls", style=steps_center))
+    html.Div(children="Simulation Playback Controls", style=steps_center))
 
 toggle_sim_btn = dbc.Container(dbc.Row(dbc.Col(html.Div([dbc.Button('Start Playback',
                                             size="lg", id='toggle_sim_btn_id',n_clicks=0)],
@@ -482,10 +482,12 @@ toggle_sim_btn = dbc.Container(dbc.Row(dbc.Col(html.Div([dbc.Button('Start Playb
 ))
 
 playback_times_display = dbc.Container(html.Div([
-    dbc.Row([dbc.Col(html.Div(id='playback_start_time_disp', children="Awaiting Playback Start",
-                              style=feedback_smaller)),
-            dbc.Col(html.Div(id='playback_end_time_disp', children="Awaiting Playback End",
-                             style=feedback_smaller)),]),
+    dbc.Row([dbc.Col(html.Div(children="Start Time", style=steps), width=2),
+    dbc.Col(html.Div(id='playback_start_time_disp', children="Not Set",
+                              style=feedback_smaller), width=4),
+    dbc.Col(html.Div(children="End Time", style=steps), width=2),
+    dbc.Col(html.Div(id='playback_end_time_disp', children="Not Set",
+                             style=feedback_smaller),width=4),]),
              ]))
 
 simulation_clock =dbc.Container(html.Div([
@@ -496,7 +498,7 @@ simulation_clock =dbc.Container(html.Div([
             spacer_mini,
             toggle_sim_btn,
             spacer_mini,
-        html.Div(id='clock_output', style=feedback),
+        html.Div(id='clock_output', children='Simulation not started yet', style=feedback),
 
     ], id='clock_container', style=section_box_pad),
 ]))

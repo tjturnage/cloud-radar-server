@@ -53,7 +53,7 @@ class UpdateDirList():
             self.dirlist_initialize()
         else:
             try:
-                self.current_playback_time = datetime.strptime(self.current_playback_timestr,"%Y-%m-%d %H:%M:%S UTC").replace(tzinfo=pytz.UTC).timestamp()
+                self.current_playback_time = datetime.strptime(self.current_playback_timestr,"%Y-%m-%d %H:%M").replace(tzinfo=pytz.UTC).timestamp()
                 self.update_dirlist()
             except ValueError as ve:
                 print(f'Could not update dirlist: {ve}')
@@ -107,5 +107,5 @@ class UpdateDirList():
 #-------------------------------
 if __name__ == "__main__":
     #this_radar = 'KGRR'
-    #this_playback_time = '2024-06-01 23:15:20 UTC'
+    #this_playback_time = '2024-06-01 23:15:20'
     UpdateDirList(sys.argv[1],sys.argv[2],sys.argv[3])

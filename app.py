@@ -103,6 +103,7 @@ class RadarSimulator(Config):
         self.event_start_minute = 45
         self.event_duration = 30
         self.timestring = None
+        self.show_radar_map = False
         self.number_of_radars = 1
         self.radar_list = []
         self.radar_dict = {}
@@ -116,8 +117,7 @@ class RadarSimulator(Config):
         self.scripts_progress = 'Scripts not started'
         self.current_dir = Path.cwd()
         self.define_scripts_and_assets_directories()
-        self.simulation_clock = None
-        self.simulation_running = False
+        self.sim_playback_running = False
         self.playback_timer = None
         self.make_simulation_times()
 
@@ -204,24 +204,29 @@ class RadarSimulator(Config):
 
         Variables ending with "_str" are the string representations of the datetime objects
         """
-        self.playback_start_time = datetime.now(tz=timezone.utc) - timedelta(hours=2)
-        self.playback_timer = self.playback_start_time + timedelta(seconds=360)
+        start_time = datetime.now(tz=timezone.utc) - timedelta(hours=2)
+        if start_time.minute < 30:
+            start_time = start_time.replace(minute=0, second=0, microsecond=0)
+        else:
+            start_time = start_time.replace(minute=30, second=0, microsecond=0)
+        self.playback_start_time = start_time
+        self.playback_timer = self.playback_start_time + timedelta(seconds=300)
         self.event_start_time = datetime(self.event_start_year, self.event_start_month,
                                          self.event_start_day, self.event_start_hour,
                                          self.event_start_minute, second=0,
                                          tzinfo=timezone.utc)
-        self.simulation_time_shift = self.playback_start_time - self.event_start_time
-        self.simulation_seconds_shift = round(
-            self.simulation_time_shift.total_seconds())
-        self.sim_clock = self.playback_start_time
         self.event_start_str = datetime.strftime(
-            self.event_start_time, "%Y-%m-%d %H:%M:%S UTC")
+            self.event_start_time, "%Y-%m-%d %H:%M")
+        self.simulation_time_shift = self.playback_start_time - self.event_start_time
+        self.simulation_seconds_shift = round(self.simulation_time_shift.total_seconds())
+        self.sim_clock = self.playback_start_time
+
         self.playback_start_str = datetime.strftime(
-            self.playback_start_time, "%Y-%m-%d %H:%M:%S UTC")
+            self.playback_start_time, "%Y-%m-%d %H:%M")
         self.playback_end_time = self.playback_start_time + \
             timedelta(minutes=int(self.event_duration))
         self.playback_end_str = datetime.strftime(
-            self.playback_end_time, "%Y-%m-%d %H:%M:%S UTC")
+            self.playback_end_time, "%Y-%m-%d %H:%M")
 
     def get_days_in_month(self) -> None:
         """
@@ -396,6 +401,25 @@ sim_day_selection = dbc.Col(html.Div([
     lc.step_day,
     dcc.Dropdown(np.arange(1, sa.days_in_month+1), 7, id='start_day', clearable=False)]))
 
+# Assuming sa.playback_start_time and sa.playback_end_time are defined
+playback_start_time = sa.playback_start_time
+playback_end_time = sa.playback_end_time
+total_five_minutes = int((playback_end_time - playback_start_time).total_seconds()/(60*5))
+
+slide = html.Div([
+    dcc.Slider(
+        id='playback_slider',
+        min=0,
+        max=total_five_minutes,
+        step=1,
+        value=0,
+        marks={i: str(i) for i in range(0, total_five_minutes + 1, 1)},
+        tooltip={"placement": "bottom", "always_visible": True}
+    ),
+    html.Div(id='slider_output')
+], id='slider_section', style={'display': 'none'})
+
+
 app.layout = dbc.Container([
     # testing directory size monitoring
     dcc.Interval(id='directory_monitor', disabled=False, interval=2*1000),
@@ -422,6 +446,7 @@ app.layout = dbc.Container([
     lc.status_section,
     lc.polling_section, lc.links_section,
     lc.simulation_clock,
+    slide,
     lc.radar_id,    # testing radar id, just a dummy storage location
     lc.bottom_section
 ])  # end of app.layout
@@ -476,18 +501,15 @@ def display_click_data(quant_str: str, click_data: dict):
      Output('map_btn', 'children')],
     Input('map_btn', 'n_clicks'),
     Input('confirm_radars_btn', 'n_clicks'))
-def toggle_map_display(map_n, confirm_n) -> dict:
+def toggle_map_display(_map_n, _confirm_n) -> dict:
     """
     based on button click, show or hide the map by returning a css style dictionary
     to modify the associated html element
     """
-    total_clicks = map_n + confirm_n
-    if total_clicks % 2 == 0:
-        return {'display': 'none'}, 'Show Radar Map'
-    return lc.map_section_style, 'Hide Radar Map'
-    #if triggered_id == 'confirm_radars_btn':
-    #    
-    #    return {'display': 'none'}, 'Show Radar Map'
+    sa.show_radar_map = not sa.show_radar_map
+    if sa.show_radar_map:
+        return lc.map_section_style, 'Hide Radar Map'
+    return {'display': 'none'}, 'Show Radar Map'
 
 @app.callback(
     [Output('full_transpose_section_id', 'style'),
@@ -495,7 +517,8 @@ def toggle_map_display(map_n, confirm_n) -> dict:
     Output('allow_transpose_id', 'style'),
     Output('run_scripts_btn', 'disabled'),
     Output('playback_start_time_disp', 'children'),
-    Output('playback_end_time_disp', 'children')
+    Output('playback_end_time_disp', 'children'),
+    Output('slider_section', 'style'),
     ], Input('confirm_radars_btn', 'n_clicks'),
     Input('radar_quantity', 'value'),
     prevent_initial_call=True)
@@ -508,14 +531,14 @@ def finalize_radar_selections(_clicks: int, _quant_str: str):
     #script_style = {'padding': '1em', 'vertical-align': 'middle'}
     triggered_id = ctx.triggered_id
     if triggered_id == 'radar_quantity':
-        return disp_none, disp_none, disp_none, True, '', ''
+        return disp_none, disp_none, disp_none, True, '', '', disp_none
     if triggered_id == 'confirm_radars_btn':
         sa.make_simulation_times()
-        play_start = f"Playback start:\n{sa.playback_start_str}"
-        play_end = f"Playback end:\n{sa.playback_end_str}"
+        play_start = f"{sa.playback_start_str} UTC"
+        play_end = f"{sa.playback_end_str} UTC"
         if sa.number_of_radars == 1 and len(sa.radar_list) == 1:
-            return lc.section_box_pad, disp_none, disp_block, False, play_start, play_end
-    return lc.section_box_pad, disp_block, disp_none, False, play_start, play_end
+            return lc.section_box_pad, disp_none, disp_block, False, play_start, play_end, disp_none
+    return lc.section_box_pad, disp_block, disp_none, False, play_start, play_end, disp_none
 
 ################################################################################################
 # ----------------------------- Transpose radar section  ---------------------------------------
@@ -821,21 +844,25 @@ def run_transpose_script() -> None:
 
 @app.callback(
     [Output('toggle_sim_btn_id', 'children'),
-    Output('playback_clock', 'disabled')],
-    Input('toggle_sim_btn_id', 'n_clicks'))
-def toggle_simulation_clock(n: int) -> dict:
+    Output('playback_clock', 'disabled'),
+    Output('slider_section', 'style')],
+    Input('toggle_sim_btn_id', 'n_clicks'),
+    prevent_initial_call=True)
+def toggle_simulation_playback_clock(_n: int) -> dict:
     """
-    Toggles the simulation clock
+    Toggles the simulation playback clock
     """
-    if n > 0:
-        if n%2 == 1:
-            return 'Pause Playback', False
-        return 'Start Playback', True
-    return 'Start Playback', True
+    sa.sim_playback_running = not sa.sim_playback_running
+    if sa.sim_playback_running:
+        if sa.playback_timer < sa.playback_end_time:
+            return 'Pause Playback', False, {'display': 'block'}
+        return 'Simulation Complete!', True, {'display': 'none'}
+    return 'Start Playback', True, {'display': 'none'}
 
 @app.callback(
     Output('clock_output', 'children'),
-    Input('playback_clock', 'n_intervals')
+    Input('playback_clock', 'n_intervals'),
+    prevent_initial_call=True
 )
 def update_time(_n) -> str:
     """
@@ -845,18 +872,30 @@ def update_time(_n) -> str:
        - assets/hodographs.html page
        - assets/polling/KXXX/dir.list files
     """
-
-    sa.playback_timer += timedelta(seconds=90)
-    while sa.playback_timer < sa.playback_end_time:
+    if sa.sim_playback_running:
         sa.playback_timer += timedelta(seconds=90)
-        playback_time_str = sa.playback_timer.strftime("%Y-%m-%d %H:%M:%S UTC")
-        UpdateHodoHTML(playback_time_str, initialize=False)
-        if sa.new_radar != 'None':
-            UpdateDirList(sa.new_radar, playback_time_str, initialize=False)
-        else:
+        playback_time_str = sa.playback_timer.strftime("%Y-%m-%d %H:%M")
+        if sa.playback_timer < sa.playback_end_time:
+            UpdateHodoHTML(playback_time_str, initialize=False)
             for _r, radar in enumerate(sa.radar_list):
                 UpdateDirList(radar, playback_time_str, initialize=False)
-        return playback_time_str
+            return f'Running at {playback_time_str}'
+        return 'Simulation Complete!'
+    return 'Simulation paused at ' + sa.playback_timer.strftime("%Y-%m-%d %H:%M UTC")
+
+
+@app.callback(
+    Output('slider_output', 'children'),
+    Input('playback_slider', 'value')
+)
+def update_playback_time(slider_value):
+    """
+    Update the playback timer based on the slider value.
+    """
+    print(f"Slider value: {slider_value}")
+    sa.playback_timer = playback_start_time + timedelta(minutes=slider_value * 5)
+    playback_time_str = sa.playback_timer.strftime("%Y-%m-%d %H:%M")
+    return f'Running at {playback_time_str}'
 
 
 ################################################################################################
@@ -879,7 +918,7 @@ def get_sim(_yr, _mo, _dy, _hr, _mn, _dur) -> str:
     object for use in scripts so don't need to be explicitly returned here.
     """
     sa.make_simulation_times()
-    line1 = f'Start: {sa.event_start_str[:-7]}Z ____ {sa.event_duration} minutes'
+    line1 = f'Start: {sa.event_start_str}Z ____ {sa.event_duration} minutes'
     return line1
 
 

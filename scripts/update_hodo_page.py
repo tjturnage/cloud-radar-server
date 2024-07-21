@@ -44,7 +44,7 @@ TAIL_NOLIST = """</body>
 class UpdateHodoHTML():
     """
     playback_time: str
-        Current playback time in the format 'YYYY-MM-DD HH:MM:SS UTC'
+        Current playback time in the format 'YYYY-MM-DD HH:MM'
     initialize: bool
         If True, the page will be initialized with a message that graphics are not available
         If False, the page will be updated with "available" hodographs based on the current playback time
@@ -69,10 +69,10 @@ class UpdateHodoHTML():
     def update_hodo_page(self) -> None:
         """
         Updates the hodographs.html page with available hodographs based on the current playback time
-        Playback time is in the format 'YYYY-MM-DD HH:MM:SS UTC', but will be ignored if it is not in this format
+        Playback time is in the format 'YYYY-MM-DD HH:MM UTC', but will be ignored if it is not in this format
         """
         try:
-            current_playback_time = datetime.strptime(self.playback_time,"%Y-%m-%d %H:%M:%S UTC").replace(tzinfo=pytz.UTC).timestamp()
+            current_playback_time = datetime.strptime(self.playback_time,"%Y-%m-%d %H:%M").replace(tzinfo=pytz.UTC).timestamp()
             print(current_playback_time)
         except ValueError as ve:
             print(f'Could not decode current playback time: {ve}')
@@ -90,5 +90,5 @@ class UpdateHodoHTML():
             fout.write(TAIL)
 
 if __name__ == "__main__":
-    #this_playback_time = '2024-06-01 23:15:20 UTC'
+    #this_playback_time = '2024-06-01 23:15 UTC'
     UpdateHodoHTML(sys.argv[1], sys.argv[2])
