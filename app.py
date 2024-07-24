@@ -12,6 +12,7 @@ import shutil
 import re
 import subprocess
 from pathlib import Path
+import mimetypes
 from glob import glob
 import time
 from datetime import datetime, timedelta, timezone
@@ -43,6 +44,8 @@ from scripts.update_hodo_page import UpdateHodoHTML
 from scripts.nse import Nse
 
 import utils 
+
+mimetypes.add_type("text/hmtl", ".cfg", True)
 
 # Earth radius (km)
 R = 6_378_137
