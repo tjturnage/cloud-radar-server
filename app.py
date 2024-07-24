@@ -52,8 +52,8 @@ from scripts.nse import Nse
 import utils 
 
 import mimetypes
-mimetypes.add_type("text/hmtl", ".cfg", True)
-mimetypes.add_type("text/hmtl", ".list", True)
+mimetypes.add_type("text/html", ".cfg", True)
+mimetypes.add_type("text/html", ".list", True)
 
 # Earth radius (km)
 R = 6_378_137
