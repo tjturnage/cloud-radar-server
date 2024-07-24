@@ -5,13 +5,6 @@ hodographs. The application is designed to mimic the behavior of a radar system 
 specified period, starting from a predefined date and time. It allows for the simulation of
 radar data generation, including the handling of time shifts and geographical coordinates.
 
-09 June 2024
--- More docstrings and type hints added
--- Pylinting checks and corrections
-
-11 Jun 2024
-- Trying to show Transpose radar section only if radar_quantity is 1 and radar is selected
-- need to account for the possibility of a user selecting fewer radars, including 3 --> 1
 """
 # from flask import Flask, render_template
 import os
@@ -518,7 +511,6 @@ def toggle_map_display(_map_n, _confirm_n) -> dict:
     Output('run_scripts_btn', 'disabled'),
     Output('playback_start_time_disp', 'children'),
     Output('playback_end_time_disp', 'children'),
-    Output('slider_section', 'style'),
     ], Input('confirm_radars_btn', 'n_clicks'),
     Input('radar_quantity', 'value'),
     prevent_initial_call=True)
@@ -531,14 +523,14 @@ def finalize_radar_selections(_clicks: int, _quant_str: str):
     #script_style = {'padding': '1em', 'vertical-align': 'middle'}
     triggered_id = ctx.triggered_id
     if triggered_id == 'radar_quantity':
-        return disp_none, disp_none, disp_none, True, '', '', disp_none
+        return disp_none, disp_none, disp_none, True, '', ''
     if triggered_id == 'confirm_radars_btn':
         sa.make_simulation_times()
         play_start = f"{sa.playback_start_str} UTC"
         play_end = f"{sa.playback_end_str} UTC"
         if sa.number_of_radars == 1 and len(sa.radar_list) == 1:
-            return lc.section_box_pad, disp_none, disp_block, False, play_start, play_end, disp_none
-    return lc.section_box_pad, disp_block, disp_none, False, play_start, play_end, disp_none
+            return lc.section_box_pad, disp_none, disp_block, False, play_start, play_end
+    return lc.section_box_pad, disp_block, disp_none, False, play_start, play_end
 
 ################################################################################################
 # ----------------------------- Transpose radar section  ---------------------------------------
