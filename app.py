@@ -807,43 +807,43 @@ def run_transpose_script() -> None:
 # ----------------------------- Clock Callbacks  -----------------------------------------------
 ################################################################################################
 
-@app.callback(
-    Output('clock-container', 'style'),
-    Input('start_simulation_btn_id', 'n_clicks'))
-def enable_simulation_clock(n: int) -> dict:
-    """
-    Toggles the simulation clock display on/off by returning a css style dictionary to modify
-    Disabled this for now
-    """
-    if n%2 == 0:
-        return {'display': 'none'}
-    return {'padding': '1em', 'vertical-align': 'middle'}
+# @app.callback(
+#     Output('clock-container', 'style'),
+#     Input('start_simulation_btn_id', 'n_clicks'))
+# def enable_simulation_clock(n: int) -> dict:
+#     """
+#     Toggles the simulation clock display on/off by returning a css style dictionary to modify
+#     Disabled this for now
+#     """
+#     if n%2 == 0:
+#         return {'display': 'none'}
+#     return {'padding': '1em', 'vertical-align': 'middle'}
 
 
-@app.callback(
-    Output('clock-output', 'children'),
-    Input('playback-clock', 'n_intervals')
-)
-def update_time(_n) -> str:
-    """
-    If scripts are still running, provides a text status update.
-    After scripts are done:
-       - counter updates the playback time, and this used to update:
-       - assets/hodographs.html page
-       - assets/polling/KXXX/dir.list files
-    """
+# @app.callback(
+#     Output('clock-output', 'children'),
+#     Input('playback-clock', 'n_intervals')
+# )
+# def update_time(_n) -> str:
+#     """
+#     If scripts are still running, provides a text status update.
+#     After scripts are done:
+#        - counter updates the playback time, and this used to update:
+#        - assets/hodographs.html page
+#        - assets/polling/KXXX/dir.list files
+#     """
 
-    sa.playback_timer += timedelta(seconds=90)
-    while sa.playback_timer < sa.playback_end_time:
-        sa.playback_timer += timedelta(seconds=90)
-        playback_time_str = sa.playback_timer.strftime("%Y-%m-%d %H:%M:%S UTC")
-        UpdateHodoHTML(playback_time_str, initialize=False)
-        if sa.new_radar != 'None':
-            UpdateDirList(sa.new_radar, playback_time_str, initialize=False)
-        else:
-            for _r, radar in enumerate(sa.radar_list):
-                UpdateDirList(radar, playback_time_str, initialize=False)
-        return playback_time_str
+#     sa.playback_timer += timedelta(seconds=90)
+#     while sa.playback_timer < sa.playback_end_time:
+#         sa.playback_timer += timedelta(seconds=90)
+#         playback_time_str = sa.playback_timer.strftime("%Y-%m-%d %H:%M:%S UTC")
+#         UpdateHodoHTML(playback_time_str, initialize=False)
+#         if sa.new_radar != 'None':
+#             UpdateDirList(sa.new_radar, playback_time_str, initialize=False)
+#         else:
+#             for _r, radar in enumerate(sa.radar_list):
+#                 UpdateDirList(radar, playback_time_str, initialize=False)
+#         return playback_time_str
 
 
 ################################################################################################
