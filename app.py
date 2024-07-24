@@ -53,7 +53,7 @@ import utils
 
 import mimetypes
 mimetypes.add_type("text/hmtl", ".cfg", True)
-
+mimetypes.add_type("text/hmtl", ".list", True)
 
 # Earth radius (km)
 R = 6_378_137
