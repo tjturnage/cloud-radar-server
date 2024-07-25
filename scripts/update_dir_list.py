@@ -96,9 +96,9 @@ class UpdateDirList():
             file_timestamp = self.datetime_object_from_timestring(file.parts[-1])
             if file_timestamp < self.current_playback_time:
                 print(f'file: {file_timestamp} is older than {self.current_playback_time}')
-                line = f'{file.stat().st_size} {file.parts[-1]}\n'
+                line = f'{file.stat().st_size} {file.parts[-1]}'
                 print(f'adding: {line}')
-                output = output + line
+                output = output + line+"\n"
         with open(self.dirlist_flle, mode='w', encoding='utf-8') as f:
             f.write(output)
         
