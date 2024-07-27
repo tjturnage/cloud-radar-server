@@ -226,7 +226,7 @@ fig.update_layout(
 
 
 fig.update_layout(uirevision='foo', clickmode='event+select',
-                  hovermode='closest', hoverdistance=10,
+                  hovermode='closest', hoverdistance=15,
                   margin={'r': 0, 't': 0, 'l': 0, 'b': 0},)
 
 
@@ -355,6 +355,11 @@ status_section = dbc.Container(dbc.Container(
              obs_placefile_status, nse_status, hodograph_status])])
 ))
 
+
+################################################################################################
+# ----------------------------- Polling section  --------------------------------------------
+################################################################################################
+
 PLACEFILES_BANNER_TEXT = "Placefile and graphics links"
 placefiles_banner = dbc.Row(
     dbc.Col(html.Div(children=PLACEFILES_BANNER_TEXT, style=steps_center)))
@@ -380,10 +385,17 @@ polling_section = dbc.Container(dbc.Container(html.Div(
             style={"display": "flex", "flexWrap": "wrap"},
         )])))
 
+
+################################################################################################
+# ----------------------------- Placefiles section  --------------------------------------------
+################################################################################################
+
+toggle_placefiles_btn = dbc.Col(html.Div([dbc.Button('Hide Placefiles Section', size="lg",
+                                                id='toggle_placefiles_section_btn', n_clicks=0)],
+                                                className="d-grid gap-2 col-12 mx-auto"))
+
 links_section = dbc.Container(dbc.Container(html.Div(
     [
-        spacer_mini,
-        spacer_mini,
         spacer_mini,
         spacer_mini,
         dbc.Row(
@@ -467,7 +479,7 @@ links_section = dbc.Container(dbc.Container(html.Div(
         ),
         html.P(id="counter"),
         html.P(id="radar_quantity_holder", style={'display': 'none'}),
-    ]
+    ],id="placefiles_section", style={'display': 'block'}
 )))
 
 ################################################################################################
@@ -477,8 +489,8 @@ links_section = dbc.Container(dbc.Container(html.Div(
 step_sim_clock = [dbc.CardBody(
     [html.H5("Simulation Progress", className="card-text")])]
 
-start_simulation_btn = dbc.Col(html.Div([dbc.Button('Show Simulation Clock', size="lg",
-                                                id='start_simulation_btn_id', n_clicks=0)],
+start_simulation_btn = dbc.Col(html.Div([dbc.Button('Toggle Simulation Playback Display', size="lg",
+                                                id='start_simulation_btn', n_clicks=0)],
                                                 className="d-grid gap-2 col-12 mx-auto"))
 
 
@@ -492,7 +504,6 @@ simulation_clock = html.Div([
 
     ], id='clock_container', style={'display': 'none'}),
 ])
-
 
 
 bottom_section = html.Div([], style={'height': '500px'})

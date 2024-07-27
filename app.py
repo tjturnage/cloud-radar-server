@@ -422,7 +422,10 @@ app.layout = dbc.Container([
     lc.full_transpose_section,
     lc.scripts_button,
     lc.status_section,
-    lc.polling_section, lc.links_section, lc.start_simulation_btn,
+    lc.spacer_mini,
+    lc.polling_section, lc.spacer_mini,
+    lc.toggle_placefiles_btn,lc.spacer_mini,
+    lc.links_section, lc.start_simulation_btn,
     lc.simulation_clock, lc.radar_id, lc.bottom_section
 ])  # end of app.layout
 
@@ -804,25 +807,43 @@ def run_transpose_script() -> None:
     sa.shift_placefiles()
 
 ################################################################################################
+# ----------------------------- Toggle Placefiles Section --------------------------------------
+################################################################################################
+
+@app.callback(
+    [Output('placefiles_section', 'style'),
+     Output('toggle_placefiles_section_btn', 'children')],
+    Input('toggle_placefiles_section_btn', 'n_clicks'),
+    prevent_initial_call=True)
+def toggle_placefiles_section(n) -> dict:
+    """
+    based on button click, show or hide the map by returning a css style dictionary
+    to modify the associated html element
+    """
+    if n % 2 == 1:
+        return {'display': 'none'}, 'Show Placefiles Section'
+    return {'display': 'block'}, 'Hide Placefiles Section'
+
+################################################################################################
 # ----------------------------- Clock Callbacks  -----------------------------------------------
 ################################################################################################
 
-# @app.callback(
-#     Output('clock-container', 'style'),
-#     Input('start_simulation_btn_id', 'n_clicks'))
-# def enable_simulation_clock(n: int) -> dict:
-#     """
-#     Toggles the simulation clock display on/off by returning a css style dictionary to modify
-#     Disabled this for now
-#     """
-#     if n%2 == 0:
-#         return {'display': 'none'}
-#     return {'padding': '1em', 'vertical-align': 'middle'}
+@app.callback(
+    Output('clock_container', 'style'),
+    Input('start_simulation_btn', 'n_clicks'))
+def enable_simulation_clock(n: int) -> dict:
+    """
+    Toggles the simulation clock display on/off by returning a css style dictionary to modify
+    Disabled this for now
+    """
+    if n%2 == 0:
+        return {'display': 'none'}
+    return {'padding': '1em', 'vertical-align': 'middle'}
 
 
 # @app.callback(
-#     Output('clock-output', 'children'),
-#     Input('playback-clock', 'n_intervals')
+#     Output('clock_output', 'children'),
+#     Input('playback_clock', 'n_intervals')
 # )
 # def update_time(_n) -> str:
 #     """
