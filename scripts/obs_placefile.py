@@ -86,7 +86,7 @@ class Mesowest():
         self.steps = int(self.duration/5 + 1)
         self.d_t = 10 # number of minutes to increment
         self.network = "1,2,96,162"
-        self.var_str = 'air_temp,dew_point_temperature,wind_speed,wind_direction,wind_gust,visibility,road_temp'
+        self.var_str = 'air_temp,dew_point_temperature,wind_speed,wind_direction,wind_gust,visibility'
         self.unit_str = 'temp|F,speed|kts,precip|in'
         self.api = 'mesowest'
         self.bbox = f'{self.lon-4},{self.lat-4},{self.lon+4},{self.lat+4}'
@@ -123,7 +123,6 @@ class Mesowest():
         self.all_title = f'All Elements {place_text}'
         self.place_title = f'Air Temperature {place_text}'
         self.wind_place_title = f'Wind and Gust {place_text}'
-        self.road_place_title = f'Road Temperature {place_text}'
         self.dewpoint_place_title = f'Dewpoint Temperature {place_text}'
         self.times = self.time_shift()
         self.build_placefile()
@@ -209,7 +208,6 @@ class Mesowest():
 
         self.placefile = 'Title: Mesowest ' + self.place_title + icon_font_text
         self.wind_placefile = 'Title: Mesowest ' + self.wind_place_title + icon_font_text
-        self.road_placefile = 'Title: Mesowest ' + self.road_place_title + icon_font_text
         self.dewpoint_placefile = 'Title: Mesowest ' + self.dewpoint_place_title + icon_font_text
         self.all_placefile = 'Title: Mesowest ' + self.all_title + icon_font_text
 
@@ -226,7 +224,6 @@ class Mesowest():
             time_text = f'TimeRange: {now} {future}\n\n'
             self.placefile += time_text
             self.wind_placefile += time_text
-            self.road_placefile += time_text
             self.dewpoint_placefile += time_text
             self.all_placefile += time_text
             for j,station in enumerate(jas['STATION']):
@@ -303,7 +300,6 @@ class Mesowest():
                     self.placefile += f'{obj_head}{vis_txt} End:\n\n'
                 if rt_str != 'NA':
                     self.all_placefile += f'{obj_head}  Threshold: {other_zoom}\n{rt_txt} End:\n\n'
-                    self.road_placefile += f'{obj_head}  Threshold: {other_zoom}\n{rt_txt} End:\n\n'
 
 
         with open(os.path.join(PLACEFILES_DIR, 'temp.txt'), 'w', encoding='utf8') as outfile:
@@ -311,9 +307,6 @@ class Mesowest():
 
         with open(os.path.join(PLACEFILES_DIR, 'wind.txt'), 'w', encoding='utf8') as outfile:
             outfile.write(self.wind_placefile)
-
-        with open(os.path.join(PLACEFILES_DIR, 'road.txt'), 'w', encoding='utf8') as outfile:
-            outfile.write(self.road_placefile)
 
         with open(os.path.join(PLACEFILES_DIR, 'dwpt.txt'), 'w', encoding='utf8') as outfile:
             outfile.write(self.dewpoint_placefile)
@@ -520,5 +513,5 @@ class Mesowest():
 
 
 if __name__ == "__main__":
-    test = Mesowest(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])
-    #test = Mesowest(42.9634, -85.6681, '2024-06-01 23:15:20 UTC', 60)
+    #test = Mesowest(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])
+    test = Mesowest(42.9634, -85.6681, '2024-06-01 23:15:20 UTC', 60)
