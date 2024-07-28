@@ -202,7 +202,7 @@ class Mesowest():
         \nIconFile: 1, 18, 32, 2, 31, "https://mesonet.agron.iastate.edu/request/grx/windbarbs.png"\
         \nIconFile: 2, 15, 15, 8, 8, "https://mesonet.agron.iastate.edu/request/grx/cloudcover.png"\
         \nIconFile: 3, 25, 25, 12, 12, "https://mesonet.agron.iastate.edu/request/grx/rwis_cr.png"\
-        \nIconFile: 4, 13, 24, 2, 23, "https://www.turnageweather.us/assets/windbarbs-small.png"\
+        \nIconFile: 4, 13, 24, 2, 23, "https://rssic.nws.noaa.gov/assets/iconfiles/windbarbs-small.png"\
         \nFont: 1, 11, 1, "Arial"\
         \nFont: 2, 14, 1, "Arial"\n\n'
 
@@ -513,5 +513,5 @@ class Mesowest():
 
 
 if __name__ == "__main__":
-    #test = Mesowest(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])
-    test = Mesowest(42.9634, -85.6681, '2024-06-01 23:15:20 UTC', 60)
+    test = Mesowest(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])
+    #test = Mesowest(42.9634, -85.6681, '2024-06-01 23:15:20 UTC', 60)

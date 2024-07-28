@@ -1,5 +1,5 @@
 """
-UpdateHoooHTML Class
+UpdateHodoHTML Class
 updated: 2021-06-02
 """
 from pathlib import Path

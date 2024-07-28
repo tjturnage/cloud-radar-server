@@ -19,7 +19,10 @@ import warnings
 import glob
 from pathlib import Path
 import hodo_resources as hr
-
+from dotenv import load_dotenv
+load_dotenv()
+API_TOKEN = os.getenv("HODO_PLOT_TOKEN")
+API_ROOT = "https://api.synopticdata.com/v2/"
 
 #Time and Time Zone
 timezone = 'UTC'
@@ -169,8 +172,7 @@ for p in radar_filepaths:
   else:
       storm_motion_method = 'Bunkers Right' #Choose Mean Wind, Bunkers Left, Bunkers Right, User Selected, Corfidi Downshear, Corfidi Upshear
 
-  API_TOKEN = '86eac26a58a647e69b8c69feaef76bae'
-  API_ROOT = "https://api.synopticdata.com/v2/"
+
 
   def mesowest_get_sfcwind(api_args):
       """
