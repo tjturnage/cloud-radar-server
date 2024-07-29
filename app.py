@@ -120,9 +120,9 @@ class RadarSimulator(Config):
         self.scripts_progress = 'Scripts not started'
         self.current_dir = Path.cwd()
         self.define_scripts_and_assets_directories()
-        self.simulation_clock = None
+        self.playback_clock = None
+        self.playback_clock_str = None
         self.simulation_running = False
-        self.playback_timer = None
         self.make_simulation_times()
 
         # This will generate a logfile. Something we'll want to turn on in the future.
@@ -195,7 +195,8 @@ class RadarSimulator(Config):
         """
         playback_start_time: datetime object
             - the time the simulation starts.
-            - set to (current UTC time - 2hrs), "recent enough" for GR2Analyst to poll data
+            - set to (current UTC time rounded to nearest 30 minutes then minus 2hrs)
+            - This is "recent enough" for GR2Analyst to poll data
         playback_timer: datetime object
             - the "current" displaced realtime during the playback
         event_start_time: datetime object
@@ -208,22 +209,31 @@ class RadarSimulator(Config):
 
         Variables ending with "_str" are the string representations of the datetime objects
         """
-        self.playback_start_time = datetime.now(tz=timezone.utc) - timedelta(hours=2)
-        self.playback_timer = self.playback_start_time + timedelta(seconds=360)
+        self.playback_start = datetime.now(pytz.utc) - timedelta(hours=2)
+        self.playback_start = self.playback_start.replace(second=0, microsecond=0)
+        if self.playback_start.minute < 30:
+            self.playback_start = self.playback_start.replace(minute=0)
+        else:
+            self.playback_start = self.playback_start.replace(minute=30)
+
+        self.playback_start_str = datetime.strftime(
+            self.playback_start, "%Y-%m-%d %H:%M")
+        self.playback_end_time = self.playback_start + \
+            timedelta(minutes=int(self.event_duration))
+
+        self.playback_clock = self.playback_start + timedelta(seconds=600)
+        self.playback_clock_str = datetime.strftime(
+            self.playback_clock, "%Y-%m-%d %H:%M")
+
         self.event_start_time = datetime(self.event_start_year, self.event_start_month,
                                          self.event_start_day, self.event_start_hour,
                                          self.event_start_minute, second=0,
                                          tzinfo=timezone.utc)
-        self.simulation_time_shift = self.playback_start_time - self.event_start_time
+        self.simulation_time_shift = self.playback_start - self.event_start_time
         self.simulation_seconds_shift = round(
             self.simulation_time_shift.total_seconds())
-        self.sim_clock = self.playback_start_time
         self.event_start_str = datetime.strftime(
-            self.event_start_time, "%Y-%m-%d %H:%M:%S UTC")
-        self.playback_start_str = datetime.strftime(
-            self.playback_start_time, "%Y-%m-%d %H:%M:%S UTC")
-        self.playback_end_time = self.playback_start_time + \
-            timedelta(minutes=int(self.event_duration))
+            self.event_start_time, "%Y-%m-%d %H:%M")
 
     def get_days_in_month(self) -> None:
         """
@@ -401,7 +411,7 @@ sim_day_selection = dbc.Col(html.Div([
 app.layout = dbc.Container([
     # testing directory size monitoring
     dcc.Interval(id='directory_monitor', disabled=False, interval=2*1000),
-    dcc.Interval(id='playback-clock', disabled=True, interval=60*1000),
+    dcc.Interval(id='playback_clock', disabled=True, interval=60*1000),
     # dcc.Store(id='model_dir_size'),
     # dcc.Store(id='radar_dir_size'),
     dcc.Store(id='tradar'),
@@ -422,11 +432,10 @@ app.layout = dbc.Container([
     lc.full_transpose_section,
     lc.scripts_button,
     lc.status_section,
-    lc.spacer_mini,
-    lc.polling_section, lc.spacer_mini,
-    lc.toggle_placefiles_btn,lc.spacer_mini,
-    lc.links_section, lc.start_simulation_btn,
-    lc.simulation_clock, lc.radar_id, lc.bottom_section
+    lc.spacer,lc.toggle_placefiles_btn,
+    lc.full_links_section, lc.spacer,
+    lc.simulation_playback_section,
+    lc.radar_id, lc.bottom_section
 ])  # end of app.layout
 
 ################################################################################################
@@ -682,7 +691,7 @@ def run_with_cancel_button():
             return
 
         try:
-            UpdateHodoHTML('None', initialize=True)
+            UpdateHodoHTML('None')
         except Exception as e:
             print("Error updating hodo html: ", e)
             sa.log.exception("Error updating hodo html: ", exc_info=True)
@@ -820,52 +829,61 @@ def toggle_placefiles_section(n) -> dict:
     based on button click, show or hide the map by returning a css style dictionary
     to modify the associated html element
     """
+    btn_text = 'Links Section'
     if n % 2 == 1:
-        return {'display': 'none'}, 'Show Placefiles Section'
-    return {'display': 'block'}, 'Hide Placefiles Section'
+        return {'display': 'none'}, f'Show {btn_text}'
+    return {'display': 'block'}, f'Hide {btn_text}'
 
 ################################################################################################
 # ----------------------------- Clock Callbacks  -----------------------------------------------
 ################################################################################################
 
+
 @app.callback(
-    Output('clock_container', 'style'),
-    Input('start_simulation_btn', 'n_clicks'))
-def enable_simulation_clock(n: int) -> dict:
+    Output('start_simulation_btn', 'children'),
+    Output('playback_clock', 'disabled'),
+    Output('clock_readout', 'children'),
+    Input('start_simulation_btn', 'n_clicks'),
+    Input('playback_clock', 'n_intervals'),
+    prevent_initial_call=True
+    )
+def manage_clock_(nclick, _n_intervals) -> tuple:
+    """     
+    Enables/disables interval component that elapses the playback time
+
+    If scripts are still running, provides a text status update.
+    After scripts are done:
+       - counter updates the playback time, and this used to update:
+       - assets/hodographs.html page
+       - assets/polling/KXXX/dir.list files
     """
-    Toggles the simulation clock display on/off by returning a css style dictionary to modify
-    Disabled this for now
-    """
-    if n%2 == 0:
-        return {'display': 'none'}
-    return {'padding': '1em', 'vertical-align': 'middle'}
+    btn_text = 'Simulation Playback'
+    start_btn = f'Start {btn_text}'
+    pause_btn = f'Pause {btn_text}'
+    paused_text = f'{btn_text} Paused at {sa.playback_clock_str}'
+    running_text = f'{btn_text} Running at {sa.playback_clock_str}'
+    completed_text = 'Simulation Complete!'
+    triggered_id = ctx.triggered_id
+    
+    if triggered_id == 'start_simulation_btn':
+        if nclick == 0:
+            return start_btn, True, 'Simulation not started'
+        if nclick % 2 == 1:
+            return pause_btn, False, running_text
+        return start_btn, True, paused_text
 
-
-# @app.callback(
-#     Output('clock_output', 'children'),
-#     Input('playback_clock', 'n_intervals')
-# )
-# def update_time(_n) -> str:
-#     """
-#     If scripts are still running, provides a text status update.
-#     After scripts are done:
-#        - counter updates the playback time, and this used to update:
-#        - assets/hodographs.html page
-#        - assets/polling/KXXX/dir.list files
-#     """
-
-#     sa.playback_timer += timedelta(seconds=90)
-#     while sa.playback_timer < sa.playback_end_time:
-#         sa.playback_timer += timedelta(seconds=90)
-#         playback_time_str = sa.playback_timer.strftime("%Y-%m-%d %H:%M:%S UTC")
-#         UpdateHodoHTML(playback_time_str, initialize=False)
-#         if sa.new_radar != 'None':
-#             UpdateDirList(sa.new_radar, playback_time_str, initialize=False)
-#         else:
-#             for _r, radar in enumerate(sa.radar_list):
-#                 UpdateDirList(radar, playback_time_str, initialize=False)
-#         return playback_time_str
-
+    sa.playback_clock += timedelta(seconds=60)
+    if sa.playback_clock < sa.playback_end_time:
+        sa.playback_clock_str = sa.playback_clock.strftime("%Y-%m-%d %H:%M")
+        UpdateHodoHTML(sa.playback_clock_str)
+        if sa.new_radar != 'None':
+            UpdateDirList(sa.new_radar, sa.playback_clock_str)
+        else:
+            for _r, radar in enumerate(sa.radar_list):
+                UpdateDirList(radar,sa.playback_clock_str)
+        return pause_btn, False, running_text
+    return completed_text, True, completed_text
+            
 
 ################################################################################################
 # ----------------------------- Time Selection Summary and Callbacks  --------------------------
@@ -887,7 +905,7 @@ def get_sim(_yr, _mo, _dy, _hr, _mn, _dur) -> str:
     object for use in scripts so don't need to be explicitly returned here.
     """
     sa.make_simulation_times()
-    line1 = f'Start: {sa.event_start_str[:-7]}Z ____ {sa.event_duration} minutes'
+    line1 = f'Start: {sa.event_start_str}Z ____ {sa.event_duration} minutes'
     return line1
 
 
@@ -972,6 +990,26 @@ if __name__ == '__main__':
                 dev_tools_hot_reload=False)
 
 '''
+
+@app.callback(
+    Output('start_simulation_btn', 'children'),
+    Output('playback_clock', 'disabled'),
+    Output('clock_output', 'children'),
+    Input('start_simulation_btn', 'n_clicks'),
+    prevent_initial_call=True)
+def enable_simulation_clock(n: int) -> tuple:
+    """
+    Toggles the simulation clock display on/off by returning a css style dictionary to modify
+    Disabled this for now
+    """
+    btn_text = 'Simulation Playback'
+    if n > 0:
+        if n % 2 == 1:
+            return f'Pause {btn_text}', False,  f'{btn_text} Running at {sa.playback_clock_str}'
+        return f'Start {btn_text}', True, f'{btn_text} Paused at {sa.playback_clock_str}'
+    return f'Start {btn_text}', True, 'Simulation Not Started'
+
+
 # pathname_params = dict()
 # if my_settings.hosting_path is not None:
 #     pathname_params["routes_pathname_prefix"] = "/"

@@ -24,7 +24,7 @@ place_base = f"{link_base}/placefiles"
 
 now = datetime.now(pytz.utc)
 
-spacer = html.Div([], style={'height': '30px'})
+spacer = html.Div([], style={'height': '25px'})
 spacer_mini = html.Div([], style={'height': '10px'})
 
 df = pd.read_csv('radars.csv', dtype={'lat': float, 'lon': float})
@@ -54,6 +54,9 @@ steps_center = {'padding': '0.4em', 'border': '0.3em', 'border-radius': '15px',
                 'font-weight': 'bold', 'color': '#06DB42', 'background': '#555555',
                 'font-size': '1.4em', 'text-align': 'center', 'height': 'vh5'}
 
+polling_link = {'padding': '0.4em', 'border': '0.3em', 'border-radius': '15px',
+                'font-weight': 'bold', 'color': '#cccccc', 'background': '#555555',
+                'font-size': '1.4em', 'text-align': 'center', 'height': 'vh5'}
 
 column_label = {'font-weight': 'bold', 'text-align': 'right'}
 
@@ -360,43 +363,38 @@ status_section = dbc.Container(dbc.Container(
 # ----------------------------- Polling section  --------------------------------------------
 ################################################################################################
 
-PLACEFILES_BANNER_TEXT = "Placefile and graphics links"
+PLACEFILES_BANNER_TEXT = "Polling, Graphics, and Placefiles Links for GR2Analyst"
 placefiles_banner = dbc.Row(
     dbc.Col(html.Div(children=PLACEFILES_BANNER_TEXT, style=steps_center)))
 
-group_item_style = {'font-weight': 'bold', 'color': 'white', 'border': '1px gray solid',
+group_item_style = {'font-weight': 'bold', 'color': 'white', 'border-right': '1px white solid',
+                    'font-size': '1.2em', 'text-align': 'right'}
+group_item_style_no_border = {'font-weight': 'bold', 'color': '#cccc99',
                     'font-size': '1.2em', 'text-align': 'right'}
 group_item_style_center = {'font-weight': 'bold', 'color': 'white', 'border': '1px gray solid',
                     'font-size': '1.2em', 'text-align': 'center'}
+group_item_style_left = {'font-weight': 'bold', 'color': '#cccccc',
+                    'font-size': '1.2em', 'text-align': 'left'}
 
 polling_section = dbc.Container(dbc.Container(html.Div(
     [
-        spacer_mini,
-        spacer_mini,
-        placefiles_banner,
-        spacer_mini,
-        spacer_mini,
-        dbc.Row(
-            [
-            dbc.Col(dbc.ListGroupItem("Copy this polling address into GR2Analyst:"),
-            style=group_item_style, width=6),
-            dbc.Col(dbc.ListGroupItem("https://rssic.nws.noaa.gov/assets/polling"),
-            style=group_item_style_center, width=6)],
-            style={"display": "flex", "flexWrap": "wrap"},
-        )])))
+        dbc.Row([
+            dbc.Col(dbc.ListGroupItem("Copy this polling address into GR2Analyst -->"),
+            style=steps_right, width=6),
+            dbc.Col(dbc.ListGroupItem("https://rssic.nws.noaa.gov/assets/polling",
+                                      href="https://rssic.nws.noaa.gov/assets/polling"),
+                    style=polling_link, width=6)
+            ])
+    ])))
 
 
 ################################################################################################
 # ----------------------------- Placefiles section  --------------------------------------------
 ################################################################################################
 
-toggle_placefiles_btn = dbc.Col(html.Div([dbc.Button('Hide Placefiles Section', size="lg",
-                                                id='toggle_placefiles_section_btn', n_clicks=0)],
-                                                className="d-grid gap-2 col-12 mx-auto"))
 
 links_section = dbc.Container(dbc.Container(html.Div(
     [
-        spacer_mini,
         spacer_mini,
         dbc.Row(
             [
@@ -424,7 +422,7 @@ links_section = dbc.Container(dbc.Container(html.Div(
                         href=f"{place_base}/wind_shifted.txt"),width=2),
             dbc.Col(dbc.ListGroupItem("Temp", href=f"{place_base}/temp_shifted.txt"),width=2),
             dbc.Col(dbc.ListGroupItem("Dwpt", href=f"{place_base}/dwpt_shifted.txt"),width=2),
-            dbc.Col(dbc.ListGroupItem("Road obs", href=f"{place_base}/road_shifted.txt"),width=2),
+            dbc.Col(dbc.ListGroupItem(" "),width=2),
             ],
             style={"display": "flex", "flexWrap": "wrap"},
 
@@ -453,8 +451,8 @@ links_section = dbc.Container(dbc.Container(html.Div(
                         href=f"{place_base}/esrh_shifted.txt"), width=2),
                 dbc.Col(dbc.ListGroupItem("0-500m", href=f"{place_base}/srh500_shifted.txt"),
                         width=2),
-                dbc.Col(dbc.ListGroupItem("Blank"), width=2),
-                dbc.Col(dbc.ListGroupItem("Blank"), width=2),
+                dbc.Col(dbc.ListGroupItem(" "), width=2),
+                dbc.Col(dbc.ListGroupItem(" "), width=2),
 
             ],
             style={"display": "flex", "flexWrap": "wrap"},
@@ -465,7 +463,7 @@ links_section = dbc.Container(dbc.Container(html.Div(
                 dbc.Col(dbc.ListGroupItem("NSE Thermo"), style=group_item_style, width=2),
                 dbc.Col(dbc.ListGroupItem("MLCAPE",
                         href=f"{place_base}/mlcape_shifted.txt"), width=2),
-                dbc.Col(dbc.ListGroupItem("MLCIN", 
+                dbc.Col(dbc.ListGroupItem("MLCIN",
                         href=f"{place_base}/mlcin_shifted.txt"), width=2),
                 dbc.Col(dbc.ListGroupItem("0-3 MLCP",
                         href=f"{place_base}/cape3km_shifted.txt"), width=2),
@@ -477,33 +475,48 @@ links_section = dbc.Container(dbc.Container(html.Div(
             style={"display": "flex", "flexWrap": "wrap"},
 
         ),
-        html.P(id="counter"),
-        html.P(id="radar_quantity_holder", style={'display': 'none'}),
     ],id="placefiles_section", style={'display': 'block'}
 )))
+
+toggle_placefiles_btn = dbc.Container(dbc.Col(html.Div([dbc.Button(
+    'Hide Links Section', size="lg", id='toggle_placefiles_section_btn',
+    n_clicks=0)],style=section_box_pad,className="d-grid gap-2 col-12 mx-auto")))
+
+full_links_section = dbc.Container(
+    dbc.Container(
+    html.Div([
+              spacer_mini,
+              polling_section,
+              spacer_mini,
+            links_section
+              ]),style=section_box_pad))
 
 ################################################################################################
 # ----------------------------- Clock components  ----------------------------------------------
 ################################################################################################
 
-step_sim_clock = [dbc.CardBody(
-    [html.H5("Simulation Progress", className="card-text")])]
+SIMULATION_PLAYBACK_BANNER_TEXT = "Simulation Playback Section"
+playback_banner = dbc.Row(
+    dbc.Col(html.Div(children=SIMULATION_PLAYBACK_BANNER_TEXT, style=steps_center)))
 
-start_simulation_btn = dbc.Col(html.Div([dbc.Button('Toggle Simulation Playback Display', size="lg",
+start_simulation_btn = dbc.Col(html.Div([dbc.Button('Start Simulation Playback', size="lg",
                                                 id='start_simulation_btn', n_clicks=0)],
                                                 className="d-grid gap-2 col-12 mx-auto"))
 
 
-simulation_clock = html.Div([
-    html.Div([
-        html.Div([
-            dbc.Card(step_sim_clock, color="secondary", inverse=True)],
-            style={'text-align': 'center'},),
+clock_readout_box = dbc.Col(html.Div(id='clock_readout', children='Simulation Playback Not Started', style=feedback))
+clock_readout_container = dbc.Container(html.Div([dbc.Row([clock_readout_box])]))
+simulation_playback_section = dbc.Container(
+    dbc.Container(
+    html.Div([playback_banner,
+              spacer,
+              start_simulation_btn,
+              spacer,
+              clock_readout_container,
+              ]),style=section_box_pad))
 
-        html.Div(id='clock_output', style=feedback),
 
-    ], id='clock_container', style={'display': 'none'}),
-])
-
-
-bottom_section = html.Div([], style={'height': '500px'})
+bottom_section = html.Div([
+    html.P(id="counter", style={'display': 'none'}),
+    html.P(id="radar_quantity_holder", style={'display': 'none'}),],
+    style={'height': '500px'})
