@@ -839,50 +839,50 @@ def toggle_placefiles_section(n) -> dict:
 ################################################################################################
 
 
-@app.callback(
-    Output('start_simulation_btn', 'children'),
-    Output('playback_clock', 'disabled'),
-    Output('clock_readout', 'children'),
-    Input('start_simulation_btn', 'n_clicks'),
-    Input('playback_clock', 'n_intervals'),
-    prevent_initial_call=True
-    )
-def manage_clock_(nclick, _n_intervals) -> tuple:
-    """     
-    Enables/disables interval component that elapses the playback time
+# @app.callback(
+#     Output('start_simulation_btn', 'children'),
+#     Output('playback_clock', 'disabled'),
+#     Output('clock_readout', 'children'),
+#     Input('start_simulation_btn', 'n_clicks'),
+#     Input('playback_clock', 'n_intervals'),
+#     prevent_initial_call=True
+#     )
+# def manage_clock_(nclick, _n_intervals) -> tuple:
+#     """     
+#     Enables/disables interval component that elapses the playback time
 
-    If scripts are still running, provides a text status update.
-    After scripts are done:
-       - counter updates the playback time, and this used to update:
-       - assets/hodographs.html page
-       - assets/polling/KXXX/dir.list files
-    """
-    btn_text = 'Simulation Playback'
-    start_btn = f'Start {btn_text}'
-    pause_btn = f'Pause {btn_text}'
-    paused_text = f'{btn_text} Paused at {sa.playback_clock_str}'
-    running_text = f'{btn_text} Running at {sa.playback_clock_str}'
-    completed_text = 'Simulation Complete!'
-    triggered_id = ctx.triggered_id
+#     If scripts are still running, provides a text status update.
+#     After scripts are done:
+#        - counter updates the playback time, and this used to update:
+#        - assets/hodographs.html page
+#        - assets/polling/KXXX/dir.list files
+#     """
+#     btn_text = 'Simulation Playback'
+#     start_btn = f'Start {btn_text}'
+#     pause_btn = f'Pause {btn_text}'
+#     paused_text = f'{btn_text} Paused at {sa.playback_clock_str}'
+#     running_text = f'{btn_text} Running at {sa.playback_clock_str}'
+#     completed_text = 'Simulation Complete!'
+#     triggered_id = ctx.triggered_id
     
-    if triggered_id == 'start_simulation_btn':
-        if nclick == 0:
-            return start_btn, True, 'Simulation not started'
-        if nclick % 2 == 1:
-            return pause_btn, False, running_text
-        return start_btn, True, paused_text
+#     if triggered_id == 'start_simulation_btn':
+#         if nclick == 0:
+#             return start_btn, True, 'Simulation not started'
+#         if nclick % 2 == 1:
+#             return pause_btn, False, running_text
+#         return start_btn, True, paused_text
 
-    sa.playback_clock += timedelta(seconds=60)
-    if sa.playback_clock < sa.playback_end_time:
-        sa.playback_clock_str = sa.playback_clock.strftime("%Y-%m-%d %H:%M")
-        UpdateHodoHTML(sa.playback_clock_str)
-        if sa.new_radar != 'None':
-            UpdateDirList(sa.new_radar, sa.playback_clock_str)
-        else:
-            for _r, radar in enumerate(sa.radar_list):
-                UpdateDirList(radar,sa.playback_clock_str)
-        return pause_btn, False, running_text
-    return completed_text, True, completed_text
+#     sa.playback_clock += timedelta(seconds=60)
+#     if sa.playback_clock < sa.playback_end_time:
+#         sa.playback_clock_str = sa.playback_clock.strftime("%Y-%m-%d %H:%M")
+#         UpdateHodoHTML(sa.playback_clock_str)
+#         if sa.new_radar != 'None':
+#             UpdateDirList(sa.new_radar, sa.playback_clock_str)
+#         else:
+#             for _r, radar in enumerate(sa.radar_list):
+#                 UpdateDirList(radar,sa.playback_clock_str)
+#         return pause_btn, False, running_text
+#     return completed_text, True, completed_text
             
 
 ################################################################################################
