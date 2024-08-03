@@ -65,7 +65,7 @@ class Munger():
         self.original_rda = original_rda.upper()
         self.source_directory = self.RADAR_DATA_BASE_DIR / self.original_rda / 'downloads'
         os.makedirs(self.source_directory, exist_ok=True)
-        self.playback_start = datetime.strptime(playback_start,"%Y-%m-%d %H:%M:%S UTC").replace(tzinfo=pytz.UTC)
+        self.playback_start = datetime.strptime(playback_start,"%Y-%m-%d %H:%M").replace(tzinfo=pytz.UTC)
         self.duration = duration
         self.seconds_shift = int(timeshift)    # Needed for data passed in via command line. 
         self.new_rda = new_rda

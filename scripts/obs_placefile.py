@@ -105,7 +105,7 @@ class Mesowest():
             self.base_time = now + timedelta(minutes=round_up)
             self.place_time = now - timedelta(minutes=round_down)
         else:
-            self.base_time = datetime.strptime(self.event_timestr,'%Y-%m-%d %H:%M:%S UTC')
+            self.base_time = datetime.strptime(self.event_timestr,'%Y-%m-%d %H:%M')
             self.place_time = self.base_time
 
         self.base_ts = datetime.strftime(self.base_time,'%Y%m%d%H%M')

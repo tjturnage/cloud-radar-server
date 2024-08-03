@@ -31,7 +31,7 @@ class NexradDownloader:
         super().__init__()
         self.radar_id = radar_id
         self.start_tstr = start_tstr
-        self.start_time = datetime.strptime(self.start_tstr,'%Y-%m-%d %H:%M:%S UTC')
+        self.start_time = datetime.strptime(self.start_tstr,'%Y-%m-%d %H:%M')
         self.duration = int(duration)
         self.end_time = self.start_time + timedelta(minutes=int(duration))
         self.download = download
