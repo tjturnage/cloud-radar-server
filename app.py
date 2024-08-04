@@ -397,7 +397,7 @@ class RadarSimulator(Config):
 
 sa = RadarSimulator()
 app = Dash(__name__, external_stylesheets=[dbc.themes.CYBORG],
-           suppress_callback_exceptions=True)
+           suppress_callback_exceptions=True, update_title=None)
 app.title = "Radar Simulator"
 
 ################################################################################################
@@ -748,7 +748,7 @@ def cancel_scripts(n_clicks) -> None:
     Output('radar_status', 'value'),
     Output('hodo_status', 'value'),
     Output('transpose_status', 'value'),
-    Output('obs_placefile_status', 'value'),
+    Output('obs_placefile_status', 'children'),
     Output('model_table', 'data'),
     Output('model_status_warning', 'children'),
     Output('show_script_progress', 'children', allow_duplicate=True),
@@ -779,7 +779,7 @@ def monitor(_n):
             runtime = time.time() - p['create_time']
             #screen_output += f"{name}: {p['status']} for {round(runtime,1)} s. "
             screen_output += f"{name}: running for {round(runtime,1)} s. "
-        seen_scripts.append(name)
+            seen_scripts.append(name)
 
     # Radar file download status
     radar_dl_completion, radar_files = utils.radar_monitor(sa)
@@ -788,7 +788,8 @@ def monitor(_n):
     munger_completion = utils.munger_monitor(sa)
 
     # Surface placefile status
-    placefile_completion = utils.surface_placefile_monitor(sa)
+    placefile_stats = utils.surface_placefile_monitor(sa)
+    placefile_status_string = f"{placefile_stats[0]}/{placefile_stats[1]} files found"
 
     # Hodographs. Currently hard-coded to expect 2 files for every radar and radar file.
     num_hodograph_images = len(glob(f"{sa.hodo_images}/*.png"))
@@ -800,7 +801,7 @@ def monitor(_n):
     # NSE placefiles
     model_list, model_warning = utils.nse_status_checker(sa)
     return (radar_dl_completion, hodograph_completion, munger_completion, 
-            placefile_completion, model_list, model_warning, screen_output)
+            placefile_status_string, model_list, model_warning, screen_output)
 
 ################################################################################################
 # ----------------------------- Transpose placefiles in time and space  ------------------------

@@ -314,8 +314,10 @@ obs_placefile_status_header = html.Div(
     children="Placefile status", style=status_headers)
 
 obs_placefile_status = dbc.Col(html.Div([obs_placefile_status_header,
-                                         dbc.Progress(id='obs_placefile_status',
-                                        striped=True, value=0),]))
+                                         html.P(id='obs_placefile_status',
+                                                style={'color': 'white',
+                                                       'font-weight': 'bold',
+                                                       'textAlign': 'center'}),]))
 
 radar_status_header = html.Div(
     children="Radar data status", style=status_headers)
