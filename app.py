@@ -397,7 +397,7 @@ class RadarSimulator(Config):
 
 sa = RadarSimulator()
 app = Dash(__name__, external_stylesheets=[dbc.themes.CYBORG],
-           suppress_callback_exceptions=True)
+           suppress_callback_exceptions=True, update_title=None)
 app.title = "Radar Simulator"
 
 ################################################################################################
