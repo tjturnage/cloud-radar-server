@@ -432,7 +432,7 @@ app.layout = dbc.Container([
     lc.full_transpose_section,
     lc.scripts_button,
     lc.status_section,
-    lc.spacer,lc.toggle_placefiles_btn,
+    lc.spacer,lc.toggle_placefiles_btn,lc.spacer_mini,
     lc.full_links_section, lc.spacer,
     lc.simulation_playback_section,
     lc.radar_id, lc.bottom_section
@@ -833,7 +833,7 @@ def toggle_placefiles_section(n) -> dict:
     btn_text = 'Links Section'
     if n % 2 == 1:
         return {'display': 'none'}, f'Show {btn_text}'
-    return {'display': 'block'}, f'Hide {btn_text}'
+    return lc.section_box_pad, f'Hide {btn_text}'
 
 ################################################################################################
 # ----------------------------- Clock Callbacks  -----------------------------------------------

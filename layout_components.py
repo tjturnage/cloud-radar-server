@@ -396,7 +396,7 @@ polling_section = dbc.Container(dbc.Container(html.Div(
 
 
 links_section = dbc.Container(dbc.Container(html.Div(
-    [
+    [polling_section,
         spacer_mini,
         dbc.Row(
             [
@@ -477,21 +477,18 @@ links_section = dbc.Container(dbc.Container(html.Div(
             style={"display": "flex", "flexWrap": "wrap"},
 
         ),
-    ],id="placefiles_section", style={'display': 'block'}
+    ]#,id="placefiles_section", style={'display': 'block'}
 )))
 
 toggle_placefiles_btn = dbc.Container(dbc.Col(html.Div([dbc.Button(
     'Hide Links Section', size="lg", id='toggle_placefiles_section_btn',
-    n_clicks=0)],style=section_box_pad,className="d-grid gap-2 col-12 mx-auto")))
+    n_clicks=0)],className="d-grid gap-2 col-12 mx-auto")))
 
 full_links_section = dbc.Container(
     dbc.Container(
     html.Div([
-              spacer_mini,
-              polling_section,
-              spacer_mini,
             links_section
-              ]),style=section_box_pad))
+              ]),id="placefiles_section",style=section_box_pad))
 
 ################################################################################################
 # ----------------------------- Clock components  ----------------------------------------------
