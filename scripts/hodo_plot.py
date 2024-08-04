@@ -103,15 +103,15 @@ def mesowest_get_sfcwind(api_args):
     """
     station = api_args["stid"]
     api_request_url = os.path.join(API_ROOT, "stations/nearesttime")
-    req = requests.get(api_request_url, params=api_args)
+    req = requests.get(api_request_url, params=api_args, timeout=10)
     jas_ts = req.json()
-    wnspd = None 
-    wndir = None 
+    #wnspd = None
+    #wndir = None
+    wnspd = ''
+    wndir = ''
     for s in range(0,len(jas_ts['STATION'])):
         try:
             station = jas_ts['STATION'][s]
-            stn_id = station['STID']
-            ob_times = station['OBSERVATIONS']['wind_speed_value_1']['date_time']
             wnspd = station['OBSERVATIONS']['wind_speed_value_1']['value']
             wndir = station['OBSERVATIONS']['wind_direction_value_1']['value']
         except:
@@ -187,7 +187,7 @@ def create_hodos(filename):
             radar_1sweep = radar.extract_sweeps([idx])
             try:
                 vad = pyart.retrieve.vad_browning(
-                    radar_1sweep, "corrected_velocity", z_want=zlevels
+                    radar_1sweep, "velocity", z_want=zlevels
                 )
                 u_allsweeps.append(vad.u_wind)
                 v_allsweeps.append(vad.v_wind)
@@ -217,14 +217,18 @@ def create_hodos(filename):
         storm_motion_method = 'Bunkers Right' #Choose Mean Wind, Bunkers Left, Bunkers Right, User Selected, Corfidi Downshear, Corfidi Upshear
 
     if sfc_status == 'Preset':
-        track = radar_id
+        #track = radar_id
         nearest_asos = asos_one
         api_args = {"token":API_TOKEN, "stid": f"{nearest_asos}", "attime":api_tstr, "within": 60,"status":"active", "units":"speed|kts",  "hfmetars":'1'}
         wnspd, wndir = mesowest_get_sfcwind(api_args)
-        if wndir is None or wnspd is None:
+        if wndir == '' or wnspd == '':
             nearest_asos = asos_two
             newapi_args = {"token":API_TOKEN, "stid": f"{nearest_asos}", "attime": api_tstr, "within": 60,"status":"active", "units":"speed|kts",  "hfmetars":'1'}
             wnspd, wndir = mesowest_get_sfcwind(newapi_args)
+        
+        if wnspd == '' or wndir == '':
+            sfc_dir = 180
+            sfc_spd = 0
         sfc_dir = wndir
         sfc_spd = wnspd
 
