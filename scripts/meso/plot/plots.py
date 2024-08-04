@@ -75,7 +75,7 @@ def contour(lon, lat, data, time_str, timerange_str, **kwargs):
         c = ax.contour(lon, lat, data)
     
     out = []
-    out.append('Title: %s | %s\n' % (plotinfo, time_str))
+    out.append('Title: %s -- for radar simulation\n' % (plotinfo))
     out.append('RefreshSeconds: 60\n')
     out.append('Font: 1, 14, 1, "Arial"\n')
     out.append('TimeRange: %s\n' % (timerange_str))
@@ -268,7 +268,7 @@ def contourf(lon, lat, data, time_str, timerange_str, **kwargs):
     c = ax.contourf(lon, lat, np.where(data < levels[0], np.nan, data))
 
     out = []
-    out.append('Title: %s Filled Contour | %s\n' % (plotinfo, time_str))
+    out.append('Title: %s Filled Contour -- for radar simulation\n' % (plotinfo))
     out.append('RefreshSeconds: 60\n')
     out.append('TimeRange: %s\n' % (timerange_str))
     rgb = hex2rgb(colors[0])
@@ -480,7 +480,7 @@ def barbs(lon, lat, U, V, time_str, timerange_str, **kwargs):
     plotinfo = kwargs.get('varname', 'None')
     skip = kwargs.get('skip', 6)
     out = []
-    out.append('Title: %s | %s\n' % (plotinfo, time_str))
+    out.append('Title: %s -- for radar simulation\n' % (plotinfo))
     out.append('RefreshSeconds: 60\n')
     out.append('TimeRange: %s\n' % (timerange_str))
     out.append('Color: 255 255 255\n')
@@ -541,7 +541,7 @@ def barbs_devtor(lon, lat, U, V, deviance, time_str, timerange_str, **kwargs):
     plotinfo = kwargs.get('varname', 'None')
     skip = kwargs.get('skip', 3)
     out = []
-    out.append('Title: %s | %s\n' % (plotinfo, time_str))
+    out.append('Title: %s -- for radar simulation\n' % (plotinfo))
     out.append('RefreshSeconds: 60\n')
     out.append('TimeRange: %s\n' % (timerange_str))
     out.append('Color: 255 255 255\n')
