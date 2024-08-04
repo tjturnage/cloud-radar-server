@@ -14,9 +14,8 @@ import math
 import requests
 import os
 import sys
-import pandas as pd
 import warnings
-import glob
+from multiprocessing import Pool, freeze_support
 from pathlib import Path
 import hodo_resources as hr
 from dotenv import load_dotenv
@@ -80,8 +79,9 @@ radar_filepaths = [p for p in DOWNLOADS.iterdir() if p.name.endswith(suffixes)]
 #Surface Winds
 sfc_status = 'Preset'
 
-for p in radar_filepaths:
-    file = p.name
+def create_hodos(filename):
+
+    file = filename.parts[-1]
     fout = CF_DIR / f'{file}.nc'
     radar_time = datetime.strptime(file[4:19], '%Y%m%d_%H%M%S')
     shifted_time = radar_time + timedelta(seconds=timeshift_seconds)
@@ -89,7 +89,7 @@ for p in radar_filepaths:
     
     if radar_id.startswith('K') or radar_id.startswith('P'):
 
-        radar = pyart.io.read(p)
+        radar = pyart.io.read(filename)
 
         # create a gate filter which specifies gates to exclude from dealiasing
         gatefilter = pyart.filters.GateFilter(radar)
@@ -105,7 +105,7 @@ for p in radar_filepaths:
         pyart.io.write_cfradial(fout, radar, format='NETCDF4')
 
     if radar_id.startswith('T'):
-        radar = pyart.io.read(p)
+        radar = pyart.io.read(filename)
 
         pyart.io.write_cfradial(fout, radar, format='NETCDF4')
 
@@ -1053,3 +1053,14 @@ for p in radar_filepaths:
     del sfc_angle, sfc_u, sfc_v
     sr_hodo_fp = HODO_IMAGES / f'SR_Hodograph_{radar_label}_{r_date}_{r_time}.png'
     plt.savefig(sr_hodo_fp, bbox_inches='tight')
+
+def execute_multiprocessing():
+    # Limited to 8 processes on the AWS instance
+    pool = Pool(4)
+    pool.map(create_hodos, radar_filepaths)
+    pool.close()
+    pool.terminate()
+
+if __name__ == '__main__':
+    freeze_support()
+    execute_multiprocessing()
