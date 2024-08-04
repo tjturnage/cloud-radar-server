@@ -779,7 +779,7 @@ def monitor(_n):
             runtime = time.time() - p['create_time']
             #screen_output += f"{name}: {p['status']} for {round(runtime,1)} s. "
             screen_output += f"{name}: running for {round(runtime,1)} s. "
-        seen_scripts.append(name)
+            seen_scripts.append(name)
 
     # Radar file download status
     radar_dl_completion, radar_files = utils.radar_monitor(sa)
@@ -788,10 +788,8 @@ def monitor(_n):
     munger_completion = utils.munger_monitor(sa)
 
     # Surface placefile status
-    placefile_completion = utils.surface_placefile_monitor(sa)
-    placefile_status_string = ''
-    if placefile_completion > 99:
-        placefile_status_string = 'Surface placefiles done!'
+    placefile_stats = utils.surface_placefile_monitor(sa)
+    placefile_status_string = f"{placefile_stats[0]}/{placefile_stats[1]} files found"
 
     # Hodographs. Currently hard-coded to expect 2 files for every radar and radar file.
     num_hodograph_images = len(glob(f"{sa.hodo_images}/*.png"))
