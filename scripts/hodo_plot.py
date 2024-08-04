@@ -79,6 +79,45 @@ radar_filepaths = [p for p in DOWNLOADS.iterdir() if p.name.endswith(suffixes)]
 #Surface Winds
 sfc_status = 'Preset'
 
+def mesowest_get_sfcwind(api_args):
+    """
+    For each station in a list of stations, retrieves all observational data
+    within a defined time range using mesowest API. Writes the retrieved data
+    and associated observation times to a destination file. API documentation:
+
+        https://api.synopticdata.com/v2/stations/nearesttime
+
+    Parameters
+    ----------
+    api_args  : dictionary
+
+
+    Returns
+    -------
+        jas_ts  : json file
+                dictionary of all observations for a given station.
+                What is most significant, however, is writing the
+                observed data to a file that then can be manipulated
+                for plotting.
+
+    """
+    station = api_args["stid"]
+    api_request_url = os.path.join(API_ROOT, "stations/nearesttime")
+    req = requests.get(api_request_url, params=api_args)
+    jas_ts = req.json()
+    wnspd = None 
+    wndir = None 
+    for s in range(0,len(jas_ts['STATION'])):
+        try:
+            station = jas_ts['STATION'][s]
+            stn_id = station['STID']
+            ob_times = station['OBSERVATIONS']['wind_speed_value_1']['date_time']
+            wnspd = station['OBSERVATIONS']['wind_speed_value_1']['value']
+            wndir = station['OBSERVATIONS']['wind_direction_value_1']['value']
+        except:
+            pass
+    return wnspd, wndir
+
 def create_hodos(filename):
 
     file = filename.parts[-1]
@@ -177,51 +216,12 @@ def create_hodos(filename):
     else:
         storm_motion_method = 'Bunkers Right' #Choose Mean Wind, Bunkers Left, Bunkers Right, User Selected, Corfidi Downshear, Corfidi Upshear
 
-
-
-    def mesowest_get_sfcwind(api_args):
-        """
-        For each station in a list of stations, retrieves all observational data
-        within a defined time range using mesowest API. Writes the retrieved data
-        and associated observation times to a destination file. API documentation:
-
-            https://api.synopticdata.com/v2/stations/nearesttime
-
-        Parameters
-        ----------
-        api_args  : dictionary
-
-
-        Returns
-        -------
-            jas_ts  : json file
-                    dictionary of all observations for a given station.
-                    What is most significant, however, is writing the
-                    observed data to a file that then can be manipulated
-                    for plotting.
-
-        """
-        station = api_args["stid"]
-        api_request_url = os.path.join(API_ROOT, "stations/nearesttime")
-        req = requests.get(api_request_url, params=api_args)
-        jas_ts = req.json()
-        for s in range(0,len(jas_ts['STATION'])):
-            try:
-                station = jas_ts['STATION'][s]
-                stn_id = station['STID']
-                ob_times = station['OBSERVATIONS']['wind_speed_value_1']['date_time']
-                wnspd = station['OBSERVATIONS']['wind_speed_value_1']['value']
-                wndir = station['OBSERVATIONS']['wind_direction_value_1']['value']
-            except:
-                pass
-        return wnspd, wndir
-    
     if sfc_status == 'Preset':
         track = radar_id
         nearest_asos = asos_one
         api_args = {"token":API_TOKEN, "stid": f"{nearest_asos}", "attime":api_tstr, "within": 60,"status":"active", "units":"speed|kts",  "hfmetars":'1'}
         wnspd, wndir = mesowest_get_sfcwind(api_args)
-        if wndir == ''or wnspd  == '':
+        if wndir is None or wnspd is None:
             nearest_asos = asos_two
             newapi_args = {"token":API_TOKEN, "stid": f"{nearest_asos}", "attime": api_tstr, "within": 60,"status":"active", "units":"speed|kts",  "hfmetars":'1'}
             wnspd, wndir = mesowest_get_sfcwind(newapi_args)
