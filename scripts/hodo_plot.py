@@ -71,11 +71,12 @@ static_value = 70 # Enter Static Hodo Range or 999 To Not Use
 
 # presumes you have the radar files downloaded already
 # fixed to account for V08 files
-radar_files = [f.name for f in DOWNLOADS.iterdir() if f.name.endswith('V06')]
-radar_filepaths = [p for p in DOWNLOADS.iterdir() if p.name.endswith('V06')]
-if len(radar_files) == 0:
-  radar_files = [f.name for f in DOWNLOADS.iterdir() if f.name.endswith('V08')]
-  radar_filepaths = [p for p in DOWNLOADS.iterdir() if p.name.endswith('V08')]
+suffixes = ('.gz', 'V06', 'V08')
+radar_files = [f.name for f in DOWNLOADS.iterdir() if f.name.endswith(suffixes)]
+radar_filepaths = [p for p in DOWNLOADS.iterdir() if p.name.endswith(suffixes)]
+#if len(radar_files) == 0:
+#  radar_files = [f.name for f in DOWNLOADS.iterdir() if f.name.endswith('V08')]
+#  radar_filepaths = [p for p in DOWNLOADS.iterdir() if p.name.endswith('V08')]
 
 #Surface Winds
 sfc_status = 'Preset'
