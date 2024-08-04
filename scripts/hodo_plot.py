@@ -102,28 +102,31 @@ def create_hodos(filename):
         dealias_data = pyart.correct.dealias_region_based(radar, gatefilter=gatefilter)
         radar.add_field("corrected_velocity", dealias_data)
 
-        pyart.io.write_cfradial(fout, radar, format='NETCDF4')
+        #pyart.io.write_cfradial(fout, radar, format='NETCDF4')
 
     if radar_id.startswith('T'):
         radar = pyart.io.read(filename)
 
-        pyart.io.write_cfradial(fout, radar, format='NETCDF4')
+        #pyart.io.write_cfradial(fout, radar, format='NETCDF4')
 
     if radar_id.startswith('K') or radar_id.startswith('P'):
-        ncrad = pyart.io.read_cfradial(fout)
+        #ncrad = pyart.io.read_cfradial(fout)
 
         # Loop on all sweeps and compute VAD
         zlevels = np.arange(0, data_ceiling+100, 100)  # height above radar
         u_allsweeps = []
         v_allsweeps = []
 
-        for idx in range(ncrad.nsweeps):
-            radar_1sweep = ncrad.extract_sweeps([idx])
-            vad = pyart.retrieve.vad_browning(
-                radar_1sweep, "corrected_velocity", z_want=zlevels
-            )
-            u_allsweeps.append(vad.u_wind)
-            v_allsweeps.append(vad.v_wind)
+        for idx in range(radar.nsweeps):
+            radar_1sweep = radar.extract_sweeps([idx])
+            try:
+                vad = pyart.retrieve.vad_browning(
+                    radar_1sweep, "corrected_velocity", z_want=zlevels
+                )
+                u_allsweeps.append(vad.u_wind)
+                v_allsweeps.append(vad.v_wind)
+            except ValueError:
+                pass
 
         # Average U and V over all sweeps and compute magnitude and angle
         u_avg = np.nanmean(np.array(u_allsweeps), axis=0)
@@ -134,20 +137,23 @@ def create_hodos(filename):
         v_avg *= 1.944
 
     if radar_id.startswith('T'):
-        ncrad = pyart.io.read_cfradial(fout)
+        #ncrad = pyart.io.read_cfradial(fout)
 
         # Loop on all sweeps and compute VAD
         zlevels = np.arange(0, 8100, 100)  # height above radar
         u_allsweeps = []
         v_allsweeps = []
 
-        for idx in range(ncrad.nsweeps):
-            radar_1sweep = ncrad.extract_sweeps([idx])
-            vad = pyart.retrieve.vad_browning(
-                radar_1sweep, "velocity", z_want=zlevels
-            )
-            u_allsweeps.append(vad.u_wind)
-            v_allsweeps.append(vad.v_wind)
+        for idx in range(radar.nsweeps):
+            radar_1sweep = radar.extract_sweeps([idx])
+            try:
+                vad = pyart.retrieve.vad_browning(
+                    radar_1sweep, "corrected_velocity", z_want=zlevels
+                )
+                u_allsweeps.append(vad.u_wind)
+                v_allsweeps.append(vad.v_wind)
+            except ValueError:
+                pass
 
         # Average U and V over all sweeps and compute magnitude and angle
         u_avg = np.nanmean(np.array(u_allsweeps), axis=0)
