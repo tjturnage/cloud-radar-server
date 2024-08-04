@@ -748,7 +748,7 @@ def cancel_scripts(n_clicks) -> None:
     Output('radar_status', 'value'),
     Output('hodo_status', 'value'),
     Output('transpose_status', 'value'),
-    Output('obs_placefile_status', 'value'),
+    Output('obs_placefile_status', 'children'),
     Output('model_table', 'data'),
     Output('model_status_warning', 'children'),
     Output('show_script_progress', 'children', allow_duplicate=True),
@@ -789,6 +789,9 @@ def monitor(_n):
 
     # Surface placefile status
     placefile_completion = utils.surface_placefile_monitor(sa)
+    placefile_status_string = ''
+    if placefile_completion > 99:
+        placefile_status_string = 'Surface placefiles done!'
 
     # Hodographs. Currently hard-coded to expect 2 files for every radar and radar file.
     num_hodograph_images = len(glob(f"{sa.hodo_images}/*.png"))
@@ -800,7 +803,7 @@ def monitor(_n):
     # NSE placefiles
     model_list, model_warning = utils.nse_status_checker(sa)
     return (radar_dl_completion, hodograph_completion, munger_completion, 
-            placefile_completion, model_list, model_warning, screen_output)
+            placefile_status_string, model_list, model_warning, screen_output)
 
 ################################################################################################
 # ----------------------------- Transpose placefiles in time and space  ------------------------

@@ -112,14 +112,13 @@ def munger_monitor(sa):
 
 def surface_placefile_monitor(sa):
     filenames = [
-        'wind.txt', 'temp.txt', 'road.txt', 'latest_surface_observations.txt',
+        'wind.txt', 'temp.txt', 'latest_surface_observations.txt',
         'latest_surface_observations_lg.txt', 'latest_surface_observations_xlg.txt'
     ]
     expected_files =  [f"{sa.placefiles_dir}/{i}" for i in filenames]
     files_on_system = [x for x in expected_files if os.path.exists(x)]
 
-    #percent_complete = calc_completion_percentage(expected_files, files_on_system)
-    percent_complete = 0.
+    percent_complete = calc_completion_percentage(expected_files, files_on_system)
     return percent_complete
 
 def nse_status_checker(sa):
