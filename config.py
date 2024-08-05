@@ -18,13 +18,13 @@ else:
     cloud = True
 
 
-
-BASE_DIR = Path.cwd()
+#BASE_DIR = Path.cwd()
 ASSETS_DIR = BASE_DIR / 'assets'
 HODO_HTML_PAGE = ASSETS_DIR / 'hodographs.html'
 POLLING_DIR = ASSETS_DIR / 'polling'
 PLACEFILES_DIR = ASSETS_DIR / 'placefiles'
 HODOGRAPHS_DIR = ASSETS_DIR / 'hodographs'
+HODOGRAPHS_HTML_PAGE = ASSETS_DIR / 'hodographs.html'
 HODO_IMAGES = ASSETS_DIR / 'hodographs'
 DATA_DIR = BASE_DIR / 'data'
 MODEL_DIR = DATA_DIR / 'model_data'
@@ -46,4 +46,3 @@ os.makedirs(DATA_DIR, exist_ok=True)
 os.makedirs(log_dir, exist_ok=True)
 os.makedirs(HODO_IMAGES, exist_ok=True)
 os.makedirs(PLACEFILES_DIR, exist_ok=True)
-

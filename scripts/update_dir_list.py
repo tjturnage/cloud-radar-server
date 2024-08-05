@@ -9,6 +9,7 @@ import sys
 from pathlib import Path
 from datetime import datetime
 import pytz
+#from config import BASE_DIR, SCRIPTS_DIR, POLLING_DIR
 
 class UpdateDirList():
     """

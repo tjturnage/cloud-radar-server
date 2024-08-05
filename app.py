@@ -26,6 +26,7 @@ import calendar
 import math
 import json
 import logging
+import mimetypes
 import psutil, signal
 import pytz
 #import pandas as pd
@@ -49,9 +50,11 @@ from scripts.update_dir_list import UpdateDirList
 from scripts.update_hodo_page import UpdateHodoHTML
 from scripts.nse import Nse
 
-import utils 
-
-import mimetypes
+import utils
+import config as cfg
+from config import BASE_DIR, POLLING_DIR, PLACEFILES_DIR, SCRIPTS_DIR, DATA_DIR
+from config import HODOGRAPHS_DIR, MODEL_DIR, RADAR_DIR, OBS_SCRIPT_PATH, NSE_SCRIPT_PATH
+from config import HODO_SCRIPT_PATH, HODO_IMAGES, NEXRAD_SCRIPT_PATH, L2MUNGER_FILEPATH
 mimetypes.add_type("text/plain", ".cfg", True)
 mimetypes.add_type("text/plain", ".list", True)
 
@@ -67,21 +70,21 @@ TIME_REGEX = "[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z"
 ################################################################################################
 TOKEN = 'INSERT YOUR MAPBOX TOKEN HERE'
 
-BASE_DIR = Path.cwd()
-ASSETS_DIR = BASE_DIR / 'assets'
-HODO_HTML_PAGE = ASSETS_DIR / 'hodographs.html'
-POLLING_DIR = ASSETS_DIR / 'polling'
-PLACEFILES_DIR = ASSETS_DIR / 'placefiles'
-HODOGRAPHS_DIR = ASSETS_DIR / 'hodographs'
-DATA_DIR = BASE_DIR / 'data'
-MODEL_DIR = DATA_DIR / 'model_data'
-RADAR_DIR = DATA_DIR / 'radar'
-CSV_PATH = BASE_DIR / 'radars.csv'
-SCRIPTS_DIR = BASE_DIR / 'scripts'
-OBS_SCRIPT_PATH = SCRIPTS_DIR / 'obs_placefile.py'
-HODO_SCRIPT_PATH = SCRIPTS_DIR / 'hodo_plot.py'
-NEXRAD_SCRIPT_PATH = SCRIPTS_DIR / 'Nexrad.py'
-L2MUNGER_FILEPATH = SCRIPTS_DIR / 'l2munger'
+# BASE_DIR = Path.cwd()
+# ASSETS_DIR = BASE_DIR / 'assets'
+# HODO_HTML_PAGE = ASSETS_DIR / 'hodographs.html'
+# POLLING_DIR = ASSETS_DIR / 'polling'
+# PLACEFILES_DIR = ASSETS_DIR / 'placefiles'
+# HODOGRAPHS_DIR = ASSETS_DIR / 'hodographs'
+# DATA_DIR = BASE_DIR / 'data'
+# MODEL_DIR = DATA_DIR / 'model_data'
+# RADAR_DIR = DATA_DIR / 'radar'
+# CSV_PATH = BASE_DIR / 'radars.csv'
+# SCRIPTS_DIR = BASE_DIR / 'scripts'
+# OBS_SCRIPT_PATH = SCRIPTS_DIR / 'obs_placefile.py'
+# HODO_SCRIPT_PATH = SCRIPTS_DIR / 'hodo_plot.py'
+# NEXRAD_SCRIPT_PATH = SCRIPTS_DIR / 'Nexrad.py'
+# L2MUNGER_FILEPATH = SCRIPTS_DIR / 'l2munger'
 
 ################################################################################################
 # ----------------------------- Define class RadarSimulator  -----------------------------------
@@ -310,7 +313,8 @@ class RadarSimulator(Config):
         # While the _shifted placefiles should be purged for each run, just ensure we're
         # only querying the "original" placefiles to shift (exclude any with _shifted.txt)        
         """
-        filenames = glob(f"{self.placefiles_dir}/*.txt")
+        #filenames = glob(f"{self.placefiles_dir}/*.txt")
+        filenames = glob(f"{PLACEFILES_DIR}/*.txt")
         filenames = [x for x in filenames if "shifted" not in x]
         for file_ in filenames:
             with open(file_, 'r', encoding='utf-8') as f:
@@ -381,7 +385,7 @@ class RadarSimulator(Config):
         Cleans up files and directories from the previous simulation so these datasets
         are not included in the current simulation.
         """
-        dirs = [RADAR_DIR, POLLING_DIR, HODOGRAPHS_DIR, MODEL_DIR]
+        dirs = [cfg.RADAR_DIR, cfg.POLLING_DIR, cfg.HODOGRAPHS_DIR, cfg.MODEL_DIR]
         for directory in dirs:
             for root, dirs, files in os.walk(directory, topdown=False):
                 for name in files:
@@ -561,7 +565,8 @@ def query_radar_files():
         radar = radar.upper()
         args = [radar, f'{sa.event_start_str}', str(sa.event_duration), str(False)]
         sa.log.info(f"Passing {args} to Nexrad.py")
-        results = utils.exec_script(sa.nexrad_script_path, args)
+        #results = utils.exec_script(sa.nexrad_script_path, args)
+        results = utils.exec_script(NEXRAD_SCRIPT_PATH, args)
         if results['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
             sa.log.warning(f"User cancelled query_radar_files()")
             break
@@ -584,7 +589,7 @@ def run_hodo_script(args) -> None:
     start and playback start
     """
     print(args)
-    subprocess.run(["python", HODO_SCRIPT_PATH] + args, check=True)
+    subprocess.run(["python", cfg.HODO_SCRIPT_PATH] + args, check=True)
 
 
 def call_function(func, *args, **kwargs):
@@ -639,15 +644,17 @@ def run_with_cancel_button():
    
             # Radar download
             args = [radar, str(sa.event_start_str), str(sa.event_duration), str(True)]
-            res = call_function(utils.exec_script, sa.nexrad_script_path, args)
+            #res = call_function(utils.exec_script, sa.nexrad_script_path, args)
+            res = call_function(utils.exec_script, NEXRAD_SCRIPT_PATH, args)
             if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
                 return
 
             # Munger
             args = [radar, str(sa.playback_start_str), str(sa.event_duration), 
                     str(sa.simulation_seconds_shift), new_radar]
-            res = call_function(utils.exec_script, sa.l2munger_script_path, args)
-            if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]: 
+            #res = call_function(utils.exec_script, sa.l2munger_script_path, args)
+            res = call_function(utils.exec_script, L2MUNGER_FILEPATH, args)
+            if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
                 return
       
             # this gives the user some radar data to poll while other scripts are running
@@ -659,14 +666,18 @@ def run_with_cancel_button():
 
     # Surface observations
     args = [str(sa.lat), str(sa.lon), sa.event_start_str, str(sa.event_duration)]
-    res = call_function(utils.exec_script, sa.obs_script_path, args)
+    #res = call_function(utils.exec_script, sa.obs_script_path, args)
+    res = call_function(utils.exec_script, cfg.OBS_SCRIPT_PATH, args)
     if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
         return
 
     # NSE placefiles
-    args = [str(sa.event_start_time), str(sa.event_duration), str(sa.scripts_path), 
-            str(sa.data_dir), str(sa.placefiles_dir)]
-    res = call_function(utils.exec_script, sa.nse_script_path, args)
+    #args = [str(sa.event_start_time), str(sa.event_duration), str(sa.scripts_path),
+    #        str(sa.data_dir), str(sa.placefiles_dir)]
+    args = [str(sa.event_start_time), str(sa.event_duration), str(cfg.SCRIPTS_DIR),
+            str(cfg.DATA_DIR), str(cfg.PLACEFILES_DIR)]
+   #res = call_function(utils.exec_script, sa.nse_script_path, args)
+    res = call_function(utils.exec_script, cfg.NSE_SCRIPT_PATH, args)
     if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
         return
 
@@ -686,7 +697,8 @@ def run_with_cancel_button():
     
         # Execute hodograph script
         args = [radar, sa.new_radar, asos_one, asos_two, str(sa.simulation_seconds_shift)]
-        res = call_function(utils.exec_script, sa.hodo_script_path, args)
+        #res = call_function(utils.exec_script, sa.hodo_script_path, args)
+        res = call_function(utils.exec_script, cfg.HODO_SCRIPT_PATH, args)
         if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
             return
 
@@ -792,7 +804,8 @@ def monitor(_n):
     placefile_status_string = f"{placefile_stats[0]}/{placefile_stats[1]} files found"
 
     # Hodographs. Currently hard-coded to expect 2 files for every radar and radar file.
-    num_hodograph_images = len(glob(f"{sa.hodo_images}/*.png"))
+    #num_hodograph_images = len(glob(f"{sa.hodo_images}/*.png"))
+    num_hodograph_images = len(glob(f"{HODO_IMAGES}/*.png"))
     hodograph_completion = 0
     if len(radar_files) > 0:
         hodograph_completion = 100 * \
