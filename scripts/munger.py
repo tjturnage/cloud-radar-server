@@ -22,6 +22,14 @@ import time
 import pytz
 import config as cfg
 
+BASE_DIR = Path('/data/cloud-radar-server')
+# In order to get this work on my dev and work laptop
+if sys.platform.startswith('darwin') or sys.platform.startswith('win'):
+    parts = Path.cwd().parts
+    idx = parts.index('cloud-radar-server')
+    BASE_DIR =  Path(*parts[0:idx+1])
+
+
 class Munger():
     """
     Copies Nexrad Archive 2 files from a raw directory so Displaced Real-Time (DRT) simulations
@@ -42,33 +50,15 @@ class Munger():
     - playback_speed: float
         speed of simulation compared to real time ... example: 2.0 means event proceeds twice as fast
     """
-    BASE_DIR = Path('/data/cloud-radar-server')
-    # In order to get this work on my dev and work laptop
-    if sys.platform.startswith('darwin') or sys.platform.startswith('win'):
-        parts = Path.cwd().parts
-        idx = parts.index('cloud-radar-server')
-        BASE_DIR =  Path(*parts[0:idx+1])
-
-    SCRIPTS_DIR = BASE_DIR / 'scripts'
-    L2MUNGER_FILEPATH = SCRIPTS_DIR / 'l2munger'
-    DEBZ_FILEPATH = SCRIPTS_DIR / 'debz.py'
-
-    RADAR_DATA_BASE_DIR = BASE_DIR / 'data' / 'radar' #/KGRR/downloads'
-    POLLING_DIR = BASE_DIR / 'assets' / 'polling'
-
-    #SCRIPTS_DIR = Path('/data/cloud-radar-server/scripts')
-    #L2MUNGER_FILEPATH = SCRIPTS_DIR / 'l2munger'	    
-    #DEBZ_FILEPATH = SCRIPTS_DIR / 'debz.py'	    
-    #RADAR_DATA_BASE_DIR = Path('/data/cloud-radar-server/data/radar') #/KGRR/downloads'	
-    #POLLING_DIR = Path('/data/cloud-radar-server/assets/polling')
 
     def __init__(self, original_rda, playback_start, duration, timeshift, new_rda, playback_speed=1.5):
         self.original_rda = original_rda.upper()
+        print(self.original_rda)
         self.source_directory = cfg.RADAR_DIR / self.original_rda / 'downloads'
         os.makedirs(self.source_directory, exist_ok=True)
         self.playback_start = datetime.strptime(playback_start,"%Y-%m-%d %H:%M").replace(tzinfo=pytz.UTC)
         self.duration = duration
-        self.seconds_shift = int(timeshift)    # Needed for data passed in via command line. 
+        self.seconds_shift = int(timeshift)    # Needed for data passed in via command line.
         self.new_rda = new_rda
         self.this_radar_polling_dir = cfg.POLLING_DIR / self.original_rda
         if self.new_rda != 'None':

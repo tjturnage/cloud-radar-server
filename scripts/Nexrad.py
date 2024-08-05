@@ -17,17 +17,19 @@ import json
 import boto3
 import botocore
 from botocore.client import Config
-import config as cfg
+#import config as cfg
 
+
+BASE_DIRECTORY = Path('/data/cloud-radar-server')
+BASE_DIRECTORY = Path.cwd()
+RADAR_DIR = BASE_DIRECTORY / 'data' / 'radar'
 
 class NexradDownloader:
     """
     Downloads NEXRAD radar data from the NOAA NEXRAD Level 2 or TDWR bucket.
     The radar data are saved in the data/radar folder in the project directory.
     """
-    #BASE_DIRECTORY = Path('/data/cloud-radar-server')
-    #BASE_DIRECTORY = Path.cwd()
-    #RADAR_DATA_BASE_DIR = BASE_DIRECTORY / 'data' / 'radar'
+
 
     def __init__(self, radar_id, start_tstr, duration, download):
         super().__init__()
@@ -42,7 +44,7 @@ class NexradDownloader:
                                         user_agent_extra='Resource')).Bucket('noaa-nexrad-level2')
 
         self.prefix_day_one, self.prefix_day_two = self.make_prefix()
-        self.download_directory = cfg.RADAR_DIR / self.radar_id / 'downloads'
+        self.download_directory = RADAR_DIR / self.radar_id / 'downloads'
         os.makedirs(self.download_directory, exist_ok=True)
         self.process_files()
         sys.stdout.write(json.dumps(self.radar_files_dict))
@@ -130,8 +132,7 @@ class NexradDownloader:
 
 
 if __name__ == "__main__":
-
-    #NexradDownloader('KDTX', '2013-05-20 22:45:00 UTC', 30, False)
+    #NexradDownloader('KDTX', '2013-05-20 22:45', 30, False)
     download_flag = sys.argv[4]
     if type(download_flag) == str:
         download_flag = ast.literal_eval(download_flag)
