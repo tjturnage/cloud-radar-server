@@ -49,7 +49,7 @@ class UpdateDirList():
         self.current_playback_timestr = current_playback_timestr
         self.this_radar_polling_directory = cfg.POLLING_DIR / self.radar
         print(self.this_radar_polling_directory)
-        self.dirlist_flle = self.this_radar_polling_directory / 'dir.list'
+        self.dirlist_file = self.this_radar_polling_directory / 'dir.list'
         self.current_playback_time = None
         self.initialize = initialize
         self.filelist = sorted(list(self.this_radar_polling_directory.glob('*gz')))
@@ -57,7 +57,6 @@ class UpdateDirList():
             self.dirlist_initialize()
         else:
             try:
-
                 self.current_playback_time = datetime.strptime(self.current_playback_timestr,"%Y-%m-%d %H:%M").replace(tzinfo=pytz.UTC).timestamp()
                 print(f'Update dirlist time: {self.current_playback_timestr}')
                 self.update_dirlist()
@@ -85,7 +84,7 @@ class UpdateDirList():
             line = f'{file.stat().st_size} {file.parts[-1]}\n'
             #print(line)
             output = output + line
-        with open(self.dirlist_flle, mode='w', encoding='utf-8') as f:
+        with open(self.dirlist_file, mode='w', encoding='utf-8') as f:
             f.write(output)
         
         return
@@ -105,7 +104,7 @@ class UpdateDirList():
                 line = f'{file.stat().st_size} {file.parts[-1]}'
                 print(f'adding: {line}')
                 output = output + line+"\n"
-        with open(self.dirlist_flle, mode='w', encoding='utf-8') as f:
+        with open(self.dirlist_file, mode='w', encoding='utf-8') as f:
             f.write(output)
         
         return

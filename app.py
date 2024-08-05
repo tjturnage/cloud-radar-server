@@ -52,9 +52,6 @@ from scripts.nse import Nse
 
 import utils
 import config as cfg
-#from config import BASE_DIR, POLLING_DIR, PLACEFILES_DIR, SCRIPTS_DIR, DATA_DIR
-#from config import HODOGRAPHS_DIR, MODEL_DIR, RADAR_DIR, OBS_SCRIPT_PATH, NSE_SCRIPT_PATH
-#from config import HODO_SCRIPT_PATH, HODO_IMAGES, NEXRAD_SCRIPT_PATH, L2MUNGER_FILEPATH
 mimetypes.add_type("text/plain", ".cfg", True)
 mimetypes.add_type("text/plain", ".list", True)
 
@@ -70,21 +67,6 @@ TIME_REGEX = "[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z"
 ################################################################################################
 TOKEN = 'INSERT YOUR MAPBOX TOKEN HERE'
 
-# BASE_DIR = Path.cwd()
-# ASSETS_DIR = BASE_DIR / 'assets'
-# HODO_HTML_PAGE = ASSETS_DIR / 'hodographs.html'
-# POLLING_DIR = ASSETS_DIR / 'polling'
-# PLACEFILES_DIR = ASSETS_DIR / 'placefiles'
-# HODOGRAPHS_DIR = ASSETS_DIR / 'hodographs'
-# DATA_DIR = BASE_DIR / 'data'
-# MODEL_DIR = DATA_DIR / 'model_data'
-# RADAR_DIR = DATA_DIR / 'radar'
-# CSV_PATH = BASE_DIR / 'radars.csv'
-# SCRIPTS_DIR = BASE_DIR / 'scripts'
-# OBS_SCRIPT_PATH = SCRIPTS_DIR / 'obs_placefile.py'
-# HODO_SCRIPT_PATH = SCRIPTS_DIR / 'hodo_plot.py'
-# NEXRAD_SCRIPT_PATH = SCRIPTS_DIR / 'Nexrad.py'
-# L2MUNGER_FILEPATH = SCRIPTS_DIR / 'l2munger'
 
 ################################################################################################
 # ----------------------------- Define class RadarSimulator  -----------------------------------
@@ -163,8 +145,8 @@ class RadarSimulator(Config):
         Ensures a grlevel2.cfg file is copied into the polling directory.
         This file is required for GR2Analyst to poll for radar data.
         """
-        source = BASE_DIR / 'grlevel2.cfg'
-        destination = POLLING_DIR / 'grlevel2.cfg'
+        source = cfg.BASE_DIR / 'grlevel2.cfg'
+        destination = cfg.POLLING_DIR / 'grlevel2.cfg'
         try:
             shutil.copyfile(source, destination)
         except Exception as e:
@@ -174,24 +156,24 @@ class RadarSimulator(Config):
         """
         Defines the directories for scripts, data files, and web assets used in the simulation.
         """
-        self.csv_file = self.current_dir / 'radars.csv'
-        self.data_dir = self.current_dir / 'data'
-        os.makedirs(self.data_dir, exist_ok=True)
-        self.log_dir = self.data_dir / 'logs'
+        #self.csv_file = self.current_dir / 'radars.csv'
+        #self.data_dir = self.current_dir / 'data'
+        #os.makedirs(self.data_dir, exist_ok=True)
+        self.log_dir = cfg.DATA_DIR / 'logs'
         os.makedirs(self.log_dir, exist_ok=True)
-        self.scripts_path = self.current_dir / 'scripts'
-        self.obs_script_path = self.scripts_path / 'obs_placefile.py'
-        self.hodo_script_path = self.scripts_path / 'hodo_plot.py'
-        self.nexrad_script_path = self.scripts_path / 'Nexrad.py'
-        self.l2munger_script_path = self.scripts_path / 'munger.py'
-        self.nse_script_path = self.scripts_path / 'nse.py'
-        self.munge_dir = self.scripts_path / 'munge'
-        self.assets_dir = self.current_dir / 'assets'
-        self.hodo_images = self.assets_dir / 'hodographs'
-        os.makedirs(self.hodo_images, exist_ok=True)
-        self.polling_dir = self.assets_dir / 'polling'
-        self.placefiles_dir = self.assets_dir / 'placefiles'
-        os.makedirs(self.placefiles_dir, exist_ok=True)
+        #self.scripts_path = self.current_dir / 'scripts'
+        #self.obs_script_path = self.scripts_path / 'obs_placefile.py'
+        #self.hodo_script_path = self.scripts_path / 'hodo_plot.py'
+        #self.nexrad_script_path = self.scripts_path / 'Nexrad.py'
+        #self.l2munger_script_path = self.scripts_path / 'munger.py'
+        #self.nse_script_path = self.scripts_path / 'nse.py'
+        #self.munge_dir = self.scripts_path / 'munge'
+        #self.assets_dir = self.current_dir / 'assets'
+        #self.hodo_images = self.assets_dir / 'hodographs'
+        #os.makedirs(self.hodo_images, exist_ok=True)
+        #self.polling_dir = self.assets_dir / 'polling'
+        #self.placefiles_dir = self.assets_dir / 'placefiles'
+        #os.makedirs(self.placefiles_dir, exist_ok=True)
 
 
     def make_simulation_times(self) -> None:
