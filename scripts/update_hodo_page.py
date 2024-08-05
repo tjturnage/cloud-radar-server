@@ -7,7 +7,8 @@ import os
 import sys
 from datetime import datetime
 import pytz
-from config import HODOGRAPHS_DIR, HODOGRAPHS_HTML_PAGE
+import config as cfg
+#from config import HODOGRAPHS_DIR, HODOGRAPHS_HTML_PAGE
 #HODOGRAPHS_DIR = '/data/cloud-radar-server/assets/hodographs'
 #HODOGRAPHS_HTML_PAGE = '/data/cloud-radar-server/assets/hodographs.html'
 #dir_parts = Path.cwd().parts
@@ -68,7 +69,7 @@ class UpdateHodoHTML():
         Returns a list of valid hodographs based on the current playback time
         """
         valid_hodo_list = []
-        image_files = [f for f in os.listdir(HODOGRAPHS_DIR) if f.endswith('.png') or f.endswith('.jpg')]
+        image_files = [f for f in os.listdir(cfg.HODO_IMAGES) if f.endswith('.png') or f.endswith('.jpg')]
         
         for filename in image_files:
             file_time = datetime.strptime(filename[-19:-4], '%Y%m%d_%H%M%S').replace(tzinfo=pytz.UTC).timestamp()
@@ -80,7 +81,7 @@ class UpdateHodoHTML():
         """
         Initializes the hodographs.html page with a message that graphics are not available
         """
-        with open(HODOGRAPHS_HTML_PAGE, 'w', encoding='utf-8') as fout:
+        with open(cfg.HODOGRAPHS_HTML_PAGE, 'w', encoding='utf-8') as fout:
             fout.write(HEAD_NOLIST)
             fout.write('<h1>Graphics not available, check back later!</h1>\n')
             fout.write(TAIL_NOLIST)
@@ -93,7 +94,7 @@ class UpdateHodoHTML():
         if len(self.valid_hodo_list) == 0:
             self.initialize_hodo_page()
         else:
-            with open(HODOGRAPHS_HTML_PAGE, 'w', encoding='utf-8') as fout:
+            with open(cfg.HODOGRAPHS_HTML_PAGE, 'w', encoding='utf-8') as fout:
                 fout.write(HEAD)
                 for filename in self.valid_hodo_list:
                     file_time = datetime.strptime(filename[-19:-4], '%Y%m%d_%H%M%S').replace(tzinfo=pytz.UTC).timestamp()

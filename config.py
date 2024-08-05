@@ -3,19 +3,30 @@ Defines the directories for scripts, data files, and web assets used in the simu
 """
 from pathlib import Path
 import os
+import sys
 
-# Set the base directory for the app
-dir_parts = Path.cwd().parts
-link_base = "http://localhost:8050/assets"
-if 'C:\\' in dir_parts:
-    BASE_DIR = Path('C:/data/scripts/cloud-radar-server')
+BASE_DIR = Path('/data/cloud-radar-server')
+link_base = "https://rssic.nws.noaa.gov/assets"
+cloud = True
+# In order to get this work on my dev and work laptop
+if sys.platform.startswith('darwin') or sys.platform.startswith('win'):
+    parts = Path.cwd().parts
+    idx = parts.index('cloud-radar-server')
+    BASE_DIR =  Path(*parts[0:idx+1])
+    link_base = "http://localhost:8050/assets"
     cloud = False
-elif 'carlaw' in dir_parts:
-    BASE_DIR = Path('C:/data/scripts/cloud-radar-server')
-else:
-    BASE_DIR = Path('/data/cloud-radar-server')
-    link_base = "https://rssic.nws.noaa.gov/assets"
-    cloud = True
+# # Set the base directory for the app
+# dir_parts = Path.cwd().parts
+# link_base = "http://localhost:8050/assets"
+# if 'C:\\' in dir_parts:
+#     BASE_DIR = Path('C:/data/scripts/cloud-radar-server')
+#     cloud = False
+# elif 'carlaw' in dir_parts:
+#     BASE_DIR = Path('C:/data/scripts/cloud-radar-server')
+# else:
+#     BASE_DIR = Path('/data/cloud-radar-server')
+#     link_base = "https://rssic.nws.noaa.gov/assets"
+#     cloud = True
 
 
 #BASE_DIR = Path.cwd()
@@ -39,6 +50,7 @@ L2MUNGER_FILEPATH = SCRIPTS_DIR / 'l2munger'
 MUNGE_DIR = SCRIPTS_DIR / 'munge'
 nse_script_path = SCRIPTS_DIR / 'nse.py'
 NSE_SCRIPT_PATH = SCRIPTS_DIR / 'nse.py'
+DEBZ_FILEPATH = SCRIPTS_DIR / 'debz.py'	
 log_dir = DATA_DIR / 'logs'
 LOG_DIR = DATA_DIR / 'logs'
 

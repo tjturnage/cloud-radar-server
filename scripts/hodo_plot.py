@@ -43,7 +43,7 @@ BASE_DIR = Path('/data/cloud-radar-server')
 RADAR_DIR = BASE_DIR / 'data' / 'radar'
 HODO_IMAGES = BASE_DIR / 'assets'/ 'hodographs'
 
-THIS_RADAR = RADAR_DIR / radar_id 
+THIS_RADAR = RADAR_DIR / radar_id
 os.makedirs(THIS_RADAR, exist_ok=True)
 DOWNLOADS = THIS_RADAR / 'downloads'
 os.makedirs(DOWNLOADS, exist_ok=True)

@@ -17,6 +17,8 @@ import json
 import boto3
 import botocore
 from botocore.client import Config
+import config as cfg
+
 
 class NexradDownloader:
     """
@@ -24,8 +26,8 @@ class NexradDownloader:
     The radar data are saved in the data/radar folder in the project directory.
     """
     #BASE_DIRECTORY = Path('/data/cloud-radar-server')
-    BASE_DIRECTORY = Path.cwd()
-    RADAR_DATA_BASE_DIR = BASE_DIRECTORY / 'data' / 'radar'
+    #BASE_DIRECTORY = Path.cwd()
+    #RADAR_DATA_BASE_DIR = BASE_DIRECTORY / 'data' / 'radar'
 
     def __init__(self, radar_id, start_tstr, duration, download):
         super().__init__()
@@ -40,7 +42,7 @@ class NexradDownloader:
                                         user_agent_extra='Resource')).Bucket('noaa-nexrad-level2')
 
         self.prefix_day_one, self.prefix_day_two = self.make_prefix()
-        self.download_directory = self.RADAR_DATA_BASE_DIR / self.radar_id / 'downloads'
+        self.download_directory = cfg.RADAR_DIR / self.radar_id / 'downloads'
         os.makedirs(self.download_directory, exist_ok=True)
         self.process_files()
         sys.stdout.write(json.dumps(self.radar_files_dict))

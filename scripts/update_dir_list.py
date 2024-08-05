@@ -9,7 +9,19 @@ import sys
 from pathlib import Path
 from datetime import datetime
 import pytz
+import config as cfg
 #from config import BASE_DIR, SCRIPTS_DIR, POLLING_DIR
+
+if sys.platform.startswith('darwin') or sys.platform.startswith('win'):
+    parts = Path.cwd().parts
+    idx = parts.index('cloud-radar-server')
+    BASE_DIR =  Path(*parts[0:idx+1])
+
+#SCRIPTS_DIR = BASE_DIR / 'scripts'
+#POLLING_DIR = BASE_DIR / 'assets' / 'polling'
+#SCRIPTS_DIR = Path('/data/cloud-radar-server/scripts')
+#POLLING_DIR = Path('/data/cloud-radar-server/assets/polling')
+
 
 class UpdateDirList():
     """
@@ -29,21 +41,13 @@ class UpdateDirList():
         False: will update the dir.list file with all files in the polling directory that are older than the current playback time
 
     """
-    BASE_DIR = Path('/data/cloud-radar-server')
-    if sys.platform.startswith('darwin') or sys.platform.startswith('win'):
-        parts = Path.cwd().parts
-        idx = parts.index('cloud-radar-server')
-        BASE_DIR =  Path(*parts[0:idx+1])
 
-    SCRIPTS_DIR = BASE_DIR / 'scripts'
-    POLLING_DIR = BASE_DIR / 'assets' / 'polling'
-    #SCRIPTS_DIR = Path('/data/cloud-radar-server/scripts')
-    #POLLING_DIR = Path('/data/cloud-radar-server/assets/polling')
+
 
     def __init__(self, radar: str, current_playback_timestr: str, initialize: bool = False):
         self.radar = radar.upper()
         self.current_playback_timestr = current_playback_timestr
-        self.this_radar_polling_directory = self.POLLING_DIR / self.radar
+        self.this_radar_polling_directory = cfg.POLLING_DIR / self.radar
         print(self.this_radar_polling_directory)
         self.dirlist_flle = self.this_radar_polling_directory / 'dir.list'
         self.current_playback_time = None

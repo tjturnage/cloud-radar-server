@@ -20,6 +20,7 @@ import struct
 from datetime import datetime, timedelta, timezone
 import time
 import pytz
+import config as cfg
 
 class Munger():
     """
@@ -63,15 +64,15 @@ class Munger():
 
     def __init__(self, original_rda, playback_start, duration, timeshift, new_rda, playback_speed=1.5):
         self.original_rda = original_rda.upper()
-        self.source_directory = self.RADAR_DATA_BASE_DIR / self.original_rda / 'downloads'
+        self.source_directory = cfg.RADAR_DIR / self.original_rda / 'downloads'
         os.makedirs(self.source_directory, exist_ok=True)
         self.playback_start = datetime.strptime(playback_start,"%Y-%m-%d %H:%M").replace(tzinfo=pytz.UTC)
         self.duration = duration
         self.seconds_shift = int(timeshift)    # Needed for data passed in via command line. 
         self.new_rda = new_rda
-        self.this_radar_polling_dir = self.POLLING_DIR / self.original_rda
+        self.this_radar_polling_dir = cfg.POLLING_DIR / self.original_rda
         if self.new_rda != 'None':
-            self.this_radar_polling_dir = self.POLLING_DIR / self.new_rda.upper()
+            self.this_radar_polling_dir = cfg.POLLING_DIR / self.new_rda.upper()
 
         os.makedirs(self.this_radar_polling_dir, exist_ok=True)
 
@@ -87,9 +88,9 @@ class Munger():
         The compiled l2munger executable needs to be in the source
         radar files directory to work properly
         """
-        chmod_cmd = f'chmod 775 {self.L2MUNGER_FILEPATH}'
+        chmod_cmd = f'chmod 775 {cfg.L2MUNGER_FILEPATH}'
         os.system(chmod_cmd)
-        cp_cmd = f'cp {self.L2MUNGER_FILEPATH} {self.source_directory}'
+        cp_cmd = f'cp {cfg.L2MUNGER_FILEPATH} {self.source_directory}'
         os.system(cp_cmd)
 
 
@@ -118,7 +119,7 @@ class Munger():
                 
             if 'V0' in filename_str:
                 # Keep existing logic for .V06 and .V08 files
-                command_string = f'python {self.DEBZ_FILEPATH} {filename_str} {filename_str}.uncompressed'
+                command_string = f'python {cfg.DEBZ_FILEPATH} {filename_str} {filename_str}.uncompressed'
                 os.system(command_string)
             else:
                 print(f'File type not recognized: {filename_str}')
