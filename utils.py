@@ -6,6 +6,7 @@ from glob import glob
 import psutil
 import pandas as pd
 import json
+import config as cfg
 
 def exec_script(script_path, args):
     """
@@ -105,27 +106,30 @@ def munger_monitor(sa):
     expected_files = list(sa.radar_files_dict.values())
 
     # Are the mungered files always .gz?
-    files_on_system = glob(f"{sa.polling_dir}/**/*.gz", recursive=True)
+    #files_on_system = glob(f"{sa.polling_dir}/**/*.gz", recursive=True)
+    files_on_system = glob(f"{cfg.POLLING_DIR}/**/*.gz", recursive=True)
 
     percent_complete = calc_completion_percentage(expected_files, files_on_system)
     return percent_complete
 
-def surface_placefile_monitor(sa):
+def surface_placefile_monitor(_sa):
     filenames = [
         'wind.txt', 'temp.txt', 'latest_surface_observations.txt',
         'latest_surface_observations_lg.txt', 'latest_surface_observations_xlg.txt'
     ]
-    expected_files =  [f"{sa.placefiles_dir}/{i}" for i in filenames]
+    #expected_files =  [f"{sa.placefiles_dir}/{i}" for i in filenames]
+    expected_files =  [f"{cfg.PLACEFILES_DIR}/{i}" for i in filenames]
     files_on_system = [x for x in expected_files if os.path.exists(x)]
 
     #percent_complete = calc_completion_percentage(expected_files, files_on_system)
     return len(files_on_system), len(expected_files)
 
-def nse_status_checker(sa):
+def nse_status_checker(_sa):
     """
     Read in model status text file and query associated file sizes. 
     """
-    filename = f"{sa.data_dir}/model_data/model_list.txt"
+    #filename = f"{sa.data_dir}/model_data/model_list.txt"
+    filename = f"{cfg.DATA_DIR}/model_data/model_list.txt"
     output = []
     warning_text = ""
     if os.path.exists(filename):
@@ -141,7 +145,7 @@ def nse_status_checker(sa):
         df = pd.DataFrame({'Model data': model_list, 'Size (MB)': filesizes})
         output = df.to_dict('records')
 
-        if len(output) == 0: 
+        if len(output) == 0:
             warning_text = (
                 "Warning: No RAP data was found for this request. NSE placefiles "
                 "will be unavailable."
