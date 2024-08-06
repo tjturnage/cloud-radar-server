@@ -61,12 +61,7 @@ R = 6_378_137
 # Regular expressions. First one finds lat/lon pairs, second finds the timestamps.
 LAT_LON_REGEX = "[0-9]{1,2}.[0-9]{1,100},[ ]{0,1}[|\\s-][0-9]{1,3}.[0-9]{1,100}"
 TIME_REGEX = "[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z"
-
-################################################################################################
-# ----------------------------- Attempt to set up environment  ---------------------------------
-################################################################################################
 TOKEN = 'INSERT YOUR MAPBOX TOKEN HERE'
-
 
 ################################################################################################
 # ----------------------------- Define class RadarSimulator  -----------------------------------
@@ -104,7 +99,6 @@ class RadarSimulator(Config):
         self.new_lon = None
         self.scripts_progress = 'Scripts not started'
         self.current_dir = Path.cwd()
-        self.define_scripts_and_assets_directories()
         self.playback_clock = None
         self.playback_clock_str = None
         self.simulation_running = False
@@ -120,7 +114,8 @@ class RadarSimulator(Config):
         Creates an initial logfile. Stored in the data dir for now. Call is 
         sa.log.info or sa.log.error or sa.log.warning or sa.log.exception
         """
-        logging.basicConfig(filename=f"{self.log_dir}/logfile.txt",
+        os.makedirs(cfg.LOG_DIR, exist_ok=True)
+        logging.basicConfig(filename=f"{cfg.LOG_DIR}/logfile.txt",
                             format='%(levelname)s %(asctime)s :: %(message)s',
                             datefmt="%Y-%m-%d %H:%M:%S")
         log = logging.getLogger()
@@ -151,30 +146,6 @@ class RadarSimulator(Config):
             shutil.copyfile(source, destination)
         except Exception as e:
             print(f"Error copying {source} to {destination}: {e}")
-
-    def define_scripts_and_assets_directories(self) -> None:
-        """
-        Defines the directories for scripts, data files, and web assets used in the simulation.
-        """
-        #self.csv_file = self.current_dir / 'radars.csv'
-        #self.data_dir = self.current_dir / 'data'
-        #os.makedirs(self.data_dir, exist_ok=True)
-        self.log_dir = cfg.DATA_DIR / 'logs'
-        os.makedirs(self.log_dir, exist_ok=True)
-        #self.scripts_path = self.current_dir / 'scripts'
-        #self.obs_script_path = self.scripts_path / 'obs_placefile.py'
-        #self.hodo_script_path = self.scripts_path / 'hodo_plot.py'
-        #self.nexrad_script_path = self.scripts_path / 'Nexrad.py'
-        #self.l2munger_script_path = self.scripts_path / 'munger.py'
-        #self.nse_script_path = self.scripts_path / 'nse.py'
-        #self.munge_dir = self.scripts_path / 'munge'
-        #self.assets_dir = self.current_dir / 'assets'
-        #self.hodo_images = self.assets_dir / 'hodographs'
-        #os.makedirs(self.hodo_images, exist_ok=True)
-        #self.polling_dir = self.assets_dir / 'polling'
-        #self.placefiles_dir = self.assets_dir / 'placefiles'
-        #os.makedirs(self.placefiles_dir, exist_ok=True)
-
 
     def make_simulation_times(self) -> None:
         """
@@ -976,7 +947,7 @@ def get_duration(duration) -> int:
 ################################################################################################
 
 if __name__ == '__main__':
-    if lc.cloud:
+    if cfg.CLOUD:
         app.run_server(host="0.0.0.0", port=8050, threaded=True, debug=True, use_reloader=False,
                        dev_tools_hot_reload=False)
     else:
@@ -986,26 +957,6 @@ if __name__ == '__main__':
                 dev_tools_hot_reload=False)
 
 '''
-
-@app.callback(
-    Output('start_simulation_btn', 'children'),
-    Output('playback_clock', 'disabled'),
-    Output('clock_output', 'children'),
-    Input('start_simulation_btn', 'n_clicks'),
-    prevent_initial_call=True)
-def enable_simulation_clock(n: int) -> tuple:
-    """
-    Toggles the simulation clock display on/off by returning a css style dictionary to modify
-    Disabled this for now
-    """
-    btn_text = 'Simulation Playback'
-    if n > 0:
-        if n % 2 == 1:
-            return f'Pause {btn_text}', False,  f'{btn_text} Running at {sa.playback_clock_str}'
-        return f'Start {btn_text}', True, f'{btn_text} Paused at {sa.playback_clock_str}'
-    return f'Start {btn_text}', True, 'Simulation Not Started'
-
-
 # pathname_params = dict()
 # if my_settings.hosting_path is not None:
 #     pathname_params["routes_pathname_prefix"] = "/"

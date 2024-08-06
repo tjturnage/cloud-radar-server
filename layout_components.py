@@ -9,18 +9,17 @@ import numpy as np
 import plotly.graph_objs as go
 import dash_bootstrap_components as dbc
 from dash import html, dcc, dash_table
+from config import PLACEFILES_DIR
+# dir_parts = Path.cwd().parts
+# if 'C:\\' in dir_parts:
+#     PLACEFILES_DIR = "http://localhost:8050/assets"
+#     cloud = False
 
+# else:
+#     PLACEFILES_DIR = "https://rssic.nws.noaa.gov/assets"
+#     cloud = True
 
-dir_parts = Path.cwd().parts
-if 'C:\\' in dir_parts:
-    link_base = "http://localhost:8050/assets"
-    cloud = False
-
-else:
-    link_base = "https://rssic.nws.noaa.gov/assets"
-    cloud = True
-
-place_base = f"{link_base}/placefiles"
+# PLACEFILES_DIR = f"{PLACEFILES_DIR}/placefiles"
 
 now = datetime.now(pytz.utc)
 
@@ -401,7 +400,7 @@ links_section = dbc.Container(dbc.Container(html.Div(
         dbc.Row(
             [
             dbc.Col(dbc.ListGroupItem("Graphics"), style=group_item_style, width=2),
-            dbc.Col(dbc.ListGroupItem("Hodographs", href=f"{link_base}/hodographs.html"), width=2)
+            dbc.Col(dbc.ListGroupItem("Hodographs", href=f"{PLACEFILES_DIR}/hodographs.html"), width=2)
             ],
             style={"display": "flex", "flexWrap": "wrap"}
         ),
@@ -409,11 +408,11 @@ links_section = dbc.Container(dbc.Container(html.Div(
             [
             dbc.Col(dbc.ListGroupItem("Sfc obs"), style=group_item_style, width=2),
                 dbc.Col(dbc.ListGroupItem("Regular font",
-                        href=f"{place_base}/latest_surface_observations_shifted.txt"), width=2),
+                        href=f"{PLACEFILES_DIR}/latest_surface_observations_shifted.txt"), width=2),
                 dbc.Col(dbc.ListGroupItem("Large font",
-                        href=f"{place_base}/latest_surface_observations_lg_shifted.txt"), width=2),
+                        href=f"{PLACEFILES_DIR}/latest_surface_observations_lg_shifted.txt"), width=2),
                 dbc.Col(dbc.ListGroupItem("Small font",
-                        href=f"{place_base}/latest_surface_observations_xlg_shifted.txt"), width=2),
+                        href=f"{PLACEFILES_DIR}/latest_surface_observations_xlg_shifted.txt"), width=2),
             ],
             style={"display": "flex", "flexWrap": "wrap"}
         ),
@@ -421,9 +420,9 @@ links_section = dbc.Container(dbc.Container(html.Div(
             [
             dbc.Col(dbc.ListGroupItem("Sfc obs parts"), style=group_item_style, width=2),
             dbc.Col(dbc.ListGroupItem("Wind",
-                        href=f"{place_base}/wind_shifted.txt"),width=2),
-            dbc.Col(dbc.ListGroupItem("Temp", href=f"{place_base}/temp_shifted.txt"),width=2),
-            dbc.Col(dbc.ListGroupItem("Dwpt", href=f"{place_base}/dwpt_shifted.txt"),width=2),
+                        href=f"{PLACEFILES_DIR}/wind_shifted.txt"),width=2),
+            dbc.Col(dbc.ListGroupItem("Temp", href=f"{PLACEFILES_DIR}/temp_shifted.txt"),width=2),
+            dbc.Col(dbc.ListGroupItem("Dwpt", href=f"{PLACEFILES_DIR}/dwpt_shifted.txt"),width=2),
             dbc.Col(dbc.ListGroupItem(" "),width=2),
             ],
             style={"display": "flex", "flexWrap": "wrap"},
@@ -432,16 +431,16 @@ links_section = dbc.Container(dbc.Container(html.Div(
         dbc.Row(
             [
             dbc.Col(dbc.ListGroupItem("NSE Shear"), style=group_item_style, width=2),
-            dbc.Col(dbc.ListGroupItem("Effective", href=f"{place_base}/ebwd_shifted.txt"),
+            dbc.Col(dbc.ListGroupItem("Effective", href=f"{PLACEFILES_DIR}/ebwd_shifted.txt"),
                     width=2),
-            dbc.Col(dbc.ListGroupItem("0-1 SHR", href=f"{place_base}/shr1_shifted.txt"),
+            dbc.Col(dbc.ListGroupItem("0-1 SHR", href=f"{PLACEFILES_DIR}/shr1_shifted.txt"),
                     width=2),
             dbc.Col(dbc.ListGroupItem(
-                    "0-3 SHR", href=f"{place_base}/shr3_shifted.txt"), width=2),
+                    "0-3 SHR", href=f"{PLACEFILES_DIR}/shr3_shifted.txt"), width=2),
             dbc.Col(dbc.ListGroupItem(
-                    "0-6 SHR", href=f"{place_base}/shr6_shifted.txt"), width=2),
+                    "0-6 SHR", href=f"{PLACEFILES_DIR}/shr6_shifted.txt"), width=2),
             dbc.Col(dbc.ListGroupItem(
-                    "0-8 SHR", href=f"{place_base}/shr8_shifted.txt"), width=2),
+                    "0-8 SHR", href=f"{PLACEFILES_DIR}/shr8_shifted.txt"), width=2),
             ],
             style={"display": "flex", "flexWrap": "wrap"},
 
@@ -450,8 +449,8 @@ links_section = dbc.Container(dbc.Container(html.Div(
             [
                 dbc.Col(dbc.ListGroupItem("NSE SRH"), style=group_item_style, width=2),
                 dbc.Col(dbc.ListGroupItem("Effective",
-                        href=f"{place_base}/esrh_shifted.txt"), width=2),
-                dbc.Col(dbc.ListGroupItem("0-500m", href=f"{place_base}/srh500_shifted.txt"),
+                        href=f"{PLACEFILES_DIR}/esrh_shifted.txt"), width=2),
+                dbc.Col(dbc.ListGroupItem("0-500m", href=f"{PLACEFILES_DIR}/srh500_shifted.txt"),
                         width=2),
                 dbc.Col(dbc.ListGroupItem(" "), width=2),
                 dbc.Col(dbc.ListGroupItem(" "), width=2),
@@ -464,15 +463,15 @@ links_section = dbc.Container(dbc.Container(html.Div(
             [
                 dbc.Col(dbc.ListGroupItem("NSE Thermo"), style=group_item_style, width=2),
                 dbc.Col(dbc.ListGroupItem("MLCAPE",
-                        href=f"{place_base}/mlcape_shifted.txt"), width=2),
+                        href=f"{PLACEFILES_DIR}/mlcape_shifted.txt"), width=2),
                 dbc.Col(dbc.ListGroupItem("MLCIN",
-                        href=f"{place_base}/mlcin_shifted.txt"), width=2),
+                        href=f"{PLACEFILES_DIR}/mlcin_shifted.txt"), width=2),
                 dbc.Col(dbc.ListGroupItem("0-3 MLCP",
-                        href=f"{place_base}/cape3km_shifted.txt"), width=2),
+                        href=f"{PLACEFILES_DIR}/cape3km_shifted.txt"), width=2),
                 dbc.Col(dbc.ListGroupItem("0-3 LR",
-                        href=f"{place_base}/lr03km_shifted.txt"), width=2),
+                        href=f"{PLACEFILES_DIR}/lr03km_shifted.txt"), width=2),
                 dbc.Col(dbc.ListGroupItem("MUCAPE",
-                        href=f"{place_base}/mucape_shifted.txt"), width=2),
+                        href=f"{PLACEFILES_DIR}/mucape_shifted.txt"), width=2),
             ],
             style={"display": "flex", "flexWrap": "wrap"},
 
