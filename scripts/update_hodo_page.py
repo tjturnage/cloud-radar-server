@@ -7,7 +7,7 @@ import os
 import sys
 from datetime import datetime
 import pytz
-import config as cfg
+import scripts.config as cfg
 #from config import HODOGRAPHS_DIR, HODOGRAPHS_HTML_PAGE
 #HODOGRAPHS_DIR = '/data/cloud-radar-server/assets/hodographs'
 #HODOGRAPHS_HTML_PAGE = '/data/cloud-radar-server/assets/hodographs.html'

@@ -9,7 +9,7 @@ Selecting stations: https://developers.synopticdata.com/mesonet/v2/station-selec
 09 Jun 2024: Made exception handling more robust 
 11 Jun 2024: Exceptions not robust enough! Added KeyError handling, since that was the main issue
 """
-from config import PLACEFILES_DIR
+from scripts.config import PLACEFILES_DIR
 import sys
 import os
 import math

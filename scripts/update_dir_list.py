@@ -9,7 +9,7 @@ import sys
 from pathlib import Path
 from datetime import datetime
 import pytz
-#import config as cfg
+import scripts.config as cfg
 
 BASE_DIR = Path('/data/cloud-radar-server')
 if sys.platform.startswith('darwin') or sys.platform.startswith('win'):

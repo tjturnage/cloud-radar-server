@@ -51,7 +51,7 @@ from scripts.update_hodo_page import UpdateHodoHTML
 from scripts.nse import Nse
 
 import utils
-import config as cfg
+import scripts.config as cfg
 mimetypes.add_type("text/plain", ".cfg", True)
 mimetypes.add_type("text/plain", ".list", True)
 

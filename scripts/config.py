@@ -19,12 +19,19 @@ if sys.platform.startswith('darwin') or sys.platform.startswith('win'):
 
 
 ASSETS_DIR = BASE_DIR / 'assets'
-HODO_HTML_PAGE = ASSETS_DIR / 'hodographs.html'
-POLLING_DIR = ASSETS_DIR / 'polling'
 PLACEFILES_DIR = ASSETS_DIR / 'placefiles'
+
+PLACEFILES_LINKS = f'{LINK_BASE}/placefiles'
+
 HODOGRAPHS_DIR = ASSETS_DIR / 'hodographs'
-HODOGRAPHS_HTML_PAGE = ASSETS_DIR / 'hodographs.html'
+HODOGRAPHS_PAGE = ASSETS_DIR / 'hodographs.html'
+HODO_HTML_PAGE = HODOGRAPHS_PAGE
+
+HODO_HTML_LINK = f'{LINK_BASE}/hodographs.html'
 HODO_IMAGES = ASSETS_DIR / 'hodographs'
+POLLING_DIR = ASSETS_DIR / 'polling'
+
+
 DATA_DIR = BASE_DIR / 'data'
 MODEL_DIR = DATA_DIR / 'model_data'
 RADAR_DIR = DATA_DIR / 'radar'
