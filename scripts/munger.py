@@ -92,7 +92,8 @@ class Munger():
         """
         recent archived files are compressed with bzip2
         earlier files are compressed with gzip
-        example command line: python debz.py KBRO20170825_195747_V06 KBRO20170825_195747_V06.uncompressed
+        example command line:
+            python debz.py KBRO20170825_195747_V06 KBRO20170825_195747_V06.uncompressed
         """
 
         os.chdir(self.source_directory)
@@ -110,11 +111,11 @@ class Munger():
                 os.system(command_string)
                 #os.rename(filename_str, new_filename)
                 time.sleep(1)
-                
+
             if 'V0' in filename_str:
                 # Keep existing logic for .V06 and .V08 files
-                command_string = f'python {DEBZ_FILEPATH} {filename_str} {filename_str}.uncompressed'
-                os.system(command_string)
+                command_str = f'python {DEBZ_FILEPATH} {filename_str} {filename_str}.uncompressed'
+                os.system(command_str)
             else:
                 print(f'File type not recognized: {filename_str}')
                 continue
@@ -167,7 +168,7 @@ class Munger():
         output.close()
         return
 
-    
+
     def munge_files(self) -> None:
         """
         Sets reference time to two hours before current time

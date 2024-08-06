@@ -17,12 +17,16 @@ import json
 import boto3
 import botocore
 from botocore.client import Config
-#import config as cfg
 
 
-BASE_DIRECTORY = Path('/data/cloud-radar-server')
-BASE_DIRECTORY = Path.cwd()
-RADAR_DIR = BASE_DIRECTORY / 'data' / 'radar'
+BASE_DIR = Path('/data/cloud-radar-server')
+# In order to get this work on my dev and work laptop
+if sys.platform.startswith('darwin') or sys.platform.startswith('win'):
+    parts = Path.cwd().parts
+    idx = parts.index('cloud-radar-server')
+    BASE_DIR =  Path(*parts[0:idx+1])
+
+RADAR_DIR = BASE_DIR / 'data' / 'radar'
 
 class NexradDownloader:
     """
@@ -89,7 +93,8 @@ class NexradDownloader:
         Identifies those radar files that are within the time range specified by the user.
         This is done by comparing the filename datetime string with the simulation start/end time.
         If self.download is True, the radar files are downloaded.
-        If self.download is False, a dictionary of radar files is created without downloading the files.
+        If self.download is False, a dictionary of radar files is created without
+        downloading the files.
         """
         key = obj.key
         filename = Path(obj.key).name
@@ -115,20 +120,6 @@ class NexradDownloader:
         if self.prefix_day_two is not None:
             for obj in self.bucket.objects.filter(Prefix=self.prefix_day_two):
                 self.download_or_inventory_file(obj)
-
-        # if not self.download:
-        #     try:
-        #         with open(f"{self.download_directory}/radar_dict.json", 'w', encoding='utf-8') as f:
-        #             json.dump(self.radar_files_dict, f)
-        #     except:
-        #         print('No radar files found in the specified time range.')
-        # else:
-        #     try:
-        #         print('Downloaded radar files:')
-        #         #with open(f"{self.download_directory}/radar_dict.json", 'r', encoding='utf-8') as f:
-        #         #    radar_files = json.load(f)
-        #     except:
-        #         print('No radar files found in the specified time range.')
 
 
 if __name__ == "__main__":

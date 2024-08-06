@@ -208,13 +208,15 @@ def create_hodos(filename):
             nancount +=1
 
     if nancount != 0:
-        storm_motion_method = 'User Selected' #Choose Mean Wind, Bunkers Left, Bunkers Right, User Selected, Corfidi Downshear, Corfidi Upshear
+        # Mean Wind, Bunkers Left, Bunkers Right, User Selected, Corfidi Downshear, Corfidi Upshear
+        storm_motion_method = 'User Selected'
 
         sm_dir = 308
         sm_speed = 21
 
     else:
-        storm_motion_method = 'Bunkers Right' #Choose Mean Wind, Bunkers Left, Bunkers Right, User Selected, Corfidi Downshear, Corfidi Upshear
+        # Mean Wind, Bunkers Left, Bunkers Right, User Selected, Corfidi Downshear, Corfidi Upshear
+        storm_motion_method = 'Bunkers Right'
 
     if sfc_status == 'Preset':
         #track = radar_id

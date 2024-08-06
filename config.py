@@ -39,7 +39,7 @@ MUNGER_SCRIPT_FILEPATH = SCRIPTS_DIR / 'munger.py'
 MUNGE_DIR = SCRIPTS_DIR / 'munge'
 nse_script_path = SCRIPTS_DIR / 'nse.py'
 NSE_SCRIPT_PATH = SCRIPTS_DIR / 'nse.py'
-DEBZ_FILEPATH = SCRIPTS_DIR / 'debz.py'	
+DEBZ_FILEPATH = SCRIPTS_DIR / 'debz.py'
 LOG_DIR = DATA_DIR / 'logs'
 
 os.makedirs(DATA_DIR, exist_ok=True)

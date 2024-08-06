@@ -107,8 +107,6 @@ class RadarSimulator(Config):
         # This will generate a logfile. Something we'll want to turn on in the future.
         self.log = self.create_logfile()
 
-        # self.get_radar_coordinates()
-
     def create_logfile(self):
         """
         Creates an initial logfile. Stored in the data dir for now. Call is 
@@ -266,7 +264,6 @@ class RadarSimulator(Config):
         # While the _shifted placefiles should be purged for each run, just ensure we're
         # only querying the "original" placefiles to shift (exclude any with _shifted.txt)        
         """
-        #filenames = glob(f"{self.placefiles_dir}/*.txt")
         filenames = glob(f"{cfg.PLACEFILES_DIR}/*.txt")
         filenames = [x for x in filenames if "shifted" not in x]
         for file_ in filenames:
@@ -518,7 +515,6 @@ def query_radar_files():
         radar = radar.upper()
         args = [radar, f'{sa.event_start_str}', str(sa.event_duration), str(False)]
         sa.log.info(f"Passing {args} to Nexrad.py")
-        #results = utils.exec_script(sa.nexrad_script_path, args)
         results = utils.exec_script(cfg.NEXRAD_SCRIPT_PATH, args)
         if results['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
             sa.log.warning(f"User cancelled query_radar_files()")
@@ -597,7 +593,6 @@ def run_with_cancel_button():
    
             # Radar download
             args = [radar, str(sa.event_start_str), str(sa.event_duration), str(True)]
-            #res = call_function(utils.exec_script, sa.nexrad_script_path, args)
             res = call_function(utils.exec_script, cfg.NEXRAD_SCRIPT_PATH, args)
             if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
                 return
@@ -605,7 +600,6 @@ def run_with_cancel_button():
             # Munger
             args = [radar, str(sa.playback_start_str), str(sa.event_duration), 
                     str(sa.simulation_seconds_shift), new_radar]
-            #res = call_function(utils.exec_script, sa.l2munger_script_path, args)
             res = call_function(utils.exec_script, cfg.MUNGER_SCRIPT_FILEPATH, args)
             if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
                 return
@@ -619,7 +613,6 @@ def run_with_cancel_button():
 
     # Surface observations
     args = [str(sa.lat), str(sa.lon), sa.event_start_str, str(sa.event_duration)]
-    #res = call_function(utils.exec_script, sa.obs_script_path, args)
     res = call_function(utils.exec_script, cfg.OBS_SCRIPT_PATH, args)
     if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
         return
@@ -629,7 +622,6 @@ def run_with_cancel_button():
     #        str(sa.data_dir), str(sa.placefiles_dir)]
     args = [str(sa.event_start_time), str(sa.event_duration), str(cfg.SCRIPTS_DIR),
             str(cfg.DATA_DIR), str(cfg.PLACEFILES_DIR)]
-   #res = call_function(utils.exec_script, sa.nse_script_path, args)
     res = call_function(utils.exec_script, cfg.NSE_SCRIPT_PATH, args)
     if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
         return
@@ -650,7 +642,6 @@ def run_with_cancel_button():
     
         # Execute hodograph script
         args = [radar, sa.new_radar, asos_one, asos_two, str(sa.simulation_seconds_shift)]
-        #res = call_function(utils.exec_script, sa.hodo_script_path, args)
         res = call_function(utils.exec_script, cfg.HODO_SCRIPT_PATH, args)
         if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
             return
@@ -757,7 +748,6 @@ def monitor(_n):
     placefile_status_string = f"{placefile_stats[0]}/{placefile_stats[1]} files found"
 
     # Hodographs. Currently hard-coded to expect 2 files for every radar and radar file.
-    #num_hodograph_images = len(glob(f"{sa.hodo_images}/*.png"))
     num_hodograph_images = len(glob(f"{cfg.HODO_IMAGES}/*.png"))
     hodograph_completion = 0
     if len(radar_files) > 0:

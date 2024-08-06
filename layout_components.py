@@ -2,7 +2,6 @@
 Layout components for the Cloud Radar Simulation Server application    
 """
 from datetime import datetime
-from pathlib import Path
 import pytz
 import pandas as pd
 import numpy as np
@@ -10,26 +9,16 @@ import plotly.graph_objs as go
 import dash_bootstrap_components as dbc
 from dash import html, dcc, dash_table
 from config import PLACEFILES_DIR
-# dir_parts = Path.cwd().parts
-# if 'C:\\' in dir_parts:
-#     PLACEFILES_DIR = "http://localhost:8050/assets"
-#     cloud = False
-
-# else:
-#     PLACEFILES_DIR = "https://rssic.nws.noaa.gov/assets"
-#     cloud = True
-
-# PLACEFILES_DIR = f"{PLACEFILES_DIR}/placefiles"
 
 now = datetime.now(pytz.utc)
-
-spacer = html.Div([], style={'height': '25px'})
-spacer_mini = html.Div([], style={'height': '10px'})
 
 df = pd.read_csv('radars.csv', dtype={'lat': float, 'lon': float})
 # df = pd.read_csv('radars_no_tdwr.csv', dtype={'lat': float, 'lon': float})
 df['radar_id'] = df['radar']
 df.set_index('radar_id', inplace=True)
+
+spacer = html.Div([], style={'height': '25px'})
+spacer_mini = html.Div([], style={'height': '10px'})
 
 bold = {'font-weight': 'bold'}
 
@@ -501,16 +490,49 @@ start_simulation_btn = dbc.Col(html.Div([dbc.Button('Start Simulation Playback',
                                                 id='start_simulation_btn', n_clicks=0)],
                                                 className="d-grid gap-2 col-12 mx-auto"))
 
+playback_start_label = html.Div(children="Playback Start", style=time_headers)
+playback_start_readout = html.Div(children="Not started", id='start_readout', style=feedback)
 
+
+playback_end_label = html.Div(children="Playback End", style=time_headers)
+playback_end_readout = html.Div(children="Not started", id='end_readout', style=feedback)
+
+
+playback_current_label = html.Div(children="Playback Current", style=time_headers)
+playback_current_readout = html.Div(children="Not started", id='current_readout', style=feedback)
+
+
+playback_start_col = dbc.Col(html.Div([
+    playback_start_label, spacer_mini, playback_start_readout]))
+playback_end_col = dbc.Col(html.Div([
+    playback_end_label, spacer_mini, playback_end_readout]))
+playback_current_col = dbc.Col(html.Div([
+    playback_current_label, spacer_mini, playback_current_readout]))
+
+playback_timer_readout_container = dbc.Container(
+    html.Div([dbc.Row([playback_start_col,
+                       playback_current_col,
+                       playback_end_col])
+              ])
+    )
+
+# CONFIRM_TIMES_TEXT = "Confirm start time and duration -->"
+# confirm_times_section = dbc.Col(
+#     html.Div(children=CONFIRM_TIMES_TEXT, style=steps_right))
+# time_settings_readout = dbc.Col(html.Div(id='show_time_data', style=feedback))
+# step_time_confirm = dbc.Container(html.Div([dbc.Row([confirm_times_section, time_settings_readout
+#                                                      ])]))
 clock_readout_box = dbc.Col(html.Div(id='clock_readout', children='Simulation Playback Not Started', style=feedback))
-clock_readout_container = dbc.Container(html.Div([dbc.Row([clock_readout_box])]))
+clock_status_container = dbc.Container(html.Div([dbc.Row([clock_readout_box])]))
 simulation_playback_section = dbc.Container(
     dbc.Container(
     html.Div([playback_banner,
               spacer,
               start_simulation_btn,
               spacer,
-              clock_readout_container,
+              playback_timer_readout_container,
+              spacer_mini,
+              clock_status_container,
               ]),style=section_box_pad))
 
 
