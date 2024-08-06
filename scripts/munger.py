@@ -13,7 +13,6 @@ from __future__ import print_function
 import os
 import sys
 import shutil
-from pathlib import Path
 import bz2
 import gzip
 import struct
@@ -21,14 +20,6 @@ from datetime import datetime, timedelta, timezone
 import time
 import pytz
 import config as cfg
-
-BASE_DIR = Path('/data/cloud-radar-server')
-# In order to get this work on my dev and work laptop
-if sys.platform.startswith('darwin') or sys.platform.startswith('win'):
-    parts = Path.cwd().parts
-    idx = parts.index('cloud-radar-server')
-    BASE_DIR =  Path(*parts[0:idx+1])
-
 
 class Munger():
     """
@@ -179,25 +170,11 @@ class Munger():
             new_filename_date_string = datetime.strftime(new_time_obj, '%Y%m%d_%H%M%S')
             command_line = f'./l2munger {self.new_rda} {new_time_str} 1 {file_datetime_str}'
             print(command_line)
-            #print(f'     source file = {fn}')
             os.system(command_line)
             new_filename = f'{self.new_rda}{new_filename_date_string}'
-            #print(new_filename)
             with open(new_filename, 'rb') as f_in:
                 with gzip.open(f'{self.this_radar_polling_dir}/{new_filename}.gz', 'wb') as f_out:
                     shutil.copyfileobj(f_in, f_out)
-            #gzip_filename = f'{new_filename}.gz'
-            #if gzip_filename not in os.listdir(self.this_radar_polling_dir):
-            #    gzip_command = f"gzip -c {new_filename} > {self.this_radar_polling_dir}/{new_filename}.gz"
-                
-            #    os.system(gzip_command)
-            #else:
-            #    print(f'{gzip_filename} already exists!')
-
-        #move_command = f'mv {self.source_directory}/{self.new_rda}*gz {self.this_radar_polling_dir}'
-        #print(move_command)
-        #os.system(move_command)
-
 
 #-------------------------------
 if __name__ == "__main__":
