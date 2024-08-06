@@ -51,7 +51,7 @@ class Munger():
         speed of simulation compared to real time ... example: 2.0 means event proceeds twice as fast
     """
 
-    def __init__(self, original_rda, playback_start, duration, timeshift, new_rda, playback_speed=1.5):
+    def __init__(self, original_rda, playback_start, duration, timeshift, new_rda='None'):
         self.original_rda = original_rda.upper()
         print(self.original_rda)
         self.source_directory = cfg.RADAR_DIR / self.original_rda / 'downloads'
@@ -66,7 +66,6 @@ class Munger():
 
         os.makedirs(self.this_radar_polling_dir, exist_ok=True)
 
-        self.playback_speed = playback_speed
         self.copy_l2munger_executable()
         self.uncompress_files()
         self.uncompressed_files = list(self.source_directory.glob('*uncompressed'))
@@ -211,9 +210,9 @@ if __name__ == "__main__":
         DURATION = 30
         simulation_time_shift = playback_start_time - event_start_time
         seconds_shift = int(simulation_time_shift.total_seconds())
-        playback_start_str = datetime.strftime(playback_start_time,"%Y-%m-%d %H:%M:%S UTC")
+        playback_start_str = datetime.strftime(playback_start_time,"%Y-%m-%d %H:%M")
         playback_end_time = playback_start_time + timedelta(minutes=int(DURATION))
-        Munger(ORIG_RDA, playback_start_str, DURATION, seconds_shift, NEW_RDA, playback_speed=1.5)
+        Munger(ORIG_RDA, playback_start_str, DURATION, seconds_shift, NEW_RDA)
     else:
-        Munger(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], playback_speed=1.5)
+        Munger(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5])
         #original_rda, playback_start, duration, timeshift, new_rda, playback_speed=1.5

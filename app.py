@@ -635,7 +635,7 @@ def run_with_cancel_button():
             args = [radar, str(sa.playback_start_str), str(sa.event_duration), 
                     str(sa.simulation_seconds_shift), new_radar]
             #res = call_function(utils.exec_script, sa.l2munger_script_path, args)
-            res = call_function(utils.exec_script, cfg.L2MUNGER_FILEPATH, args)
+            res = call_function(utils.exec_script, cfg.MUNGER_SCRIPT_FILEPATH, args)
             if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
                 return
       
