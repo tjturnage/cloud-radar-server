@@ -8,7 +8,7 @@ import numpy as np
 import plotly.graph_objs as go
 import dash_bootstrap_components as dbc
 from dash import html, dcc, dash_table
-from scripts.config import LINK_BASE, PLACEFILES_LINKS
+from config import LINK_BASE, PLACEFILES_LINKS
 
 now = datetime.now(pytz.utc)
 

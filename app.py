@@ -39,6 +39,7 @@ from dash.exceptions import PreventUpdate
 # import diskcache
 import numpy as np
 from botocore.client import Config
+import config as cfg
 
 # bootstrap is what helps styling for a better presentation
 import dash_bootstrap_components as dbc
@@ -51,7 +52,6 @@ from scripts.update_hodo_page import UpdateHodoHTML
 from scripts.nse import Nse
 
 import utils
-import scripts.config as cfg
 mimetypes.add_type("text/plain", ".cfg", True)
 mimetypes.add_type("text/plain", ".list", True)
 

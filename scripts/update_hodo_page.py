@@ -2,21 +2,20 @@
 UpdateHodoHTML Class
 updated: 2021-06-02
 """
-#from pathlib import Path
+from pathlib import Path
 import os
 import sys
 from datetime import datetime
 import pytz
-import scripts.config as cfg
-#from config import HODOGRAPHS_DIR, HODOGRAPHS_HTML_PAGE
-#HODOGRAPHS_DIR = '/data/cloud-radar-server/assets/hodographs'
-#HODOGRAPHS_HTML_PAGE = '/data/cloud-radar-server/assets/hodographs.html'
-#dir_parts = Path.cwd().parts
-#if 'C:\\' in dir_parts:
-#    HODOGRAPHS_DIR = 'C:/data/scripts/cloud-radar-server/assets/hodographs'
-#    HODOGRAPHS_HTML_PAGE = 'C:/data/scripts/cloud-radar-server/assets/hodographs.html'
-    #link_base = "http://localhost:8050/assets"
-    #cloud = False
+
+HODO_DIR = '/data/cloud-radar-server/assets/hodographs'
+HODOGRAPHS_PAGE = '/data/cloud-radar-server/assets/hodographs.html'
+dir_parts = Path.cwd().parts
+if 'C:\\' in dir_parts:
+    HODO_DIR = 'C:/data/scripts/cloud-radar-server/assets/hodographs'
+    HODOGRAPHS_PAGE = 'C:/data/scripts/cloud-radar-server/assets/hodographs.html'
+    link_base = "http://localhost:8050/assets"
+    cloud = False
 
 
 HEAD = """<!DOCTYPE html>
@@ -69,7 +68,7 @@ class UpdateHodoHTML():
         Returns a list of valid hodographs based on the current playback time
         """
         valid_hodo_list = []
-        image_files = [f for f in os.listdir(cfg.HODO_IMAGES) if f.endswith('.png') or f.endswith('.jpg')]
+        image_files = [f for f in os.listdir(HODO_DIR) if f.endswith('.png') or f.endswith('.jpg')]
         
         for filename in image_files:
             file_time = datetime.strptime(filename[-19:-4], '%Y%m%d_%H%M%S').replace(tzinfo=pytz.UTC).timestamp()
@@ -81,7 +80,7 @@ class UpdateHodoHTML():
         """
         Initializes the hodographs.html page with a message that graphics are not available
         """
-        with open(cfg.HODOGRAPHS_HTML_PAGE, 'w', encoding='utf-8') as fout:
+        with open(HODOGRAPHS_PAGE, 'w', encoding='utf-8') as fout:
             fout.write(HEAD_NOLIST)
             fout.write('<h1>Graphics not available, check back later!</h1>\n')
             fout.write(TAIL_NOLIST)
@@ -94,7 +93,7 @@ class UpdateHodoHTML():
         if len(self.valid_hodo_list) == 0:
             self.initialize_hodo_page()
         else:
-            with open(cfg.HODOGRAPHS_HTML_PAGE, 'w', encoding='utf-8') as fout:
+            with open(HODOGRAPHS_PAGE, 'w', encoding='utf-8') as fout:
                 fout.write(HEAD)
                 for filename in self.valid_hodo_list:
                     file_time = datetime.strptime(filename[-19:-4], '%Y%m%d_%H%M%S').replace(tzinfo=pytz.UTC).timestamp()

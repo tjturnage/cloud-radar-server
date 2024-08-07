@@ -9,7 +9,7 @@ Selecting stations: https://developers.synopticdata.com/mesonet/v2/station-selec
 09 Jun 2024: Made exception handling more robust 
 11 Jun 2024: Exceptions not robust enough! Added KeyError handling, since that was the main issue
 """
-from scripts.config import PLACEFILES_DIR
+from pathlib import Path
 import sys
 import os
 import math
@@ -22,6 +22,11 @@ API_TOKEN = os.getenv("SYNOPTIC_API_TOKEN")
 #PLACEFILES_DIR = os.path.join(os.getcwd(),'assets','placefiles')
 API_ROOT = "https://api.synopticdata.com/v2/"
 
+parts = Path.cwd().parts
+idx = parts.index('cloud-radar-server')
+BASE_DIR =  Path(*parts[0:idx+1])
+print(BASE_DIR)
+
 public_wind_zoom = 400
 rwis_wind_zoom = 150
 public_t_zoom = 600
@@ -29,7 +34,14 @@ rwis_t_zoom = 75
 gray = '180 180 180'
 white= '255 255 255'
 
-#PLACEFILES_DIR = os.path.join(os.getcwd(),'assets','placefiles')
+BASE_DIR = Path('/data/cloud-radar-server')
+# In order to get this work on my dev and work laptop
+if sys.platform.startswith('darwin') or sys.platform.startswith('win'):
+    parts = Path.cwd().parts
+    idx = parts.index('cloud-radar-server')
+    BASE_DIR =  Path(*parts[0:idx+1])
+
+PLACEFILES_DIR = BASE_DIR / 'assets' / 'placefiles'
 
 net = "1,2,96,162"
 variables = 'air_temp,dew_point_temperature,wind_speed,wind_direction,wind_gust,visibility,road_temp'

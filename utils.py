@@ -6,7 +6,7 @@ from glob import glob
 import psutil
 import pandas as pd
 import json
-import scripts.config as cfg
+import config as cfg
 
 def exec_script(script_path, args):
     """
