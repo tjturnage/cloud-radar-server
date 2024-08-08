@@ -482,23 +482,25 @@ full_links_section = dbc.Container(
 # ----------------------------- Clock components  ----------------------------------------------
 ################################################################################################
 
+step_select_time_section = dbc.Container(
+    dbc.Col(html.Div(children=STEP_SELECT_TIME, style=steps_center)))
 SIMULATION_PLAYBACK_BANNER_TEXT = "Simulation Playback Section"
 playback_banner = dbc.Row(
     dbc.Col(html.Div(children=SIMULATION_PLAYBACK_BANNER_TEXT, style=steps_center)))
 
 start_simulation_btn = dbc.Col(html.Div([dbc.Button('Start Simulation Playback', size="lg",
-                                                id='start_simulation_btn', n_clicks=0)],
+                                                id='playback_btn', n_clicks=0)],
                                                 className="d-grid gap-2 col-12 mx-auto"))
 
-playback_start_label = html.Div(children="Playback Start", style=time_headers)
+playback_start_label = html.Div(children="Simulation Start Time", style=time_headers)
 playback_start_readout = html.Div(children="Not started", id='start_readout', style=feedback)
 
 
-playback_end_label = html.Div(children="Playback End", style=time_headers)
+playback_end_label = html.Div(children="Simulation End Time", style=time_headers)
 playback_end_readout = html.Div(children="Not started", id='end_readout', style=feedback)
 
 
-playback_current_label = html.Div(children="Playback Current", style=time_headers)
+playback_current_label = html.Div(children="Simulation Current Time", style=time_headers)
 playback_current_readout = html.Div(children="Not started", id='current_readout', style=feedback)
 
 
@@ -512,18 +514,21 @@ playback_current_col = dbc.Col(html.Div([
 playback_timer_readout_container = dbc.Container(
     html.Div([dbc.Row([playback_start_col,
                        playback_current_col,
-                       playback_end_col])
-              ])
-    )
+                       playback_end_col])]))
 
-# CONFIRM_TIMES_TEXT = "Confirm start time and duration -->"
-# confirm_times_section = dbc.Col(
-#     html.Div(children=CONFIRM_TIMES_TEXT, style=steps_right))
-# time_settings_readout = dbc.Col(html.Div(id='show_time_data', style=feedback))
-# step_time_confirm = dbc.Container(html.Div([dbc.Row([confirm_times_section, time_settings_readout
-#                                                      ])]))
 clock_readout_box = dbc.Col(html.Div(id='clock_readout', children='Simulation Playback Not Started', style=feedback))
 clock_status_container = dbc.Container(html.Div([dbc.Row([clock_readout_box])]))
+
+# Playback speed components
+playback_speed_label = html.Div(children="Playback Speed", style=time_headers)
+playback_speed_dropdown_values = [0.25, 0.5, 0.75, 1.0, 1.5, 2.0, 3.0, 4.0, 5.0, 10.0]
+playback_speed_options = [{'label': str(i) + 'x', 'value': i} for i in playback_speed_dropdown_values]
+playback_speed_dropdown = dcc.Dropdown(options=playback_speed_options, value=1.0, id='speed_dropdown')
+playback_speed_col = dbc.Col(html.Div([playback_speed_label, spacer_mini, playback_speed_dropdown]))
+
+
+change_playback_time_label = html.Div(children="Change Playback Time", style=time_headers)
+
 simulation_playback_section = dbc.Container(
     dbc.Container(
     html.Div([playback_banner,
@@ -532,6 +537,7 @@ simulation_playback_section = dbc.Container(
               spacer,
               playback_timer_readout_container,
               spacer_mini,
+              
               clock_status_container,
               ]),style=section_box_pad))
 

@@ -5,13 +5,6 @@ hodographs. The application is designed to mimic the behavior of a radar system 
 specified period, starting from a predefined date and time. It allows for the simulation of
 radar data generation, including the handling of time shifts and geographical coordinates.
 
-09 June 2024
--- More docstrings and type hints added
--- Pylinting checks and corrections
-
-11 Jun 2024
-- Trying to show Transpose radar section only if radar_quantity is 1 and radar is selected
-- need to account for the possibility of a user selecting fewer radars, including 3 --> 1
 """
 # from flask import Flask, render_template
 import os
@@ -32,17 +25,17 @@ import pytz
 #import pandas as pd
 
 # from time import sleep
-from dash import Dash, html, Input, Output, dcc , ctx #, callback
+from dash import Dash, html, Input, Output, dcc, ctx, State #, callback
 from dash.exceptions import PreventUpdate
 # from dash import diskcache, DiskcacheManager, CeleryManager
 # from uuid import uuid4
 # import diskcache
 import numpy as np
 from botocore.client import Config
-import config as cfg
-
 # bootstrap is what helps styling for a better presentation
 import dash_bootstrap_components as dbc
+import config as cfg
+
 import layout_components as lc
 from scripts.obs_placefile import Mesowest
 from scripts.Nexrad import NexradDownloader
@@ -89,6 +82,7 @@ class RadarSimulator(Config):
         self.timestring = None
         self.number_of_radars = 1
         self.radar_list = []
+        self.playback_dropdown_dict = {}
         self.radar_dict = {}
         self.radar_files_dict = {}
         self.radar = None
@@ -98,12 +92,11 @@ class RadarSimulator(Config):
         self.new_lat = None
         self.new_lon = None
         self.scripts_progress = 'Scripts not started'
-        self.current_dir = Path.cwd()
+        self.base_dir = Path.cwd()
         self.playback_clock = None
         self.playback_clock_str = None
         self.simulation_running = False
         self.make_simulation_times()
-
         # This will generate a logfile. Something we'll want to turn on in the future.
         self.log = self.create_logfile()
 
@@ -145,6 +138,26 @@ class RadarSimulator(Config):
         except Exception as e:
             print(f"Error copying {source} to {destination}: {e}")
 
+    def date_time_string(self,dt) -> str:
+        """
+        Converts a datetime object to a string.
+        """
+        return datetime.strftime(dt, "%Y-%m-%d %H:%M")
+
+    def date_time_object(self,dt_str) -> datetime:
+        """
+        Converts a string to a timezone aware datetime object.
+        """
+        dt = datetime.strptime(dt_str, "%Y-%m-%d %H:%M")
+        dt.replace(tzinfo=pytz.UTC)
+        return dt
+
+    def timestamp_from_string(self,dt_str) -> float:
+        """
+        Converts a string to a timestamp.
+        """
+        return datetime.strptime(dt_str, "%Y-%m-%d %H:%M").timestamp()
+
     def make_simulation_times(self) -> None:
         """
         playback_start_time: datetime object
@@ -170,14 +183,14 @@ class RadarSimulator(Config):
         else:
             self.playback_start = self.playback_start.replace(minute=30)
 
-        self.playback_start_str = datetime.strftime(
-            self.playback_start, "%Y-%m-%d %H:%M")
-        self.playback_end_time = self.playback_start + \
+        self.playback_start_str = self.date_time_string(self.playback_start)
+
+        self.playback_end = self.playback_start + \
             timedelta(minutes=int(self.event_duration))
+        self.playback_end_str = self.date_time_string(self.playback_end)
 
         self.playback_clock = self.playback_start + timedelta(seconds=600)
-        self.playback_clock_str = datetime.strftime(
-            self.playback_clock, "%Y-%m-%d %H:%M")
+        self.playback_clock_str = self.date_time_string(self.playback_clock)
 
         self.event_start_time = datetime(self.event_start_year, self.event_start_month,
                                          self.event_start_day, self.event_start_hour,
@@ -186,8 +199,14 @@ class RadarSimulator(Config):
         self.simulation_time_shift = self.playback_start - self.event_start_time
         self.simulation_seconds_shift = round(
             self.simulation_time_shift.total_seconds())
-        self.event_start_str = datetime.strftime(
-            self.event_start_time, "%Y-%m-%d %H:%M")
+        self.event_start_str = self.date_time_string(self.event_start_time)
+        increment_list = []
+        for t in range(0, int(self.event_duration/5) + 1 , 1):
+            new_time = self.playback_start + timedelta(seconds=t*300)
+            new_time_str = self.date_time_string(new_time)
+            increment_list.append(new_time_str)
+
+        self.playback_dropdown_dict = [{'label': increment, 'value': increment} for increment in increment_list]
 
     def get_days_in_month(self) -> None:
         """
@@ -362,15 +381,23 @@ sim_day_selection = dbc.Col(html.Div([
     lc.step_day,
     dcc.Dropdown(np.arange(1, sa.days_in_month+1), 7, id='start_day', clearable=False)]))
 
+playback_time_options = dbc.Col(html.Div([
+    dcc.Dropdown(options=sa.playback_dropdown_dict, id='time_jump', clearable=False)]))
+
+playback_time_options_col = dbc.Col(html.Div([lc.change_playback_time_label, lc.spacer_mini,
+                                              playback_time_options]))
+
 app.layout = dbc.Container([
     # testing directory size monitoring
     dcc.Interval(id='directory_monitor', disabled=False, interval=2*1000),
-    dcc.Interval(id='playback_clock', disabled=True, interval=60*1000),
+    dcc.Interval(id='playback_timer', disabled=True, interval=60*1000),
     # dcc.Store(id='model_dir_size'),
     # dcc.Store(id='radar_dir_size'),
     dcc.Store(id='tradar'),
     dcc.Store(id='dummy'),
     dcc.Store(id='sim_store'),
+    dcc.Store(id='playback_clock'),
+    dcc.Store(id='playback_store'),  # Add this line
     lc.top_section, lc.top_banner,
     dbc.Container([
         dbc.Container([
@@ -389,8 +416,12 @@ app.layout = dbc.Container([
     lc.spacer,lc.toggle_placefiles_btn,lc.spacer_mini,
     lc.full_links_section, lc.spacer,
     lc.simulation_playback_section,
+
+    dbc.Container([
+        dbc.Row([lc.playback_speed_col, playback_time_options_col], style={'padding': '1em'}),
+        ]),
     lc.radar_id, lc.bottom_section
-])  # end of app.layout
+    ])# end of app.layout
 
 ################################################################################################
 # ----------------------------- Radar map section  ---------------------------------------------
@@ -795,13 +826,12 @@ def toggle_placefiles_section(n) -> dict:
 # ----------------------------- Clock Callbacks  -----------------------------------------------
 ################################################################################################
 
-
 @app.callback(
-    Output('start_simulation_btn', 'children'),
-    Output('playback_clock', 'disabled'),
+    Output('playback_btn', 'children'),
+    Output('playback_timer', 'disabled'),
     Output('clock_readout', 'children'),
-    Input('start_simulation_btn', 'n_clicks'),
-    Input('playback_clock', 'n_intervals'),
+    Input('playback_btn', 'n_clicks'),
+    Input('playback_timer', 'n_intervals'),
     prevent_initial_call=True
     )
 def manage_clock_(nclick, _n_intervals) -> tuple:
@@ -822,7 +852,7 @@ def manage_clock_(nclick, _n_intervals) -> tuple:
     completed_text = 'Simulation Complete!'
     triggered_id = ctx.triggered_id
     
-    if triggered_id == 'start_simulation_btn':
+    if triggered_id == 'playback_btn':
         if nclick == 0:
             return start_btn, True, 'Simulation not started'
         if nclick % 2 == 1:
@@ -830,8 +860,9 @@ def manage_clock_(nclick, _n_intervals) -> tuple:
         return start_btn, True, paused_text
 
     sa.playback_clock += timedelta(seconds=60)
-    if sa.playback_clock < sa.playback_end_time:
-        sa.playback_clock_str = sa.playback_clock.strftime("%Y-%m-%d %H:%M")
+    if sa.playback_clock < sa.playback_end:
+        #sa.playback_clock_str = sa.playback_clock.strftime("%Y-%m-%d %H:%M")
+        sa.playback_clock_str = sa.date_time_string(sa.playback_clock)
         UpdateHodoHTML(sa.playback_clock_str)
         if sa.new_radar != 'None':
             UpdateDirList(sa.new_radar, sa.playback_clock_str)
@@ -840,7 +871,43 @@ def manage_clock_(nclick, _n_intervals) -> tuple:
                 UpdateDirList(radar,sa.playback_clock_str)
         return pause_btn, False, running_text
     return completed_text, True, completed_text
-            
+
+        
+def change_playback_time(dseconds) -> str:
+    """
+    This function is called by the playback_clock interval component. It updates the playback
+    time and checks if the simulation is complete. If so, it will stop the interval component.
+    """
+    sa.playback_clock += timedelta(seconds=dseconds)
+    if sa.playback_start < sa.playback_clock < sa.playback_end:
+        sa.playback_clock_str = sa.playback_clock.strftime("%Y-%m-%d %H:%M")
+    elif sa.playback_clock >= sa.playback_end:
+        sa.playback_clock_str = sa.playback_end_str
+    else:
+        sa.playback_clock_str = sa.playback_start_str
+
+    return sa.playback_clock_str
+
+@app.callback(
+    Output('playback_store', 'data'),
+    Input('playback_timer', 'n_intervals'),
+    State('playback_store', 'data')
+)
+def update_playback_time(_n_intervals, playback_data):
+    if playback_data is None:
+        playback_data = {'playback_time': sa.playback_clock_str}
+    else:
+        new_playback_str = change_playback_time(60)
+        playback_data['playback_time'] = new_playback_str
+    return playback_data
+
+@app.callback(
+    Output('current_readout', 'children'),
+    Input('playback_store', 'data')
+)
+def use_playback_time(playback_data):
+    playback_time = playback_data.get('playback_time', '1970-01-01 00:00')
+    return playback_time
 
 ################################################################################################
 # ----------------------------- Time Selection Summary and Callbacks  --------------------------
