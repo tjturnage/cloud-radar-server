@@ -488,7 +488,7 @@ SIMULATION_PLAYBACK_BANNER_TEXT = "Simulation Playback Section"
 playback_banner = dbc.Row(
     dbc.Col(html.Div(children=SIMULATION_PLAYBACK_BANNER_TEXT, style=steps_center)))
 
-start_simulation_btn = dbc.Col(html.Div([dbc.Button('Start Simulation Playback', size="lg",
+playback_btn = dbc.Col(html.Div([dbc.Button('Start Simulation Playback', size="lg",
                                                 id='playback_btn', n_clicks=0)],
                                                 className="d-grid gap-2 col-12 mx-auto"))
 
@@ -516,8 +516,8 @@ playback_timer_readout_container = dbc.Container(
                        playback_current_col,
                        playback_end_col])]))
 
-clock_readout_box = dbc.Col(html.Div(id='clock_readout', children='Simulation Playback Not Started', style=feedback))
-clock_status_container = dbc.Container(html.Div([dbc.Row([clock_readout_box])]))
+playback_status_box = dbc.Col(html.Div(id='playback_status', children='Simulation Playback Not Started', style=feedback))
+clock_status_container = dbc.Container(html.Div([dbc.Row([playback_status_box])]))
 
 # Playback speed components
 playback_speed_label = html.Div(children="Playback Speed", style=time_headers)
@@ -528,16 +528,14 @@ playback_speed_col = dbc.Col(html.Div([playback_speed_label, spacer_mini, playba
 
 
 change_playback_time_label = html.Div(children="Change Playback Time", style=time_headers)
-
 simulation_playback_section = dbc.Container(
     dbc.Container(
     html.Div([playback_banner,
               spacer,
-              start_simulation_btn,
+              playback_btn,
               spacer,
               playback_timer_readout_container,
               spacer_mini,
-              
               clock_status_container,
               ]),style=section_box_pad))
 

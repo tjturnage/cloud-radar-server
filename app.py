@@ -93,6 +93,7 @@ class RadarSimulator(Config):
         self.new_lon = None
         self.scripts_progress = 'Scripts not started'
         self.base_dir = Path.cwd()
+        self.playback_speed = 1.0
         self.playback_clock = None
         self.playback_clock_str = None
         self.simulation_running = False
@@ -207,6 +208,21 @@ class RadarSimulator(Config):
             increment_list.append(new_time_str)
 
         self.playback_dropdown_dict = [{'label': increment, 'value': increment} for increment in increment_list]
+
+    def change_playback_time(self,dseconds) -> str:
+        """
+        This function is called by the playback_clock interval component. It updates the playback
+        time and checks if the simulation is complete. If so, it will stop the interval component.
+        """
+        self.playback_clock += timedelta(seconds=dseconds * self.playback_speed)
+        if self.playback_start < self.playback_clock < self.playback_end:
+            self.playback_clock_str = self.date_time_string(self.playback_clock)
+        elif self.playback_clock >= self.playback_end:
+            self.playback_clock_str = self.playback_end_str
+        else:
+            self.playback_clock_str = self.playback_start_str
+        return self.playback_clock_str
+
 
     def get_days_in_month(self) -> None:
         """
@@ -340,12 +356,12 @@ class RadarSimulator(Config):
         return new_line
 
 
-    def datetime_object_from_timestring(self, file: str) -> datetime:
+    def datetime_object_from_timestring(self, dt_str: str) -> datetime:
         """
         - extracts datetime info from the radar filename
         - converts it to a timezone aware datetime object in UTC
         """
-        file_time = datetime.strptime(file[4:19], '%Y%m%d_%H%M%S')
+        file_time = datetime.strptime(dt_str, '%Y%m%d_%H%M%S')
         utc_file_time = file_time.replace(tzinfo=pytz.UTC)
         return utc_file_time
 
@@ -376,16 +392,30 @@ app.title = "Radar Simulator"
 ################################################################################################
 # ----------------------------- Build the layout  ---------------------------------------------
 ################################################################################################
-
+################################################################################################
+################################################################################################
+################################################################################################
+################################################################################################
 sim_day_selection = dbc.Col(html.Div([
     lc.step_day,
     dcc.Dropdown(np.arange(1, sa.days_in_month+1), 7, id='start_day', clearable=False)]))
 
 playback_time_options = dbc.Col(html.Div([
-    dcc.Dropdown(options=sa.playback_dropdown_dict, id='time_jump', clearable=False)]))
+    dcc.Dropdown(options=sa.playback_dropdown_dict, id='change_time', clearable=False)]))
 
 playback_time_options_col = dbc.Col(html.Div([lc.change_playback_time_label, lc.spacer_mini,
                                               playback_time_options]))
+
+playback_controls = dbc.Container(
+    html.Div([dbc.Row([lc.playback_speed_col,lc.playback_status_box,
+                       playback_time_options_col])]))
+
+simulation_playback_section = dbc.Container(
+    dbc.Container(
+    html.Div([lc.playback_banner, lc.spacer, lc.playback_btn, lc.spacer,
+              lc.playback_timer_readout_container,lc.spacer,lc.spacer,
+              playback_controls, lc.spacer_mini,
+              ]),style=lc.section_box_pad))
 
 app.layout = dbc.Container([
     # testing directory size monitoring
@@ -396,8 +426,7 @@ app.layout = dbc.Container([
     dcc.Store(id='tradar'),
     dcc.Store(id='dummy'),
     dcc.Store(id='sim_store'),
-    dcc.Store(id='playback_clock'),
-    dcc.Store(id='playback_store'),  # Add this line
+    dcc.Store(id='playback_clock_store'),
     lc.top_section, lc.top_banner,
     dbc.Container([
         dbc.Container([
@@ -415,14 +444,16 @@ app.layout = dbc.Container([
     lc.status_section,
     lc.spacer,lc.toggle_placefiles_btn,lc.spacer_mini,
     lc.full_links_section, lc.spacer,
-    lc.simulation_playback_section,
-
-    dbc.Container([
-        dbc.Row([lc.playback_speed_col, playback_time_options_col], style={'padding': '1em'}),
-        ]),
+    simulation_playback_section,
+    html.Div(id='playback_speed_dummy', style={'display': 'none'}),
     lc.radar_id, lc.bottom_section
     ])# end of app.layout
 
+################################################################################################
+################################################################################################
+################################################################################################
+################################################################################################
+################################################################################################
 ################################################################################################
 # ----------------------------- Radar map section  ---------------------------------------------
 ################################################################################################
@@ -829,7 +860,7 @@ def toggle_placefiles_section(n) -> dict:
 @app.callback(
     Output('playback_btn', 'children'),
     Output('playback_timer', 'disabled'),
-    Output('clock_readout', 'children'),
+    Output('playback_status', 'children'),
     Input('playback_btn', 'n_clicks'),
     Input('playback_timer', 'n_intervals'),
     prevent_initial_call=True
@@ -847,21 +878,22 @@ def manage_clock_(nclick, _n_intervals) -> tuple:
     btn_text = 'Simulation Playback'
     start_btn = f'Start {btn_text}'
     pause_btn = f'Pause {btn_text}'
-    paused_text = f'{btn_text} Paused at {sa.playback_clock_str}'
-    running_text = f'{btn_text} Running at {sa.playback_clock_str}'
-    completed_text = 'Simulation Complete!'
+    #paused_text = f'{btn_text} Paused at {sa.playback_clock_str}'
+    #running_text = f'{btn_text} Running at {sa.playback_clock_str}'
+    paused_text = 'Playback Paused'
+    running_text = 'Playback Running'
+    completed_text = 'Playback Complete!'
     triggered_id = ctx.triggered_id
     
     if triggered_id == 'playback_btn':
         if nclick == 0:
-            return start_btn, True, 'Simulation not started'
+            return start_btn, True, 'Playback Not Started'
         if nclick % 2 == 1:
             return pause_btn, False, running_text
         return start_btn, True, paused_text
 
     sa.playback_clock += timedelta(seconds=60)
     if sa.playback_clock < sa.playback_end:
-        #sa.playback_clock_str = sa.playback_clock.strftime("%Y-%m-%d %H:%M")
         sa.playback_clock_str = sa.date_time_string(sa.playback_clock)
         UpdateHodoHTML(sa.playback_clock_str)
         if sa.new_radar != 'None':
@@ -872,42 +904,51 @@ def manage_clock_(nclick, _n_intervals) -> tuple:
         return pause_btn, False, running_text
     return completed_text, True, completed_text
 
-        
-def change_playback_time(dseconds) -> str:
-    """
-    This function is called by the playback_clock interval component. It updates the playback
-    time and checks if the simulation is complete. If so, it will stop the interval component.
-    """
-    sa.playback_clock += timedelta(seconds=dseconds)
-    if sa.playback_start < sa.playback_clock < sa.playback_end:
-        sa.playback_clock_str = sa.playback_clock.strftime("%Y-%m-%d %H:%M")
-    elif sa.playback_clock >= sa.playback_end:
-        sa.playback_clock_str = sa.playback_end_str
-    else:
-        sa.playback_clock_str = sa.playback_start_str
-
-    return sa.playback_clock_str
 
 @app.callback(
-    Output('playback_store', 'data'),
-    Input('playback_timer', 'n_intervals'),
-    State('playback_store', 'data')
-)
+    Output('playback_clock_store', 'data'),
+    [Input('playback_timer', 'n_intervals'),
+     Input('change_time', 'value')])
 def update_playback_time(_n_intervals, playback_data):
-    if playback_data is None:
-        playback_data = {'playback_time': sa.playback_clock_str}
-    else:
-        new_playback_str = change_playback_time(60)
-        playback_data['playback_time'] = new_playback_str
-    return playback_data
+    """
+    Updates the playback time in the dcc.Store component
+    """
+    triggered_id = ctx.triggered_id
+    if triggered_id == 'playback_timer':
+        if sa.playback_clock < sa.playback_end:
+            sa.playback_clock += timedelta(seconds=60)
+            sa.playback_clock_str = sa.date_time_string(sa.playback_clock)
+            return {'playback_time': sa.playback_clock_str}
+        return {'playback_time': sa.playback_end_str}
+    return {'playback_time': playback_data}
+
+################################################################################################
+# ----------------------------- Playback Speed Callbacks  --------------------------------------
+################################################################################################
+@app.callback(
+    Output('playback_speed_dummy', 'children'),
+    Input('playback_speed_dropdown', 'value'))
+def update_playback_speed(selected_speed):
+    sa.playback_speed = selected_speed
+    try:
+        sa.playback_speed = float(selected_speed)
+    except ValueError:
+        print(f"Error converting {selected_speed} to float")
+        sa.playback_speed = 1.0
+    return selected_speed
 
 @app.callback(
     Output('current_readout', 'children'),
-    Input('playback_store', 'data')
-)
-def use_playback_time(playback_data):
+    Input('playback_clock_store', 'data'))
+def update_readout(playback_data):
+    """
+    Shows the current playback time based on the
+    updated playback time stored in the dcc.Store component
+    """
     playback_time = playback_data.get('playback_time', '1970-01-01 00:00')
     return playback_time
+
+
 
 ################################################################################################
 # ----------------------------- Time Selection Summary and Callbacks  --------------------------
