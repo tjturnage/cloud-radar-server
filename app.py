@@ -927,7 +927,7 @@ def update_playback_time(_n_intervals, playback_data):
 ################################################################################################
 @app.callback(
     Output('playback_speed_dummy', 'children'),
-    Input('playback_speed_dropdown', 'value'))
+    Input('speed_dropdown', 'value'))
 def update_playback_speed(selected_speed):
     sa.playback_speed = selected_speed
     try:
