@@ -10,13 +10,15 @@ from pathlib import Path
 from datetime import datetime
 import pytz
 
-BASE_DIR = Path('/data/cloud-radar-server')
-if sys.platform.startswith('darwin') or sys.platform.startswith('win'):
-    parts = Path.cwd().parts
-    idx = parts.index('cloud-radar-server')
-    BASE_DIR =  Path(*parts[0:idx+1])
+from config import POLLING_DIR
 
-POLLING_DIR = BASE_DIR / 'assets' / 'polling'
+#BASE_DIR = Path('/data/cloud-radar-server')
+#if sys.platform.startswith('darwin') or sys.platform.startswith('win'):
+#    parts = Path.cwd().parts
+#    idx = parts.index('cloud-radar-server')
+#    BASE_DIR =  Path(*parts[0:idx+1])
+
+#POLLING_DIR = BASE_DIR / 'assets' / 'polling'
 
 class UpdateDirList():
     """
