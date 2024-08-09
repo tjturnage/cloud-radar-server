@@ -94,6 +94,11 @@ class RadarSimulator(Config):
         self.scripts_progress = 'Scripts not started'
         self.base_dir = Path.cwd()
         self.playback_speed = 1.0
+        self.playback_start = 'Not Ready'
+        self.playback_end = 'Not Ready'
+        self.playback_start_str = 'Not Ready'
+        self.playback_end_str = 'Not Ready'
+        self.playback_current_time = 'Not Ready'
         self.playback_clock = None
         self.playback_clock_str = None
         self.simulation_running = False
@@ -425,9 +430,9 @@ app.layout = dbc.Container([
     # dcc.Store(id='radar_dir_size'),
     dcc.Store(id='tradar'),
     dcc.Store(id='dummy'),
-    dcc.Store(id='playback_start_store'),
-    dcc.Store(id='playback_end_store'),
-    dcc.Store(id='playback_clock_store'),
+    dcc.Store(id='playback_start_store', data={'this_time': 'Not Ready'}),
+    dcc.Store(id='playback_end_store', data={'this_time': 'Not Ready'}),
+    dcc.Store(id='playback_clock_store', data={'this_time': 'Not Ready'}),
     lc.top_section, lc.top_banner,
     dbc.Container([
         dbc.Container([
@@ -624,8 +629,6 @@ def run_with_cancel_button():
     sa.scripts_progress = 'Setting up files and times'
     # determine actual event time, playback time, diff of these two
     sa.make_simulation_times()
-    dcc.Store('playback_start_store', data={'this_time': sa.playback_start_str})
-    dcc.Store('playback_end_store', data={'this_time': sa.playback_end_str})
     # clean out old files and directories
     try:
         sa.remove_files_and_dirs()
@@ -744,7 +747,10 @@ def launch_simulation(n_clicks) -> None:
     if n_clicks == 0:
         raise PreventUpdate
     else:
-        run_with_cancel_button()
+        if cfg.PLATFORM == 'WINDOWS':
+            sa.make_simulation_times()
+        else:
+            run_with_cancel_button()
  
 ################################################################################################
 # ----------------------------- Monitoring and reporting script status  ------------------------
@@ -890,11 +896,14 @@ def manage_clock_(nclick, _n_intervals) -> tuple:
     if triggered_id == 'playback_btn':
         if nclick == 0:
             return start_btn, True, 'Playback Not Started'
+        if nclick == 1:
+            dcc.Store('playback_start_store', data={'this_time': sa.playback_start_str})
+            dcc.Store('playback_end_store', data={'this_time': sa.playback_end_str})
         if nclick % 2 == 1:
             return pause_btn, False, running_text
         return start_btn, True, paused_text
 
-    sa.playback_clock += timedelta(seconds=60)
+    sa.playback_clock += timedelta(seconds=60 * sa.playback_speed)
     if sa.playback_clock < sa.playback_end:
         sa.playback_clock_str = sa.date_time_string(sa.playback_clock)
         UpdateHodoHTML(sa.playback_clock_str)
@@ -952,8 +961,7 @@ def update_readout(playback_data):
 
 @app.callback(
     Output('start_readout', 'children'),
-    Input('playback_start_store', 'data'),
-    prevent_initial_call=True)
+    Input('playback_start_store', 'data'))
 def populate_playback_start_time(start_data):
     """
     Shows the playback start time for the simulation
@@ -964,8 +972,7 @@ def populate_playback_start_time(start_data):
 
 @app.callback(
     Output('end_readout', 'children'),
-    Input('playback_end_store', 'data'),
-    prevent_initial_call=True)
+    Input('playback_end_store', 'data'))
 def populate_playback_end_time(end_data):
     """
     Shows the playback start time for the simulation
