@@ -775,34 +775,32 @@ def cancel_scripts(n_clicks) -> None:
 )
 def monitor(_n):
     """
-    This function is called every second by the directory_monitor interval. It checks the
-    status of the radar and hodograph scripts and reports the status to the user.
+    This function is called every second by the directory_monitor interval. It (1) checks 
+    the status of the various scripts and reports them to the front-end application and 
+    (2) monitors the completion status of the scripts. 
     """
 
-    # Need to put this list and utils.cancel_all scripts_list into __init__ or somewhere
-    # similar. Finds running processes, determines if they're associated with this app, 
-    # and outputs text at the bottom. 
+    # Scripts executed as modules are scripts.XX. get_data and process are called by nse.py. 
     scripts_list = ["scripts.Nexrad", "scripts.nse", "get_data.py", "process.py", 
                     "scripts.hodo_plot", "scripts.munger", "wgrib2", "scripts.obs_placefile"]
     processes = utils.get_app_processes()
     screen_output = ""
     seen_scripts = []
     for p in processes:
-        # We only care about scripts executed by the application, which now have the form
-        # ['python', '-m', 'scripts.XXXX', args]
-        if len(p['cmdline']) > 2:
-            name = p['cmdline'][2].rsplit('/', 1)
-            if len(name) > 1: name = name[1]
+        name = p['cmdline'][1].rsplit('/', 1)[-1]
+
+        # Scripts executed as python modules will be like [python, -m, script.name]
+        if p['cmdline'][1] == '-m':
+            name = p['cmdline'][2].rsplit('/', 1)[-1]
+            
+            #if len(name) > 1: name = name[1]
             if p['name'] == 'wgrib2':
                 name = 'wgrib2'
 
-            name = name[0]
-
-            if name in scripts_list and name not in seen_scripts:
-                runtime = time.time() - p['create_time']
-                #screen_output += f"{name}: {p['status']} for {round(runtime,1)} s. "
-                screen_output += f"{name}: running for {round(runtime,1)} s. "
-                seen_scripts.append(name)
+        if name in scripts_list and name not in seen_scripts:
+            runtime = time.time() - p['create_time']
+            screen_output += f"{name}: running for {round(runtime,1)} s. "
+            seen_scripts.append(name)
 
     # Radar file download status
     radar_dl_completion, radar_files = utils.radar_monitor(sa)
