@@ -1049,9 +1049,11 @@ if __name__ == '__main__':
         app.run_server(host="0.0.0.0", port=8050, threaded=True, debug=True, use_reloader=False,
                        dev_tools_hot_reload=False)
     else:
-        # This option is used for testing on development PCs and the AWS instance. 
-        app.run(host="0.0.0.0", port=8051, threaded=True, debug=True, use_reloader=False,
+        if cfg.PLATFORM == 'DARWIN':
+            app.run(host="0.0.0.0", port=8051, threaded=True, debug=True, use_reloader=False,
                 dev_tools_hot_reload=False)
+        else:
+            app.run(debug=True, port=8050, threaded=True, dev_tools_hot_reload=False)
     
 
 '''

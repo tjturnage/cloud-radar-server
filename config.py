@@ -9,14 +9,23 @@ import sys
 BASE_DIR = Path('/data/cloud-radar-server')
 LINK_BASE = "https://rssic.nws.noaa.gov/assets"
 CLOUD = True
+PLATFORM = 'AWS'
 # In order to get this work on my dev and work laptop
-if sys.platform.startswith('darwin') or sys.platform.startswith('win') or \
-    os.getlogin() == 'lee.carlaw':
+if sys.platform.startswith('darwin') or os.getlogin() == 'lee.carlaw':
     parts = Path.cwd().parts
     idx = parts.index('cloud-radar-server')
     BASE_DIR =  Path(*parts[0:idx+1])
     LINK_BASE = "http://localhost:8050/assets"
     CLOUD = False
+    PLATFORM = 'DARWIN'
+if sys.platform.startswith('win'):
+    parts = Path.cwd().parts
+    idx = parts.index('cloud-radar-server')
+    BASE_DIR =  Path(*parts[0:idx+1])
+    LINK_BASE = "http://localhost:8050/assets"
+    CLOUD = False
+    PLATFORM = 'WINDOWS'
+
 
 ASSETS_DIR = BASE_DIR / 'assets'
 PLACEFILES_DIR = ASSETS_DIR / 'placefiles'
