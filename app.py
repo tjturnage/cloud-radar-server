@@ -729,9 +729,9 @@ def run_with_cancel_button():
         (Output('map_btn', 'disabled'), True, False),
         (Output('new_radar_selection', 'disabled'), True, False),
         (Output('run_scripts_btn', 'disabled'), True, False),
-        (Output('playback_clock', 'disabled'), True, False),
+        (Output('playback_clock_store', 'disabled'), True, False),
         (Output('confirm_radars_btn', 'disabled'), True, False), # added radar confirm btn
-        (Output('start_simulation_btn', 'disabled'), True, False), # add start sim btn
+        (Output('playback_btn', 'disabled'), True, False), # add start sim btn
         (Output('cancel_scripts', 'disabled'), False, True),
     ])
 def launch_simulation(n_clicks) -> None:
@@ -1049,10 +1049,10 @@ if __name__ == '__main__':
         app.run_server(host="0.0.0.0", port=8050, threaded=True, debug=True, use_reloader=False,
                        dev_tools_hot_reload=False)
     else:
-        # Add hot reload to False. As files update during a run, page updates, and
-        # simulation dates change back to defaults causing issues with time shifting.
-        app.run(debug=True, port=8050, threaded=True,
+        # This option is used for testing on development PCs and the AWS instance. 
+        app.run(host="0.0.0.0", port=8051, threaded=True, debug=True, use_reloader=False,
                 dev_tools_hot_reload=False)
+    
 
 '''
 # pathname_params = dict()
