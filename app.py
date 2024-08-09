@@ -97,7 +97,7 @@ class RadarSimulator(Config):
         self.playback_clock = None
         self.playback_clock_str = None
         self.simulation_running = False
-        self.make_simulation_times()
+        #self.make_simulation_times()
         # This will generate a logfile. Something we'll want to turn on in the future.
         self.log = self.create_logfile()
 
@@ -425,7 +425,8 @@ app.layout = dbc.Container([
     # dcc.Store(id='radar_dir_size'),
     dcc.Store(id='tradar'),
     dcc.Store(id='dummy'),
-    dcc.Store(id='sim_store'),
+    dcc.Store(id='playback_start_store'),
+    dcc.Store(id='playback_end_store'),
     dcc.Store(id='playback_clock_store'),
     lc.top_section, lc.top_banner,
     dbc.Container([
@@ -623,7 +624,8 @@ def run_with_cancel_button():
     sa.scripts_progress = 'Setting up files and times'
     # determine actual event time, playback time, diff of these two
     sa.make_simulation_times()
-
+    dcc.Store('playback_start_store', data={'this_time': sa.playback_start_str})
+    dcc.Store('playback_end_store', data={'this_time': sa.playback_end_str})
     # clean out old files and directories
     try:
         sa.remove_files_and_dirs()
@@ -948,6 +950,29 @@ def update_readout(playback_data):
     playback_time = playback_data.get('playback_time', '1970-01-01 00:00')
     return playback_time
 
+@app.callback(
+    Output('start_readout', 'children'),
+    Input('playback_start_store', 'data'),
+    prevent_initial_call=True)
+def populate_playback_start_time(start_data):
+    """
+    Shows the playback start time for the simulation
+    This won't change.
+    """
+    start_time = start_data.get('this_time', '1970-01-01 00:00')
+    return start_time
+
+@app.callback(
+    Output('end_readout', 'children'),
+    Input('playback_end_store', 'data'),
+    prevent_initial_call=True)
+def populate_playback_end_time(end_data):
+    """
+    Shows the playback start time for the simulation
+    This won't change.
+    """
+    end_time = end_data.get('this_time', '1970-01-01 00:00')
+    return end_time
 
 
 ################################################################################################

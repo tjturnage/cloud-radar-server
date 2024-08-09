@@ -493,15 +493,15 @@ playback_btn = dbc.Col(html.Div([dbc.Button('Start Simulation Playback', size="l
                                                 className="d-grid gap-2 col-12 mx-auto"))
 
 playback_start_label = html.Div(children="Simulation Start Time", style=time_headers)
-playback_start_readout = html.Div(children="Not started", id='start_readout', style=feedback)
+playback_start_readout = html.Div(children="Not Ready", id='start_readout', style=feedback)
 
 
 playback_end_label = html.Div(children="Simulation End Time", style=time_headers)
-playback_end_readout = html.Div(children="Not started", id='end_readout', style=feedback)
+playback_end_readout = html.Div(children="Not Ready", id='end_readout', style=feedback)
 
 
 playback_current_label = html.Div(children="Simulation Current Time", style=time_headers)
-playback_current_readout = html.Div(children="Not started", id='current_readout', style=feedback)
+playback_current_readout = html.Div(children="Not Ready", id='current_readout', style=feedback)
 
 
 playback_start_col = dbc.Col(html.Div([
@@ -516,7 +516,7 @@ playback_timer_readout_container = dbc.Container(
                        playback_current_col,
                        playback_end_col])]))
 
-playback_status_box = dbc.Col(html.Div(id='playback_status', children='Simulation Playback Not Started', style=feedback))
+playback_status_box = dbc.Col(html.Div(id='playback_status', children='Not Started', style=feedback))
 clock_status_container = dbc.Container(html.Div([dbc.Row([playback_status_box])]))
 
 # Playback speed components
