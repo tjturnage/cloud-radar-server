@@ -779,25 +779,21 @@ def monitor(_n):
     the status of the various scripts and reports them to the front-end application and 
     (2) monitors the completion status of the scripts. 
     """
-
-    # Scripts executed as modules are scripts.XX. get_data and process are called by nse.py. 
-    scripts_list = ["scripts.Nexrad", "scripts.nse", "get_data.py", "process.py", 
-                    "scripts.hodo_plot", "scripts.munger", "wgrib2", "scripts.obs_placefile"]
     processes = utils.get_app_processes()
     screen_output = ""
     seen_scripts = []
     for p in processes:
-        name = p['cmdline'][1].rsplit('/', 1)[-1]
+        # Returns get_data or process (the two scripts launched by nse.py)
+        name = p['cmdline'][1].rsplit('/')[-1].rsplit('.')[0]
 
         # Scripts executed as python modules will be like [python, -m, script.name]
         if p['cmdline'][1] == '-m':
-            name = p['cmdline'][2].rsplit('/', 1)[-1]
-            
-            #if len(name) > 1: name = name[1]
+            # Should return Nexrad, munger, nse, etc.
+            name = p['cmdline'][2].rsplit('/')[-1].rsplit('.')[-1]
             if p['name'] == 'wgrib2':
                 name = 'wgrib2'
 
-        if name in scripts_list and name not in seen_scripts:
+        if name in cfg.scripts_list and name not in seen_scripts:
             runtime = time.time() - p['create_time']
             screen_output += f"{name}: running for {round(runtime,1)} s. "
             seen_scripts.append(name)

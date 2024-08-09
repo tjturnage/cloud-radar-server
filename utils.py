@@ -60,10 +60,6 @@ def cancel_all(sa):
     This function is invoked when the user clicks the Cancel button in the app. See
     app.cancel_scripts.
     """
-    # Should move this somewhere else, maybe into the __init__ function? These are 
-    # the cancelable scripts
-    scripts_list = ["Nexrad.py", "nse.py", "get_data.py", "process.py",
-                    "hodo_plot.py", "munger.py", "obs_placefile.py"]
     processes = get_app_processes()
 
     # ******************************************************************************
@@ -75,16 +71,20 @@ def cancel_all(sa):
     # shouldn't be?
     # ******************************************************************************
     for process in processes:
-        if any(x in process['cmdline'][1] for x in scripts_list) or \
-            ('wgrib2' in process['cmdline'][0]):
+        name = process['cmdline'][1].rsplit('/')[-1].rsplit('.')[0]
+        if process['cmdline'][1] == '-m':
+            name = process['cmdline'][2].rsplit('/')[-1].rsplit('.')[-1]
+        if process['name'] == 'wgrib2': name = 'wgrib2'
+
+        if name in cfg.scripts_list:
             sa.log.info(
-                f"Killing process: {process['cmdline'][1]} with pid: {process['pid']}"
+                f"Killing process: {name} with pid: {process['pid']}"
             ) 
             os.kill(process['pid'], signal.SIGTERM)
         
         if len(process['cmdline']) >= 3 and 'multiprocessing' in process['cmdline'][2]:
             sa.log.info(
-                f"Killing process: {process['cmdline'][1]} with pid: {process['pid']}"
+                f"Killing process: {name} with pid: {process['pid']}"
             ) 
             os.kill(process['pid'], signal.SIGTERM)
 
