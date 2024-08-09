@@ -23,8 +23,14 @@ def exec_script(script_path, args):
 
     output = {}
     try:
-        process = subprocess.Popen([PYTHON, script_path] + args, stdout=subprocess.PIPE,
-                                   stderr=subprocess.PIPE)
+        # Execute scripts as python module to allow config import from higher-level dir:
+        # python -m scripts.script-name
+        parts = script_path.parts
+        arg = f"{script_path.parts[-2]}.{parts[-1]}".replace(".py", "")
+        process = subprocess.Popen([PYTHON, '-m', arg] + args, stdout=subprocess.PIPE,
+                                    stderr=subprocess.PIPE)
+        #process = subprocess.Popen([PYTHON, script_path] + args, stdout=subprocess.PIPE,
+        #                           stderr=subprocess.PIPE)
         output['stdout'], output['stderr'] = process.communicate()
         output['returncode'] = process.returncode
     except Exception as e:

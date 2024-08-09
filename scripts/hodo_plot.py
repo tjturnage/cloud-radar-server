@@ -17,7 +17,10 @@ import sys
 import warnings
 from multiprocessing import Pool, freeze_support
 from pathlib import Path
-import hodo_resources as hr
+
+from config import RADAR_DIR, HODO_IMAGES
+import scripts.hodo_resources as hr
+
 from dotenv import load_dotenv
 load_dotenv()
 API_TOKEN = os.getenv("HODO_PLOT_TOKEN")
@@ -39,9 +42,9 @@ except:
     asos_two = None
 
 timeshift_seconds = int(sys.argv[5])
-BASE_DIR = Path('/data/cloud-radar-server')
-RADAR_DIR = BASE_DIR / 'data' / 'radar'
-HODO_IMAGES = BASE_DIR / 'assets'/ 'hodographs'
+#BASE_DIR = Path('/data/cloud-radar-server')
+#RADAR_DIR = BASE_DIR / 'data' / 'radar'
+#HODO_IMAGES = BASE_DIR / 'assets'/ 'hodographs'
 
 THIS_RADAR = RADAR_DIR / radar_id
 os.makedirs(THIS_RADAR, exist_ok=True)
