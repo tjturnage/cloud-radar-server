@@ -16,6 +16,7 @@ import math
 from datetime import datetime, timedelta
 import pytz
 import requests
+from config import PLACEFILES_DIR
 from dotenv import load_dotenv
 load_dotenv()
 API_TOKEN = os.getenv("SYNOPTIC_API_TOKEN")
@@ -34,14 +35,14 @@ rwis_t_zoom = 75
 gray = '180 180 180'
 white= '255 255 255'
 
-BASE_DIR = Path('/data/cloud-radar-server')
+#BASE_DIR = Path('/data/cloud-radar-server')
 # In order to get this work on my dev and work laptop
-if sys.platform.startswith('darwin') or sys.platform.startswith('win'):
-    parts = Path.cwd().parts
-    idx = parts.index('cloud-radar-server')
-    BASE_DIR =  Path(*parts[0:idx+1])
+#if sys.platform.startswith('darwin') or sys.platform.startswith('win'):
+#    parts = Path.cwd().parts
+#    idx = parts.index('cloud-radar-server')
+#    BASE_DIR =  Path(*parts[0:idx+1])
 
-PLACEFILES_DIR = BASE_DIR / 'assets' / 'placefiles'
+#PLACEFILES_DIR = BASE_DIR / 'assets' / 'placefiles'
 
 net = "1,2,96,162"
 variables = 'air_temp,dew_point_temperature,wind_speed,wind_direction,wind_gust,visibility,road_temp'
