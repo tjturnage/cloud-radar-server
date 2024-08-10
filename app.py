@@ -206,6 +206,13 @@ class RadarSimulator(Config):
         self.simulation_seconds_shift = round(
             self.simulation_time_shift.total_seconds())
         self.event_start_str = self.date_time_string(self.event_start_time)
+        increment_list = []
+        for t in range(0, int(self.event_duration/5) + 1 , 1):
+            new_time = self.playback_start + timedelta(seconds=t*300)
+            new_time_str = self.date_time_string(new_time)
+            increment_list.append(new_time_str)
+
+        self.playback_dropdown_dict = [{'label': increment, 'value': increment} for increment in increment_list]
 
     def change_playback_time(self,dseconds) -> str:
         """
@@ -776,27 +783,26 @@ def cancel_scripts(n_clicks) -> None:
 )
 def monitor(_n):
     """
-    This function is called every second by the directory_monitor interval. It checks the
-    status of the radar and hodograph scripts and reports the status to the user.
+    This function is called every second by the directory_monitor interval. It (1) checks 
+    the status of the various scripts and reports them to the front-end application and 
+    (2) monitors the completion status of the scripts. 
     """
-
-    # Need to put this list and utils.cancel_all scripts_list into __init__ or somewhere
-    # similar. Finds running processes, determines if they're associated with this app, 
-    # and outputs text at the bottom. 
-    scripts_list = ["Nexrad.py", "nse.py", "get_data.py", "process.py", 
-                    "hodo_plot.py", "munger.py", "wgrib2", "obs_placefile.py"]
     processes = utils.get_app_processes()
     screen_output = ""
     seen_scripts = []
     for p in processes:
-        name = p['cmdline'][1].rsplit('/', 1)
-        if len(name) > 1: name = name[1]
-        if p['name'] == 'wgrib2':
-            name = 'wgrib2'
-      
-        if name in scripts_list and name not in seen_scripts:
+        # Returns get_data or process (the two scripts launched by nse.py)
+        name = p['cmdline'][1].rsplit('/')[-1].rsplit('.')[0]
+
+        # Scripts executed as python modules will be like [python, -m, script.name]
+        if p['cmdline'][1] == '-m':
+            # Should return Nexrad, munger, nse, etc.
+            name = p['cmdline'][2].rsplit('/')[-1].rsplit('.')[-1]
+            if p['name'] == 'wgrib2':
+                name = 'wgrib2'
+
+        if name in cfg.scripts_list and name not in seen_scripts:
             runtime = time.time() - p['create_time']
-            #screen_output += f"{name}: {p['status']} for {round(runtime,1)} s. "
             screen_output += f"{name}: running for {round(runtime,1)} s. "
             seen_scripts.append(name)
 
@@ -926,31 +932,6 @@ def update_playback_time(_n_intervals, playback_data):
         return {'playback_time': sa.playback_end_str}
     return {'playback_time': playback_data}
 
-
-@app.callback(
-    Output('start_day', 'options'),
-    [Input('start_year', 'value'), Input('start_month', 'value')])
-def update_playback_dropdown():
-    increment_list = []
-    for t in range(0, int(sa.event_duration/5) + 1 , 1):
-        new_time = sa.playback_start + timedelta(seconds=t*300)
-        new_time_str = sa.date_time_string(new_time)
-        increment_list.append(new_time_str)
-    playback_dropdown_dict = [{'label': increment, 'value': increment} for increment in increment_list]
-    return playback_dropdown_dict
-
-
-def update_day_dropdown(selected_year, selected_month):
-    """
-    Updates the day dropdown based on the selected year and month
-    """
-    _, num_days = calendar.monthrange(selected_year, selected_month)
-    day_options = [{'label': str(day), 'value': day}
-                   for day in range(1, num_days+1)]
-    return day_options
-
-
-
 ################################################################################################
 # ----------------------------- Playback Speed Callbacks  --------------------------------------
 ################################################################################################
@@ -1033,30 +1014,18 @@ def get_year(start_year) -> int:
     return sa.event_start_year
 
 
-# @app.callback(
-#     Output('start_day', 'options'),
-#     [Input('start_year', 'value'), Input('start_month', 'value')])
-# def update_day_dropdown(selected_year, selected_month):
-#     """
-#     Updates the day dropdown based on the selected year and month
-#     """
-#     _, num_days = calendar.monthrange(selected_year, selected_month)
-#     day_options = [{'label': str(day), 'value': day}
-#                    for day in range(1, num_days+1)]
-#     return day_options
+@app.callback(
+    Output('start_day', 'options'),
+    [Input('start_year', 'value'), Input('start_month', 'value')])
+def update_day_dropdown(selected_year, selected_month):
+    """
+    Updates the day dropdown based on the selected year and month
+    """
+    _, num_days = calendar.monthrange(selected_year, selected_month)
+    day_options = [{'label': str(day), 'value': day}
+                   for day in range(1, num_days+1)]
+    return day_options
 
-
-# @app.callback(
-#     Output('start_day', 'options'),
-#     [Input('start_year', 'value'), Input('start_month', 'value')])
-# def update_day_dropdown(selected_year, selected_month):
-#     """
-#     Updates the day dropdown based on the selected year and month
-#     """
-#     _, num_days = calendar.monthrange(selected_year, selected_month)
-#     day_options = [{'label': str(day), 'value': day}
-#                    for day in range(1, num_days+1)]
-#     return day_options
 
 @app.callback(Output('start_month', 'value'), Input('start_month', 'value'))
 def get_month(start_month) -> int:
