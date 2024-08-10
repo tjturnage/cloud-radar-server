@@ -77,15 +77,11 @@ def cancel_all(sa):
         if process['name'] == 'wgrib2': name = 'wgrib2'
 
         if name in cfg.scripts_list:
-            sa.log.info(
-                f"Killing process: {name} with pid: {process['pid']}"
-            ) 
+            sa.log.info(f"Killing process: {name} with pid: {process['pid']}") 
             os.kill(process['pid'], signal.SIGTERM)
         
         if len(process['cmdline']) >= 3 and 'multiprocessing' in process['cmdline'][2]:
-            sa.log.info(
-                f"Killing process: {name} with pid: {process['pid']}"
-            ) 
+            sa.log.info(f"Killing spawned multi-process with pid: {process['pid']}") 
             os.kill(process['pid'], signal.SIGTERM)
 
 
