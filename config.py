@@ -61,3 +61,7 @@ LOG_DIR = DATA_DIR / 'logs'
 os.makedirs(DATA_DIR, exist_ok=True)
 os.makedirs(HODO_IMAGES, exist_ok=True)
 os.makedirs(PLACEFILES_DIR, exist_ok=True)
+
+# 
+scripts_list = ["Nexrad", "munger", "obs_placefile", "nse", "wgrib2", 
+                "get_data", "process", "hodo_plot"]

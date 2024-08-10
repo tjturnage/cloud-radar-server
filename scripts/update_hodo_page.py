@@ -8,11 +8,13 @@ import sys
 from datetime import datetime
 import pytz
 
-HODO_DIR = '/data/cloud-radar-server/assets/hodographs'
-HODOGRAPHS_PAGE = '/data/cloud-radar-server/assets/hodographs.html'
+from config import HODOGRAPHS_DIR, HODOGRAPHS_PAGE
+
+#HODO_DIR = '/data/cloud-radar-server/assets/hodographs'
+#HODOGRAPHS_PAGE = '/data/cloud-radar-server/assets/hodographs.html'
 dir_parts = Path.cwd().parts
 if 'C:\\' in dir_parts:
-    HODO_DIR = 'C:/data/scripts/cloud-radar-server/assets/hodographs'
+    HODOGRAPHS_DIR = 'C:/data/scripts/cloud-radar-server/assets/hodographs'
     HODOGRAPHS_PAGE = 'C:/data/scripts/cloud-radar-server/assets/hodographs.html'
     link_base = "http://localhost:8050/assets"
     cloud = False
@@ -68,7 +70,7 @@ class UpdateHodoHTML():
         Returns a list of valid hodographs based on the current playback time
         """
         valid_hodo_list = []
-        image_files = [f for f in os.listdir(HODO_DIR) if f.endswith('.png') or f.endswith('.jpg')]
+        image_files = [f for f in os.listdir(HODOGRAPHS_DIR) if f.endswith('.png') or f.endswith('.jpg')]
         
         for filename in image_files:
             file_time = datetime.strptime(filename[-19:-4], '%Y%m%d_%H%M%S').replace(tzinfo=pytz.UTC).timestamp()
