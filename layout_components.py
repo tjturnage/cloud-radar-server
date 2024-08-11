@@ -140,16 +140,16 @@ sim_year_section = dbc.Col(html.Div([step_year,
                                                   id='start_year', clearable=False),]))
 
 sim_month_section = dbc.Col(html.Div([
-    step_month, dcc.Dropdown(np.arange(1, 13), 5, id='start_month', clearable=False),]))
+    step_month, dcc.Dropdown(np.arange(1, 13), 7, id='start_month', clearable=False),]))
 
 sim_hour_section = dbc.Col(html.Div([
-    step_hour, dcc.Dropdown(np.arange(0, 24), 21, id='start_hour', clearable=False),]))
+    step_hour, dcc.Dropdown(np.arange(0, 24), 0, id='start_hour', clearable=False),]))
 
 sim_minute_section = dbc.Col(html.Div([
-    step_minute, dcc.Dropdown([0, 15, 30, 45], 45, id='start_minute', clearable=False),]))
+    step_minute, dcc.Dropdown([0, 15, 30, 45], 30, id='start_minute', clearable=False),]))
 
 sim_duration_section = dbc.Col(html.Div([
-    step_duration, dcc.Dropdown(np.arange(0, 240, 15), 30, id='duration', clearable=False),]))
+    step_duration, dcc.Dropdown(np.arange(0, 240, 15), 60, id='duration', clearable=False),]))
 
 CONFIRM_TIMES_TEXT = "Confirm start time and duration -->"
 confirm_times_section = dbc.Col(
@@ -496,11 +496,11 @@ SIMULATION_PLAYBACK_BANNER_TEXT = "Simulation Playback Section"
 playback_banner = dbc.Row(
     dbc.Col(html.Div(children=SIMULATION_PLAYBACK_BANNER_TEXT, style=steps_center)))
 
-start_playback_btn = dbc.Col(html.Div([dbc.Button('Initiate Playback', size="lg",
+start_playback_btn = dbc.Col(html.Div([dbc.Button('Launch Simulation', size="lg",
                                                 id='playback_btn', disabled=True, n_clicks=0)],
                                                 className="d-grid gap-2 col-12 mx-auto"))
 
-pause_resume_playback_btn = dbc.Col(html.Div([dbc.Button('Pause', size="lg",
+pause_resume_playback_btn = dbc.Col(html.Div([dbc.Button('Pause Playback', size="lg",
                                                 id='pause_resume_playback_btn', disabled=True, n_clicks=0)],
                                                 className="d-grid gap-2 col-12 mx-auto"))
 

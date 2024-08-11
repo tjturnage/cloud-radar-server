@@ -404,7 +404,7 @@ app.title = "Radar Simulator"
 ################################################################################################
 sim_day_selection = dbc.Col(html.Div([
     lc.step_day,
-    dcc.Dropdown(np.arange(1, sa.days_in_month+1), 7, id='start_day', clearable=False)]))
+    dcc.Dropdown(np.arange(1, sa.days_in_month+1), 16, id='start_day', clearable=False)]))
 
 playback_time_options = dbc.Col(html.Div([
     dcc.Dropdown(options={'label': 'Sim not started', 'value': ''}, id='change_time', disabled=True, clearable=False)]))
@@ -739,8 +739,8 @@ def run_with_cancel_button():
         (Output('playback_clock_store', 'disabled'), True, False),
         (Output('confirm_radars_btn', 'disabled'), True, False), # added radar confirm btn
         (Output('playback_btn', 'disabled'), True, False), # add start sim btn
-        (Output('pause_resume_playback_btn', 'disabled'), True, False), # add pause/resume btn
-        (Output('change_time', 'disabled'), True, False), # wait to enable change time dropdown        
+        #(Output('pause_resume_playback_btn', 'disabled'), True, False), # add pause/resume btn
+        (Output('change_time', 'disabled'), True, False), # wait to enable change time dropdown
         (Output('cancel_scripts', 'disabled'), False, True),
     ])
 def launch_simulation(n_clicks) -> None:
@@ -871,6 +871,7 @@ def toggle_placefiles_section(n) -> dict:
 @app.callback(
     Output('playback_btn', 'children'),
     Output('playback_btn', 'disabled'),
+    Output('pause_resume_playback_btn', 'disabled'),
     Output('playback_running_store', 'data'),
     Output('start_readout', 'children'),
     Output('end_readout', 'children'),
@@ -882,7 +883,7 @@ def initiate_playback(_nclick):
     Enables/disables interval component that elapses the playback time
 
     """
-    btn_text = 'Simulation Initiated'
+    btn_text = 'Simulation Launched'
     btn_disabled = True
     playback_running = True
     start = sa.playback_start_str
@@ -896,7 +897,7 @@ def initiate_playback(_nclick):
             for _r, radar in enumerate(sa.radar_list):
                 UpdateDirList(radar,sa.playback_clock_str)
 
-    return btn_text, btn_disabled, playback_running, start, end, options
+    return btn_text, btn_disabled, False, playback_running, start, end, options
 
 @app.callback(
     Output('playback_timer', 'disabled'),
@@ -910,16 +911,16 @@ def initiate_playback(_nclick):
     Input('change_time', 'value'),
     Input('playback_running_store', 'data')
     ], prevent_initial_call=True)
-def manage_clock_(nclicks, _n_intervals, new_time, playback_running):
+def manage_clock_(nclicks, _n_intervals, new_time, _playback_running):
     """     
     Test
     """
     interval_disabled = False
     status = 'Running'
-    playback_btn_text = 'Pause Simulation'
+    playback_btn_text = 'Pause Playback'
     if sa.playback_clock.tzinfo is None:
         sa.playback_clock = sa.playback_clock.replace(tzinfo=timezone.utc)
-    current_time = sa.playback_clock_str
+    #current_time = sa.playback_clock_str
     readout_time = datetime.strftime(sa.playback_clock, '%Y-%m-%d %H:%M:%S')
     style = lc.feedback_green
     triggered_id = ctx.triggered_id
@@ -943,10 +944,12 @@ def manage_clock_(nclicks, _n_intervals, new_time, playback_running):
         if nclicks % 2 == 1:
             interval_disabled = True
             status = 'Paused'
-            playback_btn_text = 'Resume Simulation'
+            playback_btn_text = 'Resume Playback'
             style = lc.feedback_yellow
 
     if triggered_id == 'change_time':
+        # interval_disabled = True
+        # status = 'Paused'
         sa.playback_clock = datetime.strptime(new_time, '%Y-%m-%d %H:%M')
         if sa.playback_clock.tzinfo is None:
             sa.playback_clock = sa.playback_clock.replace(tzinfo=timezone.utc)
@@ -959,7 +962,7 @@ def manage_clock_(nclicks, _n_intervals, new_time, playback_running):
             else:
                 for _r, radar in enumerate(sa.radar_list):
                     UpdateDirList(radar,sa.playback_clock_str)
-    
+
     if triggered_id == 'playback_running_store':
         pass
         # if not playback_running:
@@ -1092,7 +1095,7 @@ if __name__ == '__main__':
                 dev_tools_hot_reload=False)
         else:
             app.run(debug=True, port=8050, threaded=True, dev_tools_hot_reload=False)
-    
+  
 
 '''
 # pathname_params = dict()
