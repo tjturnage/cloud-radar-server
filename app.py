@@ -407,7 +407,7 @@ sim_day_selection = dbc.Col(html.Div([
     dcc.Dropdown(np.arange(1, sa.days_in_month+1), 7, id='start_day', clearable=False)]))
 
 playback_time_options = dbc.Col(html.Div([
-    dcc.Dropdown(options={'label': 'Sim not started', 'value': ''}, id='change_time', clearable=False)]))
+    dcc.Dropdown(options={'label': 'Sim not started', 'value': ''}, id='change_time', disabled=True, clearable=False)]))
 
 playback_time_options_col = dbc.Col(html.Div([lc.change_playback_time_label, lc.spacer_mini,
                                               playback_time_options]))
@@ -419,14 +419,14 @@ playback_controls = dbc.Container(
 simulation_playback_section = dbc.Container(
     dbc.Container(
     html.Div([lc.playback_banner, lc.spacer, lc.playback_buttons_container,lc.spacer,
-              lc.playback_timer_readout_container,lc.spacer,lc.spacer,
+              lc.playback_timer_readout_container,lc.spacer,
               playback_controls, lc.spacer_mini,
               ]),style=lc.section_box_pad))
 
 app.layout = dbc.Container([
     # testing directory size monitoring
     dcc.Interval(id='directory_monitor', disabled=False, interval=2*1000),
-    dcc.Interval(id='playback_timer', disabled=True, interval=60*1000),
+    dcc.Interval(id='playback_timer', disabled=True, interval=15*1000),
     # dcc.Store(id='model_dir_size'),
     # dcc.Store(id='radar_dir_size'),
     dcc.Store(id='tradar'),
@@ -740,6 +740,7 @@ def run_with_cancel_button():
         (Output('confirm_radars_btn', 'disabled'), True, False), # added radar confirm btn
         (Output('playback_btn', 'disabled'), True, False), # add start sim btn
         (Output('pause_resume_playback_btn', 'disabled'), True, False), # add pause/resume btn
+        (Output('change_time', 'disabled'), True, False), # wait to enable change time dropdown        
         (Output('cancel_scripts', 'disabled'), False, True),
     ])
 def launch_simulation(n_clicks) -> None:
@@ -916,14 +917,20 @@ def manage_clock_(nclicks, _n_intervals, new_time, playback_running):
     interval_disabled = False
     status = 'Running'
     playback_btn_text = 'Pause Simulation'
+    if sa.playback_clock.tzinfo is None:
+        sa.playback_clock = sa.playback_clock.replace(tzinfo=timezone.utc)
     current_time = sa.playback_clock_str
+    readout_time = datetime.strftime(sa.playback_clock, '%Y-%m-%d %H:%M:%S')
     style = lc.feedback_green
     triggered_id = ctx.triggered_id
 
     if triggered_id == 'playback_timer':
-        sa.playback_clock += timedelta(seconds=60 * sa.playback_speed)
+        if sa.playback_clock.tzinfo is None:
+            sa.playback_clock = sa.playback_clock.replace(tzinfo=timezone.utc)
+        sa.playback_clock += timedelta(seconds=15 * sa.playback_speed)
         if sa.playback_clock < sa.playback_end:
             sa.playback_clock_str = sa.date_time_string(sa.playback_clock)
+            readout_time = datetime.strftime(sa.playback_clock, '%Y-%m-%d %H:%M:%S')
             if cfg.PLATFORM != 'WINDOWS':
                 UpdateHodoHTML(sa.playback_clock_str)
                 if sa.new_radar != 'None':
@@ -941,7 +948,10 @@ def manage_clock_(nclicks, _n_intervals, new_time, playback_running):
 
     if triggered_id == 'change_time':
         sa.playback_clock = datetime.strptime(new_time, '%Y-%m-%d %H:%M')
-        sa.playback_clock_str = new_time
+        if sa.playback_clock.tzinfo is None:
+            sa.playback_clock = sa.playback_clock.replace(tzinfo=timezone.utc)
+            sa.playback_clock_str = new_time
+            readout_time = datetime.strftime(sa.playback_clock, '%Y-%m-%d %H:%M:%S')
         if cfg.PLATFORM != 'WINDOWS':
             UpdateHodoHTML(sa.playback_clock_str)
             if sa.new_radar != 'None':
@@ -957,7 +967,7 @@ def manage_clock_(nclicks, _n_intervals, new_time, playback_running):
         #     status = 'Paused'
         #     playback_btn_text = 'Resume Simulation'
 
-    return interval_disabled, status, style, playback_btn_text, current_time, style
+    return interval_disabled, status, style, playback_btn_text, readout_time, style
 
 ################################################################################################
 # ----------------------------- Playback Speed Callbacks  --------------------------------------
