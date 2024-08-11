@@ -6,19 +6,10 @@
 
 from __future__ import print_function
 import sys
-from pathlib import Path
 from datetime import datetime
 import pytz
-
 from config import POLLING_DIR
 
-#BASE_DIR = Path('/data/cloud-radar-server')
-#if sys.platform.startswith('darwin') or sys.platform.startswith('win'):
-#    parts = Path.cwd().parts
-#    idx = parts.index('cloud-radar-server')
-#    BASE_DIR =  Path(*parts[0:idx+1])
-
-#POLLING_DIR = BASE_DIR / 'assets' / 'polling'
 
 class UpdateDirList():
     """

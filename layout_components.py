@@ -26,6 +26,14 @@ feedback = {'border': '1px gray solid', 'padding': '0.4em', 'font-weight': 'bold
             'font-size': '1.4em', 'text-align': 'center', 'vertical-align': 'center',
             'height': '6vh'}
 
+feedback_green = {'border': '1px gray solid', 'padding': '0.4em', 'font-weight': 'bold',
+            'font-size': '1.4em', 'text-align': 'center', 'vertical-align': 'center',
+            'height': '6vh', 'color': 'black', 'background-color': '#06DB42'}
+
+feedback_yellow = {'border': '1px gray solid', 'padding': '0.4em', 'font-weight': 'bold',
+            'font-size': '1.4em', 'text-align': 'center', 'vertical-align': 'center',
+            'height': '6vh', 'color': 'black', 'background-color': '#bfbf19'}
+
 feedback_smaller = {'border': '1px gray solid', 'padding': '0.4em', 'font-weight': 'bold',
             'font-size': '1.1em', 'text-align': 'center', 'vertical-align': 'center',
             'height': '6vh'}
@@ -488,9 +496,17 @@ SIMULATION_PLAYBACK_BANNER_TEXT = "Simulation Playback Section"
 playback_banner = dbc.Row(
     dbc.Col(html.Div(children=SIMULATION_PLAYBACK_BANNER_TEXT, style=steps_center)))
 
-playback_btn = dbc.Col(html.Div([dbc.Button('Start Simulation Playback', size="lg",
-                                                id='playback_btn', n_clicks=0)],
+start_playback_btn = dbc.Col(html.Div([dbc.Button('Initiate Playback', size="lg",
+                                                id='playback_btn', disabled=True, n_clicks=0)],
                                                 className="d-grid gap-2 col-12 mx-auto"))
+
+pause_resume_playback_btn = dbc.Col(html.Div([dbc.Button('Pause', size="lg",
+                                                id='pause_resume_playback_btn', disabled=True, n_clicks=0)],
+                                                className="d-grid gap-2 col-12 mx-auto"))
+
+playback_buttons_container = dbc.Container(
+html.Div([dbc.Row([start_playback_btn,
+                    pause_resume_playback_btn])]))
 
 playback_start_label = html.Div(children="Simulation Start Time", style=time_headers)
 playback_start_readout = html.Div(children="Not Ready", id='start_readout', style=feedback)
@@ -532,7 +548,7 @@ simulation_playback_section = dbc.Container(
     dbc.Container(
     html.Div([playback_banner,
               spacer,
-              playback_btn,
+              playback_buttons_container,
               spacer,
               playback_timer_readout_container,
               spacer_mini,

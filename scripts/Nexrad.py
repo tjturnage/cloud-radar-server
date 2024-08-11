@@ -20,15 +20,6 @@ from botocore.client import Config
 
 from config import RADAR_DIR
 
-#BASE_DIR = Path('/data/cloud-radar-server')
-# In order to get this work on my dev and work laptop
-#if sys.platform.startswith('darwin') or sys.platform.startswith('win'):
-#    parts = Path.cwd().parts
-#    idx = parts.index('cloud-radar-server')
-#    BASE_DIR =  Path(*parts[0:idx+1])
-
-#RADAR_DIR = BASE_DIR / 'data' / 'radar'
-
 class NexradDownloader:
     """
     Downloads NEXRAD radar data from the NOAA NEXRAD Level 2 or TDWR bucket.

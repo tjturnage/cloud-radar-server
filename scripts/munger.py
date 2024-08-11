@@ -10,7 +10,6 @@ This script is used to munge Nexrad Archive 2 files so they can be used in Displ
 """
 
 from __future__ import print_function
-from pathlib import Path
 import os
 import sys
 import shutil
@@ -22,18 +21,6 @@ import time
 import pytz
 
 from config import RADAR_DIR, POLLING_DIR, L2MUNGER_FILEPATH, DEBZ_FILEPATH
-#BASE_DIR = Path('/data/cloud-radar-server')
-
-# In order to get this work on my dev and work laptop
-#if sys.platform.startswith('darwin') or sys.platform.startswith('win'):
-#    parts = Path.cwd().parts
-#    idx = parts.index('cloud-radar-server')
-#    BASE_DIR =  Path(*parts[0:idx+1])
-
-#RADAR_DIR = BASE_DIR / 'data' / 'radar'
-#POLLING_DIR = BASE_DIR / 'assets' / 'polling'
-#L2MUNGER_FILEPATH = BASE_DIR / 'scripts' / 'l2munger'
-#DEBZ_FILEPATH = BASE_DIR / 'scripts' / 'debz.py'
 
 class Munger():
     """

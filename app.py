@@ -93,6 +93,7 @@ class RadarSimulator(Config):
         self.new_lon = None
         self.scripts_progress = 'Scripts not started'
         self.base_dir = Path.cwd()
+        self.playback_initiated = False
         self.playback_speed = 1.0
         self.playback_start = 'Not Ready'
         self.playback_end = 'Not Ready'
@@ -406,7 +407,7 @@ sim_day_selection = dbc.Col(html.Div([
     dcc.Dropdown(np.arange(1, sa.days_in_month+1), 7, id='start_day', clearable=False)]))
 
 playback_time_options = dbc.Col(html.Div([
-    dcc.Dropdown(options=sa.playback_dropdown_dict, id='change_time', clearable=False)]))
+    dcc.Dropdown(options={'label': 'Sim not started', 'value': ''}, id='change_time', clearable=False)]))
 
 playback_time_options_col = dbc.Col(html.Div([lc.change_playback_time_label, lc.spacer_mini,
                                               playback_time_options]))
@@ -417,7 +418,7 @@ playback_controls = dbc.Container(
 
 simulation_playback_section = dbc.Container(
     dbc.Container(
-    html.Div([lc.playback_banner, lc.spacer, lc.playback_btn, lc.spacer,
+    html.Div([lc.playback_banner, lc.spacer, lc.playback_buttons_container,lc.spacer,
               lc.playback_timer_readout_container,lc.spacer,lc.spacer,
               playback_controls, lc.spacer_mini,
               ]),style=lc.section_box_pad))
@@ -430,9 +431,10 @@ app.layout = dbc.Container([
     # dcc.Store(id='radar_dir_size'),
     dcc.Store(id='tradar'),
     dcc.Store(id='dummy'),
-    dcc.Store(id='playback_start_store', data={'this_time': 'Not Ready'}),
-    dcc.Store(id='playback_end_store', data={'this_time': 'Not Ready'}),
-    dcc.Store(id='playback_clock_store', data={'this_time': 'Not Ready'}),
+    dcc.Store(id='playback_running_store', data=False),
+    dcc.Store(id='playback_start_store'),
+    dcc.Store(id='playback_end_store'),
+    dcc.Store(id='playback_clock_store'),
     lc.top_section, lc.top_banner,
     dbc.Container([
         dbc.Container([
@@ -737,6 +739,7 @@ def run_with_cancel_button():
         (Output('playback_clock_store', 'disabled'), True, False),
         (Output('confirm_radars_btn', 'disabled'), True, False), # added radar confirm btn
         (Output('playback_btn', 'disabled'), True, False), # add start sim btn
+        (Output('pause_resume_playback_btn', 'disabled'), True, False), # add pause/resume btn
         (Output('cancel_scripts', 'disabled'), False, True),
     ])
 def launch_simulation(n_clicks) -> None:
@@ -866,71 +869,95 @@ def toggle_placefiles_section(n) -> dict:
 
 @app.callback(
     Output('playback_btn', 'children'),
-    Output('playback_timer', 'disabled'),
-    Output('playback_status', 'children'),
+    Output('playback_btn', 'disabled'),
+    Output('playback_running_store', 'data'),
+    Output('start_readout', 'children'),
+    Output('end_readout', 'children'),
+    Output('change_time', 'options'),
     Input('playback_btn', 'n_clicks'),
-    Input('playback_timer', 'n_intervals'),
-    prevent_initial_call=True
-    )
-def manage_clock_(nclick, _n_intervals) -> tuple:
+    prevent_initial_call=True)
+def initiate_playback(_nclick):
     """     
     Enables/disables interval component that elapses the playback time
 
-    If scripts are still running, provides a text status update.
-    After scripts are done:
-       - counter updates the playback time, and this used to update:
-       - assets/hodographs.html page
-       - assets/polling/KXXX/dir.list files
     """
-    btn_text = 'Simulation Playback'
-    start_btn = f'Start {btn_text}'
-    pause_btn = f'Pause {btn_text}'
-    #paused_text = f'{btn_text} Paused at {sa.playback_clock_str}'
-    #running_text = f'{btn_text} Running at {sa.playback_clock_str}'
-    paused_text = 'Playback Paused'
-    running_text = 'Playback Running'
-    completed_text = 'Playback Complete!'
-    triggered_id = ctx.triggered_id
-    
-    if triggered_id == 'playback_btn':
-        if nclick == 0:
-            return start_btn, True, 'Playback Not Started'
-        if nclick == 1:
-            dcc.Store('playback_start_store', data={'this_time': sa.playback_start_str})
-            dcc.Store('playback_end_store', data={'this_time': sa.playback_end_str})
-        if nclick % 2 == 1:
-            return pause_btn, False, running_text
-        return start_btn, True, paused_text
-
-    sa.playback_clock += timedelta(seconds=60 * sa.playback_speed)
-    if sa.playback_clock < sa.playback_end:
-        sa.playback_clock_str = sa.date_time_string(sa.playback_clock)
+    btn_text = 'Simulation Initiated'
+    btn_disabled = True
+    playback_running = True
+    start = sa.playback_start_str
+    end = sa.playback_end_str
+    options = sa.playback_dropdown_dict
+    if cfg.PLATFORM != 'WINDOWS':
         UpdateHodoHTML(sa.playback_clock_str)
         if sa.new_radar != 'None':
             UpdateDirList(sa.new_radar, sa.playback_clock_str)
         else:
             for _r, radar in enumerate(sa.radar_list):
                 UpdateDirList(radar,sa.playback_clock_str)
-        return pause_btn, False, running_text
-    return completed_text, True, completed_text
 
+    return btn_text, btn_disabled, playback_running, start, end, options
 
 @app.callback(
-    Output('playback_clock_store', 'data'),
-    [Input('playback_timer', 'n_intervals'),
-     Input('change_time', 'value')])
-def update_playback_time(_n_intervals, playback_data):
+    Output('playback_timer', 'disabled'),
+    Output('playback_status', 'children'),
+    Output('playback_status', 'style'),
+    Output('pause_resume_playback_btn', 'children'),
+    Output('current_readout', 'children'),
+    Output('current_readout', 'style'),
+    [Input('pause_resume_playback_btn', 'n_clicks'),
+    Input('playback_timer', 'n_intervals'),
+    Input('change_time', 'value'),
+    Input('playback_running_store', 'data')
+    ], prevent_initial_call=True)
+def manage_clock_(nclicks, _n_intervals, new_time, playback_running):
+    """     
+    Test
     """
-    Updates the playback time in the dcc.Store component
-    """
+    interval_disabled = False
+    status = 'Running'
+    playback_btn_text = 'Pause Simulation'
+    current_time = sa.playback_clock_str
+    style = lc.feedback_green
     triggered_id = ctx.triggered_id
+
     if triggered_id == 'playback_timer':
+        sa.playback_clock += timedelta(seconds=60 * sa.playback_speed)
         if sa.playback_clock < sa.playback_end:
-            sa.playback_clock += timedelta(seconds=60)
             sa.playback_clock_str = sa.date_time_string(sa.playback_clock)
-            return {'playback_time': sa.playback_clock_str}
-        return {'playback_time': sa.playback_end_str}
-    return {'playback_time': playback_data}
+            if cfg.PLATFORM != 'WINDOWS':
+                UpdateHodoHTML(sa.playback_clock_str)
+                if sa.new_radar != 'None':
+                    UpdateDirList(sa.new_radar, sa.playback_clock_str)
+                else:
+                    for _r, radar in enumerate(sa.radar_list):
+                        UpdateDirList(radar,sa.playback_clock_str)
+
+    if triggered_id == 'pause_resume_playback_btn':
+        if nclicks % 2 == 1:
+            interval_disabled = True
+            status = 'Paused'
+            playback_btn_text = 'Resume Simulation'
+            style = lc.feedback_yellow
+
+    if triggered_id == 'change_time':
+        sa.playback_clock = datetime.strptime(new_time, '%Y-%m-%d %H:%M')
+        sa.playback_clock_str = new_time
+        if cfg.PLATFORM != 'WINDOWS':
+            UpdateHodoHTML(sa.playback_clock_str)
+            if sa.new_radar != 'None':
+                UpdateDirList(sa.new_radar, sa.playback_clock_str)
+            else:
+                for _r, radar in enumerate(sa.radar_list):
+                    UpdateDirList(radar,sa.playback_clock_str)
+    
+    if triggered_id == 'playback_running_store':
+        pass
+        # if not playback_running:
+        #     interval_disabled = True
+        #     status = 'Paused'
+        #     playback_btn_text = 'Resume Simulation'
+
+    return interval_disabled, status, style, playback_btn_text, current_time, style
 
 ################################################################################################
 # ----------------------------- Playback Speed Callbacks  --------------------------------------
@@ -939,6 +966,9 @@ def update_playback_time(_n_intervals, playback_data):
     Output('playback_speed_dummy', 'children'),
     Input('speed_dropdown', 'value'))
 def update_playback_speed(selected_speed):
+    """
+    Updates the playback speed in the sa object
+    """
     sa.playback_speed = selected_speed
     try:
         sa.playback_speed = float(selected_speed)
@@ -946,39 +976,6 @@ def update_playback_speed(selected_speed):
         print(f"Error converting {selected_speed} to float")
         sa.playback_speed = 1.0
     return selected_speed
-
-@app.callback(
-    Output('current_readout', 'children'),
-    Input('playback_clock_store', 'data'))
-def update_readout(playback_data):
-    """
-    Shows the current playback time based on the
-    updated playback time stored in the dcc.Store component
-    """
-    playback_time = playback_data.get('playback_time', '1970-01-01 00:00')
-    return playback_time
-
-@app.callback(
-    Output('start_readout', 'children'),
-    Input('playback_start_store', 'data'))
-def populate_playback_start_time(start_data):
-    """
-    Shows the playback start time for the simulation
-    This won't change.
-    """
-    start_time = start_data.get('this_time', '1970-01-01 00:00')
-    return start_time
-
-@app.callback(
-    Output('end_readout', 'children'),
-    Input('playback_end_store', 'data'))
-def populate_playback_end_time(end_data):
-    """
-    Shows the playback start time for the simulation
-    This won't change.
-    """
-    end_time = end_data.get('this_time', '1970-01-01 00:00')
-    return end_time
 
 
 ################################################################################################
