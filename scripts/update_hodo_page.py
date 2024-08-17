@@ -31,7 +31,7 @@ HEAD = """<!DOCTYPE html>
 HEAD_NOLIST = """<!DOCTYPE html>
 <html>
 <head>
-<title>Hodographs</title>
+<title>Sim Hodos/title>
 </head>
 <body>"""
 

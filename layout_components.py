@@ -34,6 +34,10 @@ feedback_yellow = {'border': '1px gray solid', 'padding': '0.4em', 'font-weight'
             'font-size': '1.4em', 'text-align': 'center', 'vertical-align': 'center',
             'height': '6vh', 'color': 'black', 'background-color': '#bfbf19'}
 
+playback_times_style = {'border': '1px gray solid', 'padding': '0.4em', 'font-weight': 'bold',
+            'font-size': '1.4em', 'text-align': 'center', 'vertical-align': 'center',
+            'height': '6vh', 'color': 'white', 'background-color': '#555555'}
+
 feedback_smaller = {'border': '1px gray solid', 'padding': '0.4em', 'font-weight': 'bold',
             'font-size': '1.1em', 'text-align': 'center', 'vertical-align': 'center',
             'height': '6vh'}
@@ -90,9 +94,9 @@ top_content = [
         spacer_mini,
         html.Div([
             dbc.Row([
-            dbc.Col(dbc.CardLink("User Guide", href="")),
-            dbc.Col(dbc.CardLink("Feedback Form", href="https://docs.google.com/forms/d/e/1FAIpQLScoQhdYa6uoR1sD1f3PUYmNVMLgOn5UDvSkUJXHu4_gpWZ9pw/viewform")),
-            dbc.Col(dbc.CardLink("GitHub", href="https://github.com/tjturnage/cloud-radar-server"))
+            dbc.Col(dbc.CardLink("User Guide", href="https://docs.google.com/document/d/1uAcsjzjTAl6SA4dKgcj3pIpM__X-yfH0OGVsdam4dQw/edit", target="_blank")),
+            dbc.Col(dbc.CardLink("Feedback Form", href="https://docs.google.com/forms/d/e/1FAIpQLScoQhdYa6uoR1sD1f3PUYmNVMLgOn5UDvSkUJXHu4_gpWZ9pw/viewform", target="_blank")),
+            dbc.Col(dbc.CardLink("GitHub", href="https://github.com/tjturnage/cloud-radar-server", target="_blank"))
             ]),
         ])
     ])
@@ -397,7 +401,7 @@ links_section = dbc.Container(dbc.Container(html.Div(
         dbc.Row(
             [
             dbc.Col(dbc.ListGroupItem("Graphics"), style=group_item_style, width=2),
-            dbc.Col(dbc.ListGroupItem("Hodographs", href=f"{LINK_BASE}/hodographs.html"), width=2)
+            dbc.Col(dbc.ListGroupItem("Hodographs webpage", href=f"{LINK_BASE}/hodographs.html", target="_blank"), width=2)
             ],
             style={"display": "flex", "flexWrap": "wrap"}
         ),
