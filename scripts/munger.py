@@ -24,23 +24,24 @@ from config import RADAR_DIR, POLLING_DIR, L2MUNGER_FILEPATH, DEBZ_FILEPATH
 
 class Munger():
     """
-    Copies Nexrad Archive 2 files from a raw directory so Displaced Real-Time (DRT) simulations
-    can be performed using GR2Analyst.
+    Processes Nexrad Archive 2 files by changing their valid times to something very recent
+    so that GR2Analyst can poll the data. If a new radar location is provided, the RDA location
+    is shifted to that location.
 
-    munge_data: Boolean
-        uses l2munger to:
-        - change valid times starting at 2 hours prior to current real time
-        - remap data to new_rda if provided (see below).
-
+    Parameters
+    ----------
+    original_rda: string
+        The original radar location
+    playback_start: string
+        The start time of the playback in the format 'YYYY-MM-DD HH:MM'
+    duration: int
+        The duration of the playback in minutes (appears to be unused)
+    timeshift: str
+        The time shift in seconds between the playback start time and the event start time
+        Needs to be converted to an integer
     new_rda: string or None
          If string is provided, it must correspond to a real nexrad location (like KGRR)
-         If None, will use radar location associated with archive files 
-     
-    start_simulation: Boolean
-        To poll in displaced real time
-        a dir.list file will be created and updated in the polling directory so GR2Analyst can play this back
-    - playback_speed: float
-        speed of simulation compared to real time ... example: 2.0 means event proceeds twice as fast
+         If None, will use original radar location 
     """
 
     def __init__(self, original_rda, playback_start, duration, timeshift, new_rda='None'):
@@ -162,14 +163,17 @@ class Munger():
         munges radar files to start at the reference time
         also changes RDA location
         """
+        fout = open('/data/cloud-radar-server/assets/file_times.txt', 'w', encoding='utf-8')
         os.chdir(self.source_directory)
         self.source_files = list(self.source_directory.glob('*uncompressed'))
         for uncompressed_file in self.uncompressed_files:
             file_datetime_str = str(uncompressed_file.parts[-1])
-            file_datetime_obj = datetime.strptime(file_datetime_str[4:19], '%Y%m%d_%H%M%S').replace(tzinfo=pytz.UTC)
+            orig_file_timestr = file_datetime_str[4:19]
+            file_datetime_obj = datetime.strptime(orig_file_timestr, '%Y%m%d_%H%M%S').replace(tzinfo=pytz.UTC)
             new_time_obj = file_datetime_obj + timedelta(seconds=self.seconds_shift)
             new_time_str = datetime.strftime(new_time_obj, '%Y/%m/%d %H:%M:%S')
             new_filename_date_string = datetime.strftime(new_time_obj, '%Y%m%d_%H%M%S')
+            fout.write(f'{file_datetime_str} -- {new_time_str}\n')
             command_line = f'./l2munger {self.new_rda} {new_time_str} 1 {file_datetime_str}'
             print(command_line)
             os.system(command_line)
@@ -177,6 +181,7 @@ class Munger():
             with open(new_filename, 'rb') as f_in:
                 with gzip.open(f'{self.this_radar_polling_dir}/{new_filename}.gz', 'wb') as f_out:
                     shutil.copyfileobj(f_in, f_out)
+        fout.close()
 
 #-------------------------------
 if __name__ == "__main__":

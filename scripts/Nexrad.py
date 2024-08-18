@@ -3,9 +3,6 @@ Leverages AWS to download NEXRAD radar data from the NOAA NEXRAD Level 2 or TDWR
 --downloads all available volume scans for a specific radar in a specific time range
 --target data is saved in the data/radar folder in the project directory.
 
-09 Jun 2024:
---older radar files use hourly tar files as obj.key, had to set filenames as Path(obj.key).name
---created identify_radar_files() to filter out non-radar files and those outside the time range
 
 """
 import sys
@@ -23,7 +20,15 @@ from config import RADAR_DIR
 class NexradDownloader:
     """
     Downloads NEXRAD radar data from the NOAA NEXRAD Level 2 or TDWR bucket.
-    The radar data are saved in the data/radar folder in the project directory.
+    The radar data are saved in the data/radar folder in the application directory.
+    radar_id: str
+        The 4-letter radar identifier in upper case
+    start_tstr: str
+        The start time of the simulation in the format 'YYYY-MM-DD HH:MM'
+    duration: str
+        The duration of the simulation in minutes
+    
+    
     """
 
 

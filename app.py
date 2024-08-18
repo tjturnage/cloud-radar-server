@@ -661,7 +661,7 @@ def run_with_cancel_button():
                     new_radar = sa.new_radar.upper()
             except Exception as e:
                 sa.log.exception("Error defining new radar: ", exc_info=True)
-   
+
             # Radar download
             args = [radar, str(sa.event_start_str), str(sa.event_duration), str(True)]
             res = call_function(utils.exec_script, cfg.NEXRAD_SCRIPT_PATH, args)
@@ -669,12 +669,12 @@ def run_with_cancel_button():
                 return
 
             # Munger
-            args = [radar, str(sa.playback_start_str), str(sa.event_duration), 
+            args = [radar, str(sa.playback_start_str), str(sa.event_duration),
                     str(sa.simulation_seconds_shift), new_radar]
             res = call_function(utils.exec_script, cfg.MUNGER_SCRIPT_FILEPATH, args)
             if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
                 return
-      
+   
             # this gives the user some radar data to poll while other scripts are running
             try:
                 UpdateDirList(new_radar, 'None', initialize=True)
@@ -710,7 +710,7 @@ def run_with_cancel_button():
             asos_two = data['asos_two']
         except KeyError as e:
             sa.log.exception("Error getting radar metadata: ", exc_info=True)
-    
+
         # Execute hodograph script
         args = [radar, sa.new_radar, asos_one, asos_two, str(sa.simulation_seconds_shift)]
         res = call_function(utils.exec_script, cfg.HODO_SCRIPT_PATH, args)
@@ -757,7 +757,7 @@ def launch_simulation(n_clicks) -> None:
             sa.make_simulation_times()
         else:
             run_with_cancel_button()
- 
+
 ################################################################################################
 # ----------------------------- Monitoring and reporting script status  ------------------------
 ################################################################################################
@@ -891,11 +891,7 @@ def initiate_playback(_nclick):
     btn_disabled = True
     playback_running = True
     start = sa.playback_start_str
-    #right_start = ('{: <5}'.format(start[0:10]))
-    #fixed_start = right_start + start[11:16]
     end = sa.playback_end_str
-    #right_end = ('{: <5}'.format(end[0:10]))
-    #fixed_end = right_end + end[11:16]
     style = lc.playback_times_style
     options = sa.playback_dropdown_dict
     if cfg.PLATFORM != 'WINDOWS':
@@ -920,7 +916,7 @@ def initiate_playback(_nclick):
     Input('change_time', 'value'),
     Input('playback_running_store', 'data')
     ], prevent_initial_call=True)
-def manage_clock_(_nclicks, _n_intervals, new_time, _playback_running):
+def manage_clock_(nclicks, _n_intervals, new_time, _playback_running):
     """     
     Test
     """
@@ -930,7 +926,6 @@ def manage_clock_(_nclicks, _n_intervals, new_time, _playback_running):
     playback_btn_text = 'Pause Playback'
     if sa.playback_clock.tzinfo is None:
         sa.playback_clock = sa.playback_clock.replace(tzinfo=timezone.utc)
-    #current_time = sa.playback_clock_str
     readout_time = datetime.strftime(sa.playback_clock, '%Y-%m-%d   %H:%M:%S')
     style = lc.feedback_green
     triggered_id = ctx.triggered_id
@@ -951,32 +946,31 @@ def manage_clock_(_nclicks, _n_intervals, new_time, _playback_running):
                         UpdateDirList(radar,sa.playback_clock_str)
             else:
                 pass
+
         if sa.playback_clock >= sa.playback_end:
             interval_disabled = True
             sa.playback_paused = True
+            sa.playback_clock = sa.playback_end
+            sa.playback_clock_str = sa.date_time_string(sa.playback_clock)
             status = 'Simulation Complete'
             playback_btn_text = 'Restart Simulation'
             style = lc.feedback_yellow
 
     if triggered_id == 'pause_resume_playback_btn':
-        if sa.playback_paused:
-            interval_disabled = False
-            status = 'Running'
-            sa.playback_paused = False
-            playback_btn_text = 'Pause Playback'
-            style = lc.feedback_green
-        else:
+        interval_disabled = False
+        status = 'Running'
+        sa.playback_paused = False
+        playback_btn_text = 'Pause Playback'
+        style = lc.feedback_green
+
+        if nclicks % 2 == 1:
             interval_disabled = True
             status = 'Paused'
             sa.playback_paused = True
             playback_btn_text = 'Resume Playback'
             style = lc.feedback_yellow
-
-
+           
     if triggered_id == 'change_time':
-        interval_disabled = False
-        status = 'Running'
-        sa.playback_paused = False
         sa.playback_clock = datetime.strptime(new_time, '%Y-%m-%d %H:%M')
         if sa.playback_clock.tzinfo is None:
             sa.playback_clock = sa.playback_clock.replace(tzinfo=timezone.utc)

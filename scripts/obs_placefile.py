@@ -6,8 +6,7 @@ Get latest obs: https://developers.synopticdata.com/mesonet/v2/stations/latest/
 Obs network/station providers: https://developers.synopticdata.com/about/station-providers
 Selecting stations: https://developers.synopticdata.com/mesonet/v2/station-selectors/
 
-09 Jun 2024: Made exception handling more robust 
-11 Jun 2024: Exceptions not robust enough! Added KeyError handling, since that was the main issue
+
 """
 from pathlib import Path
 import sys

@@ -2,14 +2,18 @@
 Layout components for the Cloud Radar Simulation Server application    
 """
 from datetime import datetime
+import os
 import pytz
 import pandas as pd
 import numpy as np
 import plotly.graph_objs as go
 import dash_bootstrap_components as dbc
 from dash import html, dcc, dash_table
+from dotenv import load_dotenv
 from config import LINK_BASE, PLACEFILES_LINKS
 
+load_dotenv()
+MAP_TOKEN = os.getenv("MAPBOX_TOKEN")
 now = datetime.now(pytz.utc)
 
 df = pd.read_csv('radars.csv', dtype={'lat': float, 'lon': float})
@@ -222,8 +226,9 @@ fig = go.Figure(go.Scattermapbox(
     text=df['radar']))
 
 fig.update_layout(
-    mapbox={  # 'accesstoken': TOKEN,
-        'style': "carto-darkmatter",
+    mapbox={'accesstoken': MAP_TOKEN,
+        #'style': "carto-darkmatter",
+        'style': "mapbox://styles/mapbox/dark-v10",
         'center': {'lon': -94.4, 'lat': 38.2},
         'zoom': 3.8})
 
