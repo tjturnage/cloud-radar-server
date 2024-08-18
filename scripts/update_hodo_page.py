@@ -8,7 +8,7 @@ import sys
 from datetime import datetime
 import pytz
 
-#from config import HODOGRAPHS_DIR, HODOGRAPHS_PAGE
+from config import HODOGRAPHS_DIR, HODOGRAPHS_PAGE
 
 #HODO_DIR = '/data/cloud-radar-server/assets/hodographs'
 #HODOGRAPHS_PAGE = '/data/cloud-radar-server/assets/hodographs.html'
@@ -32,6 +32,7 @@ HEAD_NOLIST = """<!DOCTYPE html>
 <html>
 <head>
 <title>Hodographs</title>
+<meta http-equiv="refresh" content="60">
 <link rel="icon" type="image/x-icon" href="./favicon.ico">
 </head>
 <body>"""
@@ -123,6 +124,7 @@ class UpdateHodoHTML():
             <html>
             <head>
             <title>Hodographs</title>
+            <meta http-equiv="refresh" content="60">
             <style>
             body {{ font-family: Arial, sans-serif; }}
             img {{ max-width: 60%; height: auto; }}
@@ -209,6 +211,7 @@ class UpdateHodoHTML():
             }};
 
             updateSlider(); // Initialize the slider with the default selection
+        
             </script>
             </body>
             </html>"""
