@@ -220,7 +220,12 @@ class UpdateHodoHTML():
             }};
 
             updateSlider(); // Initialize the slider with the default selection
-        
+
+            // Refresh the page every 2 minutes (120,000 milliseconds)
+            setInterval(function() {{{{
+                location.reload();
+            }}, 120000);}}
+
             </script>
             </body>
             </html>"""

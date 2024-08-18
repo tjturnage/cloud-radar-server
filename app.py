@@ -949,8 +949,11 @@ def manage_clock_(_nclicks, _n_intervals, new_time, _playback_running):
                 else:
                     for _r, radar in enumerate(sa.radar_list):
                         UpdateDirList(radar,sa.playback_clock_str)
+            else:
+                pass
         if sa.playback_clock >= sa.playback_end:
             interval_disabled = True
+            sa.playback_paused = True
             status = 'Simulation Complete'
             playback_btn_text = 'Restart Simulation'
             style = lc.feedback_yellow
@@ -971,8 +974,9 @@ def manage_clock_(_nclicks, _n_intervals, new_time, _playback_running):
 
 
     if triggered_id == 'change_time':
-        # interval_disabled = True
-        # status = 'Paused'
+        interval_disabled = False
+        status = 'Running'
+        sa.playback_paused = False
         sa.playback_clock = datetime.strptime(new_time, '%Y-%m-%d %H:%M')
         if sa.playback_clock.tzinfo is None:
             sa.playback_clock = sa.playback_clock.replace(tzinfo=timezone.utc)
