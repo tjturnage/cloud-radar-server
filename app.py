@@ -107,6 +107,7 @@ class RadarSimulator(Config):
         #self.make_simulation_times()
         # This will generate a logfile. Something we'll want to turn on in the future.
         self.log = self.create_logfile()
+        UpdateHodoHTML('None')  # set up the hodo page with no images
 
     def create_logfile(self):
         """

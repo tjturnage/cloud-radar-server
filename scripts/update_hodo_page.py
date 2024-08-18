@@ -8,16 +8,17 @@ import sys
 from datetime import datetime
 import pytz
 
-from config import HODOGRAPHS_DIR, HODOGRAPHS_PAGE
-
 #HODO_DIR = '/data/cloud-radar-server/assets/hodographs'
 #HODOGRAPHS_PAGE = '/data/cloud-radar-server/assets/hodographs.html'
 dir_parts = Path.cwd().parts
 if 'C:\\' in dir_parts:
+    PLATFORM = 'windows'
     HODOGRAPHS_DIR = 'C:/data/scripts/cloud-radar-server/assets/hodographs'
     HODOGRAPHS_PAGE = 'C:/data/scripts/cloud-radar-server/assets/hodographs.html'
     #link_base = "http://localhost:8050/assets"
     #cloud = False
+else:
+    from config import HODOGRAPHS_DIR, HODOGRAPHS_PAGE
 
 
 HEAD = """<!DOCTYPE html>
@@ -32,7 +33,6 @@ HEAD_NOLIST = """<!DOCTYPE html>
 <html>
 <head>
 <title>Hodographs</title>
-<meta http-equiv="refresh" content="60">
 <link rel="icon" type="image/x-icon" href="./favicon.ico">
 </head>
 <body>"""
@@ -124,7 +124,6 @@ class UpdateHodoHTML():
             <html>
             <head>
             <title>Hodographs</title>
-            <meta http-equiv="refresh" content="60">
             <style>
             body {{ font-family: Arial, sans-serif; }}
             img {{ max-width: 60%; height: auto; }}
@@ -220,5 +219,7 @@ class UpdateHodoHTML():
 
 
 if __name__ == "__main__":
-    #UpdateHodoHTML('2024-09-01 23:15')
-    UpdateHodoHTML(sys.argv[1])
+    if PLATFORM == 'windows':
+        UpdateHodoHTML('2024-09-01 23:15')
+    else:
+        UpdateHodoHTML(sys.argv[1])
