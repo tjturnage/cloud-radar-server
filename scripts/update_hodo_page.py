@@ -80,6 +80,7 @@ class UpdateHodoHTML():
             file_time = datetime.strptime(filename[-19:-4], '%Y%m%d_%H%M%S').replace(tzinfo=pytz.UTC).timestamp()
             if file_time < self.clock_time:
                 valid_hodo_list.append(filename)
+        valid_hodo_list.sort()
         return valid_hodo_list
 
     def initialize_hodo_page(self) -> None:
@@ -118,7 +119,16 @@ class UpdateHodoHTML():
             self.initialize_hodo_page()
 
         else:
+            link_list = []
             station_codes = set(img[-24:-20] for img in self.image_files)
+            for filename in self.valid_hodo_list:
+                file_time = datetime.strptime(filename[-19:-4], '%Y%m%d_%H%M%S').replace(tzinfo=pytz.UTC).timestamp()
+                if file_time < self.clock_time:
+                    #print(filename)
+                    link = f'hodographs/{filename}'
+                    link_list.append(link)
+            print(link_list)
+         
         # HTML content with JavaScript to loop through images using a slider
             html_content = f"""<!DOCTYPE html>
             <html>
@@ -176,7 +186,7 @@ class UpdateHodoHTML():
             <div class="slider-text-container">Ground Relative&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp | &nbsp&nbsp&nbsp&nbsp&nbsp&nbspStorm Relative</div>
 
             <script>
-            var allImages = { [f'hodographs/{img}' for img in self.image_files] };
+            var allImages = {link_list};
             var images = allImages;
             var slider = document.getElementById('image-slider');
             var dropdown = document.getElementById('station-dropdown');
