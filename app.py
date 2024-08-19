@@ -1032,7 +1032,7 @@ def get_sim(_yr, _mo, _dy, _hr, _mn, _dur) -> str:
     object for use in scripts so don't need to be explicitly returned here.
     """
     sa.make_simulation_times()
-    line1 = f'Start: {sa.event_start_str}Z ____ {sa.event_duration} minutes'
+    line1 = f'{sa.event_start_str}Z ____ {sa.event_duration} minutes'
     return line1
 
 

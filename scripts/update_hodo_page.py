@@ -34,6 +34,7 @@ HEAD_NOLIST = """<!DOCTYPE html>
 <head>
 <title>Hodographs</title>
 <link rel="icon" type="image/x-icon" href="./favicon.ico">
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootswatch/4.5.2/cyborg/bootstrap.min.css">
 </head>
 <body>"""
 
@@ -79,14 +80,19 @@ class UpdateHodoHTML():
         valid_hodo_list = []
         self.image_files = [f for f in os.listdir(HODOGRAPHS_DIR) if f.endswith('.png') or f.endswith('.jpg')]
         self.image_files.sort()
-        self.first_image_path = self.image_files[0]
-        #print(self.image_files)
-        for filename in self.image_files:
-            file_time = datetime.strptime(filename[-19:-4], '%Y%m%d_%H%M%S').replace(tzinfo=pytz.UTC).timestamp()
-            if file_time < self.clock_time:
-                valid_hodo_list.append(filename)
-        valid_hodo_list.sort()
-        return valid_hodo_list
+        try:
+            self.first_image_path = self.image_files[0]
+            #print(self.image_files)
+            for filename in self.image_files:
+                file_time = datetime.strptime(filename[-19:-4], '%Y%m%d_%H%M%S').replace(tzinfo=pytz.UTC).timestamp()
+                if file_time < self.clock_time:
+                    valid_hodo_list.append(filename)
+            valid_hodo_list.sort()
+            return valid_hodo_list
+        except IndexError as ie:
+            print(f'Could not find any hodographs in UpdateHodoHTML: {ie}')
+            self.initialize_hodo_page()
+            return []
 
     def initialize_hodo_page(self) -> None:
         """
@@ -94,7 +100,8 @@ class UpdateHodoHTML():
         """
         with open(HODOGRAPHS_PAGE, 'w', encoding='utf-8') as fout:
             fout.write(HEAD_NOLIST)
-            fout.write('<h1>Graphics not available, check back later!</h1>\n')
+            fout.write('<br><br>\n')
+            fout.write('<h3>Graphics not available, check back later!</h3>\n')
             fout.write(TAIL_NOLIST)
     
     def update_hodo_page(self) -> None:
@@ -138,7 +145,7 @@ class UpdateHodoHTML():
             <html>
             <head>
             <title>Hodographs</title>
-            <link rel="icon" href="../favicon.ico" type="image/x-icon">
+            <link rel="icon" href="./favicon.ico" type="image/x-icon">
             <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootswatch/4.5.2/cyborg/bootstrap.min.css">
             <style>
             img {{ max-width: 90%; height: auto; }} /* Display images at 90% size */
@@ -186,7 +193,7 @@ class UpdateHodoHTML():
             <div class="slider-container mb-4">
             <input type="range" min="0" max="{len(self.image_files) - 1}" value="0" class="slider" id="image-slider">
             </div>
-            <div class="slider-text-container">Choose the half of the slider to used based on desired hodo type</div>
+            <div class="slider-text-container">Choose which half of the slider to use based on desired hodo type</div>
 
 
             <script>
