@@ -181,13 +181,13 @@ class UpdateHodoHTML():
             </div>
             <div class="slider-text-container">Ground Relative&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp | &nbsp&nbsp&nbsp&nbsp&nbsp&nbspStorm Relative</div>
             <div class="slider-container mb-4">
-            <input type="range" min="0" max="{len(self.image_files) - 1}" value="0" class="slider" id="image-slider">
+            <input type="range" min="0" max="{len(self.valid_hodo_list) - 1}" value="0" class="slider" id="image-slider">
             </div>
             <div class="slider-text-container">Choose the half of the slider to used based on desired hodo type</div>
 
 
             <script>
-            var allImages = { [f'hodographs/{img}' for img in self.image_files] };
+            var allImages = {self.valid_hodo_list};
             var images = allImages;
             var slider = document.getElementById('image-slider');
             var dropdown = document.getElementById('station-dropdown');
