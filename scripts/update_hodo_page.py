@@ -135,9 +135,10 @@ class UpdateHodoHTML():
             <html>
             <head>
             <title>Hodographs</title>
+            <link rel="icon" href="../favicon.ico" type="image/x-icon">
+            <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootswatch/4.5.2/cyborg/bootstrap.min.css">
             <style>
-            body {{ font-family: Arial, sans-serif; }}
-            img {{ max-width: 60%; height: auto; }}
+            img {{ max-width: 90%; height: auto; }} /* Display images at 90% size */
             .slider-container {{
                 width: 100%;
                 text-align: center;
@@ -149,7 +150,7 @@ class UpdateHodoHTML():
                 text-align: center;
             }}
             .slider {{
-                width: 80%;
+                width: 90%;
             }}
             #image-container {{
                 display: flex;
@@ -163,31 +164,30 @@ class UpdateHodoHTML():
                 font-weight: bold;
             }}
             </style>
-            <link rel="icon" type="image/x-icon" href="./favicon.ico">
             </head>
-            <body>
-            <h1>Hodographs</h1>
+            <body class="container">
+            <br>
+            <br>
             <div class="slider-text-container">Playback time: {self.clock_str}</div>
-            <div id="controls">
+            <div id="controls" class="mb-4">
             <label for="station-dropdown">Select Station:</label>
-            <select id="station-dropdown">
-                <option value="all">All</option>
+            <select id="station-dropdown" class="form-control">
                 {"".join(f'<option value="{code}">{code}</option>' for code in station_codes)}
             </select>
             </div>
-            <div id="image-container">
+            <div id="image-container" class="mb-4">
             <img id="hodograph-image" src="hodographs/{self.image_files[0]}" alt="Hodograph">
             <div id="station-container"></div>
             </div>
-            <br><br>
-            <div class="slider-text-container">Choose which half of the slider range to use based on preferred hodo type</div>
-            <div class="slider-container">
+            <div class="slider-text-container">Ground Relative&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp | &nbsp&nbsp&nbsp&nbsp&nbsp&nbspStorm Relative</div>
+            <div class="slider-container mb-4">
             <input type="range" min="0" max="{len(self.image_files) - 1}" value="0" class="slider" id="image-slider">
             </div>
-            <div class="slider-text-container">Ground Relative&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp | &nbsp&nbsp&nbsp&nbsp&nbsp&nbspStorm Relative</div>
+            <div class="slider-text-container">Choose the half of the slider to used based on desired hodo type</div>
+
 
             <script>
-            var allImages = {link_list};
+            var allImages = { [f'hodographs/{img}' for img in self.image_files] };
             var images = allImages;
             var slider = document.getElementById('image-slider');
             var dropdown = document.getElementById('station-dropdown');
@@ -221,6 +221,8 @@ class UpdateHodoHTML():
             }};
 
             updateSlider(); // Initialize the slider with the default selection
+
+            // Refresh the page every 2 minutes (120,000 milliseconds)
             {interval_code}
             </script>
             </body>
