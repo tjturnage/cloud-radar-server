@@ -41,9 +41,13 @@ TAIL = """</ul>
 </body>
 </html>"""
 
-TAIL_NOLIST = """</body>
-</html>"""
+interval_code = "setInterval(function() {location.reload();}, 120000);"
 
+TAIL_NOLIST = """<script>
+{interval_code}
+</script>
+</body>
+</html>"""
 
 class UpdateHodoHTML():
     """
@@ -120,7 +124,6 @@ class UpdateHodoHTML():
 
         else:
             link_list = []
-            interval_code = "setInterval(function() {location.reload();}, 120000);"
             station_codes = set(img[-24:-20] for img in self.image_files)
             for filename in self.valid_hodo_list:
                 file_time = datetime.strptime(filename[-19:-4], '%Y%m%d_%H%M%S').replace(tzinfo=pytz.UTC).timestamp()
@@ -181,7 +184,7 @@ class UpdateHodoHTML():
             </div>
             <div class="slider-text-container">Ground Relative&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp | &nbsp&nbsp&nbsp&nbsp&nbsp&nbspStorm Relative</div>
             <div class="slider-container mb-4">
-            <input type="range" min="0" max="{len(self.valid_hodo_list) - 1}" value="0" class="slider" id="image-slider">
+            <input type="range" min="0" max="{len(self.image_files) - 1}" value="0" class="slider" id="image-slider">
             </div>
             <div class="slider-text-container">Choose the half of the slider to used based on desired hodo type</div>
 
