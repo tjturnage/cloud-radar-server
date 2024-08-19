@@ -78,8 +78,9 @@ class UpdateHodoHTML():
         """
         valid_hodo_list = []
         self.image_files = [f for f in os.listdir(HODOGRAPHS_DIR) if f.endswith('.png') or f.endswith('.jpg')]
-        self.first_image_path = f'hodographs/{self.image_files[0]}'
-        print(self.image_files)
+        self.image_files.sort()
+        self.first_image_path = self.image_files[0]
+        #print(self.image_files)
         for filename in self.image_files:
             file_time = datetime.strptime(filename[-19:-4], '%Y%m%d_%H%M%S').replace(tzinfo=pytz.UTC).timestamp()
             if file_time < self.clock_time:
@@ -109,7 +110,6 @@ class UpdateHodoHTML():
                 for filename in self.valid_hodo_list:
                     file_time = datetime.strptime(filename[-19:-4], '%Y%m%d_%H%M%S').replace(tzinfo=pytz.UTC).timestamp()
                     if file_time < self.clock_time:
-                        print(filename)
                         line = f'<li><a href="hodographs/{filename}">{filename}</a></li>\n'
                         fout.write(line)
                 fout.write(TAIL)
@@ -131,7 +131,7 @@ class UpdateHodoHTML():
                     #print(filename)
                     link = f'hodographs/{filename}'
                     link_list.append(link)
-            print(link_list)
+            #print(link_list)
          
         # HTML content with JavaScript to loop through images using a slider
             html_content = f"""<!DOCTYPE html>
@@ -190,7 +190,7 @@ class UpdateHodoHTML():
 
 
             <script>
-            var allImages = {self.valid_hodo_list};
+            var allImages = {link_list};
             var images = allImages;
             var slider = document.getElementById('image-slider');
             var dropdown = document.getElementById('station-dropdown');
