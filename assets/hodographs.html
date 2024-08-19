@@ -1,9 +1,94 @@
 <!DOCTYPE html>
-<html>
-<head>
-<title>Hodographs</title>
-<link rel="icon" type="image/x-icon" href="./favicon.ico">
-</head>
-<body><h1>Graphics not available, check back later!</h1>
-</body>
-</html>
+            <html>
+            <head>
+            <title>Hodographs</title>
+            <style>
+            body { font-family: Arial, sans-serif; }
+            img { max-width: 60%; height: auto; }
+            .slider-container {
+                width: 100%;
+                text-align: center;
+            }
+            .slider-text-container {
+                font-size: 2em;
+                font-style: strong;
+                width: 100%;
+                text-align: center;
+            }
+            .slider {
+                width: 80%;
+            }
+            #image-container {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            #station-container {
+                display: none;
+                margin-left: 20px;
+                font-size: 1.5em;
+                font-weight: bold;
+            }
+            </style>
+            <link rel="icon" type="image/x-icon" href="./favicon.ico">
+            </head>
+            <body>
+            <h1>Hodographs</h1>
+            <div class="slider-text-container">Playback time: 2024-09-01 23:15</div>
+            <div id="controls">
+            <label for="station-dropdown">Select Station:</label>
+            <select id="station-dropdown">
+                <option value="all">All</option>
+                <option value="KGRR">KGRR</option><option value="KDTX">KDTX</option>
+            </select>
+            </div>
+            <div id="image-container">
+            <img id="hodograph-image" src="hodographs/Hodograph_KDTX_20230825_000252.png" alt="Hodograph">
+            <div id="station-container"></div>
+            </div>
+            <br><br>
+            <div class="slider-text-container">Choose which half of the slider range to use based on preferred hodo type</div>
+            <div class="slider-container">
+            <input type="range" min="0" max="43" value="0" class="slider" id="image-slider">
+            </div>
+            <div class="slider-text-container">Ground Relative&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp | &nbsp&nbsp&nbsp&nbsp&nbsp&nbspStorm Relative</div>
+
+            <script>
+            var allImages = ['hodographs/Hodograph_KDTX_20230825_000252.png', 'hodographs/Hodograph_KDTX_20230825_000701.png', 'hodographs/Hodograph_KDTX_20230825_001111.png', 'hodographs/Hodograph_KDTX_20230825_001521.png', 'hodographs/Hodograph_KDTX_20230825_001931.png', 'hodographs/Hodograph_KDTX_20230825_002340.png', 'hodographs/Hodograph_KDTX_20230825_002750.png', 'hodographs/Hodograph_KDTX_20230825_003158.png', 'hodographs/Hodograph_KDTX_20230825_003641.png', 'hodographs/Hodograph_KDTX_20230825_004125.png', 'hodographs/Hodograph_KDTX_20230825_004608.png', 'hodographs/Hodograph_KDTX_20230825_005050.png', 'hodographs/Hodograph_KDTX_20230825_005532.png', 'hodographs/Hodograph_KGRR_20230825_000229.png', 'hodographs/Hodograph_KGRR_20230825_000826.png', 'hodographs/Hodograph_KGRR_20230825_001422.png', 'hodographs/Hodograph_KGRR_20230825_002030.png', 'hodographs/Hodograph_KGRR_20230825_002721.png', 'hodographs/Hodograph_KGRR_20230825_003412.png', 'hodographs/Hodograph_KGRR_20230825_004049.png', 'hodographs/Hodograph_KGRR_20230825_004741.png', 'hodographs/Hodograph_KGRR_20230825_005407.png', 'hodographs/SR_Hodograph_KDTX_20230825_000252.png', 'hodographs/SR_Hodograph_KDTX_20230825_000701.png', 'hodographs/SR_Hodograph_KDTX_20230825_001111.png', 'hodographs/SR_Hodograph_KDTX_20230825_001521.png', 'hodographs/SR_Hodograph_KDTX_20230825_001931.png', 'hodographs/SR_Hodograph_KDTX_20230825_002340.png', 'hodographs/SR_Hodograph_KDTX_20230825_002750.png', 'hodographs/SR_Hodograph_KDTX_20230825_003158.png', 'hodographs/SR_Hodograph_KDTX_20230825_003641.png', 'hodographs/SR_Hodograph_KDTX_20230825_004125.png', 'hodographs/SR_Hodograph_KDTX_20230825_004608.png', 'hodographs/SR_Hodograph_KDTX_20230825_005050.png', 'hodographs/SR_Hodograph_KDTX_20230825_005532.png', 'hodographs/SR_Hodograph_KGRR_20230825_000229.png', 'hodographs/SR_Hodograph_KGRR_20230825_000826.png', 'hodographs/SR_Hodograph_KGRR_20230825_001422.png', 'hodographs/SR_Hodograph_KGRR_20230825_002030.png', 'hodographs/SR_Hodograph_KGRR_20230825_002721.png', 'hodographs/SR_Hodograph_KGRR_20230825_003412.png', 'hodographs/SR_Hodograph_KGRR_20230825_004049.png', 'hodographs/SR_Hodograph_KGRR_20230825_004741.png', 'hodographs/SR_Hodograph_KGRR_20230825_005407.png'];
+            var images = allImages;
+            var slider = document.getElementById('image-slider');
+            var dropdown = document.getElementById('station-dropdown');
+
+            function updateSlider() {
+                var selectedStation = dropdown.value;
+                if (selectedStation === 'all') {
+                images = allImages;
+                } else {
+                images = allImages.filter(img => img.includes(selectedStation));
+                }
+                slider.max = images.length - 1;
+                slider.value = 0;
+                document.getElementById('hodograph-image').src = images[0];
+                updateStationCode(images[0]);
+            }
+
+            function updateStationCode(imagePath) {
+                var stationCode = imagePath.slice(-24, -20);
+                document.getElementById('station-container').innerText = stationCode;
+            }
+
+            slider.oninput = function() {
+                var selectedImage = images[this.value];
+                document.getElementById('hodograph-image').src = selectedImage;
+                updateStationCode(selectedImage);
+            };
+
+            dropdown.onchange = function() {
+                updateSlider();
+            };
+
+            updateSlider(); // Initialize the slider with the default selection
+            setInterval(function() {location.reload();}, 120000);
+            </script>
+            </body>
+            </html>

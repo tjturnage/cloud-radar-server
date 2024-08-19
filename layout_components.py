@@ -81,7 +81,7 @@ top_section = html.Div([], style={'height': '5px'})
 
 
 top_content = [
-    dbc.CardBody([html.H2("Cloud Radar Simulation Server", className="card-title",
+    dbc.CardBody([html.H2("Radar Simulation Server in the Cloud", className="card-title",
                           style={'font-weight': 'bold', 'font-style': 'italic'}),
                   html.H5(
         "Providing radar simulations for NOAA/NWS training ...",

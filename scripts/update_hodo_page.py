@@ -120,6 +120,7 @@ class UpdateHodoHTML():
 
         else:
             link_list = []
+            interval_code = "setInterval(function() {location.reload();}, 120000);"
             station_codes = set(img[-24:-20] for img in self.image_files)
             for filename in self.valid_hodo_list:
                 file_time = datetime.strptime(filename[-19:-4], '%Y%m%d_%H%M%S').replace(tzinfo=pytz.UTC).timestamp()
@@ -220,12 +221,7 @@ class UpdateHodoHTML():
             }};
 
             updateSlider(); // Initialize the slider with the default selection
-
-            // Refresh the page every 2 minutes (120,000 milliseconds)
-            setInterval(function() {{{{
-                location.reload();
-            }}, 120000);}}
-
+            {interval_code}
             </script>
             </body>
             </html>"""
