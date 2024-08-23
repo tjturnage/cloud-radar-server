@@ -5,10 +5,9 @@ from pathlib import Path
 from glob import glob
 import psutil
 import pandas as pd
-import json
-import config as cfg
+import config
 
-def exec_script(script_path, args):
+def exec_script(script_path, args, session_id):
     """
     Generalized function to run application scripts. subprocess.run() or similar is 
     required for tracking of spawned python processes and termination if requested
@@ -22,15 +21,15 @@ def exec_script(script_path, args):
         PYTHON = r"C:\\Users\\lee.carlaw\\environments\\cloud-radar\\Scripts\python.exe"
 
     output = {}
+    env = os.environ.copy() 
+    env['session_id'] = session_id # add the unique session id to the process
     try:
         # Execute scripts as python module to allow config import from higher-level dir:
         # python -m scripts.script-name
         parts = script_path.parts
         arg = f"{script_path.parts[-2]}.{parts[-1]}".replace(".py", "")
         process = subprocess.Popen([PYTHON, '-m', arg] + args, stdout=subprocess.PIPE,
-                                    stderr=subprocess.PIPE)
-        #process = subprocess.Popen([PYTHON, script_path] + args, stdout=subprocess.PIPE,
-        #                           stderr=subprocess.PIPE)
+                                    stderr=subprocess.PIPE, env=env)
         output['stdout'], output['stderr'] = process.communicate()
         output['returncode'] = process.returncode
     except Exception as e:
@@ -50,15 +49,20 @@ def get_app_processes():
             info = proc.info
             if ('python' in info['name'] or 'wgrib2' in info['name']) and \
                 len(info['cmdline']) > 1:
+                
+                # Tag process with its unique session id (set in exec_script above)
+                info['session_id'] = proc.environ().get('session_id')  
                 processes.append(info)
         except:
             pass
     return processes
 
-def cancel_all(sa):
+def cancel_all(sa, session_id):
     """
     This function is invoked when the user clicks the Cancel button in the app. See
     app.cancel_scripts.
+
+    Updated to only kill processes associated with this unique session id
     """
     processes = get_app_processes()
 
@@ -71,18 +75,20 @@ def cancel_all(sa):
     # shouldn't be?
     # ******************************************************************************
     for process in processes:
-        name = process['cmdline'][1].rsplit('/')[-1].rsplit('.')[0]
-        if process['cmdline'][1] == '-m':
-            name = process['cmdline'][2].rsplit('/')[-1].rsplit('.')[-1]
-        if process['name'] == 'wgrib2': name = 'wgrib2'
+        process_session_id = process['session_id']
+        if process_session_id == session_id:
+            name = process['cmdline'][1].rsplit('/')[-1].rsplit('.')[0]
+            if process['cmdline'][1] == '-m':
+                name = process['cmdline'][2].rsplit('/')[-1].rsplit('.')[-1]
+            if process['name'] == 'wgrib2': name = 'wgrib2'
 
-        if name in cfg.scripts_list:
-            sa.log.info(f"Killing process: {name} with pid: {process['pid']}") 
-            os.kill(process['pid'], signal.SIGTERM)
-        
-        if len(process['cmdline']) >= 3 and 'multiprocessing' in process['cmdline'][2]:
-            sa.log.info(f"Killing spawned multi-process with pid: {process['pid']}") 
-            os.kill(process['pid'], signal.SIGTERM)
+            if name in config.scripts_list:
+                sa.log.info(f"Killing process: {name} with pid: {process['pid']}") 
+                os.kill(process['pid'], signal.SIGTERM)
+            
+            if len(process['cmdline']) >= 3 and 'multiprocessing' in process['cmdline'][2]:
+                sa.log.info(f"Killing spawned multi-process with pid: {process['pid']}") 
+                os.kill(process['pid'], signal.SIGTERM)
 
 
 def calc_completion_percentage(expected_files, files_on_system):
@@ -104,34 +110,31 @@ def radar_monitor(sa):
     percent_complete = calc_completion_percentage(expected_files, files_on_system)
     return percent_complete, files_on_system
 
-def munger_monitor(sa):
+def munger_monitor(sa, cfg):
     expected_files = list(sa.radar_files_dict.values())
 
     # Are the mungered files always .gz?
-    #files_on_system = glob(f"{sa.polling_dir}/**/*.gz", recursive=True)
-    files_on_system = glob(f"{cfg.POLLING_DIR}/**/*.gz", recursive=True)
+    files_on_system = glob(f"{cfg['POLLING_DIR']}/**/*.gz", recursive=True)
 
     percent_complete = calc_completion_percentage(expected_files, files_on_system)
     return percent_complete
 
-def surface_placefile_monitor(_sa):
+def surface_placefile_monitor(_sa, cfg):
     filenames = [
         'wind.txt', 'temp.txt', 'latest_surface_observations.txt',
         'latest_surface_observations_lg.txt', 'latest_surface_observations_xlg.txt'
     ]
-    #expected_files =  [f"{sa.placefiles_dir}/{i}" for i in filenames]
-    expected_files =  [f"{cfg.PLACEFILES_DIR}/{i}" for i in filenames]
+    expected_files =  [f"{cfg['PLACEFILES_DIR']}/{i}" for i in filenames]
     files_on_system = [x for x in expected_files if os.path.exists(x)]
 
     #percent_complete = calc_completion_percentage(expected_files, files_on_system)
     return len(files_on_system), len(expected_files)
 
-def nse_status_checker(_sa):
+def nse_status_checker(_sa, cfg):
     """
     Read in model status text file and query associated file sizes. 
     """
-    #filename = f"{sa.data_dir}/model_data/model_list.txt"
-    filename = f"{cfg.DATA_DIR}/model_data/model_list.txt"
+    filename = f"{cfg['MODEL_DIR']}/model_list.txt"
     output = []
     warning_text = ""
     if os.path.exists(filename):

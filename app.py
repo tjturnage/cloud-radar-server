@@ -34,7 +34,8 @@ import numpy as np
 from botocore.client import Config
 # bootstrap is what helps styling for a better presentation
 import dash_bootstrap_components as dbc
-import config as cfg
+import config 
+from config import app
 
 import layout_components as lc
 from scripts.obs_placefile import Mesowest
@@ -107,15 +108,15 @@ class RadarSimulator(Config):
         #self.make_simulation_times()
         # This will generate a logfile. Something we'll want to turn on in the future.
         self.log = self.create_logfile()
-        UpdateHodoHTML('None')  # set up the hodo page with no images
+        #UpdateHodoHTML('None', '', '')  # set up the hodo page with no images
 
     def create_logfile(self):
         """
         Creates an initial logfile. Stored in the data dir for now. Call is 
         sa.log.info or sa.log.error or sa.log.warning or sa.log.exception
         """
-        os.makedirs(cfg.LOG_DIR, exist_ok=True)
-        logging.basicConfig(filename=f"{cfg.LOG_DIR}/logfile.txt",
+        os.makedirs(config.LOG_DIR, exist_ok=True)
+        logging.basicConfig(filename=f"{config.LOG_DIR}/logfile.txt",
                             format='%(levelname)s %(asctime)s :: %(message)s',
                             datefmt="%Y-%m-%d %H:%M:%S")
         log = logging.getLogger()
@@ -135,13 +136,13 @@ class RadarSimulator(Config):
                                               'asos_one': asos_one, 'asos_two': asos_two,
                                               'radar': radar.upper(), 'file_list': []}
 
-    def copy_grlevel2_cfg_file(self) -> None:
+    def copy_grlevel2_cfg_file(self, cfg) -> None:
         """
         Ensures a grlevel2.cfg file is copied into the polling directory.
         This file is required for GR2Analyst to poll for radar data.
         """
-        source = cfg.BASE_DIR / 'grlevel2.cfg'
-        destination = cfg.POLLING_DIR / 'grlevel2.cfg'
+        source = f"{cfg['BASE_DIR']}/grlevel2.cfg"
+        destination = f"{cfg['POLLING_DIR']}/grlevel2.cfg"
         try:
             shutil.copyfile(source, destination)
         except Exception as e:
@@ -302,12 +303,12 @@ class RadarSimulator(Config):
                                              math.cos(d/R) - math.sin(phi_new) * math.sin(phi_out))
         return math.degrees(phi_out), math.degrees(lambda_out)
 
-    def shift_placefiles(self) -> None:
+    def shift_placefiles(self, PLACEFILES_DIR) -> None:
         """
         # While the _shifted placefiles should be purged for each run, just ensure we're
         # only querying the "original" placefiles to shift (exclude any with _shifted.txt)        
         """
-        filenames = glob(f"{cfg.PLACEFILES_DIR}/*.txt")
+        filenames = glob(f"{PLACEFILES_DIR}/*.txt")
         filenames = [x for x in filenames if "shifted" not in x]
         for file_ in filenames:
             with open(file_, 'r', encoding='utf-8') as f:
@@ -373,12 +374,13 @@ class RadarSimulator(Config):
         utc_file_time = file_time.replace(tzinfo=pytz.UTC)
         return utc_file_time
 
-    def remove_files_and_dirs(self) -> None:
+    def remove_files_and_dirs(self, cfg) -> None:
         """
         Cleans up files and directories from the previous simulation so these datasets
         are not included in the current simulation.
         """
-        dirs = [cfg.RADAR_DIR, cfg.POLLING_DIR, cfg.HODOGRAPHS_DIR, cfg.MODEL_DIR]
+        dirs = [cfg['RADAR_DIR'], cfg['POLLING_DIR'], cfg['HODOGRAPHS_DIR'], cfg['MODEL_DIR'],
+                cfg['PLACEFILES_DIR']]
         for directory in dirs:
             for root, dirs, files in os.walk(directory, topdown=False):
                 for name in files:
@@ -391,11 +393,7 @@ class RadarSimulator(Config):
 # ----------------------------- Initialize the app  --------------------------------------------
 ################################################################################################
 
-
 sa = RadarSimulator()
-app = Dash(__name__, external_stylesheets=[dbc.themes.CYBORG],
-           suppress_callback_exceptions=True, update_title=None)
-app.title = "Radar Simulator"
 
 ################################################################################################
 # ----------------------------- Build the layout  ---------------------------------------------
@@ -409,7 +407,8 @@ sim_day_selection = dbc.Col(html.Div([
     dcc.Dropdown(np.arange(1, sa.days_in_month+1), 16, id='start_day', clearable=False)]))
 
 playback_time_options = dbc.Col(html.Div([
-    dcc.Dropdown(options={'label': 'Sim not started', 'value': ''}, id='change_time', disabled=True, clearable=False)]))
+    dcc.Dropdown(options={'label': 'Sim not started', 'value': ''}, id='change_time', 
+                 disabled=True, clearable=False)]))
 
 playback_time_options_col = dbc.Col(html.Div([lc.change_playback_time_label, lc.spacer_mini,
                                               playback_time_options]))
@@ -425,39 +424,62 @@ simulation_playback_section = dbc.Container(
               playback_controls, lc.spacer_mini,
               ]),style=lc.section_box_pad))
 
-app.layout = dbc.Container([
-    # testing directory size monitoring
-    dcc.Interval(id='directory_monitor', disabled=False, interval=2*1000),
-    dcc.Interval(id='playback_timer', disabled=True, interval=15*1000),
-    # dcc.Store(id='model_dir_size'),
-    # dcc.Store(id='radar_dir_size'),
-    dcc.Store(id='tradar'),
-    dcc.Store(id='dummy'),
-    dcc.Store(id='playback_running_store', data=False),
-    dcc.Store(id='playback_start_store'),
-    dcc.Store(id='playback_end_store'),
-    dcc.Store(id='playback_clock_store'),
-    lc.top_section, lc.top_banner,
-    dbc.Container([
-        dbc.Container([
-            html.Div([html.Div([lc.step_select_time_section, lc.spacer,
-                            dbc.Row([
-                                lc.sim_year_section, lc.sim_month_section, sim_day_selection,
-                                lc.sim_hour_section, lc.sim_minute_section, lc.sim_duration_section,
-                                lc.spacer, lc.step_time_confirm])], style={'padding': '1em'}),
-                      ], style=lc.section_box)])
-    ]), lc.spacer,
-    lc.full_radar_select_section, lc.spacer_mini,
-    lc.map_section,
-    lc.full_transpose_section,
-    lc.scripts_button,
-    lc.status_section,
-    lc.spacer,lc.toggle_placefiles_btn,lc.spacer_mini,
-    lc.full_links_section, lc.spacer,
-    simulation_playback_section,
-    html.Div(id='playback_speed_dummy', style={'display': 'none'}),
-    lc.radar_id, lc.bottom_section
-    ])# end of app.layout
+@app.callback( 
+    Output('dynamic_container', 'children'),
+    Output('layout_has_initialized', 'data'),
+    Input('directory_monitor', 'n_intervals'),
+    State('layout_has_initialized', 'data'),
+    State('dynamic_container', 'children')
+)
+def generate_layout(n_intervals, layout_has_initialized, children):
+    """
+    Dynamically generate the layout, which was started in the config file to set up 
+    the unique session id. This callback should only be executed once at page load in. 
+    Thereafter, layout_has_initialized will be set to True
+    """
+    if not layout_has_initialized['added']:
+        if children is None:
+            children = []
+
+        new_items = dbc.Container([
+            dcc.Interval(id='playback_timer', disabled=True, interval=15*1000),
+            dcc.Store(id='tradar'),
+            dcc.Store(id='dummy'),
+            dcc.Store(id='playback_running_store', data=False),
+            dcc.Store(id='playback_start_store'),
+            dcc.Store(id='playback_end_store'),
+            dcc.Store(id='playback_clock_store'),
+            lc.top_section, lc.top_banner,
+            dbc.Container([
+                dbc.Container([
+                    html.Div([html.Div([lc.step_select_time_section, lc.spacer,
+                                    dbc.Row([
+                                        lc.sim_year_section, lc.sim_month_section, sim_day_selection,
+                                        lc.sim_hour_section, lc.sim_minute_section, lc.sim_duration_section,
+                                        lc.spacer, lc.step_time_confirm])], style={'padding': '1em'}),
+                            ], style=lc.section_box)])
+            ]), lc.spacer,
+            lc.full_radar_select_section, lc.spacer_mini,
+            lc.map_section,
+            lc.full_transpose_section,
+            lc.scripts_button,
+            lc.status_section,
+            lc.spacer,lc.toggle_placefiles_btn,lc.spacer_mini,
+            lc.full_links_section, lc.spacer,
+            simulation_playback_section,
+            html.Div(id='playback_speed_dummy', style={'display': 'none'}),
+            lc.radar_id, lc.bottom_section
+        ])
+
+        # Append the new component to the current list of children
+        children = list(children)  
+        children.append(new_items)
+
+        layout_has_initialized['added'] = True
+
+        return children, layout_has_initialized
+
+    return children, layout_has_initialized
 
 ################################################################################################
 ################################################################################################
@@ -576,7 +598,7 @@ def transpose_radar(value):
 # ----------------------------- Run Scripts button  --------------------------------------------
 ################################################################################################
 
-def query_radar_files():
+def query_radar_files(cfg):
     """
     Get the radar files from the AWS bucket. This is a preliminary step to build the progess bar.
     """
@@ -585,9 +607,10 @@ def query_radar_files():
     sa.radar_files_dict = {}
     for _r, radar in enumerate(sa.radar_list):
         radar = radar.upper()
-        args = [radar, f'{sa.event_start_str}', str(sa.event_duration), str(False)]
+        args = [radar, f'{sa.event_start_str}', str(sa.event_duration), str(False), 
+                cfg['RADAR_DIR']]
         sa.log.info(f"Passing {args} to Nexrad.py")
-        results = utils.exec_script(cfg.NEXRAD_SCRIPT_PATH, args)
+        results = utils.exec_script(Path(cfg['NEXRAD_SCRIPT_PATH']), args, cfg['SESSION_ID'])
         if results['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
             sa.log.warning(f"User cancelled query_radar_files()")
             break
@@ -610,11 +633,11 @@ def run_hodo_script(args) -> None:
     start and playback start
     """
     print(args)
-    subprocess.run(["python", cfg.HODO_SCRIPT_PATH] + args, check=True)
+    subprocess.run(["python", config.HODO_SCRIPT_PATH] + args, check=True)
 
 
 def call_function(func, *args, **kwargs):
-    if len(args) > 0: 
+    if len(args) > 1: 
         sa.log.info(f"Sending {args[1]} to {args[0]}")
 
     result = func(*args, **kwargs)
@@ -626,29 +649,31 @@ def call_function(func, *args, **kwargs):
     return result
 
 
-def run_with_cancel_button():
+def run_with_cancel_button(cfg):
     """
     This version of the script-launcher trying to work in cancel button
     """
+    UpdateHodoHTML('None', cfg['HODOGRAPHS_DIR'], cfg['HODOGRAPHS_PAGE'])
+
     sa.scripts_progress = 'Setting up files and times'
     # determine actual event time, playback time, diff of these two
     sa.make_simulation_times()
     # clean out old files and directories
     try:
-        sa.remove_files_and_dirs()
+        sa.remove_files_and_dirs(cfg)
     except Exception as e:
         sa.log.exception("Error removing files and directories: ", exc_info=True)
 
     # based on list of selected radars, create a dictionary of radar metadata
     try:
         sa.create_radar_dict()
-        sa.copy_grlevel2_cfg_file()
+        sa.copy_grlevel2_cfg_file(cfg)
     except Exception as e:
         sa.log.exception("Error creating radar dict or config file: ", exc_info=True)
 
     # Create initial dictionary of expected radar files
     if len(sa.radar_list) > 0:
-        res = call_function(query_radar_files)
+        res = call_function(query_radar_files, cfg)
         if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
             return
 
@@ -663,37 +688,42 @@ def run_with_cancel_button():
                 sa.log.exception("Error defining new radar: ", exc_info=True)
 
             # Radar download
-            args = [radar, str(sa.event_start_str), str(sa.event_duration), str(True)]
-            res = call_function(utils.exec_script, cfg.NEXRAD_SCRIPT_PATH, args)
+            args = [radar, str(sa.event_start_str), str(sa.event_duration), str(True), 
+                    cfg['RADAR_DIR']]
+            res = call_function(utils.exec_script, Path(cfg['NEXRAD_SCRIPT_PATH']), 
+                                args, cfg['SESSION_ID'])
             if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
                 return
 
             # Munger
-            args = [radar, str(sa.playback_start_str), str(sa.event_duration),
-                    str(sa.simulation_seconds_shift), new_radar]
-            res = call_function(utils.exec_script, cfg.MUNGER_SCRIPT_FILEPATH, args)
+            args = [radar, str(sa.playback_start_str), str(sa.event_duration), 
+                    str(sa.simulation_seconds_shift), cfg['RADAR_DIR'], cfg['POLLING_DIR'],
+                    cfg['L2MUNGER_FILEPATH'], cfg['DEBZ_FILEPATH'], new_radar]
+            res = call_function(utils.exec_script, Path(cfg['MUNGER_SCRIPT_FILEPATH']), 
+                                args, cfg['SESSION_ID'])
             if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
                 return
    
             # this gives the user some radar data to poll while other scripts are running
             try:
-                UpdateDirList(new_radar, 'None', initialize=True)
+                UpdateDirList(new_radar, 'None', cfg['POLLING_DIR'], initialize=True)
             except Exception as e:
                 print(f"Error with UpdateDirList ", e)
                 sa.log.exception(f"Error with UpdateDirList ", exc_info=True)
-
+    
     # Surface observations
-    args = [str(sa.lat), str(sa.lon), sa.event_start_str, str(sa.event_duration)]
-    res = call_function(utils.exec_script, cfg.OBS_SCRIPT_PATH, args)
+    args = [str(sa.lat), str(sa.lon), sa.event_start_str, cfg['PLACEFILES_DIR'], 
+            str(sa.event_duration)]
+    res = call_function(utils.exec_script, Path(cfg['OBS_SCRIPT_PATH']), args, 
+                        cfg['SESSION_ID'])
     if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
         return
 
     # NSE placefiles
-    #args = [str(sa.event_start_time), str(sa.event_duration), str(sa.scripts_path),
-    #        str(sa.data_dir), str(sa.placefiles_dir)]
-    args = [str(sa.event_start_time), str(sa.event_duration), str(cfg.SCRIPTS_DIR),
-            str(cfg.DATA_DIR), str(cfg.PLACEFILES_DIR)]
-    res = call_function(utils.exec_script, cfg.NSE_SCRIPT_PATH, args)
+    args = [str(sa.event_start_time), str(sa.event_duration), cfg['SCRIPTS_DIR'],
+            cfg['DATA_DIR'], cfg['PLACEFILES_DIR']]
+    res = call_function(utils.exec_script, Path(cfg['NSE_SCRIPT_PATH']), args, 
+                        cfg['SESSION_ID'])
     if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
         return
 
@@ -701,7 +731,7 @@ def run_with_cancel_button():
     # script needs to execute every time, even if a user doesn't select a radar
     # to transpose to.
     sa.log.info(f"Entering function run_transpose_script")
-    run_transpose_script()
+    run_transpose_script(cfg['PLACEFILES_DIR'])
 
     # Hodographs 
     for radar, data in sa.radar_dict.items():
@@ -712,20 +742,23 @@ def run_with_cancel_button():
             sa.log.exception("Error getting radar metadata: ", exc_info=True)
 
         # Execute hodograph script
-        args = [radar, sa.new_radar, asos_one, asos_two, str(sa.simulation_seconds_shift)]
-        res = call_function(utils.exec_script, cfg.HODO_SCRIPT_PATH, args)
+        args = [radar, sa.new_radar, asos_one, asos_two, str(sa.simulation_seconds_shift),
+                cfg['RADAR_DIR'], cfg['HODOGRAPHS_DIR']]
+        res = call_function(utils.exec_script, Path(cfg['HODO_SCRIPT_PATH']), args, 
+                            cfg['SESSION_ID'])
         if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
             return
 
         try:
-            UpdateHodoHTML('None')
+            UpdateHodoHTML('None', cfg['HODOGRAPHS_DIR'], cfg['HODOGRAPHS_PAGE'])
         except Exception as e:
             print("Error updating hodo html: ", e)
             sa.log.exception("Error updating hodo html: ", exc_info=True)
 
 @app.callback(
     Output('show_script_progress', 'children', allow_duplicate=True),
-    [Input('run_scripts_btn', 'n_clicks')],
+    [Input('run_scripts_btn', 'n_clicks'),
+     State('configs', 'data')],
     prevent_initial_call=True,
     running=[
         (Output('start_year', 'disabled'), True, False),
@@ -745,7 +778,7 @@ def run_with_cancel_button():
         (Output('change_time', 'disabled'), True, False), # wait to enable change time dropdown
         (Output('cancel_scripts', 'disabled'), False, True),
     ])
-def launch_simulation(n_clicks) -> None:
+def launch_simulation(n_clicks, configs) -> None:
     """
     This function is called when the "Run Scripts" button is clicked. It will execute the
     necessary scripts to simulate radar operations, create hodographs, and transpose placefiles.
@@ -753,10 +786,10 @@ def launch_simulation(n_clicks) -> None:
     if n_clicks == 0:
         raise PreventUpdate
     else:
-        if cfg.PLATFORM == 'WINDOWS':
+        if config.PLATFORM == 'WINDOWS':
             sa.make_simulation_times()
         else:
-            run_with_cancel_button()
+            run_with_cancel_button(configs)
 
 ################################################################################################
 # ----------------------------- Monitoring and reporting script status  ------------------------
@@ -764,16 +797,17 @@ def launch_simulation(n_clicks) -> None:
 
 @app.callback(
     Output('dummy', 'data'),
-    [Input('cancel_scripts', 'n_clicks')],
+    [Input('cancel_scripts', 'n_clicks'),
+     State('session_id', 'data')],
     prevent_initial_call=True)
-def cancel_scripts(n_clicks) -> None:
+def cancel_scripts(n_clicks, SESSION_ID) -> None:
     """
     This function is called when the "Cancel Scripts" button is clicked. It will cancel all
     Args:
         n_clicks (int): incremented whenever the "Cancel Scripts" button is clicked
     """
     if n_clicks > 0:
-        utils.cancel_all(sa)
+        utils.cancel_all(sa, SESSION_ID)
 
 
 @app.callback(
@@ -784,10 +818,11 @@ def cancel_scripts(n_clicks) -> None:
     Output('model_table', 'data'),
     Output('model_status_warning', 'children'),
     Output('show_script_progress', 'children', allow_duplicate=True),
-    [Input('directory_monitor', 'n_intervals')],
+    [Input('directory_monitor', 'n_intervals'),
+     State('configs', 'data')],
     prevent_initial_call=True
 )
-def monitor(_n):
+def monitor(_n, cfg):
     """
     This function is called every second by the directory_monitor interval. It (1) checks 
     the status of the various scripts and reports them to the front-end application and 
@@ -797,40 +832,42 @@ def monitor(_n):
     screen_output = ""
     seen_scripts = []
     for p in processes:
-        # Returns get_data or process (the two scripts launched by nse.py)
-        name = p['cmdline'][1].rsplit('/')[-1].rsplit('.')[0]
+        process_session_id = p['session_id']
+        if process_session_id == cfg['SESSION_ID']:
+            # Returns get_data or process (the two scripts launched by nse.py)
+            name = p['cmdline'][1].rsplit('/')[-1].rsplit('.')[0]
 
-        # Scripts executed as python modules will be like [python, -m, script.name]
-        if p['cmdline'][1] == '-m':
-            # Should return Nexrad, munger, nse, etc.
-            name = p['cmdline'][2].rsplit('/')[-1].rsplit('.')[-1]
-            if p['name'] == 'wgrib2':
-                name = 'wgrib2'
+            # Scripts executed as python modules will be like [python, -m, script.name]
+            if p['cmdline'][1] == '-m':
+                # Should return Nexrad, munger, nse, etc.
+                name = p['cmdline'][2].rsplit('/')[-1].rsplit('.')[-1]
+                if p['name'] == 'wgrib2':
+                    name = 'wgrib2'
 
-        if name in cfg.scripts_list and name not in seen_scripts:
-            runtime = time.time() - p['create_time']
-            screen_output += f"{name}: running for {round(runtime,1)} s. "
-            seen_scripts.append(name)
+            if name in config.scripts_list and name not in seen_scripts:
+                runtime = time.time() - p['create_time']
+                screen_output += f"{name}: running for {round(runtime,1)} s. "
+                seen_scripts.append(name)
 
     # Radar file download status
     radar_dl_completion, radar_files = utils.radar_monitor(sa)
 
     # Radar mungering/transposing status
-    munger_completion = utils.munger_monitor(sa)
+    munger_completion = utils.munger_monitor(sa, cfg)
 
     # Surface placefile status
-    placefile_stats = utils.surface_placefile_monitor(sa)
+    placefile_stats = utils.surface_placefile_monitor(sa, cfg)
     placefile_status_string = f"{placefile_stats[0]}/{placefile_stats[1]} files found"
 
     # Hodographs. Currently hard-coded to expect 2 files for every radar and radar file.
-    num_hodograph_images = len(glob(f"{cfg.HODO_IMAGES}/*.png"))
+    num_hodograph_images = len(glob(f"{cfg['HODOGRAPHS_DIR']}/*.png"))
     hodograph_completion = 0
     if len(radar_files) > 0:
         hodograph_completion = 100 * \
             (num_hodograph_images / (2*len(radar_files)))
 
     # NSE placefiles
-    model_list, model_warning = utils.nse_status_checker(sa)
+    model_list, model_warning = utils.nse_status_checker(sa, cfg)
     return (radar_dl_completion, hodograph_completion, munger_completion, 
             placefile_status_string, model_list, model_warning, screen_output)
 
@@ -841,11 +878,11 @@ def monitor(_n):
 # whether to also perform a spatial shift occurrs within self.shift_placefiles where
 # a check for sa.new_radar != None takes place.
 
-def run_transpose_script() -> None:
+def run_transpose_script(PLACEFILES_DIR) -> None:
     """
     Wrapper function to the shift_placefiles script
     """
-    sa.shift_placefiles()
+    sa.shift_placefiles(PLACEFILES_DIR)
 
 ################################################################################################
 # ----------------------------- Toggle Placefiles Section --------------------------------------
@@ -881,8 +918,9 @@ def toggle_placefiles_section(n) -> dict:
     Output('end_readout', 'style'),
     Output('change_time', 'options'),
     Input('playback_btn', 'n_clicks'),
+    State('configs', 'data'),
     prevent_initial_call=True)
-def initiate_playback(_nclick):
+def initiate_playback(_nclick, cfg):
     """     
     Enables/disables interval component that elapses the playback time
 
@@ -894,13 +932,13 @@ def initiate_playback(_nclick):
     end = sa.playback_end_str
     style = lc.playback_times_style
     options = sa.playback_dropdown_dict
-    if cfg.PLATFORM != 'WINDOWS':
-        UpdateHodoHTML(sa.playback_clock_str)
+    if config.PLATFORM != 'WINDOWS':
+        UpdateHodoHTML(sa.playback_clock_str, cfg['HODOGRAPHS_DIR'], cfg['HODOGRAPHS_PAGE'])
         if sa.new_radar != 'None':
-            UpdateDirList(sa.new_radar, sa.playback_clock_str)
+            UpdateDirList(sa.new_radar, sa.playback_clock_str, cfg['POLLING_DIR'])
         else:
             for _r, radar in enumerate(sa.radar_list):
-                UpdateDirList(radar,sa.playback_clock_str)
+                UpdateDirList(radar, sa.playback_clock_str, cfg['POLLING_DIR'])
 
     return btn_text, btn_disabled, False, playback_running, start, style, end, style, options
 
@@ -914,9 +952,10 @@ def initiate_playback(_nclick):
     [Input('pause_resume_playback_btn', 'n_clicks'),
     Input('playback_timer', 'n_intervals'),
     Input('change_time', 'value'),
-    Input('playback_running_store', 'data')
+    Input('playback_running_store', 'data'),
+    State('configs', 'data')
     ], prevent_initial_call=True)
-def manage_clock_(nclicks, _n_intervals, new_time, _playback_running):
+def manage_clock_(nclicks, _n_intervals, new_time, _playback_running, cfg):
     """     
     Test
     """
@@ -937,13 +976,13 @@ def manage_clock_(nclicks, _n_intervals, new_time, _playback_running):
         if sa.playback_clock < sa.playback_end:
             sa.playback_clock_str = sa.date_time_string(sa.playback_clock)
             readout_time = datetime.strftime(sa.playback_clock, '%Y-%m-%d   %H:%M:%S')
-            if cfg.PLATFORM != 'WINDOWS':
-                UpdateHodoHTML(sa.playback_clock_str)
+            if config.PLATFORM != 'WINDOWS':
+                UpdateHodoHTML(sa.playback_clock_str, cfg['HODOGRAPHS_DIR'], cfg['HODOGRAPHS_PAGE'])
                 if sa.new_radar != 'None':
-                    UpdateDirList(sa.new_radar, sa.playback_clock_str)
+                    UpdateDirList(sa.new_radar, sa.playback_clock_str, cfg['POLLING_DIR'])
                 else:
                     for _r, radar in enumerate(sa.radar_list):
-                        UpdateDirList(radar,sa.playback_clock_str)
+                        UpdateDirList(radar, sa.playback_clock_str, cfg['POLLING_DIR'])
             else:
                 pass
 
@@ -976,13 +1015,13 @@ def manage_clock_(nclicks, _n_intervals, new_time, _playback_running):
             sa.playback_clock = sa.playback_clock.replace(tzinfo=timezone.utc)
             sa.playback_clock_str = new_time
             readout_time = datetime.strftime(sa.playback_clock, '%Y-%m-%d %H:%M:%S')
-        if cfg.PLATFORM != 'WINDOWS':
-            UpdateHodoHTML(sa.playback_clock_str)
+        if config.PLATFORM != 'WINDOWS':
+            UpdateHodoHTML(sa.playback_clock_str, cfg['HODOGRAPHS_DIR'], cfg['HODOGRAPHS_PAGE'])
             if sa.new_radar != 'None':
-                UpdateDirList(sa.new_radar, sa.playback_clock_str)
+                UpdateDirList(sa.new_radar, sa.playback_clock_str, cfg['POLLING_DIR'])
             else:
                 for _r, radar in enumerate(sa.radar_list):
-                    UpdateDirList(radar,sa.playback_clock_str)
+                    UpdateDirList(radar, sa.playback_clock_str, cfg['POLLING_DIR'])
 
     if triggered_id == 'playback_running_store':
         pass
@@ -1107,11 +1146,11 @@ def get_duration(duration) -> int:
 ################################################################################################
 
 if __name__ == '__main__':
-    if cfg.CLOUD:
+    if config.CLOUD:
         app.run_server(host="0.0.0.0", port=8050, threaded=True, debug=True, use_reloader=False,
                        dev_tools_hot_reload=False)
     else:
-        if cfg.PLATFORM == 'DARWIN':
+        if config.PLATFORM == 'DARWIN':
             app.run(host="0.0.0.0", port=8051, threaded=True, debug=True, use_reloader=False,
                 dev_tools_hot_reload=False)
         else:

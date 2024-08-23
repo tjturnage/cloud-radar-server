@@ -19,8 +19,9 @@ import struct
 from datetime import datetime, timedelta, timezone
 import time
 import pytz
+from pathlib import Path
 
-from config import RADAR_DIR, POLLING_DIR, L2MUNGER_FILEPATH, DEBZ_FILEPATH
+#from config import RADAR_DIR, POLLING_DIR, L2MUNGER_FILEPATH, DEBZ_FILEPATH
 
 class Munger():
     """
@@ -44,19 +45,24 @@ class Munger():
          If None, will use original radar location 
     """
 
-    def __init__(self, original_rda, playback_start, duration, timeshift, new_rda='None'):
+    def __init__(self, original_rda, playback_start, duration, timeshift, RADAR_DIR, POLLING_DIR,
+                 L2MUNGER_FILEPATH, DEBZ_FILEPATH, new_rda='None'):
         self.original_rda = original_rda.upper()
         print(self.original_rda)
-        self.source_directory = RADAR_DIR / self.original_rda / 'downloads'
+        self.source_directory = Path(f"{RADAR_DIR}/{self.original_rda}/downloads")
         os.makedirs(self.source_directory, exist_ok=True)
         self.playback_start = datetime.strptime(playback_start,"%Y-%m-%d %H:%M").replace(tzinfo=pytz.UTC)
         self.duration = duration
         self.seconds_shift = int(timeshift)    # Needed for data passed in via command line.
         self.new_rda = new_rda
-        self.this_radar_polling_dir = POLLING_DIR / self.original_rda
+        self.polling_dir = Path(POLLING_DIR)
+        self.assets_dir = self.polling_dir.parent
+        self.this_radar_polling_dir = Path(f"{POLLING_DIR}/{self.original_rda}")
         if self.new_rda != 'None':
-            self.this_radar_polling_dir = POLLING_DIR / self.new_rda.upper()
+            self.this_radar_polling_dir = Path(f"{POLLING_DIR}/{self.new_rda.upper()}")
 
+        self.l2munger_filepath = Path(L2MUNGER_FILEPATH)
+        self.debz_filepath = Path(DEBZ_FILEPATH)
         os.makedirs(self.this_radar_polling_dir, exist_ok=True)
 
         self.copy_l2munger_executable()
@@ -70,9 +76,9 @@ class Munger():
         The compiled l2munger executable needs to be in the source
         radar files directory to work properly
         """
-        chmod_cmd = f'chmod 775 {L2MUNGER_FILEPATH}'
+        chmod_cmd = f'chmod 775 {self.l2munger_filepath}'
         os.system(chmod_cmd)
-        cp_cmd = f'cp {L2MUNGER_FILEPATH} {self.source_directory}'
+        cp_cmd = f'cp {self.l2munger_filepath} {self.source_directory}'
         os.system(cp_cmd)
 
 
@@ -102,7 +108,7 @@ class Munger():
 
             if 'V0' in filename_str:
                 # Keep existing logic for .V06 and .V08 files
-                command_str = f'python {DEBZ_FILEPATH} {filename_str} {filename_str}.uncompressed'
+                command_str = f'python {self.debz_filepath} {filename_str} {filename_str}.uncompressed'
                 os.system(command_str)
             else:
                 print(f'File type not recognized: {filename_str}')
@@ -163,7 +169,7 @@ class Munger():
         munges radar files to start at the reference time
         also changes RDA location
         """
-        fout = open('/data/cloud-radar-server/assets/file_times.txt', 'w', encoding='utf-8')
+        fout = open(f'{self.assets_dir}/file_times.txt', 'w', encoding='utf-8')
         os.chdir(self.source_directory)
         self.source_files = list(self.source_directory.glob('*uncompressed'))
         for uncompressed_file in self.uncompressed_files:
@@ -198,5 +204,6 @@ if __name__ == "__main__":
         playback_end_time = playback_start_time + timedelta(minutes=int(DURATION))
         Munger(ORIG_RDA, playback_start_str, DURATION, seconds_shift, NEW_RDA)
     else:
-        Munger(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5])
+        Munger(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], 
+               sys.argv[6], sys.argv[7], sys.argv[8], sys.argv[9])
         #original_rda, playback_start, duration, timeshift, new_rda, playback_speed=1.5

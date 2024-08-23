@@ -18,7 +18,7 @@ import warnings
 from multiprocessing import Pool, freeze_support
 from pathlib import Path
 
-from config import RADAR_DIR, HODO_IMAGES
+#from config import RADAR_DIR, HODO_IMAGES
 import scripts.hodo_resources as hr
 
 from dotenv import load_dotenv
@@ -42,10 +42,9 @@ except:
     asos_two = None
 
 timeshift_seconds = int(sys.argv[5])
-#BASE_DIR = Path('/data/cloud-radar-server')
-#RADAR_DIR = BASE_DIR / 'data' / 'radar'
-#HODO_IMAGES = BASE_DIR / 'assets'/ 'hodographs'
 
+RADAR_DIR = Path(sys.argv[6]) 
+HODO_IMAGES = Path(sys.argv[7])
 THIS_RADAR = RADAR_DIR / radar_id
 os.makedirs(THIS_RADAR, exist_ok=True)
 DOWNLOADS = THIS_RADAR / 'downloads'

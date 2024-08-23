@@ -15,7 +15,7 @@ import boto3
 import botocore
 from botocore.client import Config
 
-from config import RADAR_DIR
+#from config import RADAR_DIR
 
 class NexradDownloader:
     """
@@ -32,7 +32,7 @@ class NexradDownloader:
     """
 
 
-    def __init__(self, radar_id, start_tstr, duration, download):
+    def __init__(self, radar_id, start_tstr, duration, download, RADAR_DIR):
         super().__init__()
         self.radar_id = radar_id
         self.start_tstr = start_tstr
@@ -45,7 +45,7 @@ class NexradDownloader:
                                         user_agent_extra='Resource')).Bucket('noaa-nexrad-level2')
 
         self.prefix_day_one, self.prefix_day_two = self.make_prefix()
-        self.download_directory = RADAR_DIR / self.radar_id / 'downloads'
+        self.download_directory = Path(f"{RADAR_DIR}/{self.radar_id}/downloads")
         os.makedirs(self.download_directory, exist_ok=True)
         self.process_files()
         sys.stdout.write(json.dumps(self.radar_files_dict))
@@ -124,4 +124,4 @@ if __name__ == "__main__":
     download_flag = sys.argv[4]
     if type(download_flag) == str:
         download_flag = ast.literal_eval(download_flag)
-    NexradDownloader(sys.argv[1], sys.argv[2], sys.argv[3], download_flag)
+    NexradDownloader(sys.argv[1], sys.argv[2], sys.argv[3], download_flag, sys.argv[5])

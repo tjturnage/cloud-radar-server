@@ -8,7 +8,8 @@ from __future__ import print_function
 import sys
 from datetime import datetime
 import pytz
-from config import POLLING_DIR
+from pathlib import Path
+#from config import POLLING_DIR
 
 
 class UpdateDirList():
@@ -32,10 +33,10 @@ class UpdateDirList():
 
 
 
-    def __init__(self, radar: str, current_playback_timestr: str, initialize: bool = False):
+    def __init__(self, radar: str, current_playback_timestr: str, POLLING_DIR: str, initialize: bool = False):
         self.radar = radar.upper()
         self.current_playback_timestr = current_playback_timestr
-        self.this_radar_polling_directory = POLLING_DIR / self.radar
+        self.this_radar_polling_directory = Path(f'{POLLING_DIR}/{self.radar}')
         print(self.this_radar_polling_directory)
         self.dirlist_file = self.this_radar_polling_directory / 'dir.list'
         self.current_playback_time = None
@@ -98,4 +99,4 @@ class UpdateDirList():
 if __name__ == "__main__":
     #this_radar = 'KGRR'
     #this_playback_time = '2024-06-01 23:15'
-    UpdateDirList(sys.argv[1],sys.argv[2],sys.argv[3])
+    UpdateDirList(sys.argv[1],sys.argv[2],sys.argv[3],sys.argv[4])
