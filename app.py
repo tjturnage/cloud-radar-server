@@ -960,7 +960,7 @@ def call_function(func, *args, **kwargs):
 def run_with_cancel_button(cfg, sim_settings):
     """
     This version of the script-launcher trying to work in cancel button
-    """    
+    """   
     UpdateHodoHTML('None', cfg['HODOGRAPHS_DIR'], cfg['HODOGRAPHS_PAGE'])
 
     #sa.scripts_progress = 'Setting up files and times'
@@ -1052,19 +1052,19 @@ def run_with_cancel_button(cfg, sim_settings):
     # to transpose to.
     logging.info(f"Entering function run_transpose_script")
     run_transpose_script(cfg['PLACEFILES_DIR'], sim_settings)
-
-    '''
+    
     # Hodographs 
-    for radar, data in sa.radar_dict.items():
+    for radar, data in sim_settings['radar_dict'].items():
         try:
             asos_one = data['asos_one']
             asos_two = data['asos_two']
         except KeyError as e:
-            sa.log.exception("Error getting radar metadata: ", exc_info=True)
+            logging.exception("Error getting radar metadata: ", exc_info=True)
 
         # Execute hodograph script
-        args = [radar, sa.new_radar, asos_one, asos_two, str(sa.simulation_seconds_shift),
-                cfg['RADAR_DIR'], cfg['HODOGRAPHS_DIR']]
+        args = [radar, sim_settings['new_radar'], asos_one, asos_two, 
+                str(sim_settings['simulation_seconds_shift']), cfg['RADAR_DIR'], 
+                cfg['HODOGRAPHS_DIR']]
         res = call_function(utils.exec_script, Path(cfg['HODO_SCRIPT_PATH']), args, 
                             cfg['SESSION_ID'])
         if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
@@ -1075,7 +1075,7 @@ def run_with_cancel_button(cfg, sim_settings):
         except Exception as e:
             print("Error updating hodo html: ", e)
             sa.log.exception("Error updating hodo html: ", exc_info=True)
-    '''
+
 @app.callback(
     Output('show_script_progress', 'children', allow_duplicate=True),
     [Input('run_scripts_btn', 'n_clicks'),
@@ -1173,13 +1173,13 @@ def monitor(_n, cfg, sim_settings):
                 seen_scripts.append(name)
 
     # Radar file download status
-    radar_dl_completion, radar_files = utils.radar_monitor(cfg)
+    radar_dl_completion, radar_files = utils.radar_monitor(cfg['RADAR_DIR'])
 
     # Radar mungering/transposing status
-    munger_completion = utils.munger_monitor(sa, cfg)
+    munger_completion = utils.munger_monitor(cfg['RADAR_DIR'], cfg['POLLING_DIR'])
 
     # Surface placefile status
-    placefile_stats = utils.surface_placefile_monitor(sa, cfg)
+    placefile_stats = utils.surface_placefile_monitor(cfg['PLACEFILES_DIR'])
     placefile_status_string = f"{placefile_stats[0]}/{placefile_stats[1]} files found"
 
     # Hodographs. Currently hard-coded to expect 2 files for every radar and radar file.
@@ -1190,7 +1190,7 @@ def monitor(_n, cfg, sim_settings):
             (num_hodograph_images / (2*len(radar_files)))
 
     # NSE placefiles
-    model_list, model_warning = utils.nse_status_checker(sa, cfg)
+    model_list, model_warning = utils.nse_status_checker(cfg['MODEL_DIR'])
     return (radar_dl_completion, hodograph_completion, munger_completion, 
             placefile_status_string, model_list, model_warning, screen_output)
 

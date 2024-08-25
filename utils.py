@@ -99,47 +99,51 @@ def calc_completion_percentage(expected_files, files_on_system):
 
     return percent_complete
 
-def radar_monitor(cfg):
+def radar_monitor(RADAR_DIR):
     """
     Reads in dictionary of radar files. Looks for associated radar files on the system 
     and compares to the total expected number and broadcasts a percentage to the 
     radar_status progress bar.
     """
-    filename = f'{cfg['RADAR_DIR']}/radarinfo.json'
+    filename = f'{RADAR_DIR}/radarinfo.json'
     expected_files = []
     if os.path.exists(filename):
-        with open(f'{cfg['RADAR_DIR']}/radarinfo.json', 'r') as jsonfile:
+        with open(f'{RADAR_DIR}/radarinfo.json', 'r') as jsonfile:
             expected_files = list(json.load(jsonfile).values())
             
     files_on_system = [x for x in expected_files if os.path.exists(x)]
     percent_complete = calc_completion_percentage(expected_files, files_on_system)
     return percent_complete, files_on_system
 
-def munger_monitor(sa, cfg):
-    expected_files = list(sa.radar_files_dict.values())
+def munger_monitor(RADAR_DIR, POLLING_DIR):
+    filename = f'{RADAR_DIR}/radarinfo.json'
+    expected_files = []
+    if os.path.exists(filename):
+        with open(f'{RADAR_DIR}/radarinfo.json', 'r') as jsonfile:
+            expected_files = list(json.load(jsonfile).values())
 
     # Are the mungered files always .gz?
-    files_on_system = glob(f"{cfg['POLLING_DIR']}/**/*.gz", recursive=True)
+    files_on_system = glob(f"{POLLING_DIR}/**/*.gz", recursive=True)
 
     percent_complete = calc_completion_percentage(expected_files, files_on_system)
     return percent_complete
 
-def surface_placefile_monitor(_sa, cfg):
+def surface_placefile_monitor(PLACEFILES_DIR):
     filenames = [
         'wind.txt', 'temp.txt', 'latest_surface_observations.txt',
         'latest_surface_observations_lg.txt', 'latest_surface_observations_xlg.txt'
     ]
-    expected_files =  [f"{cfg['PLACEFILES_DIR']}/{i}" for i in filenames]
+    expected_files =  [f"{PLACEFILES_DIR}/{i}" for i in filenames]
     files_on_system = [x for x in expected_files if os.path.exists(x)]
 
     #percent_complete = calc_completion_percentage(expected_files, files_on_system)
     return len(files_on_system), len(expected_files)
 
-def nse_status_checker(_sa, cfg):
+def nse_status_checker(MODEL_DIR):
     """
     Read in model status text file and query associated file sizes. 
     """
-    filename = f"{cfg['MODEL_DIR']}/model_list.txt"
+    filename = f"{MODEL_DIR}/model_list.txt"
     output = []
     warning_text = ""
     if os.path.exists(filename):
