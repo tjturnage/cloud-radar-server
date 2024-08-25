@@ -797,29 +797,28 @@ def query_radar_files(cfg, sim_settings):
 
         json_data = results['stdout'].decode('utf-8')
         logging.info(f"{cfg['SESSION_ID']} :: Nexrad.py returned with {json_data}")
-        #sa.radar_files_dict.update(json.loads(json_data))
         sim_settings['radar_files_dict'].update(json.loads(json_data))
 
     # Write radar metadata for this simulation to a text file. More complicated updating the
     # dcc.Store object with this information since this function isn't a callback. 
-    with open(f'{cfg['RADAR_DIR']}/radarinfo.json', 'w') as jsonfile:
-        json.dump(sim_settings['radar_files_dict'], jsonfile)  
+    with open(f'{cfg['RADAR_DIR']}/radarinfo.json', 'w') as json_file:
+        json.dump(sim_settings['radar_files_dict'], json_file)  
     
     return results
 
-
-def run_hodo_script(args) -> None:
-    """
-    Runs the hodo script with the necessary arguments. 
-    radar: str - the original radar, tells script where to find raw radar data
-    sa.new_radar: str - Either 'None' or the new radar to transpose to
-    asos_one: str - the first ASOS station to use for hodographs
-    asos_two: str - the second ASOS station to use for hodographs as a backup
-    sa.simulation_seconds_shift: str - time shift (seconds) between the event
-    start and playback start
-    """
-    print(args)
-    subprocess.run(["python", config.HODO_SCRIPT_PATH] + args, check=True)
+# !!! Not used? Can delete? !!!
+#def run_hodo_script(args) -> None:
+#    """
+#    Runs the hodo script with the necessary arguments. 
+#    radar: str - the original radar, tells script where to find raw radar data
+#    sa.new_radar: str - Either 'None' or the new radar to transpose to
+#    asos_one: str - the first ASOS station to use for hodographs
+#    asos_two: str - the second ASOS station to use for hodographs as a backup
+#    sa.simulation_seconds_shift: str - time shift (seconds) between the event
+#    start and playback start
+#    """
+#    print(args)
+#    subprocess.run(["python", config.HODO_SCRIPT_PATH] + args, check=True)
 
 
 def call_function(func, *args, **kwargs):
@@ -864,12 +863,15 @@ def run_with_cancel_button(cfg, sim_settings):
     except Exception as e:
         logging.exception("Error creating radar dict or config file: ", exc_info=True)
 
-    # Create initial dictionary of expected radar files
     if len(sim_settings['radar_list']) > 0:
+
+        # Create initial dictionary of expected radar files. 
+        # TO DO: report back issues with radar downloads (e.g. 0 files found)
         res = call_function(query_radar_files, cfg, sim_settings)
         if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
             return
 
+        # Radar downloading and mungering steps
         for _r, radar in enumerate(sim_settings['radar_list']):
             radar = radar.upper()
             try:
@@ -899,14 +901,14 @@ def run_with_cancel_button(cfg, sim_settings):
             if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
                 return
             
-    '''
             # this gives the user some radar data to poll while other scripts are running
             try:
                 UpdateDirList(new_radar, 'None', cfg['POLLING_DIR'], initialize=True)
             except Exception as e:
                 print(f"Error with UpdateDirList ", e)
-                sa.log.exception(f"Error with UpdateDirList ", exc_info=True)
+                logging.exception(f"Error with UpdateDirList ", exc_info=True)
     
+    '''
     # Surface observations
     args = [str(sa.lat), str(sa.lon), sa.event_start_str, cfg['PLACEFILES_DIR'], 
             str(sa.event_duration)]
