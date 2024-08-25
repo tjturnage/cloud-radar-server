@@ -55,11 +55,10 @@ R = 6_378_137
 # Regular expressions. First one finds lat/lon pairs, second finds the timestamps.
 LAT_LON_REGEX = "[0-9]{1,2}.[0-9]{1,100},[ ]{0,1}[|\\s-][0-9]{1,3}.[0-9]{1,100}"
 TIME_REGEX = "[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z"
-#TOKEN = 'INSERT YOUR MAPBOX TOKEN HERE'
 
-# Configure logging
 """
-Idea is to move all of these functions to some other utility script within the main dir
+Idea is to move all of these functions to some other utility file within the main dir
+to get them out of the app.
 """
 def create_logfile(LOG_DIR):
     """
@@ -688,8 +687,6 @@ def generate_layout(n_intervals, layout_has_initialized, children, sim_settings,
         sim_settings['new_radar'] = 'None'
         sim_settings['new_lat'] = None
         sim_settings['new_lon'] = None
-        #'] = 'Scripts not started'
-        #self.base_dir = Path.cwd()
         sim_settings['playback_initiated'] = False
         sim_settings['playback_speed'] = 1.0
         sim_settings['playback_start'] = 'Not Ready'
@@ -732,11 +729,11 @@ def generate_layout(n_intervals, layout_has_initialized, children, sim_settings,
             dbc.Container([
                 dbc.Container([
                     html.Div([html.Div([lc.step_select_time_section, lc.spacer,
-                                    dbc.Row([
-                                        sim_year_section, sim_month_section, sim_day_selection,
-                                        sim_hour_section, sim_minute_section, sim_duration_section,
-                                        lc.spacer, lc.step_time_confirm])], style={'padding': '1em'}),
-                            ], style=lc.section_box)])
+                            dbc.Row([
+                                sim_year_section, sim_month_section, sim_day_selection,
+                                sim_hour_section, sim_minute_section, sim_duration_section,
+                                lc.spacer, lc.step_time_confirm])], style={'padding': '1em'}),
+                    ], style=lc.section_box)])
             ]), lc.spacer,
             lc.full_radar_select_section, lc.spacer_mini,
             lc.map_section,
@@ -746,7 +743,6 @@ def generate_layout(n_intervals, layout_has_initialized, children, sim_settings,
             lc.spacer,lc.toggle_placefiles_btn,lc.spacer_mini,
             lc.full_links_section, lc.spacer,
             simulation_playback_section,
-            #html.Div(id='playback_speed_dummy', style={'display': 'none'}),
             lc.radar_id, lc.bottom_section
         ])
 
