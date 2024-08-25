@@ -7,6 +7,9 @@ import psutil
 import pandas as pd
 import config
 import json
+import logging
+#from app import create_logfile 
+#create_logfile()
 
 def exec_script(script_path, args, session_id):
     """
@@ -58,7 +61,7 @@ def get_app_processes():
             pass
     return processes
 
-def cancel_all(sa, session_id):
+def cancel_all(session_id):
     """
     This function is invoked when the user clicks the Cancel button in the app. See
     app.cancel_scripts.
@@ -84,11 +87,11 @@ def cancel_all(sa, session_id):
             if process['name'] == 'wgrib2': name = 'wgrib2'
 
             if name in config.scripts_list:
-                sa.log.info(f"Killing process: {name} with pid: {process['pid']}") 
+                logging.info(f"Killing process: {name} with pid: {process['pid']}") 
                 os.kill(process['pid'], signal.SIGTERM)
             
             if len(process['cmdline']) >= 3 and 'multiprocessing' in process['cmdline'][2]:
-                sa.log.info(f"Killing spawned multi-process with pid: {process['pid']}") 
+                logging.info(f"Killing spawned multi-process with pid: {process['pid']}") 
                 os.kill(process['pid'], signal.SIGTERM)
 
 

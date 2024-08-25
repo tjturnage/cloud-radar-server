@@ -622,7 +622,7 @@ class RadarSimulator(Config):
 # ----------------------------- Initialize the app  --------------------------------------------
 ################################################################################################
 
-sa = RadarSimulator()
+#sa = RadarSimulator()
 
 ################################################################################################
 # ----------------------------- Build the layout  ---------------------------------------------
@@ -687,7 +687,7 @@ def generate_layout(n_intervals, layout_has_initialized, children, sim_settings,
         sim_settings['new_radar'] = 'None'
         sim_settings['new_lat'] = None
         sim_settings['new_lon'] = None
-        sim_settings['scripts_progress'] = 'Scripts not started'
+        #'] = 'Scripts not started'
         #self.base_dir = Path.cwd()
         sim_settings['playback_initiated'] = False
         sim_settings['playback_speed'] = 1.0
@@ -883,7 +883,7 @@ def transpose_radar(value, sim_settings):
     initially to None.
     
     Added tradar as a dcc.Store as this callback didn't seem to execute otherwise. The
-    tradar store value is not used (currently), as everything is stored in sa.whatever.
+    tradar store value is not used (currently).
     """
     sim_settings['new_radar'] = 'None'
 
@@ -905,7 +905,7 @@ def query_radar_files(cfg, sim_settings):
     """
     # Need to reset the expected files dictionary with each call. Otherwise, if a user
     # cancels a request, the previously-requested files will still be in the dictionary.
-    #sa.radar_files_dict = {}
+    # radar_files_dict = {}
     sim_settings['radar_files_dict'] = {}
     for _r, radar in enumerate(sim_settings['radar_list']):
         radar = radar.upper()
@@ -963,24 +963,18 @@ def run_with_cancel_button(cfg, sim_settings):
     """   
     UpdateHodoHTML('None', cfg['HODOGRAPHS_DIR'], cfg['HODOGRAPHS_PAGE'])
 
-    #sa.scripts_progress = 'Setting up files and times'
-    sim_settings['scripts_progress'] = 'Setting up files and times'
+    #sim_settings['scripts_progress'] = 'Setting up files and times'
     # determine actual event time, playback time, diff of these two
-    #sa.make_simulation_times()
-    sim_settings = make_simulation_times(sim_settings)
+    #sim_settings = make_simulation_times(sim_settings)
     # clean out old files and directories
     try:
         remove_files_and_dirs(cfg)
-        #sa.remove_files_and_dirs(cfg)
     except Exception as e:
         logging.exception("Error removing files and directories: ", exc_info=True)
 
     # based on list of selected radars, create a dictionary of radar metadata
     try:
-        sa.create_radar_dict()
         create_radar_dict(sim_settings)
-
-        sa.copy_grlevel2_cfg_file(cfg)
         copy_grlevel2_cfg_file(cfg)
     except Exception as e:
         logging.exception("Error creating radar dict or config file: ", exc_info=True)
@@ -1033,14 +1027,14 @@ def run_with_cancel_button(cfg, sim_settings):
     # Surface observations
     args = [str(sim_settings['lat']), str(sim_settings['lon']), 
             sim_settings['event_start_str'], cfg['PLACEFILES_DIR'], 
-            str(sa.event_duration)]
+            str(sim_settings['event_duration'])]
     res = call_function(utils.exec_script, Path(cfg['OBS_SCRIPT_PATH']), args, 
                         cfg['SESSION_ID'])
     if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
         return
 
     # NSE placefiles
-    args = [str(sim_settings['event_start_time']), str(sim_settings['event_duration']), 
+    args = [str(sim_settings['event_start_str']), str(sim_settings['event_duration']), 
             cfg['SCRIPTS_DIR'], cfg['DATA_DIR'], cfg['PLACEFILES_DIR']]
     res = call_function(utils.exec_script, Path(cfg['NSE_SCRIPT_PATH']), args, 
                         cfg['SESSION_ID'])
@@ -1074,7 +1068,29 @@ def run_with_cancel_button(cfg, sim_settings):
             UpdateHodoHTML('None', cfg['HODOGRAPHS_DIR'], cfg['HODOGRAPHS_PAGE'])
         except Exception as e:
             print("Error updating hodo html: ", e)
-            sa.log.exception("Error updating hodo html: ", exc_info=True)
+            logging.exception("Error updating hodo html: ", exc_info=True)
+
+@app.callback(
+    Output('sim_settings', 'data', allow_duplicate=True),
+    Input('run_scripts_btn', 'n_clicks'),
+    State('sim_settings', 'data'),
+    prevent_initial_call=True
+)
+def set_simulation_times(n_clicks, sim_settings):
+    """
+    This setter callback will ensure the simulation control settings (playback times) 
+    are broadcast to the sim_settings dictionary in dcc.Store.
+    """
+    if n_clicks == 0: sim_settings['script_btn_clicks'] = 0
+
+    # User has clicked the run_scripts_btn.  B/c of the allow_duplicate=True in output,
+    # this callback fires repeatedly with ctx.triggered_id = run_scripts_button. This is
+    # a workaround to determine when the scripts button has actually been clicked.
+    if n_clicks > sim_settings['script_btn_clicks']:
+        sim_settings = make_simulation_times(sim_settings)
+    sim_settings['script_btn_clicks'] = n_clicks 
+
+    return sim_settings
 
 @app.callback(
     Output('show_script_progress', 'children', allow_duplicate=True),
@@ -1100,7 +1116,7 @@ def run_with_cancel_button(cfg, sim_settings):
         (Output('change_time', 'disabled'), True, False), # wait to enable change time dropdown
         (Output('cancel_scripts', 'disabled'), False, True),
     ])
-def launch_simulation(n_clicks, configs, sim_settings) -> None:
+def launch_simulation(n_clicks, configs, sim_settings):
     """
     This function is called when the "Run Scripts" button is clicked. It will execute the
     necessary scripts to simulate radar operations, create hodographs, and transpose placefiles.
@@ -1129,7 +1145,7 @@ def cancel_scripts(n_clicks, SESSION_ID) -> None:
         n_clicks (int): incremented whenever the "Cancel Scripts" button is clicked
     """
     if n_clicks > 0:
-        utils.cancel_all(sa, SESSION_ID)
+        utils.cancel_all(SESSION_ID)
 
 
 @app.callback(
@@ -1198,9 +1214,8 @@ def monitor(_n, cfg, sim_settings):
 # ----------------------------- Transpose placefiles in time and space  ------------------------
 ################################################################################################
 # A time shift will always be applied in the case of a simulation. Determination of
-# whether to also perform a spatial shift occurrs within self.shift_placefiles where
-# a check for sa.new_radar != None takes place.
-
+# whether to also perform a spatial shift occurrs within shift_placefiles where a check for 
+# new_radar != None takes place.
 def run_transpose_script(PLACEFILES_DIR, sim_settings) -> None:
     """
     Wrapper function to the shift_placefiles script
@@ -1242,8 +1257,9 @@ def toggle_placefiles_section(n) -> dict:
     Output('change_time', 'options'),
     Input('playback_btn', 'n_clicks'),
     State('configs', 'data'),
+    State('sim_settings', 'data'),
     prevent_initial_call=True)
-def initiate_playback(_nclick, cfg):
+def initiate_playback(_nclick, cfg, sa):
     """     
     Enables/disables interval component that elapses the playback time
 
@@ -1251,17 +1267,17 @@ def initiate_playback(_nclick, cfg):
     btn_text = 'Simulation Launched'
     btn_disabled = True
     playback_running = True
-    start = sa.playback_start_str
-    end = sa.playback_end_str
+    start = sa['playback_start_str']
+    end = sa['playback_end_str']
     style = lc.playback_times_style
-    options = sa.playback_dropdown_dict
+    options = sa['playback_dropdown_dict']
     if config.PLATFORM != 'WINDOWS':
-        UpdateHodoHTML(sa.playback_clock_str, cfg['HODOGRAPHS_DIR'], cfg['HODOGRAPHS_PAGE'])
-        if sa.new_radar != 'None':
-            UpdateDirList(sa.new_radar, sa.playback_clock_str, cfg['POLLING_DIR'])
+        UpdateHodoHTML(sa['playback_clock_str'], cfg['HODOGRAPHS_DIR'], cfg['HODOGRAPHS_PAGE'])
+        if sa['new_radar'] != 'None':
+            UpdateDirList(sa['new_radar'], sa['playback_clock_str'], cfg['POLLING_DIR'])
         else:
-            for _r, radar in enumerate(sa.radar_list):
-                UpdateDirList(radar, sa.playback_clock_str, cfg['POLLING_DIR'])
+            for _r, radar in enumerate(sa['radar_list']):
+                UpdateDirList(radar, sa['playback_clock_str'], cfg['POLLING_DIR'])
 
     return btn_text, btn_disabled, False, playback_running, start, style, end, style, options
 
@@ -1276,44 +1292,55 @@ def initiate_playback(_nclick, cfg):
     Input('playback_timer', 'n_intervals'),
     Input('change_time', 'value'),
     Input('playback_running_store', 'data'),
-    State('configs', 'data')
+    State('configs', 'data'),
+    State('sim_settings', 'data')
     ], prevent_initial_call=True)
-def manage_clock_(nclicks, _n_intervals, new_time, _playback_running, cfg):
+def manage_clock_(nclicks, _n_intervals, new_time, _playback_running, cfg, sa):
     """     
     Test
     """
     interval_disabled = False
     status = 'Running'
-    sa.playback_paused = False
+    sa['playback_paused'] = False
     playback_btn_text = 'Pause Playback'
-    if sa.playback_clock.tzinfo is None:
-        sa.playback_clock = sa.playback_clock.replace(tzinfo=timezone.utc)
-    readout_time = datetime.strftime(sa.playback_clock, '%Y-%m-%d   %H:%M:%S')
+
+    # Variables stored in the sim_settings dict in the dcc.Store object are strings. 
+    playback_clock = datetime.strptime(sa['playback_clock'], '%Y-%m-%dT%H:%M:%S+00:00')
+    playback_end = datetime.strptime(sa['playback_end'], '%Y-%m-%dT%H:%M:%S+00:00')
+    print(new_time)
+
+    if playback_clock.tzinfo is None:
+        sa['playback_clock'] = playback_clock.replace(tzinfo=timezone.utc)
+    readout_time = datetime.strftime(playback_clock, '%Y-%m-%d   %H:%M:%S')
     style = lc.feedback_green
     triggered_id = ctx.triggered_id
 
     if triggered_id == 'playback_timer':
-        if sa.playback_clock.tzinfo is None:
-            sa.playback_clock = sa.playback_clock.replace(tzinfo=timezone.utc)
-        sa.playback_clock += timedelta(seconds=15 * sa.playback_speed)
-        if sa.playback_clock < sa.playback_end:
-            sa.playback_clock_str = sa.date_time_string(sa.playback_clock)
-            readout_time = datetime.strftime(sa.playback_clock, '%Y-%m-%d   %H:%M:%S')
+        if playback_clock.tzinfo is None:
+            sa['playback_clock'] = playback_clock.replace(tzinfo=timezone.utc)
+        sa['playback_clock'] += timedelta(seconds=15 * sa['playback_speed'])
+
+        if playback_end.tzinfo is None:
+            playback_end = playback_end.replace(tzinfo=timezone.utc)
+        
+        if playback_clock < playback_end:
+            sa['playback_clock_str'] = date_time_string(playback_clock)
+            readout_time = datetime.strftime(playback_clock, '%Y-%m-%d   %H:%M:%S')
             if config.PLATFORM != 'WINDOWS':
-                UpdateHodoHTML(sa.playback_clock_str, cfg['HODOGRAPHS_DIR'], cfg['HODOGRAPHS_PAGE'])
-                if sa.new_radar != 'None':
-                    UpdateDirList(sa.new_radar, sa.playback_clock_str, cfg['POLLING_DIR'])
+                UpdateHodoHTML(sa['playback_clock_str'], cfg['HODOGRAPHS_DIR'], cfg['HODOGRAPHS_PAGE'])
+                if sa['new_radar'] != 'None':
+                    UpdateDirList(sa['new_radar'], sa['playback_clock_str'], cfg['POLLING_DIR'])
                 else:
-                    for _r, radar in enumerate(sa.radar_list):
-                        UpdateDirList(radar, sa.playback_clock_str, cfg['POLLING_DIR'])
+                    for _r, radar in enumerate(sa['radar_list']):
+                        UpdateDirList(radar, sa['playback_clock_str'], cfg['POLLING_DIR'])
             else:
                 pass
 
-        if sa.playback_clock >= sa.playback_end:
+        if playback_clock >= playback_end:
             interval_disabled = True
-            sa.playback_paused = True
-            sa.playback_clock = sa.playback_end
-            sa.playback_clock_str = sa.date_time_string(sa.playback_clock)
+            sa['playback_paused'] = True
+            sa['playback_clock'] = playback_end
+            sa['playback_clock_str'] = date_time_string(playback_clock)
             status = 'Simulation Complete'
             playback_btn_text = 'Restart Simulation'
             style = lc.feedback_yellow
@@ -1321,30 +1348,30 @@ def manage_clock_(nclicks, _n_intervals, new_time, _playback_running, cfg):
     if triggered_id == 'pause_resume_playback_btn':
         interval_disabled = False
         status = 'Running'
-        sa.playback_paused = False
+        sa['playback_paused'] = False
         playback_btn_text = 'Pause Playback'
         style = lc.feedback_green
 
         if nclicks % 2 == 1:
             interval_disabled = True
             status = 'Paused'
-            sa.playback_paused = True
+            sa['playback_paused'] = True
             playback_btn_text = 'Resume Playback'
             style = lc.feedback_yellow
            
     if triggered_id == 'change_time':
-        sa.playback_clock = datetime.strptime(new_time, '%Y-%m-%d %H:%M')
-        if sa.playback_clock.tzinfo is None:
-            sa.playback_clock = sa.playback_clock.replace(tzinfo=timezone.utc)
-            sa.playback_clock_str = new_time
-            readout_time = datetime.strftime(sa.playback_clock, '%Y-%m-%d %H:%M:%S')
+        playback_clock = datetime.strptime(new_time, '%Y-%m-%d %H:%M')
+        if playback_clock.tzinfo is None:
+            sa['playback_clock'] = playback_clock.replace(tzinfo=timezone.utc)
+            sa['playback_clock_str'] = new_time
+            readout_time = datetime.strftime(playback_clock, '%Y-%m-%d %H:%M:%S')
         if config.PLATFORM != 'WINDOWS':
-            UpdateHodoHTML(sa.playback_clock_str, cfg['HODOGRAPHS_DIR'], cfg['HODOGRAPHS_PAGE'])
-            if sa.new_radar != 'None':
-                UpdateDirList(sa.new_radar, sa.playback_clock_str, cfg['POLLING_DIR'])
+            UpdateHodoHTML(sa['playback_clock_str'], cfg['HODOGRAPHS_DIR'], cfg['HODOGRAPHS_PAGE'])
+            if sa['new_radar'] != 'None':
+                UpdateDirList(sa['new_radar'], sa['playback_clock_str'], cfg['POLLING_DIR'])
             else:
-                for _r, radar in enumerate(sa.radar_list):
-                    UpdateDirList(radar, sa.playback_clock_str, cfg['POLLING_DIR'])
+                for _r, radar in enumerate(sa['radar_list']):
+                    UpdateDirList(radar, sa['playback_clock_str'], cfg['POLLING_DIR'])
 
     if triggered_id == 'playback_running_store':
         pass
@@ -1360,17 +1387,19 @@ def manage_clock_(nclicks, _n_intervals, new_time, _playback_running, cfg):
 ################################################################################################
 @app.callback(
     Output('playback_speed_dummy', 'children'),
-    Input('speed_dropdown', 'value'))
-def update_playback_speed(selected_speed):
+    Input('speed_dropdown', 'value'),
+    State('sim_settings', 'data'),
+)
+def update_playback_speed(selected_speed, sa):
     """
     Updates the playback speed in the sa object
     """
-    sa.playback_speed = selected_speed
+    sa['playback_speed'] = selected_speed
     try:
-        sa.playback_speed = float(selected_speed)
+        sa['playback_speed'] = float(selected_speed)
     except ValueError:
         print(f"Error converting {selected_speed} to float")
-        sa.playback_speed = 1.0
+        sa['playback_speed'] = 1.0
     return selected_speed
 
 
@@ -1510,60 +1539,3 @@ if __name__ == '__main__':
                 dev_tools_hot_reload=False)
         else:
             app.run(debug=True, port=8050, threaded=True, dev_tools_hot_reload=False)
-  
-
-'''
-# pathname_params = dict()
-# if my_settings.hosting_path is not None:
-#     pathname_params["routes_pathname_prefix"] = "/"
-#     pathname_params["requests_pathname_prefix"] = "/{}/".format(my_settings.hosting_path)
-
-
-# Monitoring size of data and output directories for progress bar output
-def directory_stats(folder):
-    """Return the size of a directory. If path hasn't been created yet, returns 0."""
-    num_files = 0
-    total_size = 0
-    if os.path.isdir(folder):
-        total_size = sum(
-            sum(
-                os.path.getsize(os.path.join(walk_result[0], element))
-                for element in walk_result[2]
-            )
-            for walk_result in os.walk(folder)
-        )
-
-        for _, _, files in os.walk(folder):
-            num_files += len(files)
-
-    return total_size/1024000, num_files
-'''
-'''
-@app.callback(
-    #Output('tradar', 'value'),
-    Output('model_dir_size', 'data'),
-    Output('radar_dir_size', 'data'),
-    #Output('model_table_df', 'data'),
-    [Input('directory_monitor', 'n_intervals')],
-    prevent_initial_call=True)
-def monitor(n):
-    model_dir = directory_stats(f"{sa.data_dir}/model_data")
-    radar_dir = directory_stats(f"{sa.data_dir}/radar")
-    print("sa.new_radar", sa.new_radar)
-    #print(model_dir)
-
-    # Read modeldata.txt file 
-    #filename = f"{sa.data_dir}/model_data/model_list.txt"
-    #model_table = []
-    #if os.path.exists(filename):
-    #    model_listing = []
-    #    with open(filename, 'r') as f: model_list = f.readlines()
-    #    for line in model_list:
-    #        model_listing.append(line.rsplit('/', 1)[1][:-1])
-    # 
-    #     df = pd.DataFrame({'Model Data': model_listing})
-    #     output = df.to_dict('records')
-
-    return model_dir[0], radar_dir[0]
-
-'''
