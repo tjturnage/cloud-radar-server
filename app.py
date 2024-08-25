@@ -986,7 +986,7 @@ def launch_simulation(n_clicks, configs, sim_settings) -> None:
         raise PreventUpdate
     else:
         if config.PLATFORM == 'WINDOWS':
-            sa.make_simulation_times()
+            make_simulation_times(sim_settings)
         else:
             run_with_cancel_button(configs, sim_settings)
 
