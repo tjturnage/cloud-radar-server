@@ -1074,7 +1074,7 @@ def run_with_cancel_button(cfg, sim_settings):
         except Exception as e:
             print("Error updating hodo html: ", e)
             logging.exception("Error updating hodo html: ", exc_info=True)
-
+            
 @app.callback(
     Output('sim_settings', 'data', allow_duplicate=True),
     Input('run_scripts_btn', 'n_clicks'),
@@ -1258,6 +1258,7 @@ def toggle_placefiles_section(n) -> dict:
     Output('end_readout', 'children'),
     Output('end_readout', 'style'),
     Output('change_time', 'options'),
+    Output('speed_dropdown', 'disabled'),
     Output('playback_specs', 'data', allow_duplicate=True),
     Input('playback_btn', 'n_clicks'),
     State('playback_speed_store', 'data'),
@@ -1278,6 +1279,9 @@ def initiate_playback(_nclick, playback_speed, cfg, sa):
         'playback_speed': playback_speed,
         'new_radar': sa['new_radar'],
         'radar_list': sa['radar_list'],
+        #'interval_disabled': False,
+        #'status': 'Running',
+        #'playback_btn_text': 'playback_btn_text'
     }
 
     btn_text = 'Simulation Launched'
@@ -1296,7 +1300,7 @@ def initiate_playback(_nclick, playback_speed, cfg, sa):
                 UpdateDirList(radar, sa['playback_clock_str'], cfg['POLLING_DIR'])
 
     return (btn_text, btn_disabled, False, playback_running, start, style, end, style, options,
-            playback_specs)
+            False, playback_specs)
 
 @app.callback(
     Output('playback_timer', 'disabled'),
@@ -1310,17 +1314,21 @@ def initiate_playback(_nclick, playback_speed, cfg, sa):
     Input('playback_timer', 'n_intervals'),
     Input('change_time', 'value'),
     Input('playback_running_store', 'data'),
+    Input('playback_speed_store', 'data'),
     State('configs', 'data'),
     State('playback_specs', 'data'),
     ], prevent_initial_call=True)
-def manage_clock_(nclicks, _n_intervals, new_time, _playback_running, cfg, specs):
+def manage_clock_(nclicks, _n_intervals, new_time, _playback_running, playback_speed, 
+                  cfg, specs):
     """     
     Test
     """
-    print(specs)
+    triggered_id = ctx.triggered_id
+
+    specs['playback_speed'] = playback_speed
     interval_disabled = False
     status = 'Running'
-    specs['playback_paused'] = False
+    playback_paused = False
     playback_btn_text = 'Pause Playback'
 
     # Variables stored dcc.Store object are strings. 
@@ -1336,12 +1344,11 @@ def manage_clock_(nclicks, _n_intervals, new_time, _playback_running, cfg, specs
         specs['playback_clock'] = specs['playback_clock'].replace(tzinfo=timezone.utc)
     readout_time = datetime.strftime(specs['playback_clock'], '%Y-%m-%d   %H:%M:%S')
     style = lc.feedback_green
-    triggered_id = ctx.triggered_id
 
     if triggered_id == 'playback_timer':
         if specs['playback_clock'].tzinfo is None:
             specs['playback_clock'] = specs['playback_clock'].replace(tzinfo=timezone.utc)
-        specs['playback_clock'] += timedelta(seconds=15 * specs['playback_speed'])
+        specs['playback_clock'] += timedelta(seconds=round(15*specs['playback_speed']))
 
         if specs['playback_end'].tzinfo is None:
             specs['playback_end'] = specs['playback_end'].replace(tzinfo=timezone.utc)
@@ -1361,7 +1368,7 @@ def manage_clock_(nclicks, _n_intervals, new_time, _playback_running, cfg, specs
 
         if specs['playback_clock'] >= specs['playback_end']:
             interval_disabled = True
-            specs['playback_paused'] = True
+            playback_paused = True
             specs['playback_clock'] = specs['playback_end']
             specs['playback_clock_str'] = date_time_string(specs['playback_clock'])
             status = 'Simulation Complete'
@@ -1371,14 +1378,14 @@ def manage_clock_(nclicks, _n_intervals, new_time, _playback_running, cfg, specs
     if triggered_id == 'pause_resume_playback_btn':
         interval_disabled = False
         status = 'Running'
-        specs['playback_paused'] = False
+        playback_paused = False
         playback_btn_text = 'Pause Playback'
         style = lc.feedback_green
 
         if nclicks % 2 == 1:
             interval_disabled = True
             status = 'Paused'
-            specs['playback_paused'] = True
+            playback_paused = True
             playback_btn_text = 'Resume Playback'
             style = lc.feedback_yellow
            
@@ -1403,7 +1410,22 @@ def manage_clock_(nclicks, _n_intervals, new_time, _playback_running, cfg, specs
         #     status = 'Paused'
         #     playback_btn_text = 'Resume Simulation'
 
-    return interval_disabled, status, style, playback_btn_text, readout_time, style, specs
+    # Without this, a change to either the playback speed or playback time will restart
+    # a paused simulation
+    if triggered_id in ['playback_speed_store', 'change_time']:
+        interval_disabled = specs['interval_disabled']
+        status = specs['status']
+        playback_btn_text = specs['playback_btn_text']
+        playback_paused = specs['playback_paused']
+        style = specs['style']
+
+    specs['interval_disabled'] = interval_disabled
+    specs['status'] = status
+    specs['playback_paused'] = playback_paused
+    specs['playback_btn_text'] = playback_btn_text
+    specs['style'] = style
+    return (specs['interval_disabled'], specs['status'], specs['style'], 
+            specs['playback_btn_text'], readout_time, style, specs)
 
 ################################################################################################
 # ----------------------------- Playback Speed Callbacks  --------------------------------------

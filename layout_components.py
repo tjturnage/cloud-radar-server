@@ -553,7 +553,8 @@ clock_status_container = dbc.Container(html.Div([dbc.Row([playback_status_box])]
 playback_speed_label = html.Div(children="Playback Speed", style=time_headers)
 playback_speed_dropdown_values = [0.25, 0.5, 0.75, 1.0, 1.5, 2.0, 3.0, 4.0, 5.0, 10.0]
 playback_speed_options = [{'label': str(i) + 'x', 'value': i} for i in playback_speed_dropdown_values]
-playback_speed_dropdown = dcc.Dropdown(options=playback_speed_options, value=1.0, id='speed_dropdown')
+playback_speed_dropdown = dcc.Dropdown(options=playback_speed_options, value=1.0, id='speed_dropdown',
+                                       disabled=True)
 playback_speed_col = dbc.Col(html.Div([playback_speed_label, spacer_mini, playback_speed_dropdown]))
 
 
