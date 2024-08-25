@@ -55,7 +55,49 @@ R = 6_378_137
 # Regular expressions. First one finds lat/lon pairs, second finds the timestamps.
 LAT_LON_REGEX = "[0-9]{1,2}.[0-9]{1,100},[ ]{0,1}[|\\s-][0-9]{1,3}.[0-9]{1,100}"
 TIME_REGEX = "[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z"
-TOKEN = 'INSERT YOUR MAPBOX TOKEN HERE'
+#TOKEN = 'INSERT YOUR MAPBOX TOKEN HERE'
+
+# Configure logging
+"""
+Idea is to move all of these functions to some other utility script within the main dir
+"""
+def create_logfile(LOG_DIR):
+    """
+    Generate the main logfile for the download and processing scripts. 
+    """
+    logging.basicConfig(
+        filename=f'{LOG_DIR}/scripts.txt',  # Log file location
+        level=logging.INFO,  # Log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+        format='%(levelname)s %(asctime)s :: %(message)s',
+        datefmt="%Y-%m-%d %H:%M:%S"
+    )
+
+def copy_grlevel2_cfg_file(cfg) -> None:
+    """
+    Ensures a grlevel2.cfg file is copied into the polling directory.
+    This file is required for GR2Analyst to poll for radar data.
+    """
+    source = f"{cfg['BASE_DIR']}/grlevel2.cfg"
+    destination = f"{cfg['POLLING_DIR']}/grlevel2.cfg"
+    try:
+        shutil.copyfile(source, destination)
+    except Exception as e:
+        print(f"Error copying {source} to {destination}: {e}")
+
+def remove_files_and_dirs(cfg) -> None:
+    """
+    Cleans up files and directories from the previous simulation so these datasets
+    are not included in the current simulation.
+    """
+    dirs = [cfg['RADAR_DIR'], cfg['POLLING_DIR'], cfg['HODOGRAPHS_DIR'], cfg['MODEL_DIR'],
+            cfg['PLACEFILES_DIR']]
+    for directory in dirs:
+        for root, dirs, files in os.walk(directory, topdown=False):
+            for name in files:
+                if name != 'grlevel2.cfg':
+                    os.remove(os.path.join(root, name))
+            for name in dirs:
+                os.rmdir(os.path.join(root, name))
 
 def date_time_string(dt) -> str:
     """
@@ -499,9 +541,10 @@ simulation_playback_section = dbc.Container(
     Input('directory_monitor', 'n_intervals'),
     State('layout_has_initialized', 'data'),
     State('dynamic_container', 'children'),
-    State('sim_settings', 'data')
+    State('sim_settings', 'data'),
+    State('configs', 'data')
 )
-def generate_layout(n_intervals, layout_has_initialized, children, sim_settings):
+def generate_layout(n_intervals, layout_has_initialized, children, sim_settings, configs):
     """
     Dynamically generate the layout, which was started in the config file to set up 
     the unique session id. This callback should only be executed once at page load in. 
@@ -594,6 +637,7 @@ def generate_layout(n_intervals, layout_has_initialized, children, sim_settings)
 
         return children, layout_has_initialized, sim_settings
 
+    create_logfile(configs['LOG_DIR'])
     return children, layout_has_initialized, sim_settings
 
 ################################################################################################
@@ -743,16 +787,16 @@ def query_radar_files(cfg, sim_settings):
     sim_settings['radar_files_dict'] = {}
     for _r, radar in enumerate(sim_settings['radar_list']):
         radar = radar.upper()
-        args = [radar, str(sim_settings['event_start_str']), str(sim_settings['event_duration']), str(False), 
-                cfg['RADAR_DIR']]
-        sa.log.info(f"Passing {args} to Nexrad.py")
+        args = [radar, str(sim_settings['event_start_str']), str(sim_settings['event_duration']), 
+                str(False), cfg['RADAR_DIR']]
+        logging.info(f"{cfg['SESSION_ID']} :: Passing {args} to Nexrad.py")
         results = utils.exec_script(Path(cfg['NEXRAD_SCRIPT_PATH']), args, cfg['SESSION_ID'])
         if results['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
-            sa.log.warning(f"User cancelled query_radar_files()")
+            logging.warning(f"{cfg['SESSION_ID']} :: User cancelled query_radar_files()")
             break
 
         json_data = results['stdout'].decode('utf-8')
-        sa.log.info(f"Nexrad.py returned with {json_data}")
+        logging.info(f"{cfg['SESSION_ID']} :: Nexrad.py returned with {json_data}")
         #sa.radar_files_dict.update(json.loads(json_data))
         sim_settings['radar_files_dict'].update(json.loads(json_data))
 
@@ -774,15 +818,16 @@ def run_hodo_script(args) -> None:
 
 
 def call_function(func, *args, **kwargs):
-    if len(args) > 1: 
-        sa.log.info(f"Sending {args[1]} to {args[0]}")
+    # For the main script calls
+    if len(args) > 2: 
+        logging.info(f"Sending {args[1]} to {args[0]}")
 
     result = func(*args, **kwargs)
 
     if len(result['stderr']) > 0: 
-        sa.log.error(result['stderr'].decode('utf-8'))
+        logging.error(result['stderr'].decode('utf-8'))
     if 'exception' in result:
-        sa.log.error(f"Exception {result['exception']} occurred in {func.__name__}")
+        logging.error(f"Exception {result['exception']} occurred in {func.__name__}")
     return result
 
 
@@ -792,24 +837,27 @@ def run_with_cancel_button(cfg, sim_settings):
     """
     UpdateHodoHTML('None', cfg['HODOGRAPHS_DIR'], cfg['HODOGRAPHS_PAGE'])
 
-    sa.scripts_progress = 'Setting up files and times'
+    #sa.scripts_progress = 'Setting up files and times'
     sim_settings['scripts_progress'] = 'Setting up files and times'
     # determine actual event time, playback time, diff of these two
-    sa.make_simulation_times()
-    make_simulation_times(sim_settings)
+    #sa.make_simulation_times()
+    sim_settings = make_simulation_times(sim_settings)
     # clean out old files and directories
     try:
-        sa.remove_files_and_dirs(cfg)
+        remove_files_and_dirs(cfg)
+        #sa.remove_files_and_dirs(cfg)
     except Exception as e:
-        sa.log.exception("Error removing files and directories: ", exc_info=True)
+        logging.exception("Error removing files and directories: ", exc_info=True)
 
     # based on list of selected radars, create a dictionary of radar metadata
     try:
         sa.create_radar_dict()
         create_radar_dict(sim_settings)
+
         sa.copy_grlevel2_cfg_file(cfg)
+        copy_grlevel2_cfg_file(cfg)
     except Exception as e:
-        sa.log.exception("Error creating radar dict or config file: ", exc_info=True)
+        logging.exception("Error creating radar dict or config file: ", exc_info=True)
 
     # Create initial dictionary of expected radar files
     if len(sim_settings['radar_list']) > 0:
@@ -825,16 +873,17 @@ def run_with_cancel_button(cfg, sim_settings):
                 else:
                     new_radar = sim_settings['new_radar'].upper()
             except Exception as e:
-                sa.log.exception("Error defining new radar: ", exc_info=True)
+                logging.exception("Error defining new radar: ", exc_info=True)
 
             # Radar download
-            args = [radar, str(sim_settings['event_start_str']), str(sim_settings['event_duration']), 
-                    str(True), cfg['RADAR_DIR']]
+            args = [radar, str(sim_settings['event_start_str']), 
+                    str(sim_settings['event_duration']), str(True), cfg['RADAR_DIR']]
             res = call_function(utils.exec_script, Path(cfg['NEXRAD_SCRIPT_PATH']), 
                                 args, cfg['SESSION_ID'])
             if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
                 return
 
+    '''
             # Munger
             args = [radar, str(sa.playback_start_str), str(sa.event_duration), 
                     str(sa.simulation_seconds_shift), cfg['RADAR_DIR'], cfg['POLLING_DIR'],
@@ -894,7 +943,7 @@ def run_with_cancel_button(cfg, sim_settings):
         except Exception as e:
             print("Error updating hodo html: ", e)
             sa.log.exception("Error updating hodo html: ", exc_info=True)
-
+    '''
 @app.callback(
     Output('show_script_progress', 'children', allow_duplicate=True),
     [Input('run_scripts_btn', 'n_clicks'),

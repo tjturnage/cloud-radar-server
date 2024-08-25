@@ -55,7 +55,7 @@ def init_layout():
     Initialize the layout with a unique session id.  The 'dynamic container' is used 
     within the app to build out the rest of the application layout on page load
     """
-    session_id = f'{time.time_ns()//1000}_{uuid.uuid4()}'
+    session_id = f'{time.time_ns()//1000}_{uuid.uuid4().hex}'
     return dbc.Container([
         # Elements used to store and track the session id 
         dcc.Store(id='session_id', data=session_id, storage_type='session'),
@@ -99,7 +99,7 @@ def broadcast_session_id(n_intervals, session_id):
         dirs['POLLING_DIR'] = f"{dirs['ASSETS_DIR']}/polling"
         dirs['MODEL_DIR'] = f"{dirs['DATA_DIR']}/model_data"
         dirs['RADAR_DIR'] = f"{dirs['DATA_DIR']}/radar"
-        dirs['LOG_DIR'] = f"{dirs['DATA_DIR']}/logs"
+        dirs['LOG_DIR'] = f"{dirs['BASE_DIR']}/data/logs"
 
         # Need to be updated
         dirs['LINK_BASE'] = f"https://rssic.nws.noaa.gov/assets/{session_id}"
