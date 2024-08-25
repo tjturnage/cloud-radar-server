@@ -701,6 +701,8 @@ def generate_layout(n_intervals, layout_has_initialized, children, sim_settings,
         sim_settings['simulation_running'] = False
         sim_settings['playback_paused'] = False
 
+        sim_settings['script_btn_clicks'] = 0
+
         # Settings for date dropdowns moved here to avoid specifying different values in
         # the layout 
         now = datetime.now(pytz.utc)
@@ -722,6 +724,9 @@ def generate_layout(n_intervals, layout_has_initialized, children, sim_settings,
             dcc.Store(id='playback_start_store'),
             dcc.Store(id='playback_end_store'),
             dcc.Store(id='playback_clock_store'),
+
+            dcc.Store(id='playback_speed_store', data=sim_settings['playback_speed']),
+            dcc.Store(id='playback_specs', data={}),
             lc.top_section, lc.top_banner,
             dbc.Container([
                 dbc.Container([
@@ -740,7 +745,7 @@ def generate_layout(n_intervals, layout_has_initialized, children, sim_settings,
             lc.spacer,lc.toggle_placefiles_btn,lc.spacer_mini,
             lc.full_links_section, lc.spacer,
             simulation_playback_section,
-            html.Div(id='playback_speed_dummy', style={'display': 'none'}),
+            #html.Div(id='playback_speed_dummy', style={'display': 'none'}),
             lc.radar_id, lc.bottom_section
         ])
 
@@ -1081,8 +1086,6 @@ def set_simulation_times(n_clicks, sim_settings):
     This setter callback will ensure the simulation control settings (playback times) 
     are broadcast to the sim_settings dictionary in dcc.Store.
     """
-    if n_clicks == 0: sim_settings['script_btn_clicks'] = 0
-
     # User has clicked the run_scripts_btn.  B/c of the allow_duplicate=True in output,
     # this callback fires repeatedly with ctx.triggered_id = run_scripts_button. This is
     # a workaround to determine when the scripts button has actually been clicked.
@@ -1255,15 +1258,28 @@ def toggle_placefiles_section(n) -> dict:
     Output('end_readout', 'children'),
     Output('end_readout', 'style'),
     Output('change_time', 'options'),
+    Output('playback_specs', 'data', allow_duplicate=True),
     Input('playback_btn', 'n_clicks'),
+    State('playback_speed_store', 'data'),
     State('configs', 'data'),
     State('sim_settings', 'data'),
     prevent_initial_call=True)
-def initiate_playback(_nclick, cfg, sa):
+def initiate_playback(_nclick, playback_speed, cfg, sa):
     """     
-    Enables/disables interval component that elapses the playback time
-
+    Enables/disables interval component that elapses the playback time. The user can only 
+    click this button this once.
     """
+
+    playback_specs = {
+        'playback_paused': False,
+        'playback_clock': sa['playback_clock'],
+        'playback_clock_str': sa['playback_clock_str'],
+        'playback_end': sa['playback_end'],
+        'playback_speed': playback_speed,
+        'new_radar': sa['new_radar'],
+        'radar_list': sa['radar_list'],
+    }
+
     btn_text = 'Simulation Launched'
     btn_disabled = True
     playback_running = True
@@ -1279,7 +1295,8 @@ def initiate_playback(_nclick, cfg, sa):
             for _r, radar in enumerate(sa['radar_list']):
                 UpdateDirList(radar, sa['playback_clock_str'], cfg['POLLING_DIR'])
 
-    return btn_text, btn_disabled, False, playback_running, start, style, end, style, options
+    return (btn_text, btn_disabled, False, playback_running, start, style, end, style, options,
+            playback_specs)
 
 @app.callback(
     Output('playback_timer', 'disabled'),
@@ -1288,59 +1305,65 @@ def initiate_playback(_nclick, cfg, sa):
     Output('pause_resume_playback_btn', 'children'),
     Output('current_readout', 'children'),
     Output('current_readout', 'style'),
+    Output('playback_specs', 'data', allow_duplicate=True),
     [Input('pause_resume_playback_btn', 'n_clicks'),
     Input('playback_timer', 'n_intervals'),
     Input('change_time', 'value'),
     Input('playback_running_store', 'data'),
     State('configs', 'data'),
-    State('sim_settings', 'data')
+    State('playback_specs', 'data'),
     ], prevent_initial_call=True)
-def manage_clock_(nclicks, _n_intervals, new_time, _playback_running, cfg, sa):
+def manage_clock_(nclicks, _n_intervals, new_time, _playback_running, cfg, specs):
     """     
     Test
     """
+    print(specs)
     interval_disabled = False
     status = 'Running'
-    sa['playback_paused'] = False
+    specs['playback_paused'] = False
     playback_btn_text = 'Pause Playback'
 
-    # Variables stored in the sim_settings dict in the dcc.Store object are strings. 
-    playback_clock = datetime.strptime(sa['playback_clock'], '%Y-%m-%dT%H:%M:%S+00:00')
-    playback_end = datetime.strptime(sa['playback_end'], '%Y-%m-%dT%H:%M:%S+00:00')
-    print(new_time)
+    # Variables stored dcc.Store object are strings. 
+    specs['playback_clock'] = datetime.strptime(specs['playback_clock'], '%Y-%m-%dT%H:%M:%S+00:00')
 
-    if playback_clock.tzinfo is None:
-        sa['playback_clock'] = playback_clock.replace(tzinfo=timezone.utc)
-    readout_time = datetime.strftime(playback_clock, '%Y-%m-%d   %H:%M:%S')
+    # Unsure why these string representations change.
+    try:
+        specs['playback_end'] = datetime.strptime(specs['playback_end'], '%Y-%m-%dT%H:%M:%S+00:00')
+    except ValueError:
+        specs['playback_end'] = datetime.strptime(specs['playback_end'], '%Y-%m-%dT%H:%M:%S')
+
+    if specs['playback_clock'].tzinfo is None:
+        specs['playback_clock'] = specs['playback_clock'].replace(tzinfo=timezone.utc)
+    readout_time = datetime.strftime(specs['playback_clock'], '%Y-%m-%d   %H:%M:%S')
     style = lc.feedback_green
     triggered_id = ctx.triggered_id
 
     if triggered_id == 'playback_timer':
-        if playback_clock.tzinfo is None:
-            sa['playback_clock'] = playback_clock.replace(tzinfo=timezone.utc)
-        sa['playback_clock'] += timedelta(seconds=15 * sa['playback_speed'])
+        if specs['playback_clock'].tzinfo is None:
+            specs['playback_clock'] = specs['playback_clock'].replace(tzinfo=timezone.utc)
+        specs['playback_clock'] += timedelta(seconds=15 * specs['playback_speed'])
 
-        if playback_end.tzinfo is None:
-            playback_end = playback_end.replace(tzinfo=timezone.utc)
+        if specs['playback_end'].tzinfo is None:
+            specs['playback_end'] = specs['playback_end'].replace(tzinfo=timezone.utc)
         
-        if playback_clock < playback_end:
-            sa['playback_clock_str'] = date_time_string(playback_clock)
-            readout_time = datetime.strftime(playback_clock, '%Y-%m-%d   %H:%M:%S')
+        if specs['playback_clock'] < specs['playback_end']:
+            specs['playback_clock_str'] = date_time_string(specs['playback_clock'])
+            readout_time = datetime.strftime(specs['playback_clock'], '%Y-%m-%d   %H:%M:%S')
             if config.PLATFORM != 'WINDOWS':
-                UpdateHodoHTML(sa['playback_clock_str'], cfg['HODOGRAPHS_DIR'], cfg['HODOGRAPHS_PAGE'])
-                if sa['new_radar'] != 'None':
-                    UpdateDirList(sa['new_radar'], sa['playback_clock_str'], cfg['POLLING_DIR'])
+                UpdateHodoHTML(specs['playback_clock_str'], cfg['HODOGRAPHS_DIR'], cfg['HODOGRAPHS_PAGE'])
+                if specs['new_radar'] != 'None':
+                    UpdateDirList(specs['new_radar'], specs['playback_clock_str'], cfg['POLLING_DIR'])
                 else:
-                    for _r, radar in enumerate(sa['radar_list']):
-                        UpdateDirList(radar, sa['playback_clock_str'], cfg['POLLING_DIR'])
+                    for _r, radar in enumerate(specs['radar_list']):
+                        UpdateDirList(radar, specs['playback_clock_str'], cfg['POLLING_DIR'])
             else:
                 pass
 
-        if playback_clock >= playback_end:
+        if specs['playback_clock'] >= specs['playback_end']:
             interval_disabled = True
-            sa['playback_paused'] = True
-            sa['playback_clock'] = playback_end
-            sa['playback_clock_str'] = date_time_string(playback_clock)
+            specs['playback_paused'] = True
+            specs['playback_clock'] = specs['playback_end']
+            specs['playback_clock_str'] = date_time_string(specs['playback_clock'])
             status = 'Simulation Complete'
             playback_btn_text = 'Restart Simulation'
             style = lc.feedback_yellow
@@ -1348,30 +1371,30 @@ def manage_clock_(nclicks, _n_intervals, new_time, _playback_running, cfg, sa):
     if triggered_id == 'pause_resume_playback_btn':
         interval_disabled = False
         status = 'Running'
-        sa['playback_paused'] = False
+        specs['playback_paused'] = False
         playback_btn_text = 'Pause Playback'
         style = lc.feedback_green
 
         if nclicks % 2 == 1:
             interval_disabled = True
             status = 'Paused'
-            sa['playback_paused'] = True
+            specs['playback_paused'] = True
             playback_btn_text = 'Resume Playback'
             style = lc.feedback_yellow
            
     if triggered_id == 'change_time':
-        playback_clock = datetime.strptime(new_time, '%Y-%m-%d %H:%M')
-        if playback_clock.tzinfo is None:
-            sa['playback_clock'] = playback_clock.replace(tzinfo=timezone.utc)
-            sa['playback_clock_str'] = new_time
-            readout_time = datetime.strftime(playback_clock, '%Y-%m-%d %H:%M:%S')
+        specs['playback_clock'] = datetime.strptime(new_time, '%Y-%m-%d %H:%M')
+        if specs['playback_clock'].tzinfo is None:
+            specs['playback_clock'] = specs['playback_clock'].replace(tzinfo=timezone.utc)
+            specs['playback_clock_str'] = new_time
+            readout_time = datetime.strftime(specs['playback_clock'], '%Y-%m-%d %H:%M:%S')
         if config.PLATFORM != 'WINDOWS':
-            UpdateHodoHTML(sa['playback_clock_str'], cfg['HODOGRAPHS_DIR'], cfg['HODOGRAPHS_PAGE'])
-            if sa['new_radar'] != 'None':
-                UpdateDirList(sa['new_radar'], sa['playback_clock_str'], cfg['POLLING_DIR'])
+            UpdateHodoHTML(specs['playback_clock_str'], cfg['HODOGRAPHS_DIR'], cfg['HODOGRAPHS_PAGE'])
+            if specs['new_radar'] != 'None':
+                UpdateDirList(specs['new_radar'], specs['playback_clock_str'], cfg['POLLING_DIR'])
             else:
-                for _r, radar in enumerate(sa['radar_list']):
-                    UpdateDirList(radar, sa['playback_clock_str'], cfg['POLLING_DIR'])
+                for _r, radar in enumerate(specs['radar_list']):
+                    UpdateDirList(radar, specs['playback_clock_str'], cfg['POLLING_DIR'])
 
     if triggered_id == 'playback_running_store':
         pass
@@ -1380,27 +1403,31 @@ def manage_clock_(nclicks, _n_intervals, new_time, _playback_running, cfg, sa):
         #     status = 'Paused'
         #     playback_btn_text = 'Resume Simulation'
 
-    return interval_disabled, status, style, playback_btn_text, readout_time, style
+    return interval_disabled, status, style, playback_btn_text, readout_time, style, specs
 
 ################################################################################################
 # ----------------------------- Playback Speed Callbacks  --------------------------------------
 ################################################################################################
 @app.callback(
-    Output('playback_speed_dummy', 'children'),
+    #Output('playback_specs', 'data', allow_duplicate=True),
+    #Output('sim_settings', 'data', allow_duplicate=True),
+    Output('playback_speed_store', 'data'),
     Input('speed_dropdown', 'value'),
-    State('sim_settings', 'data'),
+    prevent_initial_call=True
 )
-def update_playback_speed(selected_speed, sa):
+def update_playback_speed(selected_speed):
     """
     Updates the playback speed in the sa object
     """
-    sa['playback_speed'] = selected_speed
+    #sim_settings['playback_speed'] = selected_speed
     try:
-        sa['playback_speed'] = float(selected_speed)
+        #sim_settings['playback_speed'] = float(selected_speed)
+        selected_speed = float(selected_speed)
     except ValueError:
         print(f"Error converting {selected_speed} to float")
-        sa['playback_speed'] = 1.0
+        selected_speed = 1.0
     return selected_speed
+    #return specs
 
 
 ################################################################################################
