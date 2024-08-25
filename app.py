@@ -57,6 +57,78 @@ LAT_LON_REGEX = "[0-9]{1,2}.[0-9]{1,100},[ ]{0,1}[|\\s-][0-9]{1,3}.[0-9]{1,100}"
 TIME_REGEX = "[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z"
 TOKEN = 'INSERT YOUR MAPBOX TOKEN HERE'
 
+def date_time_string(dt) -> str:
+    """
+    Converts a datetime object to a string.
+    """
+    return datetime.strftime(dt, "%Y-%m-%d %H:%M")
+
+def make_simulation_times(sa) -> dict:
+    """
+    playback_start_time: datetime object
+        - the time the simulation starts.
+        - set to (current UTC time rounded to nearest 30 minutes then minus 2hrs)
+        - This is "recent enough" for GR2Analyst to poll data
+    playback_timer: datetime object
+        - the "current" displaced realtime during the playback
+    event_start_time: datetime object
+        - the historical time the actual event started.
+        - based on user inputs of the event start time
+    simulation_time_shift: timedelta object
+        the difference between the playback start time and the event start time
+    simulation_seconds_shift: int
+        the difference between the playback start time and the event start time in seconds
+
+    Variables ending with "_str" are the string representations of the datetime objects
+    """
+
+    sa['playback_start'] = datetime.now(pytz.utc) - timedelta(hours=2)
+    sa['playback_start'] = sa['playback_start'].replace(second=0, microsecond=0)
+    if sa['playback_start'].minute < 30:
+        sa['playback_start'] = sa['playback_start'].replace(minute=0)
+    else:
+        sa['playback_start'] = sa['playback_start'].replace(minute=30)
+
+    sa['playback_start_str'] = date_time_string(sa['playback_start'])
+
+    sa['playback_end'] = sa['playback_start'] + timedelta(minutes=int(sa['event_duration']))
+    sa['playback_end_str'] = date_time_string(sa['playback_end'])
+
+    sa['playback_clock'] = sa['playback_start'] + timedelta(seconds=600)
+    sa['playback_clock_str'] = date_time_string(sa['playback_clock'])
+
+    sa['event_start_time'] = datetime(sa['event_start_year'], sa['event_start_month'],
+                                      sa['event_start_day'], sa['event_start_hour'],
+                                      sa['event_start_minute'], second=0,
+                                      tzinfo=timezone.utc)
+    # a timedelta object is not JSON serializable, so cannot be included in the output 
+    # dictionary stored in the dcc.Store object. All references to simulation_time_shift
+    # will need to use the simulation_seconds_shift reference instead.
+    simulation_time_shift = sa['playback_start'] - sa['event_start_time']
+    sa['simulation_seconds_shift'] = round(simulation_time_shift.total_seconds())
+    sa['event_start_str'] = date_time_string(sa['event_start_time'])
+    increment_list = []
+    for t in range(0, int(sa['event_duration']/5) + 1 , 1):
+        new_time = sa['playback_start'] + timedelta(seconds=t*300)
+        new_time_str = date_time_string(new_time)
+        increment_list.append(new_time_str)
+
+    sa['playback_dropdown_dict'] = [{'label': increment, 'value': increment} for increment in increment_list]
+    return sa
+
+def create_radar_dict(sa) -> dict:
+    """
+    Creates dictionary of radar sites and their metadata to be used in the simulation.
+    """
+    for _i, radar in enumerate(sa['radar_list']):
+        sa['lat'] = lc.df[lc.df['radar'] == radar]['lat'].values[0]
+        sa['lon'] = lc.df[lc.df['radar'] == radar]['lon'].values[0]
+        asos_one = lc.df[lc.df['radar'] == radar]['asos_one'].values[0]
+        asos_two = lc.df[lc.df['radar'] == radar]['asos_two'].values[0]
+        sa['radar_dict'][radar.upper()] = {'lat': sa['lat'], 'lon': sa['lon'],
+                                            'asos_one': asos_one, 'asos_two': asos_two,
+                                            'radar': radar.upper(), 'file_list': []}
+
 ################################################################################################
 # ----------------------------- Define class RadarSimulator  -----------------------------------
 ################################################################################################
@@ -109,7 +181,7 @@ class RadarSimulator(Config):
         # This will generate a logfile. Something we'll want to turn on in the future.
         self.log = self.create_logfile()
         #UpdateHodoHTML('None', '', '')  # set up the hodo page with no images
-
+        
     def create_logfile(self):
         """
         Creates an initial logfile. Stored in the data dir for now. Call is 
@@ -233,12 +305,12 @@ class RadarSimulator(Config):
         return self.playback_clock_str
 
 
-    def get_days_in_month(self) -> None:
-        """
-        Helper function to determine number of days to display in the dropdown
-        """
-        self.days_in_month = calendar.monthrange(
-            self.event_start_year, self.event_start_month)[1]
+    #def get_days_in_month(self) -> None:
+    #    """
+    #    Helper function to determine number of days to display in the dropdown
+    #    """
+    #    self.days_in_month = calendar.monthrange(
+    #        self.event_start_year, self.event_start_month)[1]
 
     def get_timestamp(self, file: str) -> float:
         """
@@ -402,10 +474,6 @@ sa = RadarSimulator()
 ################################################################################################
 ################################################################################################
 ################################################################################################
-sim_day_selection = dbc.Col(html.Div([
-    lc.step_day,
-    dcc.Dropdown(np.arange(1, sa.days_in_month+1), 16, id='start_day', clearable=False)]))
-
 playback_time_options = dbc.Col(html.Div([
     dcc.Dropdown(options={'label': 'Sim not started', 'value': ''}, id='change_time', 
                  disabled=True, clearable=False)]))
@@ -427,17 +495,64 @@ simulation_playback_section = dbc.Container(
 @app.callback( 
     Output('dynamic_container', 'children'),
     Output('layout_has_initialized', 'data'),
+    Output('sim_settings', 'data'),
     Input('directory_monitor', 'n_intervals'),
     State('layout_has_initialized', 'data'),
-    State('dynamic_container', 'children')
+    State('dynamic_container', 'children'),
+    State('sim_settings', 'data')
 )
-def generate_layout(n_intervals, layout_has_initialized, children):
+def generate_layout(n_intervals, layout_has_initialized, children, sim_settings):
     """
     Dynamically generate the layout, which was started in the config file to set up 
     the unique session id. This callback should only be executed once at page load in. 
     Thereafter, layout_has_initialized will be set to True
     """
     if not layout_has_initialized['added']:
+
+        # Initialize variables
+        sim_settings['event_start_year'] = 2024
+        sim_settings['event_start_month'] = 7
+        sim_settings['days_in_month'] = 30
+        sim_settings['event_start_day'] = 12
+        sim_settings['event_start_hour'] = 0
+        sim_settings['event_start_minute'] = 30
+        sim_settings['event_duration'] = 60
+        sim_settings['timestring'] = None
+        sim_settings['number_of_radars'] = 1
+        sim_settings['radar_list'] = []
+        sim_settings['playback_dropdown_dict'] = {}
+        sim_settings['radar_dict'] = {}
+        sim_settings['radar_files_dict'] = {}
+        #sim_settings['radar'] = None
+        sim_settings['lat'] = None
+        sim_settings['lon'] = None
+        sim_settings['new_radar'] = 'None'
+        sim_settings['new_lat'] = None
+        sim_settings['new_lon'] = None
+        sim_settings['scripts_progress'] = 'Scripts not started'
+        #self.base_dir = Path.cwd()
+        sim_settings['playback_initiated'] = False
+        sim_settings['playback_speed'] = 1.0
+        sim_settings['playback_start'] = 'Not Ready'
+        sim_settings['playback_end'] = 'Not Ready'
+        sim_settings['playback_start_str'] = 'Not Ready'
+        sim_settings['playback_end_str'] = 'Not Ready'
+        sim_settings['playback_current_time'] = 'Not Ready'
+        sim_settings['playback_clock'] = None
+        sim_settings['playback_clock_str'] = None
+        sim_settings['simulation_running'] = False
+        sim_settings['playback_paused'] = False
+
+        # Settings for date dropdowns moved here to avoid specifying different values in
+        # the layout 
+        now = datetime.now(pytz.utc)
+        sim_year_section = dbc.Col(html.Div([lc.step_year, dcc.Dropdown(np.arange(1992, now.year + 1), sim_settings['event_start_year'], id='start_year', clearable=False),]))
+        sim_month_section = dbc.Col(html.Div([lc.step_month, dcc.Dropdown(np.arange(1, 13), sim_settings['event_start_month'], id='start_month', clearable=False),]))
+        sim_day_selection = dbc.Col(html.Div([lc.step_day, dcc.Dropdown(np.arange(1, 31), sim_settings['event_start_day'], id='start_day', clearable=False)]))
+        sim_hour_section = dbc.Col(html.Div([lc.step_hour, dcc.Dropdown(np.arange(0, 24), sim_settings['event_start_hour'], id='start_hour', clearable=False),]))
+        sim_minute_section = dbc.Col(html.Div([lc.step_minute, dcc.Dropdown([0, 15, 30, 45], sim_settings['event_start_minute'], id='start_minute', clearable=False),]))
+        sim_duration_section = dbc.Col(html.Div([lc.step_duration, dcc.Dropdown(np.arange(0, 240, 15), sim_settings['event_duration'], id='duration', clearable=False),]))
+
         if children is None:
             children = []
 
@@ -454,8 +569,8 @@ def generate_layout(n_intervals, layout_has_initialized, children):
                 dbc.Container([
                     html.Div([html.Div([lc.step_select_time_section, lc.spacer,
                                     dbc.Row([
-                                        lc.sim_year_section, lc.sim_month_section, sim_day_selection,
-                                        lc.sim_hour_section, lc.sim_minute_section, lc.sim_duration_section,
+                                        sim_year_section, sim_month_section, sim_day_selection,
+                                        sim_hour_section, sim_minute_section, sim_duration_section,
                                         lc.spacer, lc.step_time_confirm])], style={'padding': '1em'}),
                             ], style=lc.section_box)])
             ]), lc.spacer,
@@ -477,9 +592,9 @@ def generate_layout(n_intervals, layout_has_initialized, children):
 
         layout_has_initialized['added'] = True
 
-        return children, layout_has_initialized
+        return children, layout_has_initialized, sim_settings
 
-    return children, layout_has_initialized
+    return children, layout_has_initialized, sim_settings
 
 ################################################################################################
 ################################################################################################
@@ -491,44 +606,64 @@ def generate_layout(n_intervals, layout_has_initialized, children):
 ################################################################################################
 
 @app.callback(
-    [Output('show_radar_selection_feedback', 'children'),
+    Output('show_radar_selection_feedback', 'children'),
     Output('confirm_radars_btn', 'children'),
-    Output('confirm_radars_btn', 'disabled')],
+    Output('confirm_radars_btn', 'disabled'),
+    Output('sim_settings', 'data', allow_duplicate=True),
     Input('radar_quantity', 'value'),
     Input('graph', 'clickData'),
+    State('sim_settings', 'data'),
     prevent_initial_call=True
     )
-def display_click_data(quant_str: str, click_data: dict):
+def display_click_data(quant_str: str, click_data: dict, sim_settings: dict):
     """
     Any time a radar site is clicked, 
     this function will trigger and update the radar list.
+
+    The allow_duplicate=True addition seems to cause this callback to fire repeatedly
+    event when no user input has triggered. Necessitated some workarounds.
     """
     # initially have to make radar selections and can't finalize
     select_action = 'Make'
     btn_deactivated = True
 
-    triggered_id = ctx.triggered_id
-    if triggered_id == 'radar_quantity':
-        sa.number_of_radars = int(quant_str[0:1])
-        sa.radar_list = []
-        sa.radar_dict = {}
-        return f'Use map to select {quant_str}', f'{select_action} selections', True
-    try:
-        sa.radar = click_data['points'][0]['customdata']
-        print(f"Selected radar: {sa.radar}")
-    except (KeyError, IndexError, TypeError):
-        return 'No radar selected ...', f'{select_action} selections', True
+    #triggered_id = ctx.triggered_id
+    sim_settings['number_of_radars'] = int(quant_str[0:1])
 
-    sa.radar_list.append(sa.radar)
-    if len(sa.radar_list) > sa.number_of_radars:
-        sa.radar_list = sa.radar_list[-sa.number_of_radars:]
-    if len(sa.radar_list) == sa.number_of_radars:
+    # This block was getting triggered repeatedly when adding allow_duplicate=True. 
+    #if triggered_id == 'radar_quantity' and len(sim_settings['radar_list']) != 0:
+    #    sa.number_of_radars = int(quant_str[0:1])
+    #    sa.radar_list = []
+    #    sa.radar_dict = {}
+
+    #    sim_settings['number_of_radars'] = int(quant_str[0:1])
+    #    sim_settings['radar_list'] = []
+    #    sim_settings['radar_dict'] = {} 
+
+    #    return f'Use map to select {quant_str}', f'{select_action} selections', True, sim_settings
+    add_to_list = False
+    try:
+        radar = click_data['points'][0]['customdata']
+        if len(sim_settings['radar_list']) > 0:
+            if radar != sim_settings['radar_list'][-1] and radar not in sim_settings['radar_list']:
+                add_to_list = True
+        else:
+            add_to_list = True
+    except (KeyError, IndexError, TypeError):
+        return 'No radar selected ...', f'{select_action} selections', True, sim_settings
+
+    #if triggered_id != 'radar_quantity':
+    if add_to_list:
+        sim_settings['radar_list'].append(radar)
+    if len(sim_settings['radar_list']) > sim_settings['number_of_radars']:
+        sim_settings['radar_list'] = sim_settings['radar_list'][-sim_settings['number_of_radars']:]
+    if len(sim_settings['radar_list']) == sim_settings['number_of_radars']:
         select_action = 'Finalize'
         btn_deactivated = False
 
-    print(f"Radar list: {sa.radar_list}")
-    listed_radars = ', '.join(sa.radar_list)
-    return listed_radars, f'{select_action} selections', btn_deactivated
+    #print(f"Radar list: {sim_settings['radar_list']}")
+    listed_radars = ', '.join(sim_settings['radar_list'])
+    return listed_radars, f'{select_action} selections', btn_deactivated, sim_settings
 
 
 @app.callback(
@@ -598,16 +733,17 @@ def transpose_radar(value):
 # ----------------------------- Run Scripts button  --------------------------------------------
 ################################################################################################
 
-def query_radar_files(cfg):
+def query_radar_files(cfg, sim_settings):
     """
     Get the radar files from the AWS bucket. This is a preliminary step to build the progess bar.
     """
     # Need to reset the expected files dictionary with each call. Otherwise, if a user
     # cancels a request, the previously-requested files will still be in the dictionary.
-    sa.radar_files_dict = {}
-    for _r, radar in enumerate(sa.radar_list):
+    #sa.radar_files_dict = {}
+    sim_settings['radar_files_dict'] = {}
+    for _r, radar in enumerate(sim_settings['radar_list']):
         radar = radar.upper()
-        args = [radar, f'{sa.event_start_str}', str(sa.event_duration), str(False), 
+        args = [radar, str(sim_settings['event_start_str']), str(sim_settings['event_duration']), str(False), 
                 cfg['RADAR_DIR']]
         sa.log.info(f"Passing {args} to Nexrad.py")
         results = utils.exec_script(Path(cfg['NEXRAD_SCRIPT_PATH']), args, cfg['SESSION_ID'])
@@ -617,7 +753,8 @@ def query_radar_files(cfg):
 
         json_data = results['stdout'].decode('utf-8')
         sa.log.info(f"Nexrad.py returned with {json_data}")
-        sa.radar_files_dict.update(json.loads(json_data))
+        #sa.radar_files_dict.update(json.loads(json_data))
+        sim_settings['radar_files_dict'].update(json.loads(json_data))
 
     return results
 
@@ -649,15 +786,17 @@ def call_function(func, *args, **kwargs):
     return result
 
 
-def run_with_cancel_button(cfg):
+def run_with_cancel_button(cfg, sim_settings):
     """
     This version of the script-launcher trying to work in cancel button
     """
     UpdateHodoHTML('None', cfg['HODOGRAPHS_DIR'], cfg['HODOGRAPHS_PAGE'])
 
     sa.scripts_progress = 'Setting up files and times'
+    sim_settings['scripts_progress'] = 'Setting up files and times'
     # determine actual event time, playback time, diff of these two
     sa.make_simulation_times()
+    make_simulation_times(sim_settings)
     # clean out old files and directories
     try:
         sa.remove_files_and_dirs(cfg)
@@ -667,29 +806,30 @@ def run_with_cancel_button(cfg):
     # based on list of selected radars, create a dictionary of radar metadata
     try:
         sa.create_radar_dict()
+        create_radar_dict(sim_settings)
         sa.copy_grlevel2_cfg_file(cfg)
     except Exception as e:
         sa.log.exception("Error creating radar dict or config file: ", exc_info=True)
 
     # Create initial dictionary of expected radar files
-    if len(sa.radar_list) > 0:
-        res = call_function(query_radar_files, cfg)
+    if len(sim_settings['radar_list']) > 0:
+        res = call_function(query_radar_files, cfg, sim_settings)
         if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
             return
 
-        for _r, radar in enumerate(sa.radar_list):
+        for _r, radar in enumerate(sim_settings['radar_list']):
             radar = radar.upper()
             try:
-                if sa.new_radar == 'None':
+                if sim_settings['new_radar'] == 'None':
                     new_radar = radar
                 else:
-                    new_radar = sa.new_radar.upper()
+                    new_radar = sim_settings['new_radar'].upper()
             except Exception as e:
                 sa.log.exception("Error defining new radar: ", exc_info=True)
 
             # Radar download
-            args = [radar, str(sa.event_start_str), str(sa.event_duration), str(True), 
-                    cfg['RADAR_DIR']]
+            args = [radar, str(sim_settings['event_start_str']), str(sim_settings['event_duration']), 
+                    str(True), cfg['RADAR_DIR']]
             res = call_function(utils.exec_script, Path(cfg['NEXRAD_SCRIPT_PATH']), 
                                 args, cfg['SESSION_ID'])
             if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
@@ -758,7 +898,8 @@ def run_with_cancel_button(cfg):
 @app.callback(
     Output('show_script_progress', 'children', allow_duplicate=True),
     [Input('run_scripts_btn', 'n_clicks'),
-     State('configs', 'data')],
+     State('configs', 'data'),
+     State('sim_settings', 'data')],
     prevent_initial_call=True,
     running=[
         (Output('start_year', 'disabled'), True, False),
@@ -778,7 +919,7 @@ def run_with_cancel_button(cfg):
         (Output('change_time', 'disabled'), True, False), # wait to enable change time dropdown
         (Output('cancel_scripts', 'disabled'), False, True),
     ])
-def launch_simulation(n_clicks, configs) -> None:
+def launch_simulation(n_clicks, configs, sim_settings) -> None:
     """
     This function is called when the "Run Scripts" button is clicked. It will execute the
     necessary scripts to simulate radar operations, create hodographs, and transpose placefiles.
@@ -789,7 +930,7 @@ def launch_simulation(n_clicks, configs) -> None:
         if config.PLATFORM == 'WINDOWS':
             sa.make_simulation_times()
         else:
-            run_with_cancel_button(configs)
+            run_with_cancel_button(configs, sim_settings)
 
 ################################################################################################
 # ----------------------------- Monitoring and reporting script status  ------------------------
@@ -819,10 +960,11 @@ def cancel_scripts(n_clicks, SESSION_ID) -> None:
     Output('model_status_warning', 'children'),
     Output('show_script_progress', 'children', allow_duplicate=True),
     [Input('directory_monitor', 'n_intervals'),
-     State('configs', 'data')],
+     State('configs', 'data'),
+     State('sim_settings', 'data')],
     prevent_initial_call=True
 )
-def monitor(_n, cfg):
+def monitor(_n, cfg, sim_settings):
     """
     This function is called every second by the directory_monitor interval. It (1) checks 
     the status of the various scripts and reports them to the front-end application and 
@@ -1054,34 +1196,41 @@ def update_playback_speed(selected_speed):
 ################################################################################################
 # ----------------------------- Time Selection Summary and Callbacks  --------------------------
 ################################################################################################
-
 @app.callback(
     Output('show_time_data', 'children'),
+    Output('sim_settings', 'data', allow_duplicate=True),
     Input('start_year', 'value'),
     Input('start_month', 'value'),
     Input('start_day', 'value'),
     Input('start_hour', 'value'),
     Input('start_minute', 'value'),
     Input('duration', 'value'),
+    State('sim_settings', 'data'),
+    prevent_initial_call='initial_duplicate'
 )
-def get_sim(_yr, _mo, _dy, _hr, _mn, _dur) -> str:
+def get_sim(_yr, _mo, _dy, _hr, _mn, _dur, sim_settings) -> str:
     """
     Changes to any of the Inputs above will trigger this callback function to update
     the time summary displayed on the page. Variables already have been stored in sa
     object for use in scripts so don't need to be explicitly returned here.
     """
-    sa.make_simulation_times()
-    line1 = f'{sa.event_start_str}Z ____ {sa.event_duration} minutes'
-    return line1
+    sim_settings = make_simulation_times(sim_settings)
+    line1 = f'{sim_settings['event_start_str']}Z ____ {sim_settings['event_duration']} minutes'
+    return line1, sim_settings
 
 
-@app.callback(Output('start_year', 'value'), Input('start_year', 'value'))
-def get_year(start_year) -> int:
+@app.callback(
+    Output('sim_settings', 'data', allow_duplicate=True), 
+    Input('start_year', 'value'),
+    State('sim_settings', 'data'),
+    prevent_initial_call='initial_duplicate'
+)
+def get_year(start_year, sim_settings) -> int:
     """
-    Updates the start year variable in the sa object
+    Updates the start year variable
     """
-    sa.event_start_year = start_year
-    return sa.event_start_year
+    sim_settings['event_start_year'] = start_year
+    return sim_settings
 
 
 @app.callback(
@@ -1097,49 +1246,74 @@ def update_day_dropdown(selected_year, selected_month):
     return day_options
 
 
-@app.callback(Output('start_month', 'value'), Input('start_month', 'value'))
-def get_month(start_month) -> int:
+@app.callback(
+    Output('sim_settings', 'data', allow_duplicate=True), 
+    Input('start_month', 'value'),
+    State('sim_settings', 'data'),
+    prevent_initial_call='initial_duplicate'
+)
+def get_month(start_month, sim_settings) -> int:
     """
-    Updates the start month variable in the sa object
+    Updates the start month variable
     """
-    sa.event_start_month = start_month
-    return sa.event_start_month
+    sim_settings['event_start_month'] = start_month
+    return sim_settings
 
 
-@app.callback(Output('start_day', 'value'), Input('start_day', 'value'))
-def get_day(start_day) -> int:
+@app.callback(
+    Output('sim_settings', 'data', allow_duplicate=True), 
+    Input('start_day', 'value'),
+    State('sim_settings', 'data'),
+    prevent_initial_call='initial_duplicate'
+)
+def get_day(start_day, sim_settings) -> int:
     """
-    Updates the start day variable in the sa object
+    Updates the start day variable
     """
-    sa.event_start_day = start_day
-    return sa.event_start_day
+    sim_settings['event_start_day'] = start_day
+    return sim_settings
 
 
-@app.callback(Output('start_hour', 'value'), Input('start_hour', 'value'))
-def get_hour(start_hour) -> int:
+@app.callback(
+    Output('sim_settings', 'data', allow_duplicate=True), 
+    Input('start_hour', 'value'),
+    State('sim_settings', 'data'),
+    prevent_initial_call='initial_duplicate'
+)
+def get_hour(start_hour, sim_settings) -> int:
     """
-    Updates the start hour variable in the sa object
+    Updates the start hour variable
     """
-    sa.event_start_hour = start_hour
-    return sa.event_start_hour
+    sim_settings['event_start_hour'] = start_hour
+    return sim_settings
 
 
-@app.callback(Output('start_minute', 'value'), Input('start_minute', 'value'))
-def get_minute(start_minute) -> int:
+@app.callback(
+    Output('sim_settings', 'data', allow_duplicate=True), 
+    Input('start_minute', 'value'),
+    State('sim_settings', 'data'),
+    prevent_initial_call='initial_duplicate'
+)
+def get_minute(start_minute, sim_settings) -> int:
     """
-    Updates the start minute variable in the sa object
+    Updates the start minute variable
     """
-    sa.event_start_minute = start_minute
-    return sa.event_start_minute
+    sim_settings['event_start_minute'] = start_minute
+    return sim_settings
 
 
-@app.callback(Output('duration', 'value'), Input('duration', 'value'))
-def get_duration(duration) -> int:
+@app.callback(
+    Output('sim_settings', 'data', allow_duplicate=True), 
+    Input('duration', 'value'),
+    State('sim_settings', 'data'),
+    prevent_initial_call='initial_duplicate'
+)
+def get_duration(duration, sim_settings) -> int:
     """
-    Updates the event duration (in minutes) in the sa object
+    Updates the event duration (in minutes)
     """
-    sa.event_duration = duration
-    return sa.event_duration
+    sim_settings['event_duration'] = duration
+    return sim_settings
 
 ################################################################################################
 # ----------------------------- Start app  -----------------------------------------------------

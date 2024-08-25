@@ -14,7 +14,7 @@ from config import LINK_BASE, PLACEFILES_LINKS
 
 load_dotenv()
 MAP_TOKEN = os.getenv("MAPBOX_TOKEN")
-now = datetime.now(pytz.utc)
+#now = datetime.now(pytz.utc)
 
 df = pd.read_csv('radars.csv', dtype={'lat': float, 'lon': float})
 # df = pd.read_csv('radars_no_tdwr.csv', dtype={'lat': float, 'lon': float})
@@ -143,6 +143,10 @@ step_hour = html.Div(children="Hour", style=time_headers)
 step_minute = html.Div(children="Minute", style=time_headers)
 step_duration = html.Div(children="Duration", style=time_headers)
 
+# Date settings (sim_year_section, sim_month_section, etc.) moved to app.py
+'''
+# Moved these into the app in order to control defaults more easily and remove the 
+# potential to specify different values in two locations
 sim_year_section = dbc.Col(html.Div([step_year,
                                      dcc.Dropdown(np.arange(1992, now.year + 1), now.year,
                                                   id='start_year', clearable=False),]))
@@ -158,6 +162,7 @@ sim_minute_section = dbc.Col(html.Div([
 
 sim_duration_section = dbc.Col(html.Div([
     step_duration, dcc.Dropdown(np.arange(0, 240, 15), 60, id='duration', clearable=False),]))
+'''
 
 CONFIRM_TIMES_TEXT = "Confirm start time and duration -->"
 confirm_times_section = dbc.Col(
