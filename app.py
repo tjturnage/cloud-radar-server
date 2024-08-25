@@ -555,11 +555,11 @@ def generate_layout(n_intervals, layout_has_initialized, children, sim_settings,
         # Initialize variables
         sim_settings['event_start_year'] = 2024
         sim_settings['event_start_month'] = 7
-        sim_settings['days_in_month'] = 30
-        sim_settings['event_start_day'] = 12
+        sim_settings['event_start_day'] = 16
         sim_settings['event_start_hour'] = 0
         sim_settings['event_start_minute'] = 30
         sim_settings['event_duration'] = 60
+        sim_settings['days_in_month'] = 30
         sim_settings['timestring'] = None
         sim_settings['number_of_radars'] = 1
         sim_settings['radar_list'] = []
@@ -800,6 +800,11 @@ def query_radar_files(cfg, sim_settings):
         #sa.radar_files_dict.update(json.loads(json_data))
         sim_settings['radar_files_dict'].update(json.loads(json_data))
 
+    # Write radar metadata for this simulation to a text file. More complicated updating the
+    # dcc.Store object with this information since this function isn't a callback. 
+    with open(f'{cfg['RADAR_DIR']}/radarinfo.json', 'w') as jsonfile:
+        json.dump(sim_settings['radar_files_dict'], jsonfile)  
+    
     return results
 
 
@@ -883,16 +888,18 @@ def run_with_cancel_button(cfg, sim_settings):
             if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
                 return
 
-    '''
             # Munger
-            args = [radar, str(sa.playback_start_str), str(sa.event_duration), 
-                    str(sa.simulation_seconds_shift), cfg['RADAR_DIR'], cfg['POLLING_DIR'],
-                    cfg['L2MUNGER_FILEPATH'], cfg['DEBZ_FILEPATH'], new_radar]
+            args = [radar, str(sim_settings['playback_start_str']), 
+                    str(sim_settings['event_duration']), 
+                    str(sim_settings['simulation_seconds_shift']), cfg['RADAR_DIR'], 
+                    cfg['POLLING_DIR'],cfg['L2MUNGER_FILEPATH'], cfg['DEBZ_FILEPATH'], 
+                    new_radar]
             res = call_function(utils.exec_script, Path(cfg['MUNGER_SCRIPT_FILEPATH']), 
                                 args, cfg['SESSION_ID'])
             if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
                 return
-   
+            
+    '''
             # this gives the user some radar data to poll while other scripts are running
             try:
                 UpdateDirList(new_radar, 'None', cfg['POLLING_DIR'], initialize=True)
@@ -1041,7 +1048,7 @@ def monitor(_n, cfg, sim_settings):
                 seen_scripts.append(name)
 
     # Radar file download status
-    radar_dl_completion, radar_files = utils.radar_monitor(sa)
+    radar_dl_completion, radar_files = utils.radar_monitor(cfg)
 
     # Radar mungering/transposing status
     munger_completion = utils.munger_monitor(sa, cfg)

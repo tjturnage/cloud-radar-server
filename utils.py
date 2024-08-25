@@ -6,6 +6,7 @@ from glob import glob
 import psutil
 import pandas as pd
 import config
+import json
 
 def exec_script(script_path, args, session_id):
     """
@@ -98,15 +99,19 @@ def calc_completion_percentage(expected_files, files_on_system):
 
     return percent_complete
 
-def radar_monitor(sa):
+def radar_monitor(cfg):
     """
-    Reads in dictionary of radar files passed from Nexrad.py. Looks for associated 
-    radar files on the system and compares to the total expected number and broadcasts a 
-    percentage to the radar_status progress bar.
+    Reads in dictionary of radar files. Looks for associated radar files on the system 
+    and compares to the total expected number and broadcasts a percentage to the 
+    radar_status progress bar.
     """
-    expected_files = list(sa.radar_files_dict.values())
+    filename = f'{cfg['RADAR_DIR']}/radarinfo.json'
+    expected_files = []
+    if os.path.exists(filename):
+        with open(f'{cfg['RADAR_DIR']}/radarinfo.json', 'r') as jsonfile:
+            expected_files = list(json.load(jsonfile).values())
+            
     files_on_system = [x for x in expected_files if os.path.exists(x)]
-          
     percent_complete = calc_completion_percentage(expected_files, files_on_system)
     return percent_complete, files_on_system
 
