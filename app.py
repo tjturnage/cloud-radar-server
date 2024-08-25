@@ -72,6 +72,121 @@ def create_logfile(LOG_DIR):
         datefmt="%Y-%m-%d %H:%M:%S"
     )
 
+def shift_placefiles(PLACEFILES_DIR, sa) -> None:
+    """
+    # While the _shifted placefiles should be purged for each run, just ensure we're
+    # only querying the "original" placefiles to shift (exclude any with _shifted.txt)        
+    """
+    filenames = glob(f"{PLACEFILES_DIR}/*.txt")
+    filenames = [x for x in filenames if "shifted" not in x]
+    for file_ in filenames:
+        with open(file_, 'r', encoding='utf-8') as f:
+            data = f.readlines()
+            outfilename = f"{file_[0:file_.index('.txt')]}_shifted.txt"
+            outfile = open(outfilename, 'w', encoding='utf-8')
+
+        for line in data:
+            new_line = line
+
+            if sa['simulation_seconds_shift'] is not None and \
+                any(x in line for x in ['Valid', 'TimeRange']):
+                new_line = shift_time(line, sa['simulation_seconds_shift'])
+
+            # Shift this line in space. Only perform if both an original and transpose
+            # radar have been specified.
+            if sa['new_radar'] != 'None' and sa['radar'] is not None:
+                regex = re.findall(LAT_LON_REGEX, line)
+                if len(regex) > 0:
+                    idx = regex[0].index(',')
+                    plat, plon = float(regex[0][0:idx]), float(regex[0][idx+1:])
+                    lat_out, lon_out = move_point(plat, plon, sa['lat'], sa['lon'],
+                                                  sa['new_lat'], sa['new_lon'])
+                    new_line = line.replace(regex[0], f"{lat_out}, {lon_out}")
+
+            outfile.write(new_line)
+        outfile.close()
+
+def shift_time(line: str, simulation_seconds_shift: int) -> str:
+    """
+    Shifts the time-associated lines in a placefile.
+    These look for 'Valid' and 'TimeRange'.
+    """
+    simulation_time_shift = timedelta(seconds=simulation_seconds_shift)
+    new_line = line
+    if 'Valid:' in line:
+        idx = line.find('Valid:')
+        # Leave off \n character
+        valid_timestring = line[idx+len('Valid:')+1:-1]
+        dt = datetime.strptime(valid_timestring, '%H:%MZ %a %b %d %Y')
+        new_validstring = datetime.strftime(dt + simulation_time_shift,
+                                            '%H:%MZ %a %b %d %Y')
+        new_line = line.replace(valid_timestring, new_validstring)
+
+    if 'TimeRange' in line:
+        regex = re.findall(TIME_REGEX, line)
+        dt = datetime.strptime(regex[0], '%Y-%m-%dT%H:%M:%SZ')
+        new_datestring_1 = datetime.strftime(dt + simulation_time_shift,
+                                                '%Y-%m-%dT%H:%M:%SZ')
+        dt = datetime.strptime(regex[1], '%Y-%m-%dT%H:%M:%SZ')
+        new_datestring_2 = datetime.strftime(dt + simulation_time_shift,
+                                                '%Y-%m-%dT%H:%M:%SZ')
+        new_line = line.replace(f"{regex[0]} {regex[1]}",
+                                f"{new_datestring_1} {new_datestring_2}")
+    return new_line
+    
+def move_point(plat, plon, lat, lon, new_radar_lat, new_radar_lon):
+    """
+    Shift placefiles to a different radar site. Maintains the original azimuth and range
+    from a specified RDA and applies it to a new radar location. 
+
+    Parameters:
+    -----------
+    plat: float 
+        Original placefile latitude
+    plon: float 
+        Original palcefile longitude
+
+    lat and lon is the lat/lon pair for the original radar 
+    new_lat and new_lon is for the transposed radar. These values are set in 
+    the transpose_radar function after a user makes a selection in the 
+    new_radar_selection dropdown. 
+
+    """
+    def _clamp(n, minimum, maximum):
+        """
+        Helper function to make sure we're not taking the square root of a negative 
+        number during the calculation of `c` below. 
+        """
+        return max(min(maximum, n), minimum)
+
+    # Compute the initial distance from the original radar location
+    phi1, phi2 = math.radians(lat), math.radians(plat)
+    d_phi = math.radians(plat - lat)
+    d_lambda = math.radians(plon - lon)
+
+    a = math.sin(d_phi/2)**2 + (math.cos(phi1) *
+                                math.cos(phi2) * math.sin(d_lambda/2)**2)
+    a = _clamp(a, 0, a)
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
+    d = R * c
+
+    # Compute the bearing
+    y = math.sin(d_lambda) * math.cos(phi2)
+    x = (math.cos(phi1) * math.sin(phi2)) - (math.sin(phi1) * math.cos(phi2) *
+                                             math.cos(d_lambda))
+    theta = math.atan2(y, x)
+    bearing = (math.degrees(theta) + 360) % 360
+
+    # Apply this distance and bearing to the new radar location
+    phi_new, lambda_new = math.radians(new_radar_lat), math.radians(new_radar_lon)
+    phi_out = math.asin((math.sin(phi_new) * math.cos(d/R)) + (math.cos(phi_new) *
+                        math.sin(d/R) * math.cos(math.radians(bearing))))
+    lambda_out = lambda_new + math.atan2(math.sin(math.radians(bearing)) *
+                                         math.sin(d/R) * math.cos(phi_new),
+                                         math.cos(d/R) - math.sin(phi_new) * math.sin(phi_out))
+    return math.degrees(phi_out), math.degrees(lambda_out)
+
+
 def copy_grlevel2_cfg_file(cfg) -> None:
     """
     Ensures a grlevel2.cfg file is copied into the polling directory.
@@ -566,7 +681,7 @@ def generate_layout(n_intervals, layout_has_initialized, children, sim_settings,
         sim_settings['playback_dropdown_dict'] = {}
         sim_settings['radar_dict'] = {}
         sim_settings['radar_files_dict'] = {}
-        #sim_settings['radar'] = None
+        sim_settings['radar'] = None
         sim_settings['lat'] = None
         sim_settings['lon'] = None
         sim_settings['new_radar'] = 'None'
@@ -699,6 +814,7 @@ def display_click_data(quant_str: str, click_data: dict, sim_settings: dict):
     #if triggered_id != 'radar_quantity':
     if add_to_list:
         sim_settings['radar_list'].append(radar)
+        sim_settings['radar'] = radar
     if len(sim_settings['radar_list']) > sim_settings['number_of_radars']:
         sim_settings['radar_list'] = sim_settings['radar_list'][-sim_settings['number_of_radars']:]
     if len(sim_settings['radar_list']) == sim_settings['number_of_radars']:
@@ -732,8 +848,9 @@ def toggle_map_display(map_n, confirm_n) -> dict:
     Output('run_scripts_btn', 'disabled')
     ], Input('confirm_radars_btn', 'n_clicks'),
     Input('radar_quantity', 'value'),
+    State('sim_settings', 'data'),
     prevent_initial_call=True)
-def finalize_radar_selections(clicks: int, _quant_str: str) -> dict:
+def finalize_radar_selections(clicks: int, _quant_str: str, sim_settings: dict) -> dict:
     """
     This will display the transpose section on the page if the user has selected a single radar.
     """
@@ -743,7 +860,7 @@ def finalize_radar_selections(clicks: int, _quant_str: str) -> dict:
     if triggered_id == 'radar_quantity':
         return disp_none, disp_none, disp_none, True
     if clicks > 0:
-        if sa.number_of_radars == 1 and len(sa.radar_list) == 1:
+        if sim_settings['number_of_radars'] == 1 and len(sim_settings['radar_list']) == 1:
             return lc.section_box_pad, disp_none, {'display': 'block'}, False
     return lc.section_box_pad, {'display': 'block'}, disp_none, False
 
@@ -753,25 +870,30 @@ def finalize_radar_selections(clicks: int, _quant_str: str) -> dict:
 
 @app.callback(
     Output('tradar', 'data'),
-    Input('new_radar_selection', 'value'))
-def transpose_radar(value):
+    Output('sim_settings', 'data', allow_duplicate=True),
+    Input('new_radar_selection', 'value'),
+    State('sim_settings', 'data'),
+    prevent_initial_call=True
+)
+def transpose_radar(value, sim_settings):
     """
     If a user switches from a selection BACK to "None", without this, the application 
-    will not update sa.new_radar to None. Instead, it'll be the previous selection.
+    will not update new_radar to None. Instead, it'll be the previous selection.
     Since we always evaluate "value" after every user selection, always set new_radar 
     initially to None.
     
     Added tradar as a dcc.Store as this callback didn't seem to execute otherwise. The
     tradar store value is not used (currently), as everything is stored in sa.whatever.
     """
-    sa.new_radar = 'None'
+    sim_settings['new_radar'] = 'None'
 
     if value != 'None':
-        sa.new_radar = value
-        sa.new_lat = lc.df[lc.df['radar'] == sa.new_radar]['lat'].values[0]
-        sa.new_lon = lc.df[lc.df['radar'] == sa.new_radar]['lon'].values[0]
-        return f'{sa.new_radar}'
-    return 'None'
+        new_radar = value
+        sim_settings['new_radar'] = new_radar
+        sim_settings['new_lat'] = lc.df[lc.df['radar'] == new_radar]['lat'].values[0]
+        sim_settings['new_lon'] = lc.df[lc.df['radar'] == new_radar]['lon'].values[0]
+        return f'{new_radar}', sim_settings
+    return 'None', sim_settings
 
 ################################################################################################
 # ----------------------------- Run Scripts button  --------------------------------------------
@@ -838,7 +960,7 @@ def call_function(func, *args, **kwargs):
 def run_with_cancel_button(cfg, sim_settings):
     """
     This version of the script-launcher trying to work in cancel button
-    """
+    """    
     UpdateHodoHTML('None', cfg['HODOGRAPHS_DIR'], cfg['HODOGRAPHS_PAGE'])
 
     #sa.scripts_progress = 'Setting up files and times'
@@ -908,9 +1030,9 @@ def run_with_cancel_button(cfg, sim_settings):
                 print(f"Error with UpdateDirList ", e)
                 logging.exception(f"Error with UpdateDirList ", exc_info=True)
     
-    '''
     # Surface observations
-    args = [str(sa.lat), str(sa.lon), sa.event_start_str, cfg['PLACEFILES_DIR'], 
+    args = [str(sim_settings['lat']), str(sim_settings['lon']), 
+            sim_settings['event_start_str'], cfg['PLACEFILES_DIR'], 
             str(sa.event_duration)]
     res = call_function(utils.exec_script, Path(cfg['OBS_SCRIPT_PATH']), args, 
                         cfg['SESSION_ID'])
@@ -918,8 +1040,8 @@ def run_with_cancel_button(cfg, sim_settings):
         return
 
     # NSE placefiles
-    args = [str(sa.event_start_time), str(sa.event_duration), cfg['SCRIPTS_DIR'],
-            cfg['DATA_DIR'], cfg['PLACEFILES_DIR']]
+    args = [str(sim_settings['event_start_time']), str(sim_settings['event_duration']), 
+            cfg['SCRIPTS_DIR'], cfg['DATA_DIR'], cfg['PLACEFILES_DIR']]
     res = call_function(utils.exec_script, Path(cfg['NSE_SCRIPT_PATH']), args, 
                         cfg['SESSION_ID'])
     if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
@@ -928,9 +1050,10 @@ def run_with_cancel_button(cfg, sim_settings):
     # Since there will always be a timeshift associated with a simulation, this
     # script needs to execute every time, even if a user doesn't select a radar
     # to transpose to.
-    sa.log.info(f"Entering function run_transpose_script")
-    run_transpose_script(cfg['PLACEFILES_DIR'])
+    logging.info(f"Entering function run_transpose_script")
+    run_transpose_script(cfg['PLACEFILES_DIR'], sim_settings)
 
+    '''
     # Hodographs 
     for radar, data in sa.radar_dict.items():
         try:
@@ -1078,11 +1201,11 @@ def monitor(_n, cfg, sim_settings):
 # whether to also perform a spatial shift occurrs within self.shift_placefiles where
 # a check for sa.new_radar != None takes place.
 
-def run_transpose_script(PLACEFILES_DIR) -> None:
+def run_transpose_script(PLACEFILES_DIR, sim_settings) -> None:
     """
     Wrapper function to the shift_placefiles script
     """
-    sa.shift_placefiles(PLACEFILES_DIR)
+    shift_placefiles(PLACEFILES_DIR, sim_settings)
 
 ################################################################################################
 # ----------------------------- Toggle Placefiles Section --------------------------------------
