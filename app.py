@@ -286,6 +286,7 @@ def create_radar_dict(sa) -> dict:
                                             'asos_one': asos_one, 'asos_two': asos_two,
                                             'radar': radar.upper(), 'file_list': []}
 
+'''
 ################################################################################################
 # ----------------------------- Define class RadarSimulator  -----------------------------------
 ################################################################################################
@@ -623,7 +624,7 @@ class RadarSimulator(Config):
 ################################################################################################
 
 #sa = RadarSimulator()
-
+'''
 ################################################################################################
 # ----------------------------- Build the layout  ---------------------------------------------
 ################################################################################################
@@ -933,20 +934,6 @@ def query_radar_files(cfg, sim_settings):
     
     return results
 
-# !!! Not used? Can delete? !!!
-#def run_hodo_script(args) -> None:
-#    """
-#    Runs the hodo script with the necessary arguments. 
-#    radar: str - the original radar, tells script where to find raw radar data
-#    sa.new_radar: str - Either 'None' or the new radar to transpose to
-#    asos_one: str - the first ASOS station to use for hodographs
-#    asos_two: str - the second ASOS station to use for hodographs as a backup
-#    sa.simulation_seconds_shift: str - time shift (seconds) between the event
-#    start and playback start
-#    """
-#    print(args)
-#    subprocess.run(["python", config.HODO_SCRIPT_PATH] + args, check=True)
-
 
 def call_function(func, *args, **kwargs):
     # For the main script calls
@@ -1074,7 +1061,7 @@ def run_with_cancel_button(cfg, sim_settings):
         except Exception as e:
             print("Error updating hodo html: ", e)
             logging.exception("Error updating hodo html: ", exc_info=True)
-            
+
 @app.callback(
     Output('sim_settings', 'data', allow_duplicate=True),
     Input('run_scripts_btn', 'n_clicks'),
