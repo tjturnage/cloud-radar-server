@@ -232,8 +232,8 @@ fig = go.Figure(go.Scattermapbox(
 
 fig.update_layout(
     mapbox={'accesstoken': MAP_TOKEN,
-        'style': "carto-darkmatter",
-        #'style': "mapbox://styles/mapbox/dark-v10",
+        #'style': "carto-darkmatter",
+        'style': "mapbox://styles/mapbox/dark-v10",
         'center': {'lon': -94.4, 'lat': 38.2},
         'zoom': 3.8})
 
