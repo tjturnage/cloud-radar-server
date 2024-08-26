@@ -323,18 +323,18 @@ simulation_playback_section = dbc.Container(
 @app.callback( 
     Output('dynamic_container', 'children'),
     Output('layout_has_initialized', 'data'),
-    Input('container_init', 'n_intervals'),
+    #Input('container_init', 'n_intervals'),
     State('layout_has_initialized', 'data'),
     State('dynamic_container', 'children'),
-    State('configs', 'data')
+    Input('configs', 'data')
 )
-def generate_layout(n_intervals, layout_has_initialized, children, configs):
+def generate_layout(layout_has_initialized, children, configs):
     """
     Dynamically generate the layout, which was started in the config file to set up 
     the unique session id. This callback should only be executed once at page load in. 
     Thereafter, layout_has_initialized will be set to True
     """
-    if not layout_has_initialized['added']:
+    if not layout_has_initialized['added'] and configs is not None:
         if children is None: children = []
 
         # Initialize configurable variables for load in
@@ -364,6 +364,7 @@ def generate_layout(n_intervals, layout_has_initialized, children, configs):
         monitor_store['placefile_status_string'] = ""
         monitor_store['model_list'] = []
         monitor_store['model_warning'] = ""
+        monitor_store['scripts_previously_running'] = False 
 
         radar_info = {
             'number_of_radars': number_of_radars,
@@ -399,8 +400,7 @@ def generate_layout(n_intervals, layout_has_initialized, children, configs):
         sim_duration_section = dbc.Col(html.Div([lc.step_duration, dcc.Dropdown(
                                     np.arange(0, 240, 15), event_duration, 
                                     id='duration', clearable=False),]))
-        
-        #try: 
+        print(configs)
         polling_section = dbc.Container(dbc.Container(html.Div(
         [
             dbc.Row([
@@ -518,7 +518,11 @@ def generate_layout(n_intervals, layout_has_initialized, children, configs):
             dcc.Store(id='sim_times'), 
             dcc.Store(id='playback_speed_store', data=playback_speed),
             dcc.Store(id='playback_specs'),
+
+            # For app/script monitoring
+            dcc.Interval(id='directory_monitor', interval=2000),
             dcc.Store(id='monitor_store', data=monitor_store),
+            
             lc.top_section, lc.top_banner,
             dbc.Container([
                 dbc.Container([
@@ -650,11 +654,12 @@ def finalize_radar_selections(clicks: int, _quant_str: str, radar_info: dict) ->
 @app.callback(
     Output('tradar', 'data'),
     Output('radar_info', 'data', allow_duplicate=True),
-    Input('new_radar_selection', 'value'),
-    State('radar_info', 'data'),
+    [Input('new_radar_selection', 'value'),
+    Input('radar_quantity', 'value'),
+    State('radar_info', 'data')],
     prevent_initial_call=True
 )
-def transpose_radar(value, radar_info):
+def transpose_radar(value, radar_quantity, radar_info):
     """
     If a user switches from a selection BACK to "None", without this, the application 
     will not update new_radar to None. Instead, it'll be the previous selection.
@@ -665,8 +670,9 @@ def transpose_radar(value, radar_info):
     tradar store value is not used (currently).
     """
     radar_info['new_radar'] = 'None'
-
-    if value != 'None':
+    radar_info['new_lat'] = None
+    radar_info['new_lon'] = None
+    if value != 'None' and int(radar_quantity[0:1]) == 1:
         new_radar = value
         radar_info['new_radar'] = new_radar
         radar_info['new_lat'] = lc.df[lc.df['radar'] == new_radar]['lat'].values[0]
@@ -795,7 +801,7 @@ def run_with_cancel_button(cfg, sim_times, radar_info):
             except Exception as e:
                 print(f"Error with UpdateDirList ", e)
                 logging.exception(f"Error with UpdateDirList ", exc_info=True)
-    
+
     # Surface observations
     args = [str(radar_info['lat']), str(radar_info['lon']), 
             sim_times['event_start_str'], cfg['PLACEFILES_DIR'], 
@@ -818,7 +824,7 @@ def run_with_cancel_button(cfg, sim_times, radar_info):
     # to transpose to.
     logging.info(f"Entering function run_transpose_script")
     run_transpose_script(cfg['PLACEFILES_DIR'], sim_times, radar_info)
-    
+
     # Hodographs 
     for radar, data in radar_info['radar_dict'].items():
         try:
@@ -913,7 +919,7 @@ def cancel_scripts(n_clicks, SESSION_ID) -> None:
      State('monitor_store', 'data')],
     prevent_initial_call=True
 )
-def monitor(_n, cfg, cancel_scripts_disabled, monitor_store):
+def monitor(_n, cfg, cancel_btn_disabled, monitor_store):
     """
     This function is called every second by the directory_monitor interval. It (1) checks 
     the status of the various scripts and reports them to the front-end application and 
@@ -931,7 +937,8 @@ def monitor(_n, cfg, cancel_scripts_disabled, monitor_store):
     model_warning = monitor_store['model_warning']
     screen_output = ""
 
-    if not cancel_scripts_disabled:
+    # Scripts are running or they just recently ended.
+    if not cancel_btn_disabled or monitor_store['scripts_previously_running']:
         processes = utils.get_app_processes()
         seen_scripts = []
         for p in processes:
@@ -979,6 +986,15 @@ def monitor(_n, cfg, cancel_scripts_disabled, monitor_store):
         monitor_store['placefile_status_string'] = placefile_status_string
         monitor_store['model_list'] = model_list
         monitor_store['model_warning'] = model_warning
+        monitor_store['scripts_previously_running'] = True
+
+        return (radar_dl_completion, hodograph_completion, munger_completion, 
+                placefile_status_string, model_list, model_warning, screen_output, 
+                monitor_store)
+    
+    # Scripts have completed/stopped, but were running the previous pass through.
+    if cancel_btn_disabled and monitor_store['scripts_previously_running']:
+        monitor_store['scripts_previously_running'] = False
 
     return (radar_dl_completion, hodograph_completion, munger_completion, 
             placefile_status_string, model_list, model_warning, screen_output, monitor_store)

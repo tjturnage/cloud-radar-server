@@ -51,16 +51,16 @@ def init_layout():
     #session_id = f'{time.time_ns()//1000}_{uuid.uuid4().hex}'
     session_id = f'{time.time_ns()//1000000}'
     return dbc.Container([
-        # Elements used to store and track the session id 
+        # Elements used to store and track the session id and initialize the layout
         dcc.Store(id='session_id', data=session_id, storage_type='session'),
         dcc.Interval(id='setup', interval=1, n_intervals=0, max_intervals=1),
-        dcc.Interval(id='container_init', interval=1, n_intervals=0, max_intervals=5),
+        
         dcc.Store(id='configs', data={}),
-        dcc.Store(id='sim_settings', data={}),
+        #dcc.Store(id='sim_settings', data={}),
 
         # Elements needed to set up the layout on page load by app.py
-        dcc.Interval(id='directory_monitor', interval=500),
         dcc.Store(id='layout_has_initialized', data={'added': False}),
+        #dcc.Interval(id='container_init', interval=100, n_intervals=0, max_intervals=1),
         html.Div(id='dynamic_container')
     ])
 
