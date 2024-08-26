@@ -323,14 +323,12 @@ simulation_playback_section = dbc.Container(
 @app.callback( 
     Output('dynamic_container', 'children'),
     Output('layout_has_initialized', 'data'),
-    Output('sim_settings', 'data'),
     Input('directory_monitor', 'n_intervals'),
     State('layout_has_initialized', 'data'),
     State('dynamic_container', 'children'),
-    State('sim_settings', 'data'),
     State('configs', 'data')
 )
-def generate_layout(n_intervals, layout_has_initialized, children, sim_settings, configs):
+def generate_layout(n_intervals, layout_has_initialized, children, configs):
     """
     Dynamically generate the layout, which was started in the config file to set up 
     the unique session id. This callback should only be executed once at page load in. 
@@ -358,8 +356,7 @@ def generate_layout(n_intervals, layout_has_initialized, children, sim_settings,
             'new_lon': None,
             'radar_files_dict': {}
         }
-        
-        sim_settings['playback_initiated'] = False
+
         playback_speed = 1.0
 
         # Settings for date dropdowns moved here to avoid specifying different values in
@@ -415,10 +412,10 @@ def generate_layout(n_intervals, layout_has_initialized, children, sim_settings,
 
         layout_has_initialized['added'] = True
 
-        return children, layout_has_initialized, sim_settings
+        return children, layout_has_initialized
 
     create_logfile(configs['LOG_DIR'])
-    return children, layout_has_initialized, sim_settings
+    return children, layout_has_initialized
 
 ################################################################################################
 ################################################################################################
@@ -449,23 +446,28 @@ def display_click_data(quant_str: str, click_data: dict, radar_info: dict):
 
     triggered_id = ctx.triggered_id
     radar_info['number_of_radars'] = int(quant_str[0:1])
+    
     if triggered_id == 'radar_quantity':
         radar_info['number_of_radars'] = int(quant_str[0:1])
         radar_info['radar_list'] = []
         radar_info['radar_dict'] = {}
         return f'Use map to select {quant_str}', f'{select_action} selections', True, radar_info
-    try:
-        radar_info['radar'] = click_data['points'][0]['customdata']
-    except (KeyError, IndexError, TypeError):
-        return 'No radar selected ...', f'{select_action} selections', True, radar_info
+    
+    #try:
+    #    radar_info['radar'] = click_data['points'][0]['customdata']
+    #except (KeyError, IndexError, TypeError):
+    #    return 'No radar selected ...', f'{select_action} selections', True, radar_info
+    if triggered_id == 'graph':
+        radar = click_data['points'][0]['customdata']
 
-    if radar_info['radar'] not in radar_info['radar_list']:
-        radar_info['radar_list'].append(radar_info['radar'])
-    if len(radar_info['radar_list']) > radar_info['number_of_radars']:
-        radar_info['radar_list'] = radar_info['radar_list'][-radar_info['number_of_radars']:]
-    if len(radar_info['radar_list']) == radar_info['number_of_radars']:
-        select_action = 'Finalize'
-        btn_deactivated = False
+        if radar not in radar_info['radar_list']:
+            radar_info['radar_list'].append(radar)
+        if len(radar_info['radar_list']) > radar_info['number_of_radars']:
+            radar_info['radar_list'] = radar_info['radar_list'][-radar_info['number_of_radars']:]
+        if len(radar_info['radar_list']) == radar_info['number_of_radars']:
+            select_action = 'Finalize'
+            btn_deactivated = False
+        radar_info['radar'] = radar
 
     listed_radars = ', '.join(radar_info['radar_list'])
     return listed_radars, f'{select_action} selections', btn_deactivated, radar_info
@@ -773,11 +775,10 @@ def cancel_scripts(n_clicks, SESSION_ID) -> None:
     Output('model_status_warning', 'children'),
     Output('show_script_progress', 'children', allow_duplicate=True),
     [Input('directory_monitor', 'n_intervals'),
-     State('configs', 'data'),
-     State('sim_settings', 'data')],
+     State('configs', 'data')],
     prevent_initial_call=True
 )
-def monitor(_n, cfg, sim_settings):
+def monitor(_n, cfg):
     """
     This function is called every second by the directory_monitor interval. It (1) checks 
     the status of the various scripts and reports them to the front-end application and 
