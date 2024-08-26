@@ -335,6 +335,7 @@ def generate_layout(n_intervals, layout_has_initialized, children, configs):
     Thereafter, layout_has_initialized will be set to True
     """
     if not layout_has_initialized['added']:
+        if children is None: children = []
 
         # Initialize configurable variables for load in
         event_start_year = 2024
@@ -398,10 +399,112 @@ def generate_layout(n_intervals, layout_has_initialized, children, configs):
         sim_duration_section = dbc.Col(html.Div([lc.step_duration, dcc.Dropdown(
                                     np.arange(0, 240, 15), event_duration, 
                                     id='duration', clearable=False),]))
+        
+        #try: 
+        polling_section = dbc.Container(dbc.Container(html.Div(
+        [
+            dbc.Row([
+                dbc.Col(dbc.ListGroupItem("Copy this polling address into GR2Analyst -->"),
+                style=lc.steps_right, width=6),
+                dbc.Col(dbc.ListGroupItem(f"{configs['LINK_BASE']}/polling",
+                        href=f"{configs['LINK_BASE']}/polling", target="_blank"),
+                        style=lc.polling_link, width=6)
+                ])
+        ])))
 
-        if children is None:
-            children = []
+        links_section = dbc.Container(dbc.Container(html.Div(
+        [polling_section,
+            lc.spacer_mini,
+            dbc.Row(
+                [
+                dbc.Col(dbc.ListGroupItem("Graphics"), style=lc.group_item_style, width=2),
+                dbc.Col(dbc.ListGroupItem("Hodographs webpage", 
+                        href=f"{configs['LINK_BASE']}/hodographs.html", target="_blank"), width=2)
+                ],
+                style={"display": "flex", "flexWrap": "wrap"}
+            ),
+            dbc.Row(
+                [
+                dbc.Col(dbc.ListGroupItem("Sfc obs"), style=lc.group_item_style, width=2),
+                    dbc.Col(dbc.ListGroupItem("Regular font",
+                            href=f"{configs['PLACEFILES_LINKS']}/latest_surface_observations_shifted.txt", target="_blank"), width=2),
+                    dbc.Col(dbc.ListGroupItem("Large font",
+                            href=f"{configs['PLACEFILES_LINKS']}/latest_surface_observations_lg_shifted.txt", target="_blank"), width=2),
+                    dbc.Col(dbc.ListGroupItem("Small font",
+                            href=f"{configs['PLACEFILES_LINKS']}/latest_surface_observations_xlg_shifted.txt", target="_blank"), width=2),
+                ],
+                style={"display": "flex", "flexWrap": "wrap"}
+            ),
+            dbc.Row(
+                [
+                dbc.Col(dbc.ListGroupItem("Sfc obs parts"), style=lc.group_item_style, width=2),
+                dbc.Col(dbc.ListGroupItem("Wind",
+                            href=f"{configs['PLACEFILES_LINKS']}/wind_shifted.txt", target="_blank"),width=2),
+                dbc.Col(dbc.ListGroupItem("Temp", href=f"{configs['PLACEFILES_LINKS']}/temp_shifted.txt", target="_blank"),width=2),
+                dbc.Col(dbc.ListGroupItem("Dwpt", href=f"{configs['PLACEFILES_LINKS']}/dwpt_shifted.txt", target="_blank"),width=2),
+                dbc.Col(dbc.ListGroupItem(" "),width=2),
+                ],
+                style={"display": "flex", "flexWrap": "wrap"},
 
+            ),
+            dbc.Row(
+                [
+                dbc.Col(dbc.ListGroupItem("NSE Shear"), style=lc.group_item_style, width=2),
+                dbc.Col(dbc.ListGroupItem("Effective", href=f"{configs['PLACEFILES_LINKS']}/ebwd_shifted.txt", target="_blank"),
+                        width=2),
+                dbc.Col(dbc.ListGroupItem("0-1 SHR", href=f"{configs['PLACEFILES_LINKS']}/shr1_shifted.txt", target="_blank"),
+                        width=2),
+                dbc.Col(dbc.ListGroupItem(
+                        "0-3 SHR", href=f"{configs['PLACEFILES_LINKS']}/shr3_shifted.txt", target="_blank"), width=2),
+                dbc.Col(dbc.ListGroupItem(
+                        "0-6 SHR", href=f"{configs['PLACEFILES_LINKS']}/shr6_shifted.txt", target="_blank"), width=2),
+                dbc.Col(dbc.ListGroupItem(
+                        "0-8 SHR", href=f"{configs['PLACEFILES_LINKS']}/shr8_shifted.txt", target="_blank"), width=2),
+                ],
+                style={"display": "flex", "flexWrap": "wrap"},
+
+            ),
+            dbc.Row(
+                [
+                    dbc.Col(dbc.ListGroupItem("NSE SRH"), style=lc.group_item_style, width=2),
+                    dbc.Col(dbc.ListGroupItem("Effective",
+                            href=f"{configs['PLACEFILES_LINKS']}/esrh_shifted.txt", target="_blank"), width=2),
+                    dbc.Col(dbc.ListGroupItem("0-500m", href=f"{configs['PLACEFILES_LINKS']}/srh500_shifted.txt", target="_blank"),
+                            width=2),
+                    dbc.Col(dbc.ListGroupItem(" "), width=2),
+                    dbc.Col(dbc.ListGroupItem(" "), width=2),
+
+                ],
+                style={"display": "flex", "flexWrap": "wrap"},
+
+            ),
+            dbc.Row(
+                [
+                    dbc.Col(dbc.ListGroupItem("NSE Thermo"), style=lc.group_item_style, width=2),
+                    dbc.Col(dbc.ListGroupItem("MLCAPE",
+                            href=f"{configs['PLACEFILES_LINKS']}/mlcape_shifted.txt", target="_blank"), width=2),
+                    dbc.Col(dbc.ListGroupItem("MLCIN",
+                            href=f"{configs['PLACEFILES_LINKS']}/mlcin_shifted.txt", target="_blank"), width=2),
+                    dbc.Col(dbc.ListGroupItem("0-3 MLCP",
+                            href=f"{configs['PLACEFILES_LINKS']}/cape3km_shifted.txt", target="_blank"), width=2),
+                    dbc.Col(dbc.ListGroupItem("0-3 LR",
+                            href=f"{configs['PLACEFILES_LINKS']}/lr03km_shifted.txt", target="_blank"), width=2),
+                    dbc.Col(dbc.ListGroupItem("MUCAPE",
+                            href=f"{configs['PLACEFILES_LINKS']}/mucape_shifted.txt", target="_blank"), width=2),
+                ],
+                style={"display": "flex", "flexWrap": "wrap"},
+
+            ),
+        ]
+        )))
+
+        full_links_section = dbc.Container(
+            dbc.Container(
+            html.Div([
+                    links_section
+                    ]),id="placefiles_section",style=lc.section_box_pad))
+
+    
         new_items = dbc.Container([
             dcc.Interval(id='playback_timer', disabled=True, interval=15*1000),
             dcc.Store(id='tradar'),
@@ -432,20 +535,20 @@ def generate_layout(n_intervals, layout_has_initialized, children, configs):
             lc.scripts_button,
             lc.status_section,
             lc.spacer,lc.toggle_placefiles_btn,lc.spacer_mini,
-            lc.full_links_section, lc.spacer,
+            full_links_section, lc.spacer,
             simulation_playback_section,
             lc.radar_id, lc.bottom_section
         ])
+
 
         # Append the new component to the current list of children
         children = list(children)  
         children.append(new_items)
 
         layout_has_initialized['added'] = True
-
+        create_logfile(configs['LOG_DIR'])
         return children, layout_has_initialized
 
-    create_logfile(configs['LOG_DIR'])
     return children, layout_has_initialized
 
 ################################################################################################
@@ -623,16 +726,6 @@ def run_with_cancel_button(cfg, sim_times, radar_info):
     """
     This version of the script-launcher trying to work in cancel button
     """   
-    log_string = (
-        f"\n"
-        f"=========================Simulation Settings========================\n"
-        f"Session ID: {cfg['SESSION_ID']}\n"
-        f"{sim_times}\n"
-        f"{radar_info}\n"
-        f"====================================================================\n"
-    )
-    logging.info(log_string)
-
     UpdateHodoHTML('None', cfg['HODOGRAPHS_DIR'], cfg['HODOGRAPHS_PAGE'])
 
     # clean out old files and directories
@@ -647,6 +740,16 @@ def run_with_cancel_button(cfg, sim_times, radar_info):
         copy_grlevel2_cfg_file(cfg)
     except Exception as e:
         logging.exception("Error creating radar dict or config file: ", exc_info=True)
+
+    log_string = (
+        f"\n"
+        f"=========================Simulation Settings========================\n"
+        f"Session ID: {cfg['SESSION_ID']}\n"
+        f"{sim_times}\n"
+        f"{radar_info}\n"
+        f"====================================================================\n"
+    )
+    logging.info(log_string)
 
     if len(radar_info['radar_list']) > 0:
 

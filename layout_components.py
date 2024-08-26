@@ -10,7 +10,7 @@ import plotly.graph_objs as go
 import dash_bootstrap_components as dbc
 from dash import html, dcc, dash_table
 from dotenv import load_dotenv
-from config import LINK_BASE, PLACEFILES_LINKS
+#from config import LINK_BASE, PLACEFILES_LINKS
 
 load_dotenv()
 MAP_TOKEN = os.getenv("MAPBOX_TOKEN")
@@ -388,6 +388,11 @@ group_item_style_center = {'font-weight': 'bold', 'color': 'white', 'border': '1
 group_item_style_left = {'font-weight': 'bold', 'color': '#cccccc',
                     'font-size': '1.2em', 'text-align': 'left'}
 
+################################################################################################
+# Below items moved to application so session-specific placefile and polling directories can be 
+# built dynamically
+################################################################################################
+'''
 polling_section = dbc.Container(dbc.Container(html.Div(
     [
         dbc.Row([
@@ -403,7 +408,6 @@ polling_section = dbc.Container(dbc.Container(html.Div(
 ################################################################################################
 # ----------------------------- Placefiles section  --------------------------------------------
 ################################################################################################
-
 
 links_section = dbc.Container(dbc.Container(html.Div(
     [polling_section,
@@ -490,15 +494,16 @@ links_section = dbc.Container(dbc.Container(html.Div(
     ]#,id="placefiles_section", style={'display': 'block'}
 )))
 
-toggle_placefiles_btn = dbc.Container(dbc.Col(html.Div([dbc.Button(
-    'Hide Links Section', size="lg", id='toggle_placefiles_section_btn',
-    n_clicks=0)],className="d-grid gap-2 col-12 mx-auto")))
-
 full_links_section = dbc.Container(
     dbc.Container(
     html.Div([
             links_section
               ]),id="placefiles_section",style=section_box_pad))
+'''
+
+toggle_placefiles_btn = dbc.Container(dbc.Col(html.Div([dbc.Button(
+    'Hide Links Section', size="lg", id='toggle_placefiles_section_btn',
+    n_clicks=0)],className="d-grid gap-2 col-12 mx-auto")))
 
 ################################################################################################
 # ----------------------------- Clock components  ----------------------------------------------

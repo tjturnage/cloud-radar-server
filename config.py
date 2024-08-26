@@ -34,13 +34,6 @@ if sys.platform.startswith('win'):
     CLOUD = False
     PLATFORM = 'WINDOWS'
 
-# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-# This and LINK_BASE will need to be moved into the dcc.Store object. All references to 
-# these locations in layout_components will also need to be moved into app.py after 
-# directory paths are read in from 
-# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-PLACEFILES_LINKS = f'{LINK_BASE}/placefiles'
-
 ########################################################################################
 # Initialize the application layout. A unique session ID will be generated on each page
 # load. 
@@ -55,12 +48,13 @@ def init_layout():
     Initialize the layout with a unique session id.  The 'dynamic container' is used 
     within the app to build out the rest of the application layout on page load
     """
-    session_id = f'{time.time_ns()//1000}_{uuid.uuid4().hex}'
+    #session_id = f'{time.time_ns()//1000}_{uuid.uuid4().hex}'
+    session_id = f'{time.time_ns()//1000000}'
     return dbc.Container([
         # Elements used to store and track the session id 
         dcc.Store(id='session_id', data=session_id, storage_type='session'),
         dcc.Interval(id='setup', interval=1, n_intervals=0, max_intervals=1),
-        dcc.Interval(id='container_init', interval=1, n_intervals=0, max_intervals=10),
+        dcc.Interval(id='container_init', interval=1, n_intervals=0, max_intervals=5),
         dcc.Store(id='configs', data={}),
         dcc.Store(id='sim_settings', data={}),
 
@@ -103,7 +97,7 @@ def setup_paths_and_dirs(n_intervals, session_id):
         dirs['LOG_DIR'] = f"{dirs['BASE_DIR']}/data/logs"
 
         # Need to be updated
-        dirs['LINK_BASE'] = f"https://rssic.nws.noaa.gov/assets/{session_id}"
+        dirs['LINK_BASE'] = f"{LINK_BASE}/{session_id}"
         dirs['PLACEFILES_LINKS'] = f"{dirs['LINK_BASE']}/placefiles"
         dirs['HODO_HTML_LINK'] = f"{dirs['LINK_BASE']}/hodographs.html"
 
