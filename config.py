@@ -60,11 +60,12 @@ def init_layout():
         # Elements used to store and track the session id 
         dcc.Store(id='session_id', data=session_id, storage_type='session'),
         dcc.Interval(id='setup', interval=1, n_intervals=0, max_intervals=1),
+        dcc.Interval(id='container_init', interval=1, n_intervals=0, max_intervals=10),
         dcc.Store(id='configs', data={}),
         dcc.Store(id='sim_settings', data={}),
 
         # Elements needed to set up the layout on page load by app.py
-        dcc.Interval(id='directory_monitor', interval=1000),
+        dcc.Interval(id='directory_monitor', interval=500),
         dcc.Store(id='layout_has_initialized', data={'added': False}),
         html.Div(id='dynamic_container')
     ])

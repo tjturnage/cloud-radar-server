@@ -323,7 +323,7 @@ simulation_playback_section = dbc.Container(
 @app.callback( 
     Output('dynamic_container', 'children'),
     Output('layout_has_initialized', 'data'),
-    Input('directory_monitor', 'n_intervals'),
+    Input('container_init', 'n_intervals'),
     State('layout_has_initialized', 'data'),
     State('dynamic_container', 'children'),
     State('configs', 'data')
@@ -336,38 +336,68 @@ def generate_layout(n_intervals, layout_has_initialized, children, configs):
     """
     if not layout_has_initialized['added']:
 
-        # Initialize variables
+        # Initialize configurable variables for load in
         event_start_year = 2024
         event_start_month = 7
         event_start_day = 16
         event_start_hour = 0
         event_start_minute = 30
         event_duration = 60
+        playback_speed = 1.0
+        number_of_radars = 1
+        radar_list = []
+        radar_dict = {}
+        radar = None
+        new_radar = 'None'
+        lat = None 
+        lon = None 
+        new_lat = None 
+        new_lon = None
+        radar_files_dict = {}
+        #################################################
+
+        monitor_store = {}
+        monitor_store['radar_dl_completion'] = 0
+        monitor_store['hodograph_completion'] = 0
+        monitor_store['munger_completion'] = 0
+        monitor_store['placefile_status_string'] = ""
+        monitor_store['model_list'] = []
+        monitor_store['model_warning'] = ""
 
         radar_info = {
-            'number_of_radars': 1,
-            'radar_list': [],
-            'radar_dict': {},
-            'radar': None,
-            'new_radar': 'None',
-            'lat': None,
-            'lon': None,
-            'new_lat': None, 
-            'new_lon': None,
-            'radar_files_dict': {}
+            'number_of_radars': number_of_radars,
+            'radar_list': radar_list,
+            'radar_dict': radar_dict,
+            'radar': radar,
+            'new_radar': new_radar,
+            'lat': lat,
+            'lon': lon,
+            'new_lat': new_lat, 
+            'new_lon': new_lon,
+            'radar_files_dict': radar_files_dict
         }
-
-        playback_speed = 1.0
 
         # Settings for date dropdowns moved here to avoid specifying different values in
         # the layout 
         now = datetime.now(pytz.utc)
-        sim_year_section = dbc.Col(html.Div([lc.step_year, dcc.Dropdown(np.arange(1992, now.year + 1), event_start_year, id='start_year', clearable=False),]))
-        sim_month_section = dbc.Col(html.Div([lc.step_month, dcc.Dropdown(np.arange(1, 13), event_start_month, id='start_month', clearable=False),]))
-        sim_day_selection = dbc.Col(html.Div([lc.step_day, dcc.Dropdown(np.arange(1, 31), event_start_day, id='start_day', clearable=False)]))
-        sim_hour_section = dbc.Col(html.Div([lc.step_hour, dcc.Dropdown(np.arange(0, 24), event_start_hour, id='start_hour', clearable=False),]))
-        sim_minute_section = dbc.Col(html.Div([lc.step_minute, dcc.Dropdown([0, 15, 30, 45], event_start_minute, id='start_minute', clearable=False),]))
-        sim_duration_section = dbc.Col(html.Div([lc.step_duration, dcc.Dropdown(np.arange(0, 240, 15), event_duration, id='duration', clearable=False),]))
+        sim_year_section = dbc.Col(html.Div([lc.step_year, dcc.Dropdown(
+                                   np.arange(1992, now.year+1), event_start_year, 
+                                   id='start_year', clearable=False),]))
+        sim_month_section = dbc.Col(html.Div([lc.step_month, dcc.Dropdown(
+                                    np.arange(1, 13), event_start_month, 
+                                    id='start_month', clearable=False),]))
+        sim_day_selection = dbc.Col(html.Div([lc.step_day, dcc.Dropdown(
+                                    np.arange(1, 31), event_start_day, 
+                                    id='start_day', clearable=False)]))
+        sim_hour_section = dbc.Col(html.Div([lc.step_hour, dcc.Dropdown(
+                                    np.arange(0, 24), event_start_hour, 
+                                    id='start_hour', clearable=False),]))
+        sim_minute_section = dbc.Col(html.Div([lc.step_minute, dcc.Dropdown(
+                                    [0, 15, 30, 45], event_start_minute, 
+                                    id='start_minute', clearable=False),]))
+        sim_duration_section = dbc.Col(html.Div([lc.step_duration, dcc.Dropdown(
+                                    np.arange(0, 240, 15), event_duration, 
+                                    id='duration', clearable=False),]))
 
         if children is None:
             children = []
@@ -377,14 +407,15 @@ def generate_layout(n_intervals, layout_has_initialized, children, configs):
             dcc.Store(id='tradar'),
             dcc.Store(id='dummy'),
             dcc.Store(id='playback_running_store', data=False),
-            dcc.Store(id='playback_start_store'),
-            dcc.Store(id='playback_end_store'),
-            dcc.Store(id='playback_clock_store'),
+            dcc.Store(id='playback_start_store'),   # might be unused
+            dcc.Store(id='playback_end_store'),     # might be unused
+            dcc.Store(id='playback_clock_store'),   # might be unused
 
             dcc.Store(id='radar_info', data=radar_info),     
             dcc.Store(id='sim_times'), 
             dcc.Store(id='playback_speed_store', data=playback_speed),
             dcc.Store(id='playback_specs'),
+            dcc.Store(id='monitor_store', data=monitor_store),
             lc.top_section, lc.top_banner,
             dbc.Container([
                 dbc.Container([
@@ -453,21 +484,19 @@ def display_click_data(quant_str: str, click_data: dict, radar_info: dict):
         radar_info['radar_dict'] = {}
         return f'Use map to select {quant_str}', f'{select_action} selections', True, radar_info
     
-    #try:
-    #    radar_info['radar'] = click_data['points'][0]['customdata']
-    #except (KeyError, IndexError, TypeError):
-    #    return 'No radar selected ...', f'{select_action} selections', True, radar_info
-    if triggered_id == 'graph':
+    try:
         radar = click_data['points'][0]['customdata']
+    except (KeyError, IndexError, TypeError):
+        return 'No radar selected ...', f'{select_action} selections', True, radar_info
 
-        if radar not in radar_info['radar_list']:
-            radar_info['radar_list'].append(radar)
-        if len(radar_info['radar_list']) > radar_info['number_of_radars']:
-            radar_info['radar_list'] = radar_info['radar_list'][-radar_info['number_of_radars']:]
-        if len(radar_info['radar_list']) == radar_info['number_of_radars']:
-            select_action = 'Finalize'
-            btn_deactivated = False
-        radar_info['radar'] = radar
+    if radar not in radar_info['radar_list']:
+        radar_info['radar_list'].append(radar)
+    if len(radar_info['radar_list']) > radar_info['number_of_radars']:
+        radar_info['radar_list'] = radar_info['radar_list'][-radar_info['number_of_radars']:]
+    if len(radar_info['radar_list']) == radar_info['number_of_radars']:
+        select_action = 'Finalize'
+        btn_deactivated = False
+    radar_info['radar'] = radar
 
     listed_radars = ', '.join(radar_info['radar_list'])
     return listed_radars, f'{select_action} selections', btn_deactivated, radar_info
@@ -729,7 +758,7 @@ def run_with_cancel_button(cfg, sim_times, radar_info):
         (Output('map_btn', 'disabled'), True, False),
         (Output('new_radar_selection', 'disabled'), True, False),
         (Output('run_scripts_btn', 'disabled'), True, False),
-        (Output('playback_clock_store', 'disabled'), True, False),
+        #(Output('playback_clock_store', 'disabled'), True, False),
         (Output('confirm_radars_btn', 'disabled'), True, False), # added radar confirm btn
         (Output('playback_btn', 'disabled'), True, False), # add start sim btn
         #(Output('pause_resume_playback_btn', 'disabled'), True, False), # add pause/resume btn
@@ -774,58 +803,82 @@ def cancel_scripts(n_clicks, SESSION_ID) -> None:
     Output('model_table', 'data'),
     Output('model_status_warning', 'children'),
     Output('show_script_progress', 'children', allow_duplicate=True),
+    Output('monitor_store', 'data'),
     [Input('directory_monitor', 'n_intervals'),
-     State('configs', 'data')],
+     State('configs', 'data'),
+     State('cancel_scripts', 'disabled'),
+     State('monitor_store', 'data')],
     prevent_initial_call=True
 )
-def monitor(_n, cfg):
+def monitor(_n, cfg, cancel_scripts_disabled, monitor_store):
     """
     This function is called every second by the directory_monitor interval. It (1) checks 
     the status of the various scripts and reports them to the front-end application and 
     (2) monitors the completion status of the scripts. 
+
+    In order to reduce background latency, this funcion only fully executes when the 
+    downloading and pre-processing scripts are running, defined by the cancel button
+    being enabled. Previous status data is stored in monitor_store.
     """
-    processes = utils.get_app_processes()
+    radar_dl_completion = monitor_store['radar_dl_completion']
+    hodograph_completion = monitor_store['hodograph_completion']
+    munger_completion = monitor_store['munger_completion']
+    placefile_status_string = monitor_store['placefile_status_string']
+    model_list = monitor_store['model_list']
+    model_warning = monitor_store['model_warning']
     screen_output = ""
-    seen_scripts = []
-    for p in processes:
-        process_session_id = p['session_id']
-        if process_session_id == cfg['SESSION_ID']:
-            # Returns get_data or process (the two scripts launched by nse.py)
-            name = p['cmdline'][1].rsplit('/')[-1].rsplit('.')[0]
 
-            # Scripts executed as python modules will be like [python, -m, script.name]
-            if p['cmdline'][1] == '-m':
-                # Should return Nexrad, munger, nse, etc.
-                name = p['cmdline'][2].rsplit('/')[-1].rsplit('.')[-1]
-                if p['name'] == 'wgrib2':
-                    name = 'wgrib2'
+    if not cancel_scripts_disabled:
+        processes = utils.get_app_processes()
+        seen_scripts = []
+        for p in processes:
+            process_session_id = p['session_id']
+            if process_session_id == cfg['SESSION_ID']:
+                # Returns get_data or process (the two scripts launched by nse.py)
+                name = p['cmdline'][1].rsplit('/')[-1].rsplit('.')[0]
 
-            if name in config.scripts_list and name not in seen_scripts:
-                runtime = time.time() - p['create_time']
-                screen_output += f"{name}: running for {round(runtime,1)} s. "
-                seen_scripts.append(name)
+                # Scripts executed as python modules will be like [python, -m, script.name]
+                if p['cmdline'][1] == '-m':
+                    # Should return Nexrad, munger, nse, etc.
+                    name = p['cmdline'][2].rsplit('/')[-1].rsplit('.')[-1]
+                    if p['name'] == 'wgrib2':
+                        name = 'wgrib2'
 
-    # Radar file download status
-    radar_dl_completion, radar_files = utils.radar_monitor(cfg['RADAR_DIR'])
+                if name in config.scripts_list and name not in seen_scripts:
+                    runtime = time.time() - p['create_time']
+                    screen_output += f"{name}: running for {round(runtime,1)} s. "
+                    seen_scripts.append(name)
 
-    # Radar mungering/transposing status
-    munger_completion = utils.munger_monitor(cfg['RADAR_DIR'], cfg['POLLING_DIR'])
+        # Radar file download status
+        radar_dl_completion, radar_files = utils.radar_monitor(cfg['RADAR_DIR'])
 
-    # Surface placefile status
-    placefile_stats = utils.surface_placefile_monitor(cfg['PLACEFILES_DIR'])
-    placefile_status_string = f"{placefile_stats[0]}/{placefile_stats[1]} files found"
+        # Radar mungering/transposing status
+        munger_completion = utils.munger_monitor(cfg['RADAR_DIR'], cfg['POLLING_DIR'])
 
-    # Hodographs. Currently hard-coded to expect 2 files for every radar and radar file.
-    num_hodograph_images = len(glob(f"{cfg['HODOGRAPHS_DIR']}/*.png"))
-    hodograph_completion = 0
-    if len(radar_files) > 0:
-        hodograph_completion = 100 * \
-            (num_hodograph_images / (2*len(radar_files)))
+        # Surface placefile status
+        placefile_stats = utils.surface_placefile_monitor(cfg['PLACEFILES_DIR'])
+        placefile_status_string = f"{placefile_stats[0]}/{placefile_stats[1]} files found"
 
-    # NSE placefiles
-    model_list, model_warning = utils.nse_status_checker(cfg['MODEL_DIR'])
+        # Hodographs. Currently hard-coded to expect 2 files for every radar and radar file.
+        num_hodograph_images = len(glob(f"{cfg['HODOGRAPHS_DIR']}/*.png"))
+        hodograph_completion = 0
+        if len(radar_files) > 0:
+            hodograph_completion = 100 * \
+                (num_hodograph_images / (2*len(radar_files)))
+
+        # NSE placefiles
+        model_list, model_warning = utils.nse_status_checker(cfg['MODEL_DIR'])
+
+        # Capture the latest status information 
+        monitor_store['radar_dl_completion'] = radar_dl_completion
+        monitor_store['hodograph_completion'] = hodograph_completion
+        monitor_store['munger_completion'] = munger_completion
+        monitor_store['placefile_status_string'] = placefile_status_string
+        monitor_store['model_list'] = model_list
+        monitor_store['model_warning'] = model_warning
+
     return (radar_dl_completion, hodograph_completion, munger_completion, 
-            placefile_status_string, model_list, model_warning, screen_output)
+            placefile_status_string, model_list, model_warning, screen_output, monitor_store)
 
 ################################################################################################
 # ----------------------------- Transpose placefiles in time and space  ------------------------
@@ -882,7 +935,7 @@ def toggle_placefiles_section(n) -> dict:
     prevent_initial_call=True)
 def initiate_playback(_nclick, playback_speed, cfg, sim_times, radar_info):
     """     
-    Enables/disables interval component that elapses the playback time. The user can only 
+    Enables/disables interval component that elapses the playback time. User can only 
     click this button this once.
     """
 
@@ -907,9 +960,11 @@ def initiate_playback(_nclick, playback_speed, cfg, sim_times, radar_info):
     style = lc.playback_times_style
     options = sim_times['playback_dropdown_dict']
     if config.PLATFORM != 'WINDOWS':
-        UpdateHodoHTML(sim_times['playback_clock_str'], cfg['HODOGRAPHS_DIR'], cfg['HODOGRAPHS_PAGE'])
+        UpdateHodoHTML(sim_times['playback_clock_str'], cfg['HODOGRAPHS_DIR'], 
+                       cfg['HODOGRAPHS_PAGE'])
         if radar_info['new_radar'] != 'None':
-            UpdateDirList(radar_info['new_radar'], sim_times['playback_clock_str'], cfg['POLLING_DIR'])
+            UpdateDirList(radar_info['new_radar'], sim_times['playback_clock_str'], 
+                          cfg['POLLING_DIR'])
         else:
             for _r, radar in enumerate(radar_info['radar_list']):
                 UpdateDirList(radar, sim_times['playback_clock_str'], cfg['POLLING_DIR'])
@@ -947,13 +1002,16 @@ def manage_clock_(nclicks, _n_intervals, new_time, _playback_running, playback_s
     playback_btn_text = 'Pause Playback'
 
     # Variables stored dcc.Store object are strings. 
-    specs['playback_clock'] = datetime.strptime(specs['playback_clock'], '%Y-%m-%dT%H:%M:%S+00:00')
+    specs['playback_clock'] = datetime.strptime(specs['playback_clock'], 
+                                                '%Y-%m-%dT%H:%M:%S+00:00')
 
     # Unsure why these string representations change.
     try:
-        specs['playback_end'] = datetime.strptime(specs['playback_end'], '%Y-%m-%dT%H:%M:%S+00:00')
+        specs['playback_end'] = datetime.strptime(specs['playback_end'], 
+                                                  '%Y-%m-%dT%H:%M:%S+00:00')
     except ValueError:
-        specs['playback_end'] = datetime.strptime(specs['playback_end'], '%Y-%m-%dT%H:%M:%S')
+        specs['playback_end'] = datetime.strptime(specs['playback_end'], 
+                                                  '%Y-%m-%dT%H:%M:%S')
 
     if specs['playback_clock'].tzinfo is None:
         specs['playback_clock'] = specs['playback_clock'].replace(tzinfo=timezone.utc)
@@ -1046,8 +1104,6 @@ def manage_clock_(nclicks, _n_intervals, new_time, _playback_running, playback_s
 # ----------------------------- Playback Speed Callbacks  --------------------------------------
 ################################################################################################
 @app.callback(
-    #Output('playback_specs', 'data', allow_duplicate=True),
-    #Output('sim_settings', 'data', allow_duplicate=True),
     Output('playback_speed_store', 'data'),
     Input('speed_dropdown', 'value'),
     prevent_initial_call=True
@@ -1056,15 +1112,12 @@ def update_playback_speed(selected_speed):
     """
     Updates the playback speed in the sa object
     """
-    #sim_settings['playback_speed'] = selected_speed
     try:
-        #sim_settings['playback_speed'] = float(selected_speed)
         selected_speed = float(selected_speed)
     except ValueError:
         print(f"Error converting {selected_speed} to float")
         selected_speed = 1.0
     return selected_speed
-    #return specs
 
 
 ################################################################################################
