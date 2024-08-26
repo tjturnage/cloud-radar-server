@@ -1060,16 +1060,17 @@ def run_with_cancel_button(cfg, sim_settings):
 
 @app.callback(
     Output('sim_settings', 'data', allow_duplicate=True),
-    Input('run_scripts_btn', 'n_clicks'),
+    Input('confirm_radars_btn', 'n_clicks'),
     State('sim_settings', 'data'),
     prevent_initial_call=True
 )
 def set_simulation_times(n_clicks, sim_settings):
     """
     This setter callback will ensure the simulation control settings (playback times) 
-    are broadcast to the sim_settings dictionary in dcc.Store.
+    are broadcast to the sim_settings dictionary in dcc.Store. Executed when user 
+    finalizes radar selections
     """
-    # User has clicked the run_scripts_btn.  B/c of the allow_duplicate=True in output,
+    # User has clicked confirm_radars_btn.  B/c of the allow_duplicate=True in output,
     # this callback fires repeatedly with ctx.triggered_id = run_scripts_button. This is
     # a workaround to determine when the scripts button has actually been clicked.
     if n_clicks > sim_settings['script_btn_clicks']:
@@ -1262,9 +1263,7 @@ def initiate_playback(_nclick, playback_speed, cfg, sa):
         'playback_speed': playback_speed,
         'new_radar': sa['new_radar'],
         'radar_list': sa['radar_list'],
-        #'interval_disabled': False,
-        #'status': 'Running',
-        #'playback_btn_text': 'playback_btn_text'
+        'playback_start': sa['playback_start'],
     }
 
     btn_text = 'Simulation Launched'

@@ -59,7 +59,7 @@ def init_layout():
     return dbc.Container([
         # Elements used to store and track the session id 
         dcc.Store(id='session_id', data=session_id, storage_type='session'),
-        dcc.Interval(id='broadcast_session_id', interval=1, n_intervals=0, max_intervals=1),
+        dcc.Interval(id='setup', interval=1, n_intervals=0, max_intervals=1),
         dcc.Store(id='configs', data={}),
         dcc.Store(id='sim_settings', data={}),
 
@@ -73,10 +73,10 @@ app.layout = init_layout
 
 @app.callback(
     Output('configs', 'data'),
-    Input('broadcast_session_id', 'n_intervals'),
+    Input('setup', 'n_intervals'),
     State('session_id', 'data')
 )
-def broadcast_session_id(n_intervals, session_id):
+def setup_paths_and_dirs(n_intervals, session_id):
     """
     Callback executed once on page load to query the session id in dcc.Store component.
     Creates a dictionary of directory paths and stores in a separate dcc.Store component.  
@@ -127,44 +127,6 @@ def broadcast_session_id(n_intervals, session_id):
 
         return dirs
 
-'''
-ASSETS_DIR = BASE_DIR / 'assets'
-PLACEFILES_DIR = ASSETS_DIR / 'placefiles'
-
-PLACEFILES_LINKS = f'{LINK_BASE}/placefiles'
-
-HODOGRAPHS_DIR = ASSETS_DIR / 'hodographs'
-HODOGRAPHS_PAGE = ASSETS_DIR / 'hodographs.html'
-HODO_HTML_PAGE = HODOGRAPHS_PAGE
-
-HODO_HTML_LINK = f'{LINK_BASE}/hodographs.html'
-HODO_IMAGES = ASSETS_DIR / 'hodographs'
-POLLING_DIR = ASSETS_DIR / 'polling'
-
-
-DATA_DIR = BASE_DIR / 'data'
-MODEL_DIR = DATA_DIR / 'model_data'
-RADAR_DIR = DATA_DIR / 'radar'
-LOG_DIR = DATA_DIR / 'logs'
-CSV_PATH = BASE_DIR / 'radars.csv'
-SCRIPTS_DIR = BASE_DIR / 'scripts'
-OBS_SCRIPT_PATH = SCRIPTS_DIR / 'obs_placefile.py'
-HODO_SCRIPT_PATH = SCRIPTS_DIR / 'hodo_plot.py'
-NEXRAD_SCRIPT_PATH = SCRIPTS_DIR / 'Nexrad.py'
-L2MUNGER_FILEPATH = SCRIPTS_DIR / 'l2munger'
-MUNGER_SCRIPT_FILEPATH = SCRIPTS_DIR / 'munger.py'
-MUNGE_DIR = SCRIPTS_DIR / 'munge'
-nse_script_path = SCRIPTS_DIR / 'nse.py'
-NSE_SCRIPT_PATH = SCRIPTS_DIR / 'nse.py'
-DEBZ_FILEPATH = SCRIPTS_DIR / 'debz.py'
-LOG_DIR = DATA_DIR / 'logs'
-
-os.makedirs(DATA_DIR, exist_ok=True)
-os.makedirs(HODO_IMAGES, exist_ok=True)
-os.makedirs(PLACEFILES_DIR, exist_ok=True)
-'''
-DATA_DIR = BASE_DIR / 'data'
-LOG_DIR = DATA_DIR / 'logs'
 # Names (without extensions) of various pre-processing scripts. Needed for script 
 # monitoring and/or cancelling. 
 scripts_list = ["Nexrad", "munger", "obs_placefile", "nse", "wgrib2", 
