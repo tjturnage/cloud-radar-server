@@ -126,3 +126,9 @@ def setup_paths_and_dirs(n_intervals, session_id):
 # monitoring and/or cancelling. 
 scripts_list = ["Nexrad", "munger", "obs_placefile", "nse", "wgrib2", 
                 "get_data", "process", "hodo_plot"]
+
+# Names of surface placefiles for monitoring script
+surface_placefiles = [
+    'wind.txt', 'temp.txt', 'latest_surface_observations.txt',
+    'latest_surface_observations_lg.txt', 'latest_surface_observations_xlg.txt'
+]

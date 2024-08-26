@@ -132,11 +132,7 @@ def munger_monitor(RADAR_DIR, POLLING_DIR):
     return percent_complete
 
 def surface_placefile_monitor(PLACEFILES_DIR):
-    filenames = [
-        'wind.txt', 'temp.txt', 'latest_surface_observations.txt',
-        'latest_surface_observations_lg.txt', 'latest_surface_observations_xlg.txt'
-    ]
-    expected_files =  [f"{PLACEFILES_DIR}/{i}" for i in filenames]
+    expected_files =  [f"{PLACEFILES_DIR}/{i}" for i in config.surface_placefiles]
     files_on_system = [x for x in expected_files if os.path.exists(x)]
 
     #percent_complete = calc_completion_percentage(expected_files, files_on_system)
