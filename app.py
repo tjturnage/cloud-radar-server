@@ -400,7 +400,7 @@ def generate_layout(layout_has_initialized, children, configs):
         sim_duration_section = dbc.Col(html.Div([lc.step_duration, dcc.Dropdown(
                                     np.arange(0, 240, 15), event_duration, 
                                     id='duration', clearable=False),]))
-        print(configs)
+
         polling_section = dbc.Container(dbc.Container(html.Div(
         [
             dbc.Row([
@@ -507,7 +507,7 @@ def generate_layout(layout_has_initialized, children, configs):
     
         new_items = dbc.Container([
             dcc.Interval(id='playback_timer', disabled=True, interval=15*1000),
-            dcc.Store(id='tradar'),
+            #dcc.Store(id='tradar'),
             dcc.Store(id='dummy'),
             dcc.Store(id='playback_running_store', data=False),
             dcc.Store(id='playback_start_store'),   # might be unused
@@ -652,7 +652,7 @@ def finalize_radar_selections(clicks: int, _quant_str: str, radar_info: dict) ->
 ################################################################################################
 
 @app.callback(
-    Output('tradar', 'data'),
+    #Output('tradar', 'data'),
     Output('radar_info', 'data', allow_duplicate=True),
     [Input('new_radar_selection', 'value'),
     Input('radar_quantity', 'value'),
@@ -665,20 +665,17 @@ def transpose_radar(value, radar_quantity, radar_info):
     will not update new_radar to None. Instead, it'll be the previous selection.
     Since we always evaluate "value" after every user selection, always set new_radar 
     initially to None.
-    
-    Added tradar as a dcc.Store as this callback didn't seem to execute otherwise. The
-    tradar store value is not used (currently).
     """
     radar_info['new_radar'] = 'None'
     radar_info['new_lat'] = None
     radar_info['new_lon'] = None
-    if value != 'None' and int(radar_quantity[0:1]) == 1:
+    radar_info['number_of_radars'] = int(radar_quantity[0:1])
+    if value != 'None' and radar_info['number_of_radars'] == 1:
         new_radar = value
         radar_info['new_radar'] = new_radar
         radar_info['new_lat'] = lc.df[lc.df['radar'] == new_radar]['lat'].values[0]
         radar_info['new_lon'] = lc.df[lc.df['radar'] == new_radar]['lon'].values[0]
-        return f'{new_radar}', radar_info
-    return 'None', radar_info
+    return radar_info
 
 ################################################################################################
 # ----------------------------- Run Scripts button  --------------------------------------------
