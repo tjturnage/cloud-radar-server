@@ -5,9 +5,9 @@ from pathlib import Path
 import os
 import sys
 import time 
-import uuid
+#import uuid
 
-import flask
+#import flask
 from dash import Dash, dcc, html, State, Input, Output
 import dash_bootstrap_components as dbc
 
@@ -38,9 +38,11 @@ if sys.platform.startswith('win'):
 # Initialize the application layout. A unique session ID will be generated on each page
 # load. 
 ########################################################################################
-server = flask.Flask(__name__)
 app = Dash(__name__, external_stylesheets=[dbc.themes.CYBORG],
-           suppress_callback_exceptions=True, update_title=None, server=server)
+           suppress_callback_exceptions=True, update_title=None)
+#server = flask.Flask(__name__)
+#app = Dash(__name__, external_stylesheets=[dbc.themes.CYBORG],
+#           suppress_callback_exceptions=True, update_title=None, server=server)
 app.title = "Radar Simulator"
 
 def init_layout():
