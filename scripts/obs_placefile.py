@@ -16,7 +16,7 @@ from datetime import datetime, timedelta
 import pytz
 import requests
 from dotenv import load_dotenv
-from config import PLACEFILES_DIR
+#from config import PLACEFILES_DIR
 load_dotenv()
 API_TOKEN = os.getenv("SYNOPTIC_API_TOKEN")
 #PLACEFILES_DIR = os.path.join(os.getcwd(),'assets','placefiles')
@@ -82,7 +82,8 @@ class Mesowest():
 
     """
 
-    def __init__(self,lat,lon, event_timestr, duration=None):
+    def __init__(self,lat,lon, event_timestr, PLACEFILES_DIR, duration=None):
+        self.placefiles_dir = Path(PLACEFILES_DIR)
         self.lat = float(lat)
         self.lon = float(lon)
         self.event_timestr = event_timestr
@@ -306,23 +307,23 @@ class Mesowest():
                     self.all_placefile += f'{obj_head}  Threshold: {other_zoom}\n{rt_txt} End:\n\n'
 
 
-        with open(os.path.join(PLACEFILES_DIR, 'temp.txt'), 'w', encoding='utf8') as outfile:
+        with open(os.path.join(self.placefiles_dir, 'temp.txt'), 'w', encoding='utf8') as outfile:
             outfile.write(self.placefile)
 
-        with open(os.path.join(PLACEFILES_DIR, 'wind.txt'), 'w', encoding='utf8') as outfile:
+        with open(os.path.join(self.placefiles_dir, 'wind.txt'), 'w', encoding='utf8') as outfile:
             outfile.write(self.wind_placefile)
 
-        with open(os.path.join(PLACEFILES_DIR, 'dwpt.txt'), 'w', encoding='utf8') as outfile:
+        with open(os.path.join(self.placefiles_dir, 'dwpt.txt'), 'w', encoding='utf8') as outfile:
             outfile.write(self.dewpoint_placefile)
 
-        with open(os.path.join(PLACEFILES_DIR, 'latest_surface_observations.txt'), 'w', encoding='utf8') as outfile:
+        with open(os.path.join(self.placefiles_dir, 'latest_surface_observations.txt'), 'w', encoding='utf8') as outfile:
             outfile.write(self.all_placefile)
 
-        with open(os.path.join(PLACEFILES_DIR, 'latest_surface_observations.txt'),'r',encoding='utf8') as fin:
+        with open(os.path.join(self.placefiles_dir, 'latest_surface_observations.txt'),'r',encoding='utf8') as fin:
             data = fin.readlines()
 
-            with open(os.path.join(PLACEFILES_DIR, 'latest_surface_observations_lg.txt'), 'w', encoding='utf8') as largefout:
-                with open(os.path.join(PLACEFILES_DIR, 'latest_surface_observations_xlg.txt'), 'w', encoding='utf8') as xlargefout:
+            with open(os.path.join(self.placefiles_dir, 'latest_surface_observations_lg.txt'), 'w', encoding='utf8') as largefout:
+                with open(os.path.join(self.placefiles_dir, 'latest_surface_observations_xlg.txt'), 'w', encoding='utf8') as xlargefout:
                     for line in data:
                         if 'Font: 1' in line:
                             largefout.write('Font: 1, 14, 1, "Arial"\n')
@@ -517,5 +518,5 @@ class Mesowest():
 
 
 if __name__ == "__main__":
-    test = Mesowest(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])
+    test = Mesowest(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5])
     #test = Mesowest(42.9634, -85.6681, '2024-06-01 23:15:20 UTC', 60)

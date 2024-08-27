@@ -10,11 +10,11 @@ import plotly.graph_objs as go
 import dash_bootstrap_components as dbc
 from dash import html, dcc, dash_table
 from dotenv import load_dotenv
-from config import LINK_BASE, PLACEFILES_LINKS
+#from config import LINK_BASE, PLACEFILES_LINKS
 
 load_dotenv()
 MAP_TOKEN = os.getenv("MAPBOX_TOKEN")
-now = datetime.now(pytz.utc)
+#now = datetime.now(pytz.utc)
 
 df = pd.read_csv('radars.csv', dtype={'lat': float, 'lon': float})
 # df = pd.read_csv('radars_no_tdwr.csv', dtype={'lat': float, 'lon': float})
@@ -143,6 +143,10 @@ step_hour = html.Div(children="Hour", style=time_headers)
 step_minute = html.Div(children="Minute", style=time_headers)
 step_duration = html.Div(children="Duration", style=time_headers)
 
+# Date settings (sim_year_section, sim_month_section, etc.) moved to app.py
+'''
+# Moved these into the app in order to control defaults more easily and remove the 
+# potential to specify different values in two locations
 sim_year_section = dbc.Col(html.Div([step_year,
                                      dcc.Dropdown(np.arange(1992, now.year + 1), now.year,
                                                   id='start_year', clearable=False),]))
@@ -158,6 +162,7 @@ sim_minute_section = dbc.Col(html.Div([
 
 sim_duration_section = dbc.Col(html.Div([
     step_duration, dcc.Dropdown(np.arange(0, 240, 15), 60, id='duration', clearable=False),]))
+'''
 
 CONFIRM_TIMES_TEXT = "Confirm start time and duration -->"
 confirm_times_section = dbc.Col(
@@ -383,6 +388,11 @@ group_item_style_center = {'font-weight': 'bold', 'color': 'white', 'border': '1
 group_item_style_left = {'font-weight': 'bold', 'color': '#cccccc',
                     'font-size': '1.2em', 'text-align': 'left'}
 
+################################################################################################
+# Below items moved to application so session-specific placefile and polling directories can be 
+# built dynamically
+################################################################################################
+'''
 polling_section = dbc.Container(dbc.Container(html.Div(
     [
         dbc.Row([
@@ -398,7 +408,6 @@ polling_section = dbc.Container(dbc.Container(html.Div(
 ################################################################################################
 # ----------------------------- Placefiles section  --------------------------------------------
 ################################################################################################
-
 
 links_section = dbc.Container(dbc.Container(html.Div(
     [polling_section,
@@ -485,15 +494,16 @@ links_section = dbc.Container(dbc.Container(html.Div(
     ]#,id="placefiles_section", style={'display': 'block'}
 )))
 
-toggle_placefiles_btn = dbc.Container(dbc.Col(html.Div([dbc.Button(
-    'Hide Links Section', size="lg", id='toggle_placefiles_section_btn',
-    n_clicks=0)],className="d-grid gap-2 col-12 mx-auto")))
-
 full_links_section = dbc.Container(
     dbc.Container(
     html.Div([
             links_section
               ]),id="placefiles_section",style=section_box_pad))
+'''
+
+toggle_placefiles_btn = dbc.Container(dbc.Col(html.Div([dbc.Button(
+    'Hide Links Section', size="lg", id='toggle_placefiles_section_btn',
+    n_clicks=0)],className="d-grid gap-2 col-12 mx-auto")))
 
 ################################################################################################
 # ----------------------------- Clock components  ----------------------------------------------
@@ -548,7 +558,8 @@ clock_status_container = dbc.Container(html.Div([dbc.Row([playback_status_box])]
 playback_speed_label = html.Div(children="Playback Speed", style=time_headers)
 playback_speed_dropdown_values = [0.25, 0.5, 0.75, 1.0, 1.5, 2.0, 3.0, 4.0, 5.0, 10.0]
 playback_speed_options = [{'label': str(i) + 'x', 'value': i} for i in playback_speed_dropdown_values]
-playback_speed_dropdown = dcc.Dropdown(options=playback_speed_options, value=1.0, id='speed_dropdown')
+playback_speed_dropdown = dcc.Dropdown(options=playback_speed_options, value=1.0, id='speed_dropdown',
+                                       disabled=True)
 playback_speed_col = dbc.Col(html.Div([playback_speed_label, spacer_mini, playback_speed_dropdown]))
 
 
