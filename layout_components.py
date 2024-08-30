@@ -54,13 +54,18 @@ steps_right = {'padding': '0.4em', 'border': '0.3em', 'border-radius': '15px',
                'font-weight': 'bold', 'color': '#06DB42', 'background': '#555555',
                'font-size': '1.4em', 'text-align': 'right', 'height': 'vh5'}
 
+
 steps_center = {'padding': '0.4em', 'border': '0.3em', 'border-radius': '15px',
                 'font-weight': 'bold', 'color': '#06DB42', 'background': '#555555',
                 'font-size': '1.4em', 'text-align': 'center', 'height': 'vh5'}
 
+steps_center_sm = {'padding': '0.4em', 'border': '0.3em', 'border-radius': '15px',
+               'font-weight': 'bold', 'color': '#06DB42', 'background': '#555555',
+               'font-size': '1.2em', 'text-align': 'center', 'height': 'vh5'}
+
 polling_link = {'padding': '0.4em', 'border': '0.3em', 'border-radius': '15px',
                 'font-weight': 'bold', 'color': '#cccccc', 'background': '#555555',
-                'font-size': '1.4em', 'text-align': 'center', 'height': 'vh5'}
+                'font-size': '1.2em', 'text-align': 'center', 'height': 'vh5'}
 
 column_label = {'font-weight': 'bold', 'text-align': 'right'}
 

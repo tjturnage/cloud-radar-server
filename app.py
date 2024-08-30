@@ -364,7 +364,7 @@ def generate_layout(layout_has_initialized, children, configs):
         monitor_store['placefile_status_string'] = ""
         monitor_store['model_list'] = []
         monitor_store['model_warning'] = ""
-        monitor_store['scripts_previously_running'] = False 
+        monitor_store['scripts_previously_running'] = False
 
         radar_info = {
             'number_of_radars': number_of_radars,
@@ -404,11 +404,11 @@ def generate_layout(layout_has_initialized, children, configs):
         polling_section = dbc.Container(dbc.Container(html.Div(
         [
             dbc.Row([
-                dbc.Col(dbc.ListGroupItem("Copy this polling address into GR2Analyst -->"),
-                style=lc.steps_right, width=6),
+                dbc.Col(dbc.ListGroupItem("Polling address for GR2Analyst"),
+                style=lc.steps_center_sm, width=4),
                 dbc.Col(dbc.ListGroupItem(f"{configs['LINK_BASE']}/polling",
                         href=f"{configs['LINK_BASE']}/polling", target="_blank"),
-                        style=lc.polling_link, width=6)
+                        style=lc.polling_link, width=8)
                 ])
         ])))
 
