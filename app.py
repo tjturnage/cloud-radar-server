@@ -1277,12 +1277,14 @@ def update_day_dropdown(selected_year, selected_month):
 ################################################################################################
 
 if __name__ == '__main__':
-    if config.CLOUD:
-        app.run_server(host="0.0.0.0", port=8050, threaded=True, debug=True, use_reloader=False,
-                       dev_tools_hot_reload=False)
-    else:
-        if config.PLATFORM == 'DARWIN':
-            app.run(host="0.0.0.0", port=8051, threaded=True, debug=True, use_reloader=False,
-                dev_tools_hot_reload=False)
-        else:
-            app.run(debug=True, port=8050, threaded=True, dev_tools_hot_reload=False)
+    app.run_server(host="0.0.0.0", port=8050, threaded=True, debug=True, use_reloader=False,
+                        dev_tools_hot_reload=False)
+    # if config.CLOUD:
+    #     app.run_server(host="0.0.0.0", port=8050, threaded=True, debug=True, use_reloader=False,
+    #                    dev_tools_hot_reload=False)
+    # else:
+    #     if config.PLATFORM == 'DARWIN':
+    #         app.run(host="0.0.0.0", port=8051, threaded=True, debug=True, use_reloader=False,
+    #             dev_tools_hot_reload=False)
+    #     else:
+    #         app.run(debug=True, port=8050, threaded=True, dev_tools_hot_reload=False)
