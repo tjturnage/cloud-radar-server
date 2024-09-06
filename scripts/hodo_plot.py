@@ -202,32 +202,60 @@ for p in radar_filepaths:
       """
       station = api_args["stid"]
       api_request_url = os.path.join(API_ROOT, "stations/nearesttime")
-      req = requests.get(api_request_url, params=api_args)
-      jas_ts = req.json()
-      for s in range(0,len(jas_ts['STATION'])):
-          try:
-              station = jas_ts['STATION'][s]
-              stn_id = station['STID']
-              ob_times = station['OBSERVATIONS']['wind_speed_value_1']['date_time']
-              wnspd = station['OBSERVATIONS']['wind_speed_value_1']['value']
-              wndir = station['OBSERVATIONS']['wind_direction_value_1']['value']
-          except:
-              pass
-      return wnspd, wndir
-  if sfc_status == 'Preset':
-    track = radar_id
-    nearest_asos = asos_one
-    api_args = {"token":API_TOKEN, "stid": f"{nearest_asos}", "attime":api_tstr, "within": 60,"status":"active", "units":"speed|kts",  "hfmetars":'1'}
-    wnspd, wndir = mesowest_get_sfcwind(api_args)
-    if wndir == ''or wnspd  == '':
-      nearest_asos = asos_two
-      newapi_args = {"token":API_TOKEN, "stid": f"{nearest_asos}", "attime": api_tstr, "within": 60,"status":"active", "units":"speed|kts",  "hfmetars":'1'}
-      wnspd, wndir = mesowest_get_sfcwind(newapi_args)
-    sfc_dir = wndir
-    sfc_spd = wnspd
-
-
-
+      try:
+	      req = requests.get(api_request_url, params=api_args, timeout = 10)
+	      jas_ts = req.json()
+	      for s in range(0,len(jas_ts['STATION'])):
+		  try:
+		      station = jas_ts['STATION'][s]
+		      stn_id = station['STID']
+		      ob_times = station['OBSERVATIONS']['wind_speed_value_1']['date_time']
+		      wnspd = station['OBSERVATIONS']['wind_speed_value_1']['value']
+		      wndir = station['OBSERVATIONS']['wind_direction_value_1']['value']
+		  except:
+		      pass
+	      return wnspd, wndir
+	  if sfc_status == 'Preset':
+	    track = radar_id
+	    nearest_asos = asos_one
+	    api_args = {"token":API_TOKEN, "stid": f"{nearest_asos}", "attime":api_tstr, "within": 60,"status":"active", "units":"speed|kts",  "hfmetars":'1'}
+	    wnspd, wndir = mesowest_get_sfcwind(api_args)
+	    if wndir == ''or wnspd  == '':
+	      nearest_asos = asos_two
+	      newapi_args = {"token":API_TOKEN, "stid": f"{nearest_asos}", "attime": api_tstr, "within": 60,"status":"active", "units":"speed|kts",  "hfmetars":'1'}
+	      wnspd, wndir = mesowest_get_sfcwind(newapi_args)
+	    sfc_dir = wndir
+	    sfc_spd = wnspd
+      except requests.ReadTimeout:
+	print('Timeout Error: Retrying")
+	try:
+	      req = requests.get(api_request_url, params=api_args, timeout = 20)
+	      jas_ts = req.json()
+	      for s in range(0,len(jas_ts['STATION'])):
+		  try:
+		      station = jas_ts['STATION'][s]
+		      stn_id = station['STID']
+		      ob_times = station['OBSERVATIONS']['wind_speed_value_1']['date_time']
+		      wnspd = station['OBSERVATIONS']['wind_speed_value_1']['value']
+		      wndir = station['OBSERVATIONS']['wind_direction_value_1']['value']
+		  except:
+		      pass
+	      return wnspd, wndir
+	  if sfc_status == 'Preset':
+	    track = radar_id
+	    nearest_asos = asos_one
+	    api_args = {"token":API_TOKEN, "stid": f"{nearest_asos}", "attime":api_tstr, "within": 60,"status":"active", "units":"speed|kts",  "hfmetars":'1'}
+	    wnspd, wndir = mesowest_get_sfcwind(api_args)
+	    if wndir == ''or wnspd  == '':
+	      nearest_asos = asos_two
+	      newapi_args = {"token":API_TOKEN, "stid": f"{nearest_asos}", "attime": api_tstr, "within": 60,"status":"active", "units":"speed|kts",  "hfmetars":'1'}
+	      wnspd, wndir = mesowest_get_sfcwind(newapi_args)
+	    sfc_dir = wndir
+	    sfc_spd = wnspd
+        except requests.ReadTimeout:
+		print('Server Is Unavailable. Surface Wind Data Is Unavailable For This Timestep")
+		sfc_status != 'None	
+ 
   shr005 = hr.calc_bulk_shear(data_ceiling, 500, u_avg, v_avg, zlevels)
   shr01 = hr.calc_bulk_shear(data_ceiling, 1000, u_avg, v_avg, zlevels)
   shr03 = hr.calc_bulk_shear(data_ceiling, 3000, u_avg, v_avg, zlevels)
