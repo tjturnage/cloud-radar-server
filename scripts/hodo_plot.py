@@ -105,13 +105,7 @@ def mesowest_get_sfcwind(api_args):
     """
     station = api_args["stid"]
     api_request_url = os.path.join(API_ROOT, "stations/nearesttime")
-    try:
-	req = requests.get(api_request_url, params=api_args, timeout=10)
-    except:
-	try:
-	    req = requests.get(api_request_url, params=api_args, timeout=30)
-	except:
-            sfc_status = 'None'
+    req = requests.get(api_request_url, params=api_args, timeout=10)
     jas_ts = req.json()
     #wnspd = None
     #wndir = None
