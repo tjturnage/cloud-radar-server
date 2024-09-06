@@ -105,19 +105,40 @@ def mesowest_get_sfcwind(api_args):
     """
     station = api_args["stid"]
     api_request_url = os.path.join(API_ROOT, "stations/nearesttime")
-    req = requests.get(api_request_url, params=api_args, timeout=10)
-    jas_ts = req.json()
-    #wnspd = None
-    #wndir = None
-    wnspd = ''
-    wndir = ''
-    for s in range(0,len(jas_ts['STATION'])):
-        try:
-            station = jas_ts['STATION'][s]
-            wnspd = station['OBSERVATIONS']['wind_speed_value_1']['value']
-            wndir = station['OBSERVATIONS']['wind_direction_value_1']['value']
-        except:
-            pass
+    try:
+        req = requests.get(api_request_url, params=api_args, timeout=10)
+	jas_ts = req.json()
+	#wnspd = None
+	#wndir = None
+	wnspd = ''
+	wndir = ''
+	for s in range(0,len(jas_ts['STATION'])):
+	    try:
+		station = jas_ts['STATION'][s]
+		wnspd = station['OBSERVATIONS']['wind_speed_value_1']['value']
+		wndir = station['OBSERVATIONS']['wind_direction_value_1']['value']
+	    except:
+		pass
+    except requests.ReadTimeout:
+	try:
+	    req = requests.get(api_request_url, params=api_args, timeout=10)
+	    jas_ts = req.json()
+	    #wnspd = None
+	    #wndir = None
+	    wnspd = ''
+    	    wndir = ''
+	    for s in range(0,len(jas_ts['STATION'])):
+		try:
+		    station = jas_ts['STATION'][s]
+		    wnspd = station['OBSERVATIONS']['wind_speed_value_1']['value']
+		    wndir = station['OBSERVATIONS']['wind_direction_value_1']['value']
+		except:
+		    pass
+	except requests.ReadTimeout:
+	    wnspd = None
+	    wndir = None
+	    sfc_status = 'None'
+
     return wnspd, wndir
 
 def create_hodos(filename):
