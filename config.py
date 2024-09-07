@@ -4,15 +4,15 @@ Defines the directories for scripts, data files, and web assets used in the simu
 from pathlib import Path
 import os
 import sys
-import time 
-#import uuid
+import time
+# import uuid
 
-#import flask
+# import flask
 from dash import Dash, dcc, html, State, Input, Output
 import dash_bootstrap_components as dbc
 
 ########################################################################################
-# Define the initial base directory 
+# Define the initial base directory
 ########################################################################################
 BASE_DIR = Path('/data/cloud-radar-server')
 LINK_BASE = "https://rssic.nws.noaa.gov/assets"
@@ -22,51 +22,54 @@ PLATFORM = 'AWS'
 if sys.platform.startswith('darwin') or os.getlogin() == 'lee.carlaw':
     parts = Path.cwd().parts
     idx = parts.index('cloud-radar-server')
-    BASE_DIR =  Path(*parts[0:idx+1])
+    BASE_DIR = Path(*parts[0:idx+1])
     LINK_BASE = "http://localhost:8050/assets"
     CLOUD = False
     PLATFORM = 'DARWIN'
 if sys.platform.startswith('win'):
     parts = Path.cwd().parts
     idx = parts.index('cloud-radar-server')
-    BASE_DIR =  Path(*parts[0:idx+1])
+    BASE_DIR = Path(*parts[0:idx+1])
     LINK_BASE = "http://localhost:8050/assets"
     CLOUD = False
     PLATFORM = 'WINDOWS'
 
 ########################################################################################
 # Initialize the application layout. A unique session ID will be generated on each page
-# load. 
+# load.
 ########################################################################################
 app = Dash(__name__, external_stylesheets=[dbc.themes.CYBORG],
            suppress_callback_exceptions=True, update_title=None)
-#server = flask.Flask(__name__)
-#app = Dash(__name__, external_stylesheets=[dbc.themes.CYBORG],
+# server = flask.Flask(__name__)
+# app = Dash(__name__, external_stylesheets=[dbc.themes.CYBORG],
 #           suppress_callback_exceptions=True, update_title=None, server=server)
 app.title = "Radar Simulator"
+
 
 def init_layout():
     """
     Initialize the layout with a unique session id.  The 'dynamic container' is used 
     within the app to build out the rest of the application layout on page load
     """
-    #session_id = f'{time.time_ns()//1000}_{uuid.uuid4().hex}'
+    # session_id = f'{time.time_ns()//1000}_{uuid.uuid4().hex}'
     session_id = f'{time.time_ns()//1000000}'
     return dbc.Container([
         # Elements used to store and track the session id and initialize the layout
         dcc.Store(id='session_id', data=session_id, storage_type='session'),
         dcc.Interval(id='setup', interval=1, n_intervals=0, max_intervals=1),
-        
+
         dcc.Store(id='configs', data={}),
-        #dcc.Store(id='sim_settings', data={}),
+        # dcc.Store(id='sim_settings', data={}),
 
         # Elements needed to set up the layout on page load by app.py
         dcc.Store(id='layout_has_initialized', data={'added': False}),
-        #dcc.Interval(id='container_init', interval=100, n_intervals=0, max_intervals=1),
+        # dcc.Interval(id='container_init', interval=100, n_intervals=0, max_intervals=1),
         html.Div(id='dynamic_container')
     ])
 
+
 app.layout = init_layout
+
 
 @app.callback(
     Output('configs', 'data'),
@@ -124,9 +127,10 @@ def setup_paths_and_dirs(n_intervals, session_id):
 
         return dirs
 
-# Names (without extensions) of various pre-processing scripts. Needed for script 
-# monitoring and/or cancelling. 
-scripts_list = ["Nexrad", "munger", "obs_placefile", "nse", "wgrib2", 
+
+# Names (without extensions) of various pre-processing scripts. Needed for script
+# monitoring and/or cancelling.
+scripts_list = ["Nexrad", "munger", "obs_placefile", "nse", "wgrib2",
                 "get_data", "process", "hodo_plot"]
 
 # Names of surface placefiles for monitoring script
