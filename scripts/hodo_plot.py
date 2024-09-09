@@ -81,11 +81,6 @@ radar_filepaths = [p for p in DOWNLOADS.iterdir() if p.name.endswith(suffixes)]
 #Surface Winds
 sfc_status = 'Preset'
 
-# Flag to specify whether warning text should be added to plots if dealising failure
-# occurs
-dealiasing_errors = False 
-warn_text = "NOTE: There were errors dealiasing velocity data. Use plot with caution."
-
 def mesowest_get_sfcwind(api_args):
     """
     For each station in a list of stations, retrieves all observational data
@@ -147,6 +142,9 @@ def mesowest_get_sfcwind(api_args):
     return wnspd, wndir
 
 def create_hodos(filename):
+    # Flag to specify if warning text should be added to plots if dealising failure occurs
+    dealiasing_errors = False 
+    warn_text = "NOTE: There were errors dealiasing velocity data. Use plot with caution."
 
     file = filename.parts[-1]
     #fout = CF_DIR / f'{file}.nc'
