@@ -425,8 +425,8 @@ def generate_layout(layout_has_initialized, children, configs):
                 dbc.Row([
                     dbc.Col(dbc.ListGroupItem("Polling address for GR2Analyst"),
                         style=lc.steps_center_sm, width=4),
-                    dbc.Col(dbc.ListGroupItem(f"{configs['LINK_BASE']}/polling",
-                        href=f"{configs['LINK_BASE']}/polling", target="_blank"),
+                    dbc.Col(dbc.ListGroupItem(f"{configs['LINK_BASE']}/polling", 
+                        href="", target="_blank", style={'color': '#555555'}, id="polling_link"),
                         style=lc.polling_link, width=8)
                 ])
             ])))
@@ -775,7 +775,8 @@ def call_function(func, *args, **kwargs):
         logging.error(result['stderr'].decode('utf-8'))
     if 'exception' in result:
         logging.error(f"Exception {result['exception']} occurred in {
-                      func.__name__}")
+                      func.__name__}"
+        )
     return result
 
 
@@ -799,7 +800,7 @@ def run_with_cancel_button(cfg, sim_times, radar_info):
     except Exception as e:
         logging.exception(
             "Error creating radar dict or config file: ", exc_info=True)
-
+        
     log_string = (
         f"\n"
         f"=========================Simulation Settings========================\n"
@@ -972,6 +973,8 @@ def cancel_scripts(n_clicks, SESSION_ID) -> None:
     Output('model_status_warning', 'children'),
     Output('show_script_progress', 'children', allow_duplicate=True),
     Output('monitor_store', 'data'),
+    Output('polling_link', 'href'),
+    Output('polling_link', 'style'),
     [Input('directory_monitor', 'n_intervals'),
      State('configs', 'data'),
      State('cancel_scripts', 'disabled'),
@@ -995,6 +998,14 @@ def monitor(_n, cfg, cancel_btn_disabled, monitor_store):
     model_list = monitor_store['model_list']
     model_warning = monitor_store['model_warning']
     screen_output = ""
+
+    # Polling link disclosure when grlevel2.cfg file has been copied into assets dir
+    gr2_cfg_filename = f"{cfg['POLLING_DIR']}/grlevel2.cfg"
+    polling_link_href = ""
+    polling_link_style =  {'color': '#555555'}
+    if os.path.exists(gr2_cfg_filename):
+        polling_link_href = f"{cfg['LINK_BASE']}/polling"
+        polling_link_style = {'color': '#cccccc'}
 
     # Scripts are running or they just recently ended.
     if not cancel_btn_disabled or monitor_store['scripts_previously_running']:
@@ -1054,14 +1065,15 @@ def monitor(_n, cfg, cancel_btn_disabled, monitor_store):
 
         return (radar_dl_completion, hodograph_completion, munger_completion,
                 placefile_status_string, model_list, model_warning, screen_output,
-                monitor_store)
+                monitor_store, polling_link_href, polling_link_style)
 
     # Scripts have completed/stopped, but were running the previous pass through.
     if cancel_btn_disabled and monitor_store['scripts_previously_running']:
         monitor_store['scripts_previously_running'] = False
 
     return (radar_dl_completion, hodograph_completion, munger_completion,
-            placefile_status_string, model_list, model_warning, screen_output, monitor_store)
+            placefile_status_string, model_list, model_warning, screen_output, monitor_store,
+            polling_link_href, polling_link_style)
 
 ################################################################################################
 # ----------------------------- Transpose placefiles in time and space  ------------------------
