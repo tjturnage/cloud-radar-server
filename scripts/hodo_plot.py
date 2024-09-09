@@ -81,6 +81,11 @@ radar_filepaths = [p for p in DOWNLOADS.iterdir() if p.name.endswith(suffixes)]
 #Surface Winds
 sfc_status = 'Preset'
 
+# Flag to specify whether warning text should be added to plots if dealising failure
+# occurs
+dealiasing_errors = False 
+warn_text = "NOTE: There were errors dealiasing velocity data. Use plot with caution."
+
 def mesowest_get_sfcwind(api_args):
     """
     For each station in a list of stations, retrieves all observational data
@@ -161,8 +166,13 @@ def create_hodos(filename):
         gatefilter.exclude_outside("reflectivity", 0, 80)
 
         # perform dealiasing
-        dealias_data = pyart.correct.dealias_region_based(radar, gatefilter=gatefilter)
-        radar.add_field("corrected_velocity", dealias_data)
+        try:
+            dealias_data = pyart.correct.dealias_region_based(radar, gatefilter=gatefilter)
+            radar.add_field("corrected_velocity", dealias_data)
+        except Exception:
+            dealiasing_errors = True 
+            radar.add_field_like("velocity", "corrected_velocity",
+                                 radar.fields["velocity"]["data"].copy())
 
         #pyart.io.write_cfradial(fout, radar, format='NETCDF4')
 
@@ -844,6 +854,10 @@ def create_hodos(filename):
         plt.grid(axis='y')
     except:
         pass
+
+    if dealiasing_errors:
+        plt.figtext(0.57, 0.85, warn_text, ha="center", color="red", fontsize=12, weight="bold")
+
     #Add Title and Legend and Save Figure
 
     #r_date = radar_time.strftime("%Y%m%d")
@@ -1083,6 +1097,9 @@ def create_hodos(filename):
         plt.grid(axis='y')
     except:
         pass
+
+    if dealiasing_errors:
+        plt.figtext(0.57, 0.85, warn_text, ha="center", color="red", fontsize=12, weight="bold")
 
     #Add Title and Legend and Save Figure
     del sfc_angle, sfc_u, sfc_v
