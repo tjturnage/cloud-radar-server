@@ -107,44 +107,44 @@ def mesowest_get_sfcwind(api_args):
     api_request_url = os.path.join(API_ROOT, "stations/nearesttime")
     try:
         req = requests.get(api_request_url, params=api_args, timeout=10)
-	jas_ts = req.json()
-	#wnspd = None
-	#wndir = None
-	wnspd = ''
-	wndir = ''
-	for s in range(0,len(jas_ts['STATION'])):
-	    try:
-		station = jas_ts['STATION'][s]
-		wnspd = station['OBSERVATIONS']['wind_speed_value_1']['value']
-		wndir = station['OBSERVATIONS']['wind_direction_value_1']['value']
-	    except:
-		pass
-    except requests.ReadTimeout:
-	try:
-	    req = requests.get(api_request_url, params=api_args, timeout=10)
-	    jas_ts = req.json()
-	    #wnspd = None
-	    #wndir = None
-	    wnspd = ''
-    	    wndir = ''
-	    for s in range(0,len(jas_ts['STATION'])):
-		try:
-		    station = jas_ts['STATION'][s]
-		    wnspd = station['OBSERVATIONS']['wind_speed_value_1']['value']
-		    wndir = station['OBSERVATIONS']['wind_direction_value_1']['value']
-		except:
-		    pass
-	except requests.ReadTimeout:
-	    wnspd = None
-	    wndir = None
-	    sfc_status = 'None'
+        jas_ts = req.json()
+        #wnspd = None
+        #wndir = None
+        wnspd = ''
+        wndir = ''
+        for s in range(0,len(jas_ts['STATION'])):
+            try:
+                station = jas_ts['STATION'][s]
+                wnspd = station['OBSERVATIONS']['wind_speed_value_1']['value']
+                wndir = station['OBSERVATIONS']['wind_direction_value_1']['value']
+            except:
+                pass
+    except (requests.ReadTimeout, KeyError):
+        try:
+            req = requests.get(api_request_url, params=api_args, timeout=10)
+            jas_ts = req.json()
+            #wnspd = None
+            #wndir = None
+            wnspd = ''
+            wndir = ''
+            for s in range(0,len(jas_ts['STATION'])):
+                try:
+                    station = jas_ts['STATION'][s]
+                    wnspd = station['OBSERVATIONS']['wind_speed_value_1']['value']
+                    wndir = station['OBSERVATIONS']['wind_direction_value_1']['value']
+                except:
+                    pass
+        except (requests.ReadTimeout, KeyError):
+            wnspd = ''
+            wndir = ''
+            sfc_status = 'None'  # this is not passed out, so isn't used
 
     return wnspd, wndir
 
 def create_hodos(filename):
 
     file = filename.parts[-1]
-    fout = CF_DIR / f'{file}.nc'
+    #fout = CF_DIR / f'{file}.nc'
     radar_time = datetime.strptime(file[4:19], '%Y%m%d_%H%M%S')
     shifted_time = radar_time + timedelta(seconds=timeshift_seconds)
     api_tstr = datetime.strftime(radar_time, '%Y%m%d%H%M')
@@ -252,8 +252,8 @@ def create_hodos(filename):
             wnspd, wndir = mesowest_get_sfcwind(newapi_args)
         
         if wnspd == '' or wndir == '':
-            sfc_dir = 180
-            sfc_spd = 0
+            wndir = 180
+            wnspd = 0
         sfc_dir = wndir
         sfc_spd = wnspd
 
