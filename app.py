@@ -568,6 +568,16 @@ def generate_layout(layout_has_initialized, children, configs):
                  ],
                  style={"display": "flex", "flexWrap": "wrap"},
                 ),
+                dbc.Row(
+                 [
+                     dbc.Col(dbc.ListGroupItem("LSRs"),
+                             style=lc.group_item_style, width=2),
+                     dbc.Col(dbc.ListGroupItem("Local Storm Reports",
+                                href=f"{configs['PLACEFILES_LINKS']}/LSRs_shifted.txt",
+                                target="_blank"), width=2),
+                 ],
+                 style={"display": "flex", "flexWrap": "wrap"}
+                ),
              ]
         )))
 
@@ -892,6 +902,14 @@ def run_with_cancel_button(cfg, sim_times, radar_info):
     except KeyError as e:
         logging.exception("Error removing munged radar files ", exc_info=True)
 
+    # LSR Placefiles. Not monitored currently due to how quick this executes
+    args = [str(sim_times['event_start_str']), str(sim_times['event_duration']),
+            cfg['DATA_DIR'], cfg['PLACEFILES_DIR']]
+    res = call_function(utils.exec_script, Path(cfg['LSR_SCRIPT_PATH']), args,
+                        cfg['SESSION_ID'])
+    if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
+        return
+    
     # Surface observations
     args = [str(radar_info['lat']), str(radar_info['lon']),
             sim_times['event_start_str'], cfg['PLACEFILES_DIR'],
@@ -912,6 +930,7 @@ def run_with_cancel_button(cfg, sim_times, radar_info):
     # Since there will always be a timeshift associated with a simulation, this
     # script needs to execute every time, even if a user doesn't select a radar
     # to transpose to.
+
     logging.info("Entering function run_transpose_script")
     run_transpose_script(cfg['PLACEFILES_DIR'], sim_times, radar_info)
 

@@ -109,6 +109,7 @@ def setup_paths_and_dirs(n_intervals, session_id):
         # Static directories (not dependent on session id)
         dirs['SCRIPTS_DIR'] = f'{BASE_DIR}/scripts'
         dirs['OBS_SCRIPT_PATH'] = f'{dirs['SCRIPTS_DIR']}/obs_placefile.py'
+        dirs['LSR_SCRIPT_PATH'] = f'{dirs['SCRIPTS_DIR']}/lsrs.py'
         dirs['HODO_SCRIPT_PATH'] = f'{dirs['SCRIPTS_DIR']}/hodo_plot.py'
         dirs['NEXRAD_SCRIPT_PATH'] = f'{dirs['SCRIPTS_DIR']}/Nexrad.py'
         dirs['L2MUNGER_FILEPATH'] = f'{dirs['SCRIPTS_DIR']}/l2munger'
