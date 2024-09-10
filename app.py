@@ -458,7 +458,7 @@ def generate_layout(layout_has_initialized, children, configs):
                                                href=f"{configs['LINK_BASE']}/hodographs.html", target="_blank"), width=2)
                  ],
                  style={"display": "flex", "flexWrap": "wrap"}
-             ),
+                ),
                 dbc.Row(
                  [
                      dbc.Col(dbc.ListGroupItem("Sfc obs"),
@@ -474,7 +474,7 @@ def generate_layout(layout_has_initialized, children, configs):
                                 target="_blank"), width=2),
                  ],
                  style={"display": "flex", "flexWrap": "wrap"}
-             ),
+                ),
                 dbc.Row(
                  [
                      dbc.Col(dbc.ListGroupItem("Sfc obs parts"),
@@ -491,8 +491,7 @@ def generate_layout(layout_has_initialized, children, configs):
                      dbc.Col(dbc.ListGroupItem(" "), width=2),
                  ],
                  style={"display": "flex", "flexWrap": "wrap"},
-
-             ),
+                ),
                 dbc.Row(
                  [
                      dbc.Col(dbc.ListGroupItem("NSE Shear"),
@@ -514,8 +513,7 @@ def generate_layout(layout_has_initialized, children, configs):
                                 target="_blank"), width=2),
                  ],
                  style={"display": "flex", "flexWrap": "wrap"},
-
-             ),
+                ),
                 dbc.Row(
                  [
                      dbc.Col(dbc.ListGroupItem("NSE SRH"),
@@ -531,8 +529,7 @@ def generate_layout(layout_has_initialized, children, configs):
 
                  ],
                  style={"display": "flex", "flexWrap": "wrap"},
-
-             ),
+                ),
                 dbc.Row(
                  [
                      dbc.Col(dbc.ListGroupItem("NSE Thermo"),
@@ -554,8 +551,23 @@ def generate_layout(layout_has_initialized, children, configs):
                                 target="_blank"), width=2),
                  ],
                  style={"display": "flex", "flexWrap": "wrap"},
-
-             ),
+                ),
+                dbc.Row(
+                 [
+                     dbc.Col(dbc.ListGroupItem("NSE Composites"),
+                             style=lc.group_item_style, width=2),
+                     dbc.Col(dbc.ListGroupItem("Effective Sig Tor.",
+                                href=f"{configs['PLACEFILES_LINKS']}/estp_shifted.txt",
+                                target="_blank"), width=2),
+                     dbc.Col(dbc.ListGroupItem("Non Supercell Tor.",
+                                href=f"{configs['PLACEFILES_LINKS']}/nst_shifted.txt",
+                                target="_blank"), width=2),
+                     dbc.Col(dbc.ListGroupItem("Snow Squall",
+                                href=f"{configs['PLACEFILES_LINKS']}/snsq.txt",
+                                target="_blank"), width=2),
+                 ],
+                 style={"display": "flex", "flexWrap": "wrap"},
+                ),
              ]
         )))
 
