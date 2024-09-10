@@ -226,6 +226,22 @@ def remove_files_and_dirs(cfg) -> None:
                 os.rmdir(os.path.join(root, name))
 
 
+def remove_munged_radar_files(cfg) -> None:
+    """
+    Removes uncompressed and 'munged' radar files within the /data/xx/radar directory 
+    after the pre-processing scripts have completed. These files are no longer needed 
+    as the appropriate files have been exported to the /assets/xx/polling directory. 
+    """
+    regex_pattern = r'^(.{4})(\d{8})_(\d{6})$'
+    for root, dirs, files in os.walk(cfg['RADAR_DIR']):
+        if Path(root).name == 'downloads':
+            for name in files:
+                thisfile = os.path.join(root, name)
+                matched = re.match(regex_pattern, name)
+                if matched: os.remove(thisfile)
+                if '.uncompressed' in name: os.remove(thisfile)
+          
+
 def date_time_string(dt) -> str:
     """
     Converts a datetime object to a string.
@@ -857,6 +873,12 @@ def run_with_cancel_button(cfg, sim_times, radar_info):
             except Exception as e:
                 print(f"Error with UpdateDirList ", e)
                 logging.exception(f"Error with UpdateDirList ", exc_info=True)
+
+    # Delete the uncompressed/munged radar files from the data directory    
+    try:
+        remove_munged_radar_files(cfg)
+    except KeyError as e:
+        logging.exception("Error removing munged radar files ", exc_info=True)
 
     # Surface observations
     args = [str(radar_info['lat']), str(radar_info['lon']),
