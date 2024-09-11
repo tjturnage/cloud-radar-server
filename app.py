@@ -1318,9 +1318,10 @@ def manage_clock_(nclicks, _n_intervals, new_time, _playback_running, playback_s
         if specs['playback_clock'] >= specs['playback_end']:
             interval_disabled = True
             playback_paused = True
-            specs['playback_clock'] = specs['playback_end']
-            specs['playback_clock_str'] = date_time_string(
-                specs['playback_clock'])
+            dt = datetime.strptime(specs['playback_start_str'], '%Y-%m-%d %H:%M') + \
+                 timedelta(seconds=600)
+            specs['playback_clock_str'] = dt.strftime('%Y-%m-%d %H:%M')
+            specs['playback_clock'] = dt.strftime('%Y-%m-%dT%H:%M:%S+00:00')
             status = 'Simulation Complete'
             playback_btn_text = 'Restart Simulation'
             style = lc.feedback_yellow
