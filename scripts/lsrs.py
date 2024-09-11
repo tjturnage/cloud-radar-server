@@ -17,6 +17,11 @@ class LsrCreator:
         self.outfilename = "LSRs.txt"
         self.output_file = os.path.join(self.output_folder, self.outfilename)
 
+        # Entries are in minutes. lsr_delay = how long to withhold lsr after event occurrence.
+        # lsr_duration = how long to display lsr
+        self.lsr_delay = 4
+        self.lsr_duration = 30
+
         # URL for downloading the LSR Data
         URL_BASE = "https://mesonet.agron.iastate.edu/cgi-bin/request/gis/lsr.py?sts"
         self.url = (f'{URL_BASE}={self.start_date}T{self.start_time}Z&ets={self.end_date}'
@@ -62,11 +67,11 @@ class LsrCreator:
             f.write("Threshold: 999\n")
             f.write('Title: Local Storm Reports\n')
             f.write('IconFile: 1, 25, 25, 10, 10, "https://rssic.nws.noaa.gov/assets/iconfiles/IconSheets/lsr_icons_96.png"\n')
-            f.write('IconFile: 2, 25, 32, 10, 10, "https://rssic.nws.noaa.gov/assets/iconfiles/IconSheets/LSR_Hail_Icons.tif"\n')
+            f.write('IconFile: 2, 25, 32, 10, 10, "https://rssic.nws.noaa.gov/assets/iconfiles/IconSheets/LSR_Hail_Icons.png"\n')
             f.write('IconFile: 3, 25, 32, 10, 10, "https://rssic.nws.noaa.gov/assets/iconfiles/IconSheets/wind_icons_96.png"\n')
-            f.write('IconFile: 4, 25, 32, 10, 10, "https://rssic.nws.noaa.gov/assets/iconfiles/IconSheets/Lsr_TstmWndGst_Icons.tif"\n')
-            f.write('IconFile: 5, 25, 32, 10, 10, "https://rssic.nws.noaa.gov/assets/iconfiles/IconSheets/Lsr_NonTstmWndGst_Icons.tif"\n')
-            f.write('IconFile: 6, 25, 32, 10, 10, "https://rssic.nws.noaa.gov/assets/iconfiles/IconSheets/Lsr_HeavyRain_Icons.tif"\n')
+            f.write('IconFile: 4, 25, 32, 10, 10, "https://rssic.nws.noaa.gov/assets/iconfiles/IconSheets/Lsr_TstmWndGst_Icons.png"\n')
+            f.write('IconFile: 5, 25, 32, 10, 10, "https://rssic.nws.noaa.gov/assets/iconfiles/IconSheets/Lsr_NonTstmWndGst_Icons.png"\n')
+            f.write('IconFile: 6, 25, 32, 10, 10, "https://rssic.nws.noaa.gov/assets/iconfiles/IconSheets/Lsr_HeavyRain_Icons.png"\n')
             f.write('Font: 1, 11, 1, "Courier New"\n\n')
 
             # Define the format of the original time
@@ -85,80 +90,76 @@ class LsrCreator:
                 lat = row.get("LAT", 0)
                 lon = row.get("LON", 0)
 
-                wIcon = (magnitude/5 + 1)  #to find correct Icon number for wind gusts.
+                wIcon = min(magnitude/5 + 1, 20)
                 hIcon = (magnitude*4 +1)
-                if magnitude < 6:
-                    rIcon = (magnitude *2 +1)
-                else:
-                    rIcon = magnitude + 7
+                rIcon = magnitude * 2 + 1 if magnitude < 6 else magnitude + 7
                 
                 icon2 = 'Icon: 0,0,0,1,7,'
                 icon3 = 'Icon: 0,0,0,1,15,'
 
                 # Convert original time string to datetime object
+                good_date = True
                 try:
-                    datetime_org = datetime.strptime(original_time_str, original_time_format)
-                    datetime_obj = datetime_org + timedelta(minutes=30)# timedelta is how long the LSR will stay visible in GR.
-
-                    # Convert datetime object to ISO 8601 format
+                    lsr_datetime = datetime.strptime(original_time_str, original_time_format)
+                    datetime_org = lsr_datetime + timedelta(minutes=int(self.lsr_delay))
+                    datetime_obj = lsr_datetime + timedelta(minutes=int(self.lsr_duration))
                     iso_startdate_str = datetime_org.isoformat().replace('+00:00', 'Z')
                     iso_enddate_str = datetime_obj.isoformat().replace('+00:00', 'Z')
-
+                    lsr_datetime_str = lsr_datetime.strftime("%Y-%m-%dT%H:%M:%SZ")
                 except ValueError:
                     print(f"Date format error for row index {index}")
+                    good_date = False
                     continue
 
-                # Determine icon based on event type
-                if event == "TORNADO":
-                    icon = 'Icon: 0,0,0,1,20,'
-                    mag = " "
-                elif event == "TSTM WND DMG":
-                    icon = 'Icon: 0,0,0,1,22,'
-                    mag = " "
-                elif event == "TSTM WND GST":
-                    icon = f'Icon: 0,0,0,4, {wIcon},'
-                    mag = str(magnitude) + " mph"
-                elif event == "HAIL":
-                    icon = f'Icon: 0,0,0,2,{hIcon},'
+                if good_date:
+                    if event == "TORNADO":
+                        icon = 'Icon: 0,0,0,1,20,'
+                        mag = " "
+                    elif event == "TSTM WND DMG":
+                        icon = 'Icon: 0,0,0,1,22,'
+                        mag = " "
+                    elif event == "TSTM WND GST":
+                        icon = f'Icon: 0,0,0,4,{round(wIcon)},'
+                        mag = str(magnitude) + " mph"
+                    elif event == "HAIL":
+                        icon = f'Icon: 0,0,0,2,{round(hIcon)},'
+                        mag = str(magnitude) + " inch"
+                    elif event == "RAIN":
+                        icon = f'Icon: 0,0,0,6,{round(rIcon)},'
+                        mag = str(magnitude) + " inches"
+                    elif event == "FUNNEL CLOUD":
+                        icon = 'Icon: 0,0,0,1,11,'
+                        mag = " "
+                    elif event == "NON-TSTM WND DMG":
+                        icon = 'Icon: 0,0,0,1,17,'
+                        mag = " "
+                    elif event == "NON-TSTM WND GST":
+                        icon = f'Icon: 0,0,0,5,{round(wIcon)},'
+                        mag = str(magnitude) + " mph"
+                    elif event == "FLOOD":
+                        icon = 'Icon: 0,0,0,1,9,'
+                        mag = " "
+                    elif event == "FLASH FLOOD":
+                        icon = 'Icon: 0,0,0,1,9,'
+                        mag = " "
+                    else:
+                        continue
 
-                    mag = str(magnitude) + " inch"
-                elif event == "RAIN":
-                    icon = f'Icon: 0,0,0,6,{rIcon},'
-                    mag = str(magnitude) + " inches"
-                elif event == "FUNNEL CLOUD":
-                    icon = 'Icon: 0,0,0,1,11,'
-                    mag = " "
-                elif event == "NON-TSTM WND DMG":
-                    icon = 'Icon: 0,0,0,1,17,'
-                    mag = " "
-                elif event == "NON-TSTM WND GST":
-                    #icon = 'Icon: 0,0,0,1,17,'
-                    icon = f'Icon: 0,0,0,5, {wIcon},'
-                    mag = str(magnitude) + " mph"
-                elif event == "FLOOD":
-                    icon = 'Icon: 0,0,0,1,9,'
-                    mag = " "
-                elif event == "FLASH FLOOD":
-                    icon = 'Icon: 0,0,0,1,9,'
-                    mag = " "
-                else:
-                    continue
-                    #icon = 'Icon: 0,0,0,1,23,'
+                    # Write event data to the output file
+                    f.write(f'TimeRange: {iso_startdate_str}Z {iso_enddate_str}Z\n')
+                    f.write(f'Object: {lat},{lon}\n')
+                    f.write('Threshold: 999\n')
+                    f.write(
+                        f'{icon} Event: {event}\\nLSR Time: {lsr_datetime_str}\\n'
+                        f'Place: {location} {state}\\nCounty: {county}\\n'
+                        f'Source: {source}\\n{mag} {event}\\n{remark}\n')
 
-                # Write event data to the output file
-                f.write(f'TimeRange: {iso_startdate_str}Z {iso_enddate_str}Z\n')
-                f.write(f'Object: {lat},{lon}\n')
-                f.write('Threshold: 999\n')
-                f.write(
-                    f'{icon} Event: {event}\\nTime: {original_time_str}\\nPlace: {location} {state}\\n'
-                    f'County: {county}\\nSource: {source}\\n{mag} {event}\\n{remark}\n')
-
-                if any(keyword in str(remark) for keyword in keyword1):
-                    f.write(f'{icon2}\n')
-                elif any(keyword in str(remark) for keyword in keyword2):
-                    f.write(f'{icon3}\n')
-                    
-                f.write('END:\n\n')
+                    if any(keyword in str(remark) for keyword in keyword1):
+                        f.write(f'{icon2}\n')
+                    elif any(keyword in str(remark) for keyword in keyword2):
+                        f.write(f'{icon3}\n')
+                        
+                    f.write('END:\n\n')
 
 
 if __name__ == '__main__':

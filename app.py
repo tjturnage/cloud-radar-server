@@ -84,33 +84,36 @@ def shift_placefiles(PLACEFILES_DIR, sim_times, radar_info) -> None:
     filenames = glob(f"{PLACEFILES_DIR}/*.txt")
     filenames = [x for x in filenames if "shifted" not in x]
     for file_ in filenames:
+        outfilename = f"{file_[0:file_.index('.txt')]}_shifted.txt"
+        outfile = open(outfilename, 'w', encoding='utf-8')
         with open(file_, 'r', encoding='utf-8') as f:
             data = f.readlines()
-            outfilename = f"{file_[0:file_.index('.txt')]}_shifted.txt"
-            outfile = open(outfilename, 'w', encoding='utf-8')
 
-        for line in data:
-            new_line = line
+        try:
+            for line in data:
+                new_line = line
 
-            if sim_times['simulation_seconds_shift'] is not None and \
-                    any(x in line for x in ['Valid', 'TimeRange']):
-                new_line = shift_time(
-                    line, sim_times['simulation_seconds_shift'])
+                if sim_times['simulation_seconds_shift'] is not None and \
+                        any(x in line for x in ['Valid', 'TimeRange', 'Time']):
+                    new_line = shift_time(
+                        line, sim_times['simulation_seconds_shift'])
 
-            # Shift this line in space. Only perform if both an original and transpose
-            # radar have been specified.
-            if radar_info['new_radar'] != 'None' and radar_info['radar'] is not None:
-                regex = re.findall(LAT_LON_REGEX, line)
-                if len(regex) > 0:
-                    idx = regex[0].index(',')
-                    plat, plon = float(regex[0][0:idx]), float(
-                        regex[0][idx+1:])
-                    lat_out, lon_out = move_point(plat, plon, radar_info['lat'],
-                                                  radar_info['lon'], radar_info['new_lat'],
-                                                  radar_info['new_lon'])
-                    new_line = line.replace(regex[0], f"{lat_out}, {lon_out}")
-
-            outfile.write(new_line)
+                # Shift this line in space. Only perform if both an original and 
+                # transpose radar have been specified.
+                if radar_info['new_radar'] != 'None' and radar_info['radar'] is not None:
+                    regex = re.findall(LAT_LON_REGEX, line)
+                    if len(regex) > 0:
+                        idx = regex[0].index(',')
+                        plat, plon = float(regex[0][0:idx]), float(regex[0][idx+1:])
+                        lat_out, lon_out = move_point(plat, plon, radar_info['lat'],
+                                                      radar_info['lon'], 
+                                                      radar_info['new_lat'],
+                                                      radar_info['new_lon'])
+                        new_line = line.replace(regex[0], f"{lat_out}, {lon_out}")
+                outfile.write(new_line)
+        except:
+            outfile.truncate(0)
+            outfile.write("Errors encountered shifting this placefile in time or location.")
         outfile.close()
 
 
@@ -140,6 +143,15 @@ def shift_time(line: str, simulation_seconds_shift: int) -> str:
                                              '%Y-%m-%dT%H:%M:%SZ')
         new_line = line.replace(f"{regex[0]} {regex[1]}",
                                 f"{new_datestring_1} {new_datestring_2}")
+    
+    # For LSR placefiles
+    if 'LSR Time' in line:
+        regex = re.findall(TIME_REGEX, line)
+        dt = datetime.strptime(regex[0], '%Y-%m-%dT%H:%M:%SZ')
+        new_datestring = datetime.strftime(dt + simulation_time_shift,
+                                           '%Y-%m-%dT%H:%M:%SZ')
+        new_line = line.replace(regex[0], new_datestring)
+        
     return new_line
 
 
@@ -233,13 +245,13 @@ def remove_munged_radar_files(cfg) -> None:
     as the appropriate files have been exported to the /assets/xx/polling directory. 
     """
     regex_pattern = r'^(.{4})(\d{8})_(\d{6})$'
-    for root, dirs, files in os.walk(cfg['RADAR_DIR']):
+    for root, _, files in os.walk(cfg['RADAR_DIR']):
         if Path(root).name == 'downloads':
             for name in files:
                 thisfile = os.path.join(root, name)
                 matched = re.match(regex_pattern, name)
-                if matched: os.remove(thisfile)
-                if '.uncompressed' in name: os.remove(thisfile)
+                if matched or '.uncompressed' in name: 
+                    os.remove(thisfile)
           
 
 def date_time_string(dt) -> str:
@@ -562,7 +574,7 @@ def generate_layout(layout_has_initialized, children, configs):
                      dbc.Col(dbc.ListGroupItem("Non Supercell Tor.",
                                 href=f"{configs['PLACEFILES_LINKS']}/nst_shifted.txt",
                                 target="_blank"), width=2),
-                     dbc.Col(dbc.ListGroupItem("Snow Squall",
+                     dbc.Col(dbc.ListGroupItem("Snow Squall Parameter",
                                 href=f"{configs['PLACEFILES_LINKS']}/snsq.txt",
                                 target="_blank"), width=2),
                  ],
@@ -909,7 +921,7 @@ def run_with_cancel_button(cfg, sim_times, radar_info):
                         cfg['SESSION_ID'])
     if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
         return
-    
+
     # Surface observations
     args = [str(radar_info['lat']), str(radar_info['lon']),
             sim_times['event_start_str'], cfg['PLACEFILES_DIR'],
