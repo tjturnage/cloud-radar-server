@@ -145,7 +145,7 @@ class UpdateHodoHTML():
             <html>
             <head>
             <title>Hodographs</title>
-            <link rel="icon" href="./favicon.ico" type="image/x-icon">
+            <link rel="icon" href="https://rssic.nws.noaa.gov/assets/favicon.ico" type="image/x-icon">
             <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootswatch/4.5.2/cyborg/bootstrap.min.css">
             <style>
             img {{ max-width: 90%; height: auto; }} /* Display images at 90% size */

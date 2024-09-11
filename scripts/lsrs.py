@@ -66,7 +66,7 @@ class LsrCreator:
             f.write("//Created by the NWS Central Region Convective Warning Improvement Project (CWIP Team) 2024\n")
             f.write("Refresh: 1\n")
             f.write("Threshold: 999\n")
-            f.write('Title: Local Storm Reports\n')
+            f.write('Title: Local Storm Reports -- for radar simulation\n')
             f.write(f'IconFile: 1, 25, 25, 10, 10, {icon_url}/lsr_icons_96.png\n')
             f.write(f'IconFile: 2, 25, 32, 10, 10, {icon_url}/Lsr_Hail_Icons.png\n')
             f.write(f'IconFile: 3, 25, 32, 10, 10, {icon_url}/wind_icons_96.png\n')
@@ -152,7 +152,7 @@ class LsrCreator:
                     f.write('Threshold: 999\n')
                     f.write(
                         f'{icon} Event: {event}\\nLSR Time: {lsr_datetime_str}\\n'
-                        f'Place: {location} {state}\\nCounty: {county}\\n'
+                        #f'Place: {location} {state}\\nCounty: {county}\\n'    Removed specific location and county
                         f'Source: {source}\\n{mag} {event}\\n{remark}\n')
 
                     if any(keyword in str(remark) for keyword in keyword1):

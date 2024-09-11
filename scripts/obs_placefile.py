@@ -351,7 +351,7 @@ class Mesowest():
         """
         api_request_url = os.path.join(API_ROOT, "stations/nearesttime")
         self.api_args['attime'] = time_str
-        req = requests.get(api_request_url, params=self.api_args, timeout=10)
+        req = requests.get(api_request_url, params=self.api_args, timeout=25)
 
         jas = req.json()
         return jas
