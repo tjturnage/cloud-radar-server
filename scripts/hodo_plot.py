@@ -144,7 +144,7 @@ def mesowest_get_sfcwind(api_args):
 def create_hodos(filename):
     # Flag to specify if warning text should be added to plots if dealising failure occurs
     dealiasing_errors = False 
-    warn_text = "NOTE: There were errors dealiasing velocity data. Use plot with caution."
+    warn_text = "WARNING: No velocity dealiasing was performed.  Use plot with caution."
 
     file = filename.parts[-1]
     #fout = CF_DIR / f'{file}.nc'

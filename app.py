@@ -84,33 +84,36 @@ def shift_placefiles(PLACEFILES_DIR, sim_times, radar_info) -> None:
     filenames = glob(f"{PLACEFILES_DIR}/*.txt")
     filenames = [x for x in filenames if "shifted" not in x]
     for file_ in filenames:
+        outfilename = f"{file_[0:file_.index('.txt')]}_shifted.txt"
+        outfile = open(outfilename, 'w', encoding='utf-8')
         with open(file_, 'r', encoding='utf-8') as f:
             data = f.readlines()
-            outfilename = f"{file_[0:file_.index('.txt')]}_shifted.txt"
-            outfile = open(outfilename, 'w', encoding='utf-8')
 
-        for line in data:
-            new_line = line
+        try:
+            for line in data:
+                new_line = line
 
-            if sim_times['simulation_seconds_shift'] is not None and \
-                    any(x in line for x in ['Valid', 'TimeRange']):
-                new_line = shift_time(
-                    line, sim_times['simulation_seconds_shift'])
+                if sim_times['simulation_seconds_shift'] is not None and \
+                        any(x in line for x in ['Valid', 'TimeRange', 'Time']):
+                    new_line = shift_time(
+                        line, sim_times['simulation_seconds_shift'])
 
-            # Shift this line in space. Only perform if both an original and transpose
-            # radar have been specified.
-            if radar_info['new_radar'] != 'None' and radar_info['radar'] is not None:
-                regex = re.findall(LAT_LON_REGEX, line)
-                if len(regex) > 0:
-                    idx = regex[0].index(',')
-                    plat, plon = float(regex[0][0:idx]), float(
-                        regex[0][idx+1:])
-                    lat_out, lon_out = move_point(plat, plon, radar_info['lat'],
-                                                  radar_info['lon'], radar_info['new_lat'],
-                                                  radar_info['new_lon'])
-                    new_line = line.replace(regex[0], f"{lat_out}, {lon_out}")
-
-            outfile.write(new_line)
+                # Shift this line in space. Only perform if both an original and 
+                # transpose radar have been specified.
+                if radar_info['new_radar'] != 'None' and radar_info['radar'] is not None:
+                    regex = re.findall(LAT_LON_REGEX, line)
+                    if len(regex) > 0:
+                        idx = regex[0].index(',')
+                        plat, plon = float(regex[0][0:idx]), float(regex[0][idx+1:])
+                        lat_out, lon_out = move_point(plat, plon, radar_info['lat'],
+                                                      radar_info['lon'], 
+                                                      radar_info['new_lat'],
+                                                      radar_info['new_lon'])
+                        new_line = line.replace(regex[0], f"{lat_out}, {lon_out}")
+                outfile.write(new_line)
+        except:
+            outfile.truncate(0)
+            outfile.write("Errors encountered shifting this placefile in time or location.")
         outfile.close()
 
 
@@ -140,6 +143,15 @@ def shift_time(line: str, simulation_seconds_shift: int) -> str:
                                              '%Y-%m-%dT%H:%M:%SZ')
         new_line = line.replace(f"{regex[0]} {regex[1]}",
                                 f"{new_datestring_1} {new_datestring_2}")
+    
+    # For LSR placefiles
+    if 'LSR Time' in line:
+        regex = re.findall(TIME_REGEX, line)
+        dt = datetime.strptime(regex[0], '%Y-%m-%dT%H:%M:%SZ')
+        new_datestring = datetime.strftime(dt + simulation_time_shift,
+                                           '%Y-%m-%dT%H:%M:%SZ')
+        new_line = line.replace(regex[0], new_datestring)
+        
     return new_line
 
 
@@ -225,6 +237,22 @@ def remove_files_and_dirs(cfg) -> None:
             for name in dirs:
                 os.rmdir(os.path.join(root, name))
 
+
+def remove_munged_radar_files(cfg) -> None:
+    """
+    Removes uncompressed and 'munged' radar files within the /data/xx/radar directory 
+    after the pre-processing scripts have completed. These files are no longer needed 
+    as the appropriate files have been exported to the /assets/xx/polling directory. 
+    """
+    regex_pattern = r'^(.{4})(\d{8})_(\d{6})$'
+    for root, _, files in os.walk(cfg['RADAR_DIR']):
+        if Path(root).name == 'downloads':
+            for name in files:
+                thisfile = os.path.join(root, name)
+                matched = re.match(regex_pattern, name)
+                if matched or '.uncompressed' in name: 
+                    os.remove(thisfile)
+          
 
 def date_time_string(dt) -> str:
     """
@@ -442,7 +470,7 @@ def generate_layout(layout_has_initialized, children, configs):
                                                href=f"{configs['LINK_BASE']}/hodographs.html", target="_blank"), width=2)
                  ],
                  style={"display": "flex", "flexWrap": "wrap"}
-             ),
+                ),
                 dbc.Row(
                  [
                      dbc.Col(dbc.ListGroupItem("Sfc obs"),
@@ -458,7 +486,7 @@ def generate_layout(layout_has_initialized, children, configs):
                                 target="_blank"), width=2),
                  ],
                  style={"display": "flex", "flexWrap": "wrap"}
-             ),
+                ),
                 dbc.Row(
                  [
                      dbc.Col(dbc.ListGroupItem("Sfc obs parts"),
@@ -475,8 +503,7 @@ def generate_layout(layout_has_initialized, children, configs):
                      dbc.Col(dbc.ListGroupItem(" "), width=2),
                  ],
                  style={"display": "flex", "flexWrap": "wrap"},
-
-             ),
+                ),
                 dbc.Row(
                  [
                      dbc.Col(dbc.ListGroupItem("NSE Shear"),
@@ -498,8 +525,7 @@ def generate_layout(layout_has_initialized, children, configs):
                                 target="_blank"), width=2),
                  ],
                  style={"display": "flex", "flexWrap": "wrap"},
-
-             ),
+                ),
                 dbc.Row(
                  [
                      dbc.Col(dbc.ListGroupItem("NSE SRH"),
@@ -515,8 +541,7 @@ def generate_layout(layout_has_initialized, children, configs):
 
                  ],
                  style={"display": "flex", "flexWrap": "wrap"},
-
-             ),
+                ),
                 dbc.Row(
                  [
                      dbc.Col(dbc.ListGroupItem("NSE Thermo"),
@@ -538,8 +563,33 @@ def generate_layout(layout_has_initialized, children, configs):
                                 target="_blank"), width=2),
                  ],
                  style={"display": "flex", "flexWrap": "wrap"},
-
-             ),
+                ),
+                dbc.Row(
+                 [
+                     dbc.Col(dbc.ListGroupItem("NSE Composites"),
+                             style=lc.group_item_style, width=2),
+                     dbc.Col(dbc.ListGroupItem("Effective Sig Tor.",
+                                href=f"{configs['PLACEFILES_LINKS']}/estp_shifted.txt",
+                                target="_blank"), width=2),
+                     dbc.Col(dbc.ListGroupItem("Non Supercell Tor.",
+                                href=f"{configs['PLACEFILES_LINKS']}/nst_shifted.txt",
+                                target="_blank"), width=2),
+                     dbc.Col(dbc.ListGroupItem("Snow Squall Parameter",
+                                href=f"{configs['PLACEFILES_LINKS']}/snsq.txt",
+                                target="_blank"), width=2),
+                 ],
+                 style={"display": "flex", "flexWrap": "wrap"},
+                ),
+                dbc.Row(
+                 [
+                     dbc.Col(dbc.ListGroupItem("LSRs"),
+                             style=lc.group_item_style, width=2),
+                     dbc.Col(dbc.ListGroupItem("Local Storm Reports",
+                                href=f"{configs['PLACEFILES_LINKS']}/LSRs_shifted.txt",
+                                target="_blank"), width=2),
+                 ],
+                 style={"display": "flex", "flexWrap": "wrap"}
+                ),
              ]
         )))
 
@@ -858,6 +908,20 @@ def run_with_cancel_button(cfg, sim_times, radar_info):
                 print(f"Error with UpdateDirList ", e)
                 logging.exception(f"Error with UpdateDirList ", exc_info=True)
 
+    # Delete the uncompressed/munged radar files from the data directory    
+    try:
+        remove_munged_radar_files(cfg)
+    except KeyError as e:
+        logging.exception("Error removing munged radar files ", exc_info=True)
+
+    # LSR Placefiles. Not monitored currently due to how quick this executes
+    args = [str(sim_times['event_start_str']), str(sim_times['event_duration']),
+            cfg['DATA_DIR'], cfg['PLACEFILES_DIR']]
+    res = call_function(utils.exec_script, Path(cfg['LSR_SCRIPT_PATH']), args,
+                        cfg['SESSION_ID'])
+    if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
+        return
+
     # Surface observations
     args = [str(radar_info['lat']), str(radar_info['lon']),
             sim_times['event_start_str'], cfg['PLACEFILES_DIR'],
@@ -878,6 +942,7 @@ def run_with_cancel_button(cfg, sim_times, radar_info):
     # Since there will always be a timeshift associated with a simulation, this
     # script needs to execute every time, even if a user doesn't select a radar
     # to transpose to.
+
     logging.info("Entering function run_transpose_script")
     run_transpose_script(cfg['PLACEFILES_DIR'], sim_times, radar_info)
 
@@ -1253,9 +1318,10 @@ def manage_clock_(nclicks, _n_intervals, new_time, _playback_running, playback_s
         if specs['playback_clock'] >= specs['playback_end']:
             interval_disabled = True
             playback_paused = True
-            specs['playback_clock'] = specs['playback_end']
-            specs['playback_clock_str'] = date_time_string(
-                specs['playback_clock'])
+            dt = datetime.strptime(specs['playback_start_str'], '%Y-%m-%d %H:%M') + \
+                 timedelta(seconds=600)
+            specs['playback_clock_str'] = dt.strftime('%Y-%m-%d %H:%M')
+            specs['playback_clock'] = dt.strftime('%Y-%m-%dT%H:%M:%S+00:00')
             status = 'Simulation Complete'
             playback_btn_text = 'Restart Simulation'
             style = lc.feedback_yellow
