@@ -66,12 +66,12 @@ class LsrCreator:
             f.write("Refresh: 1\n")
             f.write("Threshold: 999\n")
             f.write('Title: Local Storm Reports\n')
-            f.write('IconFile: 1, 25, 25, 10, 10, "https://rssic.nws.noaa.gov/assets/iconfiles/IconSheets/lsr_icons_96.png"\n')
-            f.write('IconFile: 2, 25, 32, 10, 10, "https://rssic.nws.noaa.gov/assets/iconfiles/IconSheets/LSR_Hail_Icons.png"\n')
-            f.write('IconFile: 3, 25, 32, 10, 10, "https://rssic.nws.noaa.gov/assets/iconfiles/IconSheets/wind_icons_96.png"\n')
-            f.write('IconFile: 4, 25, 32, 10, 10, "https://rssic.nws.noaa.gov/assets/iconfiles/IconSheets/Lsr_TstmWndGst_Icons.png"\n')
-            f.write('IconFile: 5, 25, 32, 10, 10, "https://rssic.nws.noaa.gov/assets/iconfiles/IconSheets/Lsr_NonTstmWndGst_Icons.png"\n')
-            f.write('IconFile: 6, 25, 32, 10, 10, "https://rssic.nws.noaa.gov/assets/iconfiles/IconSheets/Lsr_HeavyRain_Icons.png"\n')
+            f.write('IconFile: 1, 25, 25, 10, 10, "https://www.weather.gov/source/dmx/GRIcons/lsr_icons_96.png"\n')
+            f.write('IconFile: 2, 25, 32, 10, 10, "https://www.weather.gov/source/dmx/GRIcons/LSR_Hail_Icons.png"\n')
+            f.write('IconFile: 3, 25, 32, 10, 10, "https://www.weather.gov/source/dmx/GRIcons/wind_icons_96.png"\n')
+            f.write('IconFile: 4, 25, 32, 10, 10, "https://www.weather.gov/source/dmx/GRIcons/Lsr_TstmWndGst_Icons.png"\n')
+            f.write('IconFile: 5, 25, 32, 10, 10, "https://www.weather.gov/source/dmx/GRIcons/Lsr_NonTstmWndGst_Icons.png"\n')
+            f.write('IconFile: 6, 25, 32, 10, 10, "https://www.weather.gov/source/dmx/GRIcons/Lsr_HeavyRain_Icons.png"\n')
             f.write('Font: 1, 11, 1, "Courier New"\n\n')
 
             # Define the format of the original time
