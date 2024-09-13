@@ -263,9 +263,12 @@ def date_time_string(dt) -> str:
 
 def make_simulation_times(event_start_time, event_duration) -> dict:
     """
+    playback_end_time: datetime object
+        - set to current time plus 60 minutes then rounded to nearest 15 min.
+        - Deliberately set to a time in the future to allow placefiles to work
     playback_start_time: datetime object
         - the time the simulation starts.
-        - set to (current UTC time rounded to nearest 30 minutes then minus 2hrs)
+        - playback_end_time minus the event duration
         - This is "recent enough" for GR2Analyst to poll data
     playback_timer: datetime object
         - the "current" displaced realtime during the playback
@@ -280,17 +283,14 @@ def make_simulation_times(event_start_time, event_duration) -> dict:
     Variables ending with "_str" are the string representations of the datetime objects
     """
 
-    playback_start = datetime.now(pytz.utc) - timedelta(hours=2)
-    playback_start = playback_start.replace(second=0, microsecond=0)
-    if playback_start.minute < 30:
-        playback_start = playback_start.replace(minute=0)
-    else:
-        playback_start = playback_start.replace(minute=30)
-    playback_start_str = date_time_string(playback_start)
-
-    playback_end = playback_start + timedelta(minutes=int(event_duration))
+    now = datetime.now(pytz.utc).replace(second=0, microsecond=0) + timedelta(minutes=60)
+    playback_end = now - timedelta(minutes=now.minute % 15)
     playback_end_str = date_time_string(playback_end)
 
+    playback_start = playback_end - timedelta(minutes=event_duration)
+    playback_start_str = date_time_string(playback_start)
+
+    # The playback clock is set to 10 minutes after the start of the simulation
     playback_clock = playback_start + timedelta(seconds=600)
     playback_clock_str = date_time_string(playback_clock)
 
