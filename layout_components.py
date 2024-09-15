@@ -127,10 +127,11 @@ top_banner = html.Div([
 # ----------------------------- Time/duration components  --------------------------------------
 ################################################################################################
 
+STEP_SELECT_EVENT_TIME = "Select Event Start Date, Time, and Duration (in Minutes)"
 STEP_SELECT_TIME = "Select Simulation Start Date, Time, and Duration (in Minutes)"
 
 step_select_time_section = dbc.Container(
-    dbc.Col(html.Div(children=STEP_SELECT_TIME, style=steps_center)))
+    dbc.Col(html.Div(children=STEP_SELECT_EVENT_TIME, style=steps_center)))
 
 time_headers = {'padding': '0.05em', 'border': '1em', 'border-radius': '12px',
                 'background': '#555555', 'font-size': '1.4em', 'color': 'white',
