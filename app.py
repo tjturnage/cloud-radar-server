@@ -620,7 +620,7 @@ def generate_layout(layout_has_initialized, children, configs):
             lc.top_section, lc.top_banner,
             dbc.Container([
                 dbc.Container([
-                    html.Div([html.Div([lc.step_select_time_section, lc.spacer,
+                    html.Div([html.Div([lc.step_select_event_time_section, lc.spacer,
                                         dbc.Row([
                                             sim_year_section, sim_month_section, sim_day_selection,
                                             sim_hour_section, sim_minute_section,
