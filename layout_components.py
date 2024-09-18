@@ -462,7 +462,7 @@ playback_speed_options = [
     {'label': str(i) + 'x', 'value': i} for i in playback_speed_dropdown_values]
 
 playback_speed_dropdown = dcc.Dropdown(options=playback_speed_options, value=1.0,
-                                       id='speed_dropdown', disabled=True)
+                                       id='speed_dropdown', disabled=True, clearable=False)
 playback_speed_col = dbc.Col(
     html.Div([playback_speed_label, spacer_mini, playback_speed_dropdown]))
 

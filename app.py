@@ -44,6 +44,7 @@ from scripts.Nexrad import NexradDownloader
 from scripts.munger import Munger
 from scripts.update_dir_list import UpdateDirList
 from scripts.update_hodo_page import UpdateHodoHTML
+from scripts.update_placefiles import UpdatePlacefiles
 from scripts.nse import Nse
 
 import utils
@@ -111,9 +112,9 @@ def shift_placefiles(PLACEFILES_DIR, sim_times, radar_info) -> None:
                                                       radar_info['new_lon'])
                         new_line = line.replace(regex[0], f"{lat_out}, {lon_out}")
                 outfile.write(new_line)
-        except:
+        except (IOError, ValueError, KeyError) as e:
             outfile.truncate(0)
-            outfile.write("Errors encountered shifting this placefile in time or location.")
+            outfile.write(f"Errors shifting this placefile: {e}")
         outfile.close()
 
 
@@ -143,7 +144,7 @@ def shift_time(line: str, simulation_seconds_shift: int) -> str:
                                              '%Y-%m-%dT%H:%M:%SZ')
         new_line = line.replace(f"{regex[0]} {regex[1]}",
                                 f"{new_datestring_1} {new_datestring_2}")
-    
+
     # For LSR placefiles
     if 'LSR Time' in line:
         regex = re.findall(TIME_REGEX, line)
@@ -151,7 +152,7 @@ def shift_time(line: str, simulation_seconds_shift: int) -> str:
         new_datestring = datetime.strftime(dt + simulation_time_shift,
                                            '%Y-%m-%dT%H:%M:%SZ')
         new_line = line.replace(regex[0], new_datestring)
-        
+     
     return new_line
 
 
@@ -252,7 +253,7 @@ def remove_munged_radar_files(cfg) -> None:
                 matched = re.match(regex_pattern, name)
                 if matched or '.uncompressed' in name: 
                     os.remove(thisfile)
-          
+
 
 def date_time_string(dt) -> str:
     """
@@ -467,7 +468,7 @@ def generate_layout(layout_has_initialized, children, configs):
                      dbc.Col(dbc.ListGroupItem("Graphics"),
                              style=lc.group_item_style, width=2),
                      dbc.Col(dbc.ListGroupItem("Hodographs webpage",
-                                               href=f"{configs['LINK_BASE']}/hodographs.html", target="_blank"), width=2)
+                                               href=f"{configs['LINK_BASE']}/hodographs.html", target="_blank"), width=4)
                  ],
                  style={"display": "flex", "flexWrap": "wrap"}
                 ),
@@ -566,6 +567,24 @@ def generate_layout(layout_has_initialized, children, configs):
                 ),
                 dbc.Row(
                  [
+                     dbc.Col(dbc.ListGroupItem("NSE Color Fill"),
+                             style=lc.group_item_style, width=2),
+                     dbc.Col(" ", width=2),
+                     dbc.Col(dbc.ListGroupItem("MLCIN",
+                                href=f"{configs['PLACEFILES_LINKS']}/mlcin_cf_shifted.txt",
+                                target="_blank"), width=2),
+                     dbc.Col(dbc.ListGroupItem("0-3 MLCP",
+                                href=f"{configs['PLACEFILES_LINKS']}/cape3km_cf_shifted.txt",
+                                target="_blank"), width=2),
+                     dbc.Col(dbc.ListGroupItem("0-3 LR",
+                                href=f"{configs['PLACEFILES_LINKS']}/lr03km_cf_shifted.txt",
+                                target="_blank"), width=2),
+                     dbc.Col(" ", width=2),
+                 ],
+                 style={"display": "flex", "flexWrap": "wrap"},
+                ),
+                dbc.Row(
+                 [
                      dbc.Col(dbc.ListGroupItem("NSE Composites"),
                              style=lc.group_item_style, width=2),
                      dbc.Col(dbc.ListGroupItem("Effective Sig Tor.",
@@ -586,7 +605,7 @@ def generate_layout(layout_has_initialized, children, configs):
                              style=lc.group_item_style, width=2),
                      dbc.Col(dbc.ListGroupItem("Local Storm Reports",
                                 href=f"{configs['PLACEFILES_LINKS']}/LSRs_shifted.txt",
-                                target="_blank"), width=2),
+                                target="_blank"), width=4),
                  ],
                  style={"display": "flex", "flexWrap": "wrap"}
                 ),
@@ -808,7 +827,7 @@ def query_radar_files(cfg, radar_info, sim_times):
 
     # Write radar metadata for this simulation to a text file. More complicated updating the
     # dcc.Store object with this information since this function isn't a callback.
-    with open(f'{cfg['RADAR_DIR']}/radarinfo.json', 'w') as json_file:
+    with open(f'{cfg['RADAR_DIR']}/radarinfo.json', 'w', encoding='utf-8') as json_file:
         json.dump(radar_info['radar_files_dict'], json_file)
 
     return results
@@ -840,16 +859,15 @@ def run_with_cancel_button(cfg, sim_times, radar_info):
     try:
         remove_files_and_dirs(cfg)
     except KeyError as e:
-        logging.exception(
-            "Error removing files and directories: ", exc_info=True)
+        logging.exception("Error removing files and directories: %s",e,exc_info=True)
 
     # based on list of selected radars, create a dictionary of radar metadata
     try:
         create_radar_dict(radar_info)
         copy_grlevel2_cfg_file(cfg)
-    except Exception as e:
+    except (IOError, ValueError, KeyError) as e:
         logging.exception(
-            "Error creating radar dict or config file: ", exc_info=True)
+            "Error creating radar dict or config file: %s",e,exc_info=True)
         
     log_string = (
         f"\n"
@@ -877,8 +895,8 @@ def run_with_cancel_button(cfg, sim_times, radar_info):
                     new_radar = radar
                 else:
                     new_radar = radar_info['new_radar'].upper()
-            except Exception as e:
-                logging.exception("Error defining new radar: ", exc_info=True)
+            except (IOError, ValueError, KeyError) as e:
+                logging.exception("Error defining new radar: %s",e,exc_info=True)
 
             # Radar download
             args = [radar, str(sim_times['event_start_str']),
@@ -904,11 +922,11 @@ def run_with_cancel_button(cfg, sim_times, radar_info):
             try:
                 UpdateDirList(new_radar, 'None',
                               cfg['POLLING_DIR'], initialize=True)
-            except Exception as e:
-                print(f"Error with UpdateDirList ", e)
-                logging.exception(f"Error with UpdateDirList ", exc_info=True)
+            except (IOError, ValueError, KeyError) as e:
+                print(f"Error with UpdateDirList: {e}")
+                logging.exception("Error with UpdateDirList: %s",e, exc_info=True)
 
-    # Delete the uncompressed/munged radar files from the data directory    
+    # Delete the uncompressed/munged radar files from the data directory
     try:
         remove_munged_radar_files(cfg)
     except KeyError as e:
@@ -966,9 +984,9 @@ def run_with_cancel_button(cfg, sim_times, radar_info):
         try:
             UpdateHodoHTML(
                 'None', cfg['HODOGRAPHS_DIR'], cfg['HODOGRAPHS_PAGE'])
-        except Exception as e:
+        except (IOError, ValueError, KeyError) as e:
             print("Error updating hodo html: ", e)
-            logging.exception("Error updating hodo html: ", exc_info=True)
+            logging.exception("Error updating hodo html: %s",e, exc_info=True)
 
 
 @app.callback(
@@ -1224,6 +1242,7 @@ def initiate_playback(_nclick, playback_speed, cfg, sim_times, radar_info):
     style = lc.playback_times_style
     options = sim_times['playback_dropdown_dict']
     if config.PLATFORM != 'WINDOWS':
+        #UpdatePlacefiles(sim_times['playback_clock_str'], cfg['PLACEFILES_DIR'])
         UpdateHodoHTML(sim_times['playback_clock_str'], cfg['HODOGRAPHS_DIR'],
                        cfg['HODOGRAPHS_PAGE'])
         if radar_info['new_radar'] != 'None':
@@ -1303,6 +1322,7 @@ def manage_clock_(nclicks, _n_intervals, new_time, _playback_running, playback_s
             readout_time = datetime.strftime(
                 specs['playback_clock'], '%Y-%m-%d   %H:%M:%S')
             if config.PLATFORM != 'WINDOWS':
+                #UpdatePlacefiles(specs['playback_clock_str'], cfg['PLACEFILES_DIR'])
                 UpdateHodoHTML(specs['playback_clock_str'],
                                cfg['HODOGRAPHS_DIR'], cfg['HODOGRAPHS_PAGE'])
                 if specs['new_radar'] != 'None':
@@ -1349,6 +1369,7 @@ def manage_clock_(nclicks, _n_intervals, new_time, _playback_running, playback_s
             readout_time = datetime.strftime(
                 specs['playback_clock'], '%Y-%m-%d %H:%M:%S')
         if config.PLATFORM != 'WINDOWS':
+            #UpdatePlacefiles(specs['playback_clock_str'], cfg['PLACEFILES_DIR'])
             UpdateHodoHTML(specs['playback_clock_str'],
                            cfg['HODOGRAPHS_DIR'], cfg['HODOGRAPHS_PAGE'])
             if specs['new_radar'] != 'None':
