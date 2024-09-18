@@ -606,6 +606,9 @@ def generate_layout(layout_has_initialized, children, configs):
                      dbc.Col(dbc.ListGroupItem("Local Storm Reports",
                                 href=f"{configs['PLACEFILES_LINKS']}/LSRs_shifted.txt",
                                 target="_blank"), width=4),
+                     dbc.Col(dbc.ListGroupItem("Radar File Times",
+                                href=f"{configs['PLACEFILES_LINKS']}/file_times.txt",
+                                target="_blank"), width=4),
                  ],
                  style={"display": "flex", "flexWrap": "wrap"}
                 ),

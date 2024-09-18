@@ -179,7 +179,7 @@ class Munger():
             new_time_obj = file_datetime_obj + timedelta(seconds=self.seconds_shift)
             new_time_str = datetime.strftime(new_time_obj, '%Y/%m/%d %H:%M:%S')
             new_filename_date_string = datetime.strftime(new_time_obj, '%Y%m%d_%H%M%S')
-            fout.write(f'{file_datetime_str} -- {new_time_str}\n')
+            fout.write(f'{file_datetime_str[:19]} -- {new_time_str}\n')
             command_line = f'./l2munger {self.new_rda} {new_time_str} 1 {file_datetime_str}'
             print(command_line)
             os.system(command_line)
@@ -202,7 +202,7 @@ if __name__ == "__main__":
         seconds_shift = int(simulation_time_shift.total_seconds())
         playback_start_str = datetime.strftime(playback_start_time,"%Y-%m-%d %H:%M")
         playback_end_time = playback_start_time + timedelta(minutes=int(DURATION))
-        Munger(ORIG_RDA, playback_start_str, DURATION, seconds_shift, NEW_RDA)
+        #Munger(ORIG_RDA, playback_start_str, DURATION, seconds_shift, NEW_RDA)
     else:
         Munger(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], 
                sys.argv[6], sys.argv[7], sys.argv[8], sys.argv[9])
