@@ -98,7 +98,7 @@ class UpdatePlacefiles():
 
 #-------------------------------
 if __name__ == "__main__":
-    playback_time = '2024-09-18 15:45'
-    placefiles_directory = 'C:/data/scripts/cloud-radar-server/assets/placefiles'
-    UpdatePlacefiles(playback_time, placefiles_directory)
-    #UpdatePlacefiles(sys.argv[1],sys.argv[2])
+    #playback_time = '2024-09-18 15:45'
+    #placefiles_directory = 'C:/data/scripts/cloud-radar-server/assets/placefiles'
+    #UpdatePlacefiles(playback_time, placefiles_directory)
+    UpdatePlacefiles(sys.argv[1],sys.argv[2])

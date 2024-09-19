@@ -607,7 +607,7 @@ def generate_layout(layout_has_initialized, children, configs):
                                 href=f"{configs['PLACEFILES_LINKS']}/LSRs_shifted.txt",
                                 target="_blank"), width=4),
                      dbc.Col(dbc.ListGroupItem("Radar File Times",
-                                href=f"{configs['PLACEFILES_LINKS']}/file_times.txt",
+                                href=f"{configs['LINK_BASE']}/file_times.txt",
                                 target="_blank"), width=4),
                  ],
                  style={"display": "flex", "flexWrap": "wrap"}
@@ -1245,7 +1245,7 @@ def initiate_playback(_nclick, playback_speed, cfg, sim_times, radar_info):
     style = lc.playback_times_style
     options = sim_times['playback_dropdown_dict']
     if config.PLATFORM != 'WINDOWS':
-        #UpdatePlacefiles(sim_times['playback_clock_str'], cfg['PLACEFILES_DIR'])
+        UpdatePlacefiles(sim_times['playback_clock_str'], cfg['PLACEFILES_DIR'])
         UpdateHodoHTML(sim_times['playback_clock_str'], cfg['HODOGRAPHS_DIR'],
                        cfg['HODOGRAPHS_PAGE'])
         if radar_info['new_radar'] != 'None':
@@ -1325,7 +1325,7 @@ def manage_clock_(nclicks, _n_intervals, new_time, _playback_running, playback_s
             readout_time = datetime.strftime(
                 specs['playback_clock'], '%Y-%m-%d   %H:%M:%S')
             if config.PLATFORM != 'WINDOWS':
-                #UpdatePlacefiles(specs['playback_clock_str'], cfg['PLACEFILES_DIR'])
+                UpdatePlacefiles(specs['playback_clock_str'], cfg['PLACEFILES_DIR'])
                 UpdateHodoHTML(specs['playback_clock_str'],
                                cfg['HODOGRAPHS_DIR'], cfg['HODOGRAPHS_PAGE'])
                 if specs['new_radar'] != 'None':
@@ -1372,7 +1372,7 @@ def manage_clock_(nclicks, _n_intervals, new_time, _playback_running, playback_s
             readout_time = datetime.strftime(
                 specs['playback_clock'], '%Y-%m-%d %H:%M:%S')
         if config.PLATFORM != 'WINDOWS':
-            #UpdatePlacefiles(specs['playback_clock_str'], cfg['PLACEFILES_DIR'])
+            UpdatePlacefiles(specs['playback_clock_str'], cfg['PLACEFILES_DIR'])
             UpdateHodoHTML(specs['playback_clock_str'],
                            cfg['HODOGRAPHS_DIR'], cfg['HODOGRAPHS_PAGE'])
             if specs['new_radar'] != 'None':
