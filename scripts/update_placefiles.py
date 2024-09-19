@@ -63,12 +63,12 @@ class UpdatePlacefiles():
 
         files = os.listdir(self.placefiles_directory)
         shifted_filenames = [x for x in files if "shifted.txt" in x]
-        print(shifted_filenames)
+        #print(shifted_filenames)
         # except Exception as e:
         #     print(f"Error listing files in directory: {e}")
         for file in shifted_filenames:
             source_file = os.path.join(self.placefiles_directory, file)
-            print(f"Processing file: {source_file}")
+            #print(f"Processing file: {source_file}")
             new_filename = f"{source_file[0:source_file.index('_shifted.txt')]}_updated.txt"
             destination_path = os.path.join(self.placefiles_directory, new_filename)
             fout_path = open(destination_path, 'w', encoding='utf-8')
@@ -82,7 +82,7 @@ class UpdatePlacefiles():
                     if line_timestamp > self.playback_timestamp:
                         #print(f"{line_timestamp} ... {self.playback_timestamp}")
                         #print(f"TimeRange line exceeds playback time: {i} {line}")
-                        print(i, line)
+                        #print(i, line)
                         line_num = i
                         break
             try:
