@@ -265,8 +265,7 @@ def date_time_string(dt) -> str:
 def make_simulation_times(event_start_time, event_duration) -> dict:
     """
     playback_end_time: datetime object
-        - set to current time plus 60 minutes then rounded to nearest 15 min.
-        - Deliberately set to a time in the future to allow placefiles to work
+        - set to current time then rounded down to nearest 15 min.
     playback_start_time: datetime object
         - the time the simulation starts.
         - playback_end_time minus the event duration
@@ -284,7 +283,7 @@ def make_simulation_times(event_start_time, event_duration) -> dict:
     Variables ending with "_str" are the string representations of the datetime objects
     """
 
-    now = datetime.now(pytz.utc).replace(second=0, microsecond=0) + timedelta(minutes=60)
+    now = datetime.now(pytz.utc).replace(second=0, microsecond=0)
     playback_end = now - timedelta(minutes=now.minute % 15)
     playback_end_str = date_time_string(playback_end)
 
