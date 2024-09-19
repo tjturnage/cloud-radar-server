@@ -62,20 +62,19 @@ class UpdatePlacefiles():
         #print(all_filenames)
 
         files = os.listdir(self.placefiles_directory)
-        print("Files in directory:", files)
-        filenames = [x for x in files if "shifted.txt" in x]
-        print(filenames)
+        shifted_filenames = [x for x in files if "shifted.txt" in x]
+        print(shifted_filenames)
         # except Exception as e:
         #     print(f"Error listing files in directory: {e}")
-        for this_file in filenames:
-            fin = os.path.join(self.placefiles_directory, this_file)
-            print(f"Processing file: {fin}")
-            outfilename = f"{this_file[0:this_file.index('_shifted.txt')]}_updated.txt"
-            fout = os.path.join(self.placefiles_directory, outfilename)
-            fout_path = open(fout, 'w', encoding='utf-8')
-            with open(fin, 'r', encoding='utf-8') as f:
-                data = f.readlines()
-            
+        for file in shifted_filenames:
+            source_file = os.path.join(self.placefiles_directory, file)
+            print(f"Processing file: {source_file}")
+            new_filename = f"{source_file[0:source_file.index('_shifted.txt')]}_updated.txt"
+            destination_path = os.path.join(self.placefiles_directory, new_filename)
+            fout_path = open(destination_path, 'w', encoding='utf-8')
+            fin = open(source_file, 'r', encoding='utf-8')
+            data = fin.readlines()
+            fin.close()
             line_num = len(data)
             for i, line in enumerate(data):
                 if "TimeRange" in line:
