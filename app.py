@@ -584,7 +584,7 @@ def generate_layout(layout_has_initialized, children, configs):
                 ),
                 dbc.Row(
                  [
-                     dbc.Col(dbc.ListGroupItem("NSE Composites"),
+                     dbc.Col(dbc.ListGroupItem("Composites"),
                              style=lc.group_item_style, width=2),
                      dbc.Col(dbc.ListGroupItem("Effective Sig Tor.",
                                 href=f"{configs['PLACEFILES_LINKS']}/estp_shifted.txt",

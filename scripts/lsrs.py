@@ -57,7 +57,8 @@ class LsrCreator:
         icon_url = "https://www.weather.gov/source/dmx/GRIcons"
         
         # Read the CSV file 
-        df = pd.read_csv(self.lsr_file, low_memory=False)
+        # df = pd.read_csv(self.lsr_file, low_memory=False)
+        df = pd.read_csv(self.lsr_file, low_memory=False, on_bad_lines='warn')
         df['REMARK'] = df['REMARK'].fillna(' ') # removing nan values from output text in LSR hover text
 
         keyword1 = ["FATAL"]
