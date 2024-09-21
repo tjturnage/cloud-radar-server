@@ -655,27 +655,6 @@ def calc_wetbulb(p, t, td):
     return wetlift3(p2, t2, p)
 
 @njit
-def wetlift(p, t, p2):
-    """Lifts a parcel moist adiabatically to its new level.
-
-    Parameters
-    -----------
-    p : number
-        Pressure of initial parcel (hPa)
-    t : number
-        Temperature of initial parcel (C)
-    p2 : number
-        Pressure of final level (hPa)
-
-    Returns
-    -------
-    Temperature (C)
-    """
-    thta = theta(p, t, 1000.0)
-    thetam = thta - wobf(thta) + wobf(t)
-    return satlift(p2, thetam)
-
-@njit
 def wetlift2(p, t, p2):
     """Lifts a parcel moist adiabatically to its new level.
 
@@ -693,7 +672,7 @@ def wetlift2(p, t, p2):
     Temperature (C)
     """
     thta = theta(p, t, 1000.0)
-    thetam = thta - wobf(thta) + wobf(t)
+    thetam = thta - wobf_array(thta) + wobf_array(t)
     return thetam
 
 @njit
@@ -714,11 +693,11 @@ def wetlift3(p, t, p2):
     Temperature (C)
     """
     thta = theta(p, t, 1000.0)
-    thetam = thta - wobf2(thta) + wobf2(t)
+    thetam = thta - wobf_scalar(thta) + wobf_scalar(t)
     return satlift3(p2, thetam)
 
 @njit
-def wobf2(t):
+def wobf_scalar(t):
     """Implementation of the Wobus Function for computing the moist adiabats.
 
     .. caution::
@@ -762,7 +741,7 @@ def wobf2(t):
 
 
 @njit
-def wobf(t):
+def wobf_array(t):
     """
     Implementation of the Wobus Function for computing the moist adiabats.
 
@@ -806,54 +785,6 @@ def wobf(t):
     return correction
 
 @njit
-def satlift(p, thetam, conv=0.1):
-    """
-    Returns the temperature (C) of a saturated parcel (thm) when lifted to a
-    new pressure level (hPa)
-
-    .. caution::
-        Testing of the SHARPpy parcel lifting routines has revealed that the convergence
-        criteria used the SHARP version (and implemented here) may cause drifting the
-        pseudoadiabat to occasionally "drift" when high-resolution radiosonde data is
-        used.  While a stricter convergence criteria (e.g. 0.01) has shown to resolve
-        this problem, it creates a noticable departure from the SPC CAPE values and
-        therefore may decalibrate the other SHARPpy functions (e.g. SARS).
-
-    Parameters
-    ----------
-    p : number
-        Pressure to which parcel is raised (hPa)
-    thetam : number
-        Saturated Potential Temperature of parcel (C)
-    conv : number
-        Convergence criteria for satlift() (C)
-
-    Returns
-    -------
-    Temperature (C) of saturated parcel at new level
-    """
-    if np.fabs(p - 1000.0) - 0.001 <= 0:
-        return thetam
-    eor = 999
-    t2 = None  # All vars must be pre-defined for njit
-    e2 = None  # All vars must be pre-defined for njit
-    while np.fabs(eor) - 0.1 > 0:
-        if eor == 999:  # First Pass
-            pwrp = np.power((p / 1000.0), ROCP)
-            t1 = (thetam + ZEROCNK) * pwrp - ZEROCNK
-            e1 = wobf(t1) - wobf(thetam)
-            rate = 1
-        else:  # Successive Passes
-            rate = (t2 - t1) / (e2 - e1)
-            t1 = t2
-            e1 = e2
-        t2 = t1 - (e1 * rate)
-        e2 = (t2 + ZEROCNK) / pwrp - ZEROCNK
-        e2 += wobf(t2) - wobf(e2) - thetam
-        eor = e2 * rate
-    return t2 - eor
-
-@njit
 def satlift3(p, thetam, conv=0.1):
     """Returns the temperature (C) of a saturated parcel (thm) when lifted to a new
     pressure level (hPa)
@@ -888,7 +819,7 @@ def satlift3(p, thetam, conv=0.1):
         if eor == 999:  # First Pass
             pwrp = np.power((p / 1000.0), ROCP)
             t1 = (thetam + ZEROCNK) * pwrp - ZEROCNK
-            e1 = wobf2(t1) - wobf2(thetam)
+            e1 = wobf_scalar(t1) - wobf_scalar(thetam)
             rate = 1
         else:  # Successive Passes
             rate = (t2 - t1) / (e2 - e1)
@@ -905,7 +836,7 @@ def satlift3(p, thetam, conv=0.1):
         #    print("PWRP", (t2 + ZEROCNK) / pwrp - ZEROCNK)
         e2 = (t2 + ZEROCNK) / pwrp - ZEROCNK
         # e2 = np.divide( (t2 + ZEROCNK), pwrp) - ZEROCNK
-        e2 += wobf2(t2) - wobf2(e2) - thetam
+        e2 += wobf_scalar(t2) - wobf_scalar(e2) - thetam
         eor = e2 * rate
     return t2 - eor
 
