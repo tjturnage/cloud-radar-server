@@ -52,7 +52,6 @@ def worker(pres, tmpc, hght, dwpc, wspd, wdir, vort, SCALARS, VECTORS):
     --------
     d : Numba typed Dictionary
         Dictionary containing the derived values. [Key,j,i]
-
     """
 
     # Declare 'jit-able' dictionary and fill it with empty arrays
