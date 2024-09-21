@@ -2,11 +2,36 @@
 Layout components for the Cloud Radar Simulation Server application    
 """
 import os
+import ast
 import pandas as pd
 import plotly.graph_objs as go
 import dash_bootstrap_components as dbc
 from dash import html, dcc, dash_table
 from dotenv import load_dotenv
+
+
+def replace_in_dict(input_dict, search_str, replace_str):
+    """
+    Replace occurrences of search_str with replace_str in the string values of the input dictionary.
+
+    Args:
+        input_dict (dict): The dictionary to perform the search and replace on.
+        search_str (str): The string to search for.
+        replace_str (str): The string to replace with.
+
+    Returns:
+        dict: The updated dictionary with replacements made.
+    """
+    # Convert the dictionary to a string
+    dict_str = str(input_dict)
+
+    # Replace search_str with replace_str
+    updated_dict_str = dict_str.replace(search_str, replace_str)
+
+    # Convert the string back to a dictionary
+    updated_dict = ast.literal_eval(updated_dict_str)
+
+    return updated_dict
 
 load_dotenv()
 MAP_TOKEN = os.getenv("MAPBOX_TOKEN")
@@ -18,27 +43,28 @@ df.set_index('radar_id', inplace=True)
 spacer = html.Div([], style={'height': '25px'})
 spacer_mini = html.Div([], style={'height': '10px'})
 
+obs_c = 'cyan'
+nse_c = '#FBEC5D'
+graphics_c = 'white'
+steps_c = '#06DB42'
+
 bold = {'font-weight': 'bold'}
 
 feedback = {'border': '1px gray solid', 'padding': '0.4em', 'font-weight': 'bold',
             'font-size': '1.4em', 'text-align': 'center', 'vertical-align': 'center',
             'height': '6vh'}
 
+feedback_smaller = replace_in_dict(feedback, '1.4em', '1.2em')
+
 feedback_green = {'border': '1px gray solid', 'padding': '0.4em', 'font-weight': 'bold',
                   'font-size': '1.4em', 'text-align': 'center', 'vertical-align': 'center',
                   'height': '6vh', 'color': 'black', 'background-color': '#06DB42'}
 
-feedback_yellow = {'border': '1px gray solid', 'padding': '0.4em', 'font-weight': 'bold',
-                   'font-size': '1.4em', 'text-align': 'center', 'vertical-align': 'center',
-                   'height': '6vh', 'color': 'black', 'background-color': '#bfbf19'}
+feedback_yellow = replace_in_dict(feedback_green, '#06DB42', '#bfbf19')
 
 playback_times_style = {'border': '1px gray solid', 'padding': '0.4em', 'font-weight': 'bold',
                         'font-size': '1.4em', 'text-align': 'center', 'vertical-align': 'center',
                         'height': '6vh', 'color': 'white', 'background-color': '#555555'}
-
-feedback_smaller = {'border': '1px gray solid', 'padding': '0.4em', 'font-weight': 'bold',
-                    'font-size': '1.1em', 'text-align': 'center', 'vertical-align': 'center',
-                    'height': '6vh'}
 
 steps = {'padding': '0.4em', 'border': '0.3em', 'border-radius': '15px', 'font-weight': 'bold',
          'color': 'yellow', 'background': '#555555', 'font-size': '1.4em', 'text-align': 'left',
@@ -48,14 +74,8 @@ steps_right = {'padding': '0.4em', 'border': '0.3em', 'border-radius': '15px',
                'font-weight': 'bold', 'color': '#06DB42', 'background': '#555555',
                'font-size': '1.4em', 'text-align': 'right', 'height': 'vh5'}
 
-
-steps_center = {'padding': '0.4em', 'border': '0.3em', 'border-radius': '15px',
-                'font-weight': 'bold', 'color': '#06DB42', 'background': '#555555',
-                'font-size': '1.4em', 'text-align': 'center', 'height': 'vh5'}
-
-steps_center_sm = {'padding': '0.4em', 'border': '0.3em', 'border-radius': '15px',
-                   'font-weight': 'bold', 'color': '#06DB42', 'background': '#555555',
-                   'font-size': '1.2em', 'text-align': 'center', 'height': 'vh5'}
+steps_center = replace_in_dict(steps_right, 'right', 'center')
+steps_center_sm = replace_in_dict(steps_center, '1.4em', '1.2em')
 
 polling_link = {'padding': '0.4em', 'border': '0.3em', 'border-radius': '15px',
                 'font-weight': 'bold', 'color': '#cccccc', 'background': '#555555',
@@ -137,9 +157,7 @@ time_headers = {'padding': '0.05em', 'border': '1em', 'border-radius': '12px',
                 'background': '#555555', 'font-size': '1.4em', 'color': 'white',
                 'text-align': 'center', 'vertical-align': 'top', 'height': '4vh'}
 
-smaller_headers = {'padding': '0.05em', 'border': '1em', 'border-radius': '12px',
-                   'background': '#555555', 'font-size': '1.2em', 'color': 'white',
-                   'text-align': 'center', 'vertical-align': 'top', 'height': '4vh'}
+smaller_headers = replace_in_dict(time_headers, '1.4em', '1.2em')
 
 step_year = html.Div(children="Year", style=time_headers)
 step_month = html.Div(children="Month", style=time_headers)
@@ -148,26 +166,6 @@ step_hour = html.Div(children="Hour", style=time_headers)
 step_minute = html.Div(children="Minute", style=time_headers)
 step_duration = html.Div(children="Duration", style=time_headers)
 
-# Date settings (sim_year_section, sim_month_section, etc.) moved to app.py
-'''
-# Moved these into the app in order to control defaults more easily and remove the 
-# potential to specify different values in two locations
-sim_year_section = dbc.Col(html.Div([step_year,
-                                     dcc.Dropdown(np.arange(1992, now.year + 1), now.year,
-                                                  id='start_year', clearable=False),]))
-
-sim_month_section = dbc.Col(html.Div([
-    step_month, dcc.Dropdown(np.arange(1, 13), 7, id='start_month', clearable=False),]))
-
-sim_hour_section = dbc.Col(html.Div([
-    step_hour, dcc.Dropdown(np.arange(0, 24), 0, id='start_hour', clearable=False),]))
-
-sim_minute_section = dbc.Col(html.Div([
-    step_minute, dcc.Dropdown([0, 15, 30, 45], 30, id='start_minute', clearable=False),]))
-
-sim_duration_section = dbc.Col(html.Div([
-    step_duration, dcc.Dropdown(np.arange(0, 240, 15), 60, id='duration', clearable=False),]))
-'''
 
 CONFIRM_TIMES_TEXT = "Confirm start time and duration -->"
 confirm_times_section = dbc.Col(
@@ -383,8 +381,27 @@ PLACEFILES_BANNER_TEXT = "Polling, Graphics, and Placefiles Links for GR2Analyst
 placefiles_banner = dbc.Row(
     dbc.Col(html.Div(children=PLACEFILES_BANNER_TEXT, style=steps_center)))
 
-group_item_style = {'font-weight': 'bold', 'color': 'white', 'border-right': '1px white solid',
-                    'font-size': '1.2em', 'text-align': 'right'}
+group_item_style = {'font-weight': 'bold', 'font-style': 'italic', 'color': 'white', 'border-right': '1px white solid',
+                    'font-size': '1.3em', 'text-align': 'right'}
+
+group_header_style = {'padding': '0.1em','font-weight': 'bold', 'font-style': 'italic', 'color': 'white',
+                    'font-size': '1.3em', 'text-align': 'left', 'text-decoration': 'underline'}
+
+# {'padding': '0.4em', 'border': '0.3em', 'border-radius': '15px',
+#                 'font-weight': 'bold', 'color': '#cccccc', 'background': '#555555',
+#                 'font-size': '1.2em', 'text-align': 'center', 'height': 'vh5'}
+
+group_header_polling = {'padding': '0.4em','border': '0.3em', 'border-radius': '15px',
+                    'font-weight': 'bold', 'font-style': 'italic','color': steps_c,
+                     'background': '#555555','font-size': '1.4em', 'text-align': 'left',
+                     'height': 'vh5'}
+
+
+group_header_sfc_obs = replace_in_dict(group_header_style, 'white', obs_c)
+
+group_header_nse = replace_in_dict(group_header_style, 'white', nse_c)
+
+
 group_item_style_no_border = {'font-weight': 'bold', 'color': '#cccc99',
                               'font-size': '1.2em', 'text-align': 'right'}
 group_item_style_center = {'font-weight': 'bold', 'color': 'white', 'border': '1px gray solid',
