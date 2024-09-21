@@ -11,6 +11,8 @@ class Nse:
         self.sim_end = self.sim_start + timedelta(minutes=int(event_duration))
         self.start_string = datetime.strftime(self.sim_start,"%Y-%m-%d/%H")
         self.end_string = datetime.strftime(self.sim_end,"%Y-%m-%d/%H")
+        if self.sim_end.minute >= 30:
+            self.end_string = datetime.strftime(self.sim_end + timedelta(hours=1),"%Y-%m-%d/%H")
         self.output_path = output_path
 
         # Add one hour to the end time. Need at least two model data files for every sim. 
