@@ -76,7 +76,7 @@ class UpdatePlacefiles():
         shifted_filenames = [x for x in files if "shifted.txt" in x]
         for file in shifted_filenames:
             source_file = os.path.join(self.placefiles_directory, file)
-            new_filename = f"{source_file[0:source_file.index('.shifted')]}_updated.txt"
+            new_filename = f"{source_file[0:source_file.index('_shifted.txt')]}_updated.txt"
             destination_path = os.path.join(self.placefiles_directory, new_filename)
             fout_path = open(destination_path, 'w', encoding='utf-8')
             data = self.extract_placefile_lines(source_file)
