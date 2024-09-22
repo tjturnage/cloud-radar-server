@@ -85,7 +85,7 @@ def shift_placefiles(PLACEFILES_DIR, sim_times, radar_info) -> None:
     filenames = glob(f"{PLACEFILES_DIR}/*.txt")
     filenames = [x for x in filenames if "shifted" not in x]
     for file_ in filenames:
-        outfilename = f"{file_[0:file_.index('.txt')]}_updated.txt"
+        outfilename = f"{file_[0:file_.index('.txt')]}_shifted.txt"
         outfile = open(outfilename, 'w', encoding='utf-8')
         with open(file_, 'r', encoding='utf-8') as f:
             data = f.readlines()

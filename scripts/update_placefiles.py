@@ -8,7 +8,6 @@ import sys
 from datetime import datetime
 from pathlib import Path
 import os
-from glob import glob
 import pytz
 
 
@@ -74,8 +73,7 @@ class UpdatePlacefiles():
         """
 
         files = os.listdir(self.placefiles_directory)
-        shifted_filenames = glob(f"{self.placefiles_directory}/*.shifted")
-        print(f"Shifted filenames: {shifted_filenames}")
+        shifted_filenames = [x for x in files if "shifted.txt" in x]
         for file in shifted_filenames:
             source_file = os.path.join(self.placefiles_directory, file)
             new_filename = f"{source_file[0:source_file.index('.shifted')]}_updated.txt"
