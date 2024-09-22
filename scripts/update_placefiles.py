@@ -8,6 +8,7 @@ import sys
 from datetime import datetime
 from pathlib import Path
 import os
+from glob import glob
 import pytz
 
 
@@ -48,7 +49,7 @@ class UpdatePlacefiles():
         time_str = timerange_line.split(' ')[1]         # first element
         print(f"Time string: {time_str}")
         timestamp = datetime.strptime(time_str, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=pytz.UTC).timestamp()
-        timestamp -= 600 # subract 10 minutes to check time
+        timestamp = timestamp - 600 # subract 10 minutes to check time
         return timestamp
 
     def extract_placefile_lines(self, placefile: str) -> list:
@@ -73,10 +74,11 @@ class UpdatePlacefiles():
         """
 
         files = os.listdir(self.placefiles_directory)
-        shifted_filenames = [x for x in files if "shifted.txt" in x]
+        shifted_filenames = glob(f"{self.placefiles_directory}/*.shifted")
+        print(f"Shifted filenames: {shifted_filenames}")
         for file in shifted_filenames:
             source_file = os.path.join(self.placefiles_directory, file)
-            new_filename = f"{source_file[0:source_file.index('_shifted.txt')]}_updated.txt"
+            new_filename = f"{source_file[0:source_file.index('.shifted')]}_updated.txt"
             destination_path = os.path.join(self.placefiles_directory, new_filename)
             fout_path = open(destination_path, 'w', encoding='utf-8')
             data = self.extract_placefile_lines(source_file)
