@@ -43,10 +43,12 @@ df.set_index('radar_id', inplace=True)
 spacer = html.Div([], style={'height': '25px'})
 spacer_mini = html.Div([], style={'height': '10px'})
 
-obs_c = 'cyan'
-nse_c = '#FBEC5D'
-graphics_c = 'white'
-steps_c = '#06DB42'
+obs_c = '#10c4c4'
+nse_c = '#bdaf35'
+graphics_c = '#cccccc'
+steps_c = '#065c1e'
+pad_background = '#222222'
+steps_background = '#333333'
 
 bold = {'font-weight': 'bold'}
 
@@ -67,25 +69,29 @@ playback_times_style = {'border': '1px gray solid', 'padding': '0.4em', 'font-we
                         'height': '6vh', 'color': 'white', 'background-color': '#555555'}
 
 steps = {'padding': '0.4em', 'border': '0.3em', 'border-radius': '15px', 'font-weight': 'bold',
-         'color': 'yellow', 'background': '#555555', 'font-size': '1.4em', 'text-align': 'left',
+         'color': 'yellow', 'background': steps_background, 'font-size': '1.6em', 'text-align': 'left',
          'height': 'vh5'}
 
 steps_right = {'padding': '0.4em', 'border': '0.3em', 'border-radius': '15px',
-               'font-weight': 'bold', 'color': '#06DB42', 'background': '#555555',
-               'font-size': '1.4em', 'text-align': 'right', 'height': 'vh5'}
+               'font-weight': 'bold', 'color': '#06DB42', 'background': steps_background,
+               'font-size': '1.6em', 'text-align': 'right', 'height': 'vh5'}
 
+confirm_start_time = {'padding': '0.4em', 'border': '0.3em', 'border-radius': '15px',
+                        'color': '#cccccc', 'background': steps_background,
+                      'font-size': '1.4em', 'text-align': 'center', 'height': 'vh5'}
+
+steps_right_white = replace_in_dict(steps_right, '#06DB42', 'white')
 steps_center = replace_in_dict(steps_right, 'right', 'center')
-steps_center_sm = replace_in_dict(steps_center, '1.4em', '1.2em')
-
-polling_link = {'padding': '0.4em', 'border': '0.3em', 'border-radius': '15px',
-                'font-weight': 'bold', 'color': '#cccccc', 'background': '#555555',
-                'font-size': '1.2em', 'text-align': 'center', 'height': 'vh5'}
+steps_center_sm = replace_in_dict(steps_center, '1.6em', '1.2em')
+steps_center_white = replace_in_dict(steps_center, '#06DB42', 'white')
+steps_center_white_normal = replace_in_dict(steps_center_white, " 'font-weight': 'bold',", "")
 
 column_label = {'font-weight': 'bold', 'text-align': 'right'}
 
 section_box = {'background-color': '#333333', 'border': '2.5px gray solid'}
-section_box_pad = {'background-color': '#333333',
-                   'border': '2.5px gray solid', 'padding': '1em'}
+section_box_pad = {'background-color': pad_background,
+                   'border': '2.5px solid #333333', 'padding': '1em', 'border-radius': '8px'}
+top_section_box_pad = replace_in_dict(section_box_pad, '2.5px', '4px')
 
 url_rename = html.Div([
     dcc.Location(id='url', refresh=False),
@@ -139,7 +145,7 @@ top_banner = html.Div([
                                           style={'display': 'block', 'margin-left': 'auto',
                                                  'margin-right': 'auto', 'margin-top': '28px',
                                                  'verticalAlign': 'middle', 'width': '80%'})), width=3),
-                ], id='test', style={"padding": "1em", 'border': '3px gray solid'})],
+                ], id='test', style=top_section_box_pad)],
         style={"padding": "1.7em", "text-align": "center"}),
 ])
 
@@ -154,7 +160,7 @@ step_select_event_time_section = dbc.Container(
     dbc.Col(html.Div(children=STEP_SELECT_EVENT_TIME, style=steps_center)))
 
 time_headers = {'padding': '0.05em', 'border': '1em', 'border-radius': '12px',
-                'background': '#555555', 'font-size': '1.4em', 'color': 'white',
+                'background': steps_background, 'font-size': '1.4em', 'color': 'white',
                 'text-align': 'center', 'vertical-align': 'top', 'height': '4vh'}
 
 smaller_headers = replace_in_dict(time_headers, '1.4em', '1.2em')
@@ -167,9 +173,9 @@ step_minute = html.Div(children="Minute", style=time_headers)
 step_duration = html.Div(children="Duration", style=time_headers)
 
 
-CONFIRM_TIMES_TEXT = "Confirm start time and duration -->"
+CONFIRM_TIMES_TEXT = "Confirm start time and duration"
 confirm_times_section = dbc.Col(
-    html.Div(children=CONFIRM_TIMES_TEXT, style=steps_right))
+    html.Div(children=CONFIRM_TIMES_TEXT, style=confirm_start_time))
 time_settings_readout = dbc.Col(html.Div(id='show_time_data', style=feedback))
 step_time_confirm = dbc.Container(html.Div([dbc.Row([confirm_times_section, time_settings_readout
                                                      ])]))
@@ -198,7 +204,7 @@ confirm_radars = dbc.Col(html.Div([dbc.Button('Make selections', size="lg",
                                               id='confirm_radars_btn', n_clicks=0, disabled=True)],
                                   className="d-grid gap-2 col-12 mx-auto"))
 MAP_INSTRUCT_ONE = "Select number of radars, click Show Radar Map to make selection(s), "
-MAP_INSTRUCT_TWO = "click Finalize to confirm."
+MAP_INSTRUCT_TWO = "click Finalize to confirm"
 MAP_INSTRUCTIONS = MAP_INSTRUCT_ONE + MAP_INSTRUCT_TWO
 map_instructions_component = dbc.Row(
     dbc.Col(html.Div(children=MAP_INSTRUCTIONS, style=steps_center)))
@@ -310,7 +316,7 @@ show_script_progress = html.Div(id='show_script_progress', style=feedback)
 
 scripts_button = dbc.Container(
     dbc.Container(html.Div([
-        scripts_step, spacer_mini, scripts_button_row, spacer_mini,
+        scripts_step, spacer, scripts_button_row, spacer_mini,
         show_script_progress], id='run_scripts_sction', style=section_box_pad))
                   )
 
@@ -378,7 +384,7 @@ status_section = dbc.Container(dbc.Container(
 # ----------------------------- Polling section  --------------------------------------------
 ################################################################################################
 
-PLACEFILES_BANNER_TEXT = "Polling, Graphics, and Placefiles Links for GR2Analyst"
+PLACEFILES_BANNER_TEXT = "Set up GR2Analyst polling and add placefiles using links below"
 placefiles_banner = dbc.Row(
     dbc.Col(html.Div(children=PLACEFILES_BANNER_TEXT, style=steps_center)))
 
@@ -388,11 +394,14 @@ group_item_style = {'font-weight': 'bold', 'font-style': 'italic', 'color': 'whi
 group_header_style = {'padding': '0.1em','font-weight': 'bold', 'font-style': 'italic', 'color': 'white',
                     'font-size': '1.3em', 'text-align': 'left', 'text-decoration': 'underline'}
 
-group_header_polling = {'padding': '0.4em','border': '0.3em', 'border-radius': '15px',
-                    'font-weight': 'bold', 'font-style': 'italic','color': steps_c,
-                     'background': '#555555','font-size': '1.4em', 'text-align': 'left',
+polling_address_label = {'padding': '0.4em','border': '0.3em', 'border-radius': '10px',
+                    'font-weight': 'bold', 'font-style': 'italic','color': '#cccccc',
+                     'background': steps_background,'font-size': '1.3em', 'text-align': 'center',
                      'height': 'vh5'}
 
+polling_link = {'padding': '0.4em', 'border': '0.3em', 'border-radius': '10px',
+                'font-weight': 'bold', 'color': steps_background, 'background': steps_background,
+                'font-size': '1.2em', 'text-align': 'center', 'height': 'vh5'}
 
 group_header_sfc_obs = replace_in_dict(group_header_style, 'white', obs_c)
 
@@ -416,7 +425,7 @@ toggle_placefiles_btn = dbc.Container(dbc.Col(html.Div([dbc.Button(
 
 step_select_time_section = dbc.Container(
     dbc.Col(html.Div(children=STEP_SELECT_TIME, style=steps_center)))
-SIMULATION_PLAYBACK_BANNER_TEXT = "Simulation Playback Controls"
+SIMULATION_PLAYBACK_BANNER_TEXT = "Simulation Launch and Playback Controls"
 playback_banner = dbc.Row(
     dbc.Col(html.Div(children=SIMULATION_PLAYBACK_BANNER_TEXT, style=steps_center)))
 

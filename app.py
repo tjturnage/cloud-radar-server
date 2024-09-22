@@ -452,16 +452,16 @@ def generate_layout(layout_has_initialized, children, configs):
             [
                 dbc.Row([
                     dbc.Col(dbc.ListGroupItem("Polling address for GR2Analyst"),
-                        style=lc.group_header_polling, width=4),
+                        style=lc.polling_address_label, width=4),
                     dbc.Col(dbc.ListGroupItem(f"{configs['LINK_BASE']}/polling", 
                         href="", target="_blank", style={'color': '#555555'}, id="polling_link"),
                         style=lc.polling_link, width=8)
                 ])
             ])
 
-        links_section = dbc.Container(dbc.Container(html.Div(
-            [polling_section,
-             lc.spacer_mini,
+        links_section = dbc.Container(dbc.Container(dbc.Container(html.Div(
+            [lc.placefiles_banner, lc.spacer, polling_section,
+             lc.spacer,
                 dbc.Row(
                  [
                      dbc.Col("Surface Observations Placefiles", style=lc.group_header_sfc_obs, width=6),
@@ -469,8 +469,6 @@ def generate_layout(layout_has_initialized, children, configs):
              lc.spacer_mini,
                 dbc.Row(
                  [
-                    #  dbc.Col(dbc.ListGroupItem("Sfc obs"),
-                    #          style=lc.group_item_style, width=2),
                      dbc.Col(dbc.ListGroupItem("Regular font",
                                 href=f"{configs['PLACEFILES_LINKS']}/latest_surface_observations_updated.txt",
                                 target="_blank"), style={'color':lc.obs_c}, width=2),
@@ -492,7 +490,7 @@ def generate_layout(layout_has_initialized, children, configs):
                  ],
                  style={"display": "flex", "flexWrap": "wrap"}
                 ),
-             lc.spacer_mini,
+             lc.spacer,
                 dbc.Row(
                  [
                      dbc.Col("Near Storm Environment Placefiles", style=lc.group_header_nse, width=6),
@@ -545,6 +543,9 @@ def generate_layout(layout_has_initialized, children, configs):
                      dbc.Col(dbc.ListGroupItem("MLCAPE",
                                 href=f"{configs['PLACEFILES_LINKS']}/mlcape_updated.txt",
                                 target="_blank"), style={'color':lc.nse_c}, width=2),
+                     dbc.Col(dbc.ListGroupItem("MUCAPE",
+                                href=f"{configs['PLACEFILES_LINKS']}/mucape_updated.txt",
+                                target="_blank"), style={'color':lc.nse_c}, width=2),
                      dbc.Col(dbc.ListGroupItem("MLCIN",
                                 href=f"{configs['PLACEFILES_LINKS']}/mlcin_updated.txt",
                                 target="_blank"), style={'color':lc.nse_c}, width=2),
@@ -554,14 +555,12 @@ def generate_layout(layout_has_initialized, children, configs):
                      dbc.Col(dbc.ListGroupItem("0-3km LR",
                                 href=f"{configs['PLACEFILES_LINKS']}/lr03km_updated.txt",
                                 target="_blank"), style={'color':lc.nse_c}, width=2),
-                     dbc.Col(dbc.ListGroupItem("MUCAPE",
-                                href=f"{configs['PLACEFILES_LINKS']}/mucape_updated.txt",
-                                target="_blank"), style={'color':lc.nse_c}, width=2),
+
                  ],
                  style={"display": "flex", "flexWrap": "wrap"},
                 ),
                 dbc.Row(
-                 [dbc.Col("",width=2),
+                 [dbc.Col("",width=2),dbc.Col("",width=2),
                      dbc.Col(dbc.ListGroupItem("MLCIN (fill)",
                                 href=f"{configs['PLACEFILES_LINKS']}/mlcin_cf_updated.txt",
                                 target="_blank"), style={'color':lc.nse_c}, width=2),
@@ -571,11 +570,10 @@ def generate_layout(layout_has_initialized, children, configs):
                      dbc.Col(dbc.ListGroupItem("0-3km LR (fill)",
                                 href=f"{configs['PLACEFILES_LINKS']}/lr03km_cf_updated.txt",
                                 target="_blank"), style={'color':lc.nse_c}, width=2),
-                     dbc.Col(" ", width=2),
                  ],
                  style={"display": "flex", "flexWrap": "wrap"},
                 ),
-             lc.spacer_mini,
+             lc.spacer,
                 dbc.Row(
                  [
                      dbc.Col("Miscellaneous", style=lc.group_header_style, width=4),
@@ -597,7 +595,7 @@ def generate_layout(layout_has_initialized, children, configs):
                  style={"display": "flex", "flexWrap": "wrap"}
                 ),
              ]
-        )))
+        ))))
 
         full_links_section = dbc.Container(
             dbc.Container(
@@ -632,16 +630,16 @@ def generate_layout(layout_has_initialized, children, configs):
                                             sim_hour_section, sim_minute_section,
                                             sim_duration_section, lc.spacer,
                                             lc.step_time_confirm])], style={'padding': '1em'}),
-                              ], style=lc.section_box)])
-            ]), lc.spacer,
+                              ], style=lc.section_box_pad)])
+            ]), lc.spacer,lc.spacer_mini,
             lc.full_radar_select_section, lc.spacer_mini,
             lc.map_section,
             lc.full_transpose_section,
-            lc.spacer_mini,
+            lc.spacer,
             lc.scripts_button,
             lc.status_section,
-            lc.spacer, lc.toggle_placefiles_btn, lc.spacer_mini,
-            full_links_section, lc.spacer,
+            lc.spacer, #lc.toggle_placefiles_btn, lc.spacer_mini,
+            full_links_section, lc.spacer,lc.spacer_mini,
             simulation_playback_section,
             lc.radar_id, lc.bottom_section
         ])
@@ -1073,7 +1071,7 @@ def monitor(_n, cfg, cancel_btn_disabled, monitor_store):
     # Polling link disclosure when grlevel2.cfg file has been copied into assets dir
     gr2_cfg_filename = f"{cfg['POLLING_DIR']}/grlevel2.cfg"
     polling_link_href = ""
-    polling_link_style =  {'color': '#555555'}
+    polling_link_style =  {'color': lc.steps_background}
     if os.path.exists(gr2_cfg_filename):
         polling_link_href = f"{cfg['LINK_BASE']}/polling"
         polling_link_style = {'color': '#cccccc'}
