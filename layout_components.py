@@ -197,7 +197,7 @@ map_toggle_button = dbc.Col(html.Div([dbc.Button('Show Radar Map', size="lg",
 confirm_radars = dbc.Col(html.Div([dbc.Button('Make selections', size="lg",
                                               id='confirm_radars_btn', n_clicks=0, disabled=True)],
                                   className="d-grid gap-2 col-12 mx-auto"))
-MAP_INSTRUCT_ONE = "Select number of radars, use radar map to make selection(s), "
+MAP_INSTRUCT_ONE = "Select number of radars, click Show Radar Map to make selection(s), "
 MAP_INSTRUCT_TWO = "click Finalize to confirm."
 MAP_INSTRUCTIONS = MAP_INSTRUCT_ONE + MAP_INSTRUCT_TWO
 map_instructions_component = dbc.Row(
@@ -264,11 +264,6 @@ transpose_list = sorted(list(df.index))
 transpose_list.insert(0, 'None')
 
 STEP_TRANSPOSE_TEXT = "Optional -- Select a radar site to transpose to"
-# step_transpose_radar = dbc.Col(html.Div(children=STEP_TRANSPOSE_TEXT, style=steps_right))
-# transpose_radar_dropdown = dbc.Col(html.Div([spacer_mini,dcc.Dropdown(transpose_list, 'None',
-#                                             id='new_radar_selection', clearable=False)],
-#                                             className="d-grid gap-2 col-10 mx-auto",
-#                                             style={'vertical-align': 'top'}))
 
 step_transpose_radar = dbc.Col(
     children=STEP_TRANSPOSE_TEXT, style=steps_center)
@@ -300,20 +295,25 @@ full_transpose_section = dbc.Container([
 ################################################################################################
 # ----------------------------- Run Script button  ---------------------------------------------
 ################################################################################################
+RUN_SCRIPTS_TEXT = "Run scripts to set up simulation"
+scripts_step = dbc.Col(html.Div(children=RUN_SCRIPTS_TEXT, style=steps_center))
+run_scripts_button = dbc.Col(html.Div([dbc.Button('Run Scripts',
+                                                  size="lg", id='run_scripts_btn',
+                                                  n_clicks=0, disabled=True)],
+                                      className="d-grid gap-2 col-12 mx-auto"))
+cancel_scripts_button = dbc.Col(html.Div([dbc.Button('Cancel Scripts', color='danger',
+                                                     size="lg", id='cancel_scripts',
+                                                     n_clicks=0, disabled=True)],
+                                         className="d-grid gap-2 col-12 mx-auto"))
+scripts_button_row = dbc.Row([run_scripts_button, cancel_scripts_button])
+show_script_progress = html.Div(id='show_script_progress', style=feedback)
 
-scripts_button = dbc.Container(html.Div([
-    dbc.Row([dbc.Col(
-            html.Div([
-                dbc.Button(
-                    'Download and process radar data ... Make Obs/NSE Placefiles and Hodo plots',
-                    size="lg", id='run_scripts_btn', n_clicks=0, disabled=True),
-                dbc.Button(
-                    'Cancel all scripts', size="lg", id='cancel_scripts', n_clicks=0, disabled=True,
-                    style={'background-color': '#e25050', 'border-color': '#e25050'}),
-            ], className="d-grid gap-2"), style={'vertical-align': 'middle'}),
-        html.Div(id='show_script_progress', style=feedback)
-    ])
-], id='run_scripts_section', style={'padding': '1em', 'vertical-align': 'middle'}))
+scripts_button = dbc.Container(
+    dbc.Container(html.Div([
+        scripts_step, spacer_mini, scripts_button_row, spacer_mini,
+        show_script_progress], id='run_scripts_sction', style=section_box_pad))
+                  )
+
 
 ################################################################################################
 # ----------------------------- Script status components  --------------------------------------
@@ -369,7 +369,8 @@ transpose_status = dbc.Col(html.Div([transpose_status_header,
                                      dbc.Progress(id='transpose_status', striped=True, value=0),]))
 
 status_section = dbc.Container(dbc.Container(
-    html.Div([dbc.Row([radar_status, transpose_status,
+    html.Div([spacer_mini,spacer_mini,
+        dbc.Row([radar_status, transpose_status,
              obs_placefile_status, nse_status, hodograph_status])])
 ))
 
@@ -386,10 +387,6 @@ group_item_style = {'font-weight': 'bold', 'font-style': 'italic', 'color': 'whi
 
 group_header_style = {'padding': '0.1em','font-weight': 'bold', 'font-style': 'italic', 'color': 'white',
                     'font-size': '1.3em', 'text-align': 'left', 'text-decoration': 'underline'}
-
-# {'padding': '0.4em', 'border': '0.3em', 'border-radius': '15px',
-#                 'font-weight': 'bold', 'color': '#cccccc', 'background': '#555555',
-#                 'font-size': '1.2em', 'text-align': 'center', 'height': 'vh5'}
 
 group_header_polling = {'padding': '0.4em','border': '0.3em', 'border-radius': '15px',
                     'font-weight': 'bold', 'font-style': 'italic','color': steps_c,
@@ -419,7 +416,7 @@ toggle_placefiles_btn = dbc.Container(dbc.Col(html.Div([dbc.Button(
 
 step_select_time_section = dbc.Container(
     dbc.Col(html.Div(children=STEP_SELECT_TIME, style=steps_center)))
-SIMULATION_PLAYBACK_BANNER_TEXT = "Simulation Playback Section"
+SIMULATION_PLAYBACK_BANNER_TEXT = "Simulation Playback Controls"
 playback_banner = dbc.Row(
     dbc.Col(html.Div(children=SIMULATION_PLAYBACK_BANNER_TEXT, style=steps_center)))
 
