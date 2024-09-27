@@ -258,10 +258,7 @@ def remove_munged_radar_files(cfg) -> None:
                 matched = re.match(regex_pattern, name)
                 raw_matched = re.match(raw_pattern, name)
                 if raw_matched:
-                    with gzip.open(thisfile, 'rb') as f_in:
-                        with open(f"{thisfile}.gz", 'wb') as f_out:
-                            shutil.copyfileobj(f_in, f_out)
-                    shutil.move(f"{thisfile}.gz", cfg['USER_DOWNLOADS_DIR'])
+                    shutil.move(f"{thisfile}", cfg['USER_DOWNLOADS_DIR'] / f"{name}")
                 if matched or '.uncompressed' in name:
                     os.remove(thisfile)
 
