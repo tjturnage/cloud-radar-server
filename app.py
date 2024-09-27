@@ -9,6 +9,7 @@ radar data generation, including the handling of time shifts and geographical co
 # from flask import Flask, render_template
 import os
 import shutil
+import gzip
 import re
 import subprocess
 from pathlib import Path
@@ -229,7 +230,7 @@ def remove_files_and_dirs(cfg) -> None:
     are not included in the current simulation.
     """
     dirs = [cfg['RADAR_DIR'], cfg['POLLING_DIR'], cfg['HODOGRAPHS_DIR'], cfg['MODEL_DIR'],
-            cfg['PLACEFILES_DIR']]
+            cfg['PLACEFILES_DIR'], cfg['DOWNLOADS_DIR']]
     for directory in dirs:
         for root, dirs, files in os.walk(directory, topdown=False):
             for name in files:
@@ -244,14 +245,24 @@ def remove_munged_radar_files(cfg) -> None:
     Removes uncompressed and 'munged' radar files within the /data/xx/radar directory 
     after the pre-processing scripts have completed. These files are no longer needed 
     as the appropriate files have been exported to the /assets/xx/polling directory. 
+    
+    copies the original gzipped files to the user downloads directory so they can be
+    downloaded by the user if desired.
     """
     regex_pattern = r'^(.{4})(\d{8})_(\d{6})$'
+    raw_pattern = r'^(.{4})(\d{8})_(\d{6})_(V\d{2})$'
     for root, _, files in os.walk(cfg['RADAR_DIR']):
         if Path(root).name == 'downloads':
             for name in files:
                 thisfile = os.path.join(root, name)
                 matched = re.match(regex_pattern, name)
-                if matched or '.uncompressed' in name: 
+                raw_matched = re.match(raw_pattern, name)
+                if raw_matched:
+                    with gzip.open(thisfile, 'rb') as f_in:
+                        with open(f"{thisfile}.gz", 'wb') as f_out:
+                            shutil.copyfileobj(f_in, f_out)
+                    shutil.move(f"{thisfile}.gz", cfg['USER_DOWNLOADS_DIR'])
+                if matched or '.uncompressed' in name:
                     os.remove(thisfile)
 
 
@@ -1158,25 +1169,6 @@ def run_transpose_script(PLACEFILES_DIR, sim_times, radar_info) -> None:
     """
     shift_placefiles(PLACEFILES_DIR, sim_times, radar_info)
 
-################################################################################################
-# ----------------------------- Toggle Placefiles Section --------------------------------------
-################################################################################################
-
-
-@app.callback(
-    [Output('placefiles_section', 'style'),
-     Output('toggle_placefiles_section_btn', 'children')],
-    Input('toggle_placefiles_section_btn', 'n_clicks'),
-    prevent_initial_call=True)
-def toggle_placefiles_section(n) -> dict:
-    """
-    based on button click, show or hide the map by returning a css style dictionary
-    to modify the associated html element
-    """
-    btn_text = 'Links Section'
-    if n % 2 == 1:
-        return {'display': 'none'}, f'Show {btn_text}'
-    return lc.section_box_pad, f'Hide {btn_text}'
 
 ################################################################################################
 # ----------------------------- Clock Callbacks  -----------------------------------------------
@@ -1466,3 +1458,23 @@ if __name__ == '__main__':
         else:
             app.run(debug=True, port=8050, threaded=True,
                     dev_tools_hot_reload=False)
+
+# ################################################################################################
+# # ----------------------------- Toggle Placefiles Section --------------------------------------
+# ################################################################################################
+
+
+# @app.callback(
+#     [Output('placefiles_section', 'style'),
+#      Output('toggle_placefiles_section_btn', 'children')],
+#     Input('toggle_placefiles_section_btn', 'n_clicks'),
+#     prevent_initial_call=True)
+# def toggle_placefiles_section(n) -> dict:
+#     """
+#     based on button click, show or hide the map by returning a css style dictionary
+#     to modify the associated html element
+#     """
+#     btn_text = 'Links Section'
+#     if n % 2 == 1:
+#         return {'display': 'none'}, f'Show {btn_text}'
+#     return lc.section_box_pad, f'Hide {btn_text}'

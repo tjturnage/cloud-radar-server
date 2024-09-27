@@ -46,25 +46,31 @@ spacer_mini = html.Div([], style={'height': '10px'})
 obs_c = '#10c4c4'
 nse_c = '#bdaf35'
 graphics_c = '#cccccc'
-steps_c = '#065c1e'
-pad_background = '#222222'
-steps_background = '#333333'
+#steps_c = '#065c1e'
+steps_c = '#05610d'
+pad_background = '#202020'
+steps_background = '#303030'
+feedback_border_radius = '12px'
+#'border-radius': '12px',
 
 bold = {'font-weight': 'bold'}
 
-feedback = {'border': '1px gray solid', 'padding': '0.4em', 'font-weight': 'bold',
+feedback = {'border': '1px gray solid', 'padding': '0.4em',
+            'border-radius': feedback_border_radius, 'font-weight': 'bold',
             'font-size': '1.4em', 'text-align': 'center', 'vertical-align': 'center',
             'height': '6vh'}
 
 feedback_smaller = replace_in_dict(feedback, '1.4em', '1.2em')
 
-feedback_green = {'border': '1px gray solid', 'padding': '0.4em', 'font-weight': 'bold',
+feedback_green = {'border': '1px gray solid', 'padding': '0.4em',
+                  'border-radius': feedback_border_radius, 'font-weight': 'bold',
                   'font-size': '1.4em', 'text-align': 'center', 'vertical-align': 'center',
                   'height': '6vh', 'color': 'black', 'background-color': '#06DB42'}
 
 feedback_yellow = replace_in_dict(feedback_green, '#06DB42', '#bfbf19')
 
-playback_times_style = {'border': '1px gray solid', 'padding': '0.4em', 'font-weight': 'bold',
+playback_times_style = {'border': '1px gray solid', 'padding': '0.4em', 
+                        'border-radius': feedback_border_radius,'font-weight': 'bold',
                         'font-size': '1.4em', 'text-align': 'center', 'vertical-align': 'center',
                         'height': '6vh', 'color': 'white', 'background-color': '#555555'}
 
@@ -153,14 +159,14 @@ top_banner = html.Div([
 # ----------------------------- Time/duration components  --------------------------------------
 ################################################################################################
 
-STEP_SELECT_EVENT_TIME = "Select Event Start Date, Time, and Duration (in Minutes)"
-STEP_SELECT_TIME = "Select Simulation Start Date, Time, and Duration (in Minutes)"
+STEP_SELECT_EVENT_TIME = "Select Event Start Date, Time (in UTC), and Duration (in Minutes)"
+STEP_SELECT_TIME = "Select Simulation Start Date, Time (in UTC), and Duration (in Minutes)"
 
 step_select_event_time_section = dbc.Container(
     dbc.Col(html.Div(children=STEP_SELECT_EVENT_TIME, style=steps_center)))
 
 time_headers = {'padding': '0.05em', 'border': '1em', 'border-radius': '12px',
-                'background': steps_background, 'font-size': '1.4em', 'color': 'white',
+                'background': steps_background, 'font-size': '1.4em', 'color': '#cccccc',
                 'text-align': 'center', 'vertical-align': 'top', 'height': '4vh'}
 
 smaller_headers = replace_in_dict(time_headers, '1.4em', '1.2em')

@@ -94,6 +94,7 @@ def setup_paths_and_dirs(n_intervals, session_id):
         dirs['SESSION_ID'] = session_id
         dirs['PLACEFILES_DIR'] = f"{dirs['ASSETS_DIR']}/placefiles"
         dirs['HODOGRAPHS_DIR'] = f"{dirs['ASSETS_DIR']}/hodographs"
+        dirs['USER_DOWNLOADS_DIR'] = f"{dirs['ASSETS_DIR']}/downloads"
         dirs['HODOGRAPHS_PAGE'] = f"{dirs['ASSETS_DIR']}/hodographs.html"
         dirs['HODO_HTML_PAGE'] = dirs['HODOGRAPHS_PAGE']
         dirs['POLLING_DIR'] = f"{dirs['ASSETS_DIR']}/polling"
@@ -122,6 +123,7 @@ def setup_paths_and_dirs(n_intervals, session_id):
         os.makedirs(dirs['MODEL_DIR'], exist_ok=True)
         os.makedirs(dirs['RADAR_DIR'], exist_ok=True)
         os.makedirs(dirs['HODOGRAPHS_DIR'], exist_ok=True)
+        os.makedirs(dirs['USER_DOWNLOADS_DIR'], exist_ok=True)
         os.makedirs(dirs['PLACEFILES_DIR'], exist_ok=True)
         os.makedirs(dirs['POLLING_DIR'], exist_ok=True)
         os.makedirs(dirs['LOG_DIR'], exist_ok=True)
