@@ -230,7 +230,7 @@ def remove_files_and_dirs(cfg) -> None:
     are not included in the current simulation.
     """
     dirs = [cfg['RADAR_DIR'], cfg['POLLING_DIR'], cfg['HODOGRAPHS_DIR'], cfg['MODEL_DIR'],
-            cfg['PLACEFILES_DIR'], cfg['DOWNLOADS_DIR']]
+            cfg['PLACEFILES_DIR'], cfg['USER_DOWNLOADS_DIR']]
     for directory in dirs:
         for root, dirs, files in os.walk(directory, topdown=False):
             for name in files:
@@ -250,15 +250,13 @@ def remove_munged_radar_files(cfg) -> None:
     downloaded by the user if desired.
     """
     regex_pattern = r'^(.{4})(\d{8})_(\d{6})$'
-    raw_pattern = r'^(.{4})(\d{8})_(\d{6})_(V\d{2})$'
+    #raw_pattern = r'^(.{4})(\d{8})_(\d{6})_(V\d{2})$'
     for root, _, files in os.walk(cfg['RADAR_DIR']):
         if Path(root).name == 'downloads':
             for name in files:
                 thisfile = os.path.join(root, name)
                 matched = re.match(regex_pattern, name)
-                raw_matched = re.match(raw_pattern, name)
-                if raw_matched:
-                    shutil.move(f"{thisfile}", cfg['USER_DOWNLOADS_DIR'] / f"{name}")
+                #raw_matched = re.match(raw_pattern, name)
                 if matched or '.uncompressed' in name:
                     os.remove(thisfile)
 
@@ -905,7 +903,7 @@ def run_with_cancel_button(cfg, sim_times, radar_info):
                     str(sim_times['event_duration']),
                     str(sim_times['simulation_seconds_shift']
                         ), cfg['RADAR_DIR'],
-                    cfg['POLLING_DIR'], cfg['L2MUNGER_FILEPATH'], cfg['DEBZ_FILEPATH'],
+                    cfg['POLLING_DIR'], cfg['USER_DOWNLOADS_DIR'], cfg['L2MUNGER_FILEPATH'], cfg['DEBZ_FILEPATH'],
                     new_radar]
             res = call_function(utils.exec_script, Path(cfg['MUNGER_SCRIPT_FILEPATH']),
                                 args, cfg['SESSION_ID'])

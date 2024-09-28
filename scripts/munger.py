@@ -46,7 +46,7 @@ class Munger():
     """
 
     def __init__(self, original_rda, playback_start, duration, timeshift, RADAR_DIR, POLLING_DIR,
-                 L2MUNGER_FILEPATH, DEBZ_FILEPATH, new_rda='None'):
+                 USER_DOWNLOADS_DIR,L2MUNGER_FILEPATH, DEBZ_FILEPATH, new_rda='None'):
         self.original_rda = original_rda.upper()
         print(self.original_rda)
         self.source_directory = Path(f"{RADAR_DIR}/{self.original_rda}/downloads")
@@ -56,6 +56,7 @@ class Munger():
         self.seconds_shift = int(timeshift)    # Needed for data passed in via command line.
         self.new_rda = new_rda
         self.polling_dir = Path(POLLING_DIR)
+        self.user_downloads_dir = Path(USER_DOWNLOADS_DIR)
         self.assets_dir = self.polling_dir.parent
         self.this_radar_polling_dir = Path(f"{POLLING_DIR}/{self.original_rda}")
         if self.new_rda != 'None':
@@ -100,6 +101,9 @@ class Munger():
                 # unsure if ungzip'ed file needs to be passed to debz.py
                 # Edit 6/28: keep original compressed file used for radar status tracking.
                 filename_str = filename_str[:-3]
+                cp_command_str = f'cp {filename_str} {self.user_downloads_dir}/{filename_str}'
+                print(cp_command_str)
+                os.system(cp_command_str)
                 new_filename = f'{filename_str}.uncompressed'
                 command_string = f'gunzip -c {filename_str} > {new_filename}'
                 os.system(command_string)
@@ -108,8 +112,11 @@ class Munger():
 
             if 'V0' in filename_str:
                 # Keep existing logic for .V06 and .V08 files
-                command_str = f'python {self.debz_filepath} {filename_str} {filename_str}.uncompressed'
+                uncompressed_filestr = f'{filename_str}.uncompressed'
+                command_str = f'python {self.debz_filepath} {filename_str} {uncompressed_filestr}'
                 os.system(command_str)
+                zip_command_str = f'gzip {uncompressed_filestr} -c > {self.user_downloads_dir}/{filename_str}.gz'
+                os.system(zip_command_str)
             else:
                 print(f'File type not recognized: {filename_str}')
                 continue
@@ -194,16 +201,19 @@ if __name__ == "__main__":
     MANUAL_RUN = False
     if MANUAL_RUN:
         ORIG_RDA = 'KGRR'
-        NEW_RDA = 'KGRR'
         playback_start_time = datetime.now(tz=timezone.utc) - timedelta(hours=2)
+        playback_start_str = datetime.strftime(playback_start_time,"%Y-%m-%d %H:%M")
         event_start_time = datetime(2013, 5, 7, 21, 45, 0, tzinfo=timezone.utc)
         DURATION = 30
         simulation_time_shift = playback_start_time - event_start_time
         seconds_shift = int(simulation_time_shift.total_seconds())
-        playback_start_str = datetime.strftime(playback_start_time,"%Y-%m-%d %H:%M")
-        playback_end_time = playback_start_time + timedelta(minutes=int(DURATION))
-        #Munger(ORIG_RDA, playback_start_str, DURATION, seconds_shift, NEW_RDA)
+        radar_dir = None
+        polling_dir = None
+        user_downloads_dir = None
+        l2munger_filepath = None
+        debz_filepath = None
+        NEW_RDA = 'KGRR'
+
     else:
-        Munger(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], 
-               sys.argv[6], sys.argv[7], sys.argv[8], sys.argv[9])
-        #original_rda, playback_start, duration, timeshift, new_rda, playback_speed=1.5
+        Munger(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5],
+               sys.argv[6], sys.argv[7], sys.argv[8], sys.argv[9], sys.argv[10])
