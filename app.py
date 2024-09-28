@@ -267,8 +267,8 @@ def zip_downloadable_radar_files(cfg) -> None:
     After all radar files have been processed and are ready for download, this function
     zips up the radar files already in the user downloads directory.
     """
-    download_dir = cfg['USER_DOWNLOADS_DIR']
-    shutil.make_archive(f'{download_dir}/radar_files', 'zip', download_dir)
+    shutil.make_archive('radar_files', 'zip', cfg['USER_DOWNLOADS_DIR'])
+    shutil.move('radar_files.zip', f"{cfg['USER_DOWNLOADS_DIR']}/radar_files.zip")
 
 def date_time_string(dt) -> str:
     """
@@ -607,7 +607,7 @@ def generate_layout(layout_has_initialized, children, configs):
                                 href=f"{configs['LINK_BASE']}/file_times.txt",
                                 target="_blank"), style={'color':lc.graphics_c},width=4),
                      dbc.Col(dbc.ListGroupItem("Download radar files",
-                                href=f"{configs['LINK_BASE']}/radar_files.zip"),
+                                href=f"{configs['LINK_BASE']}/downloads/radar_files.zip"),
                                 style={'color':lc.graphics_c},width=2),
                  ],
                  style={"display": "flex", "flexWrap": "wrap"}
