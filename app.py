@@ -262,6 +262,13 @@ def remove_munged_radar_files(cfg) -> None:
                 if raw_matched:
                     shutil.copy2(thisfile, cfg['USER_DOWNLOADS_DIR'])
 
+def zip_downloadable_radar_files(cfg) -> None:
+    """
+    After all radar files have been processed and are ready for download, this function
+    zips up the radar files already in the user downloads directory.
+    """
+    download_dir = cfg['USER_DOWNLOADS_DIR']
+    shutil.make_archive(f'{download_dir}/radar_files', 'zip', download_dir)
 
 def date_time_string(dt) -> str:
     """
@@ -591,7 +598,7 @@ def generate_layout(layout_has_initialized, children, configs):
                  [
                      dbc.Col(dbc.ListGroupItem("LSRs Placefile",
                                 href=f"{configs['PLACEFILES_LINKS']}/LSRs_updated.txt",
-                                target="_blank"),style={'color':lc.graphics_c}, width=4),
+                                target="_blank"),style={'color':lc.graphics_c}, width=2),
                      dbc.Col(dbc.ListGroupItem("Hodographs webpage (click to open)",
                                 href=f"{configs['LINK_BASE']}/hodographs.html",
                                 target="_blank"),style={'color':lc.graphics_c},width=4),
@@ -599,6 +606,9 @@ def generate_layout(layout_has_initialized, children, configs):
                      dbc.Col(dbc.ListGroupItem("Radar File Times (click to open)",
                                 href=f"{configs['LINK_BASE']}/file_times.txt",
                                 target="_blank"), style={'color':lc.graphics_c},width=4),
+                     dbc.Col(dbc.ListGroupItem("Download radar files",
+                                href=f"{configs['LINK_BASE']}/radar_files.zip"),
+                                style={'color':lc.graphics_c},width=2),
                  ],
                  style={"display": "flex", "flexWrap": "wrap"}
                 ),
@@ -926,6 +936,12 @@ def run_with_cancel_button(cfg, sim_times, radar_info):
     except KeyError as e:
         logging.exception("Error removing munged radar files ", exc_info=True)
 
+    # Now that all radar files are in assets/{}/downloads dir, zip them up
+    try:
+        zip_downloadable_radar_files(cfg)
+    except KeyError as e:
+        logging.exception("Error zipping radar files ", exc_info=True)
+        
     # LSR Placefiles. Not monitored currently due to how quick this executes
     args = [str(sim_times['event_start_str']), str(sim_times['event_duration']),
             cfg['DATA_DIR'], cfg['PLACEFILES_DIR']]
