@@ -115,8 +115,8 @@ class Munger():
                 uncompressed_filestr = f'{filename_str}.uncompressed'
                 command_str = f'python {self.debz_filepath} {filename_str} {uncompressed_filestr}'
                 os.system(command_str)
-                zip_command_str = f'gzip {uncompressed_filestr} -c > {self.user_downloads_dir}/{filename_str}.gz'
-                os.system(zip_command_str)
+                #zip_command_str = f'gzip {uncompressed_filestr} -c > {self.user_downloads_dir}/{filename_str}.gz'
+                #os.system(zip_command_str)
             else:
                 print(f'File type not recognized: {filename_str}')
                 continue
@@ -195,6 +195,15 @@ class Munger():
                 with gzip.open(f'{self.this_radar_polling_dir}/{new_filename}.gz', 'wb') as f_out:
                     shutil.copyfileobj(f_in, f_out)
         fout.close()
+
+    # def make_radar_files_downloadable(self) -> None:
+    #     """
+    #     Moves radar files to the user downloads directory so they can be downloaded
+    #     """
+    #     for file in self.source_files:
+    #         if '_' in str(file):
+    #             shutil.move(file, self.user_downloads_dir)
+            
 
 #-------------------------------
 if __name__ == "__main__":

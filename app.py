@@ -246,19 +246,21 @@ def remove_munged_radar_files(cfg) -> None:
     after the pre-processing scripts have completed. These files are no longer needed 
     as the appropriate files have been exported to the /assets/xx/polling directory. 
     
-    copies the original gzipped files to the user downloads directory so they can be
+    copies the original files to the user downloads directory so they can be
     downloaded by the user if desired.
     """
     regex_pattern = r'^(.{4})(\d{8})_(\d{6})$'
-    #raw_pattern = r'^(.{4})(\d{8})_(\d{6})_(V\d{2})$'
+    raw_pattern = r'^(.{4})(\d{8})_(\d{6})_(V\d{2})$'
     for root, _, files in os.walk(cfg['RADAR_DIR']):
         if Path(root).name == 'downloads':
             for name in files:
                 thisfile = os.path.join(root, name)
                 matched = re.match(regex_pattern, name)
-                #raw_matched = re.match(raw_pattern, name)
+                raw_matched = re.match(raw_pattern, name)
                 if matched or '.uncompressed' in name:
                     os.remove(thisfile)
+                if raw_matched:
+                    shutil.copy2(thisfile, cfg['USER_DOWNLOADS_DIR'])
 
 
 def date_time_string(dt) -> str:

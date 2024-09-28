@@ -19,7 +19,7 @@ class LsrCreator:
 
         # Entries are in minutes. lsr_delay = how long to withhold lsr after event occurrence.
         # lsr_duration = how long to display lsr
-        self.lsr_delay = 4
+        self.lsr_delay = 10
         self.lsr_duration = 30
 
         # URL for downloading the LSR Data
@@ -38,7 +38,7 @@ class LsrCreator:
     def download_and_save_file(self):         
         try:
             response = requests.get(self.url, timeout=10)
-            response.raise_for_status()  
+            response.raise_for_status()
 
             with open(self.lsr_file, 'wb') as file:
                 file.write(response.content)
