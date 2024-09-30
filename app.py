@@ -507,6 +507,15 @@ def generate_layout(layout_has_initialized, children, configs):
                  ],
                  style={"display": "flex", "flexWrap": "wrap"}
                 ),
+                dbc.Row([
+                    dbc.Col(dbc.ListGroupItem("LSRs",
+                                href=f"{configs['PLACEFILES_LINKS']}/LSRs_updated.txt",
+                                target="_blank"),style={'color':lc.obs_c}, width=2),
+                    dbc.Col(dbc.ListGroupItem("Notifications (only works after successful CSV uploads)",
+                                href=f"{configs['PLACEFILES_LINKS']}/notifications_updated.txt",
+                                target="_blank"),style={'color':lc.obs_c}, width=6),
+                ],
+                style={"display": "flex", "flexWrap": "wrap"}),
              lc.spacer,
                 dbc.Row(
                  [
@@ -590,27 +599,24 @@ def generate_layout(layout_has_initialized, children, configs):
                  ],
                  style={"display": "flex", "flexWrap": "wrap"},
                 ),
-             lc.spacer,
+                lc.spacer_mini,
                 dbc.Row(
                  [
-                     dbc.Col("Miscellaneous", style=lc.group_header_style, width=4),
+                     dbc.Col("Simulation Links", style=lc.group_header_style, width=6),
                  ], style={"display": "flex", "flexWrap": "wrap"}),
              lc.spacer_mini,
                     dbc.Row(
                  [
-                     dbc.Col(dbc.ListGroupItem("LSRs Placefile",
-                                href=f"{configs['PLACEFILES_LINKS']}/LSRs_updated.txt",
-                                target="_blank"),style={'color':lc.graphics_c}, width=2),
-                     dbc.Col(dbc.ListGroupItem("Hodographs webpage (click to open)",
+                     dbc.Col(dbc.ListGroupItem("Hodographs Page (click to open)",
                                 href=f"{configs['LINK_BASE']}/hodographs.html",
                                 target="_blank"),style={'color':lc.graphics_c},width=4),
 
                      dbc.Col(dbc.ListGroupItem("Radar File Times (click to open)",
                                 href=f"{configs['LINK_BASE']}/file_times.txt",
                                 target="_blank"), style={'color':lc.graphics_c},width=4),
-                     dbc.Col(dbc.ListGroupItem("Download radar files",
+                     dbc.Col(dbc.ListGroupItem("Click to Download Radar Files",
                                 href=f"{configs['LINK_BASE']}/downloads/radar_files.zip"),
-                                style={'color':lc.graphics_c},width=2),
+                                style={'color':lc.graphics_c},width=4),
                  ],
                  style={"display": "flex", "flexWrap": "wrap"}
                 ),
@@ -1491,12 +1497,12 @@ def convert_datetimes(dts):
 
 
 
-def parse_contents(contents, filename):
+def parse_contents(contents, filename, cfg):
     """_summary_
 
     """
 
-    icon_font_text = '\n\nRefresh: 1\
+    icon_font_text = 'Refresh: 1\
     \nThreshold: 999\
     \nTitle: Notifications -- for radar simulation\
     \nColor: 255 200 255\
@@ -1509,9 +1515,11 @@ def parse_contents(contents, filename):
 
     _content_type, content_string = contents.split(',')
     decoded = base64.b64decode(content_string)
+
     try:
         if 'csv' in filename:
-            fout = open('simulation.txt', 'w', encoding='utf-8')
+            fout = open(f'{cfg['PLACEFILES_DIR']}/notifications.txt', 'w', encoding='utf-8')
+            fout.write("//RSSiC notifications file\n")
             fout.write(icon_font_text)
             # Assume that the user uploaded a CSV file
             df = pd.read_csv(io.StringIO(decoded.decode('utf-8')), dtype=str)
@@ -1527,11 +1535,11 @@ def parse_contents(contents, filename):
                         tr_line = convert_datetimes(dts)
                         obj_line = f'Object: {lat},{lon}\n'
                         comments = row.get('comments',"")
-                        icon_line = f"Threshold: 999\nIcon: 0,0,0,4,13, {comments}\nEnd:\n"
+                        icon_line = f"Threshold: 999\nIcon: 0,0,0,4,13, {comments}\nEnd:\n\n"
                         print(tr_line,obj_line,icon_line)
                         fout.write(tr_line)
                         fout.write(obj_line)
-                        fout.write(icon_line)       
+                        fout.write(icon_line)
                 except (pd.errors.ParserError, pd.errors.EmptyDataError, ValueError) as e:
                     return None, f"Error processing file: {e}"
             fout.close()
@@ -1542,19 +1550,25 @@ def parse_contents(contents, filename):
         return None, f"Error processing file: {e}"
 
 @app.callback(Output('show_upload_feedback', 'children'),
-              Input('upload-data', 'contents'),
+              [Input('upload-data', 'contents'),
               State('upload-data', 'filename'),
+              State('configs', 'data')],
               prevent_initial_call=True)
-def update_output(contents, filename):
+def update_output(contents, filename, cfg):
     if contents is not None:
-        df, error = parse_contents(contents, filename)
-        if error:
-            return html.Div([
+        try:
+            df, error = parse_contents(contents, filename, cfg)
+            if error:
+                return html.Div([
                 html.H5(error)
-            ])
-        else:
-            return html.Div([
+                ])
+            else:
+                return html.Div([
                 html.H5(f"File uploaded successfully: {filename}"),
+                ])
+        except (KeyError,pd.errors.ParserError, pd.errors.EmptyDataError, ValueError) as e:
+            return html.Div([
+                html.H5(f"Error processing file: {e}")
             ])
     return html.Div([
         html.H5("No file uploaded")
