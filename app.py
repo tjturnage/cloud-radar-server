@@ -24,7 +24,9 @@ import mimetypes
 import signal
 import psutil
 import pytz
-# import pandas as pd
+import base64
+import pandas as pd
+import io
 
 # from time import sleep
 from dash import Dash, html, Input, Output, dcc, ctx, State  # , callback
@@ -654,6 +656,7 @@ def generate_layout(layout_has_initialized, children, configs):
             lc.map_section,
             lc.full_transpose_section,
             lc.spacer,
+            lc.full_upload_section, lc.spacer,
             lc.scripts_button,
             lc.status_section,
             lc.spacer, #lc.toggle_placefiles_btn, lc.spacer_mini,
@@ -1455,6 +1458,109 @@ def update_day_dropdown(selected_year, selected_month):
     return day_options
 
 ################################################################################################
+# ----------------------------- Upload callback  -----------------------------------------------
+################################################################################################
+
+def convert_datetimes(dts):
+    """
+    Refresh: 1
+    Threshold: 999
+    Title: Notifications -- for radar simulation
+    IconFile: 1, 25, 25, 10, 10, https://www.weather.gov/source/dmx/GRIcons/lsr_icons_96.png
+    IconFile: 2, 25, 32, 10, 10, https://www.weather.gov/source/dmx/GRIcons/Lsr_Hail_Icons.png
+    IconFile: 3, 25, 32, 10, 10, https://www.weather.gov/source/dmx/GRIcons/wind_icons_96.png
+    IconFile: 4, 25, 32, 10, 10, https://www.weather.gov/source/dmx/GRIcons/Lsr_TstmWndGst_Icons.png
+    IconFile: 5, 25, 32, 10, 10, https://www.weather.gov/source/dmx/GRIcons/Lsr_NonTstmWndGst_Icons.png
+    IconFile: 6, 25, 32, 10, 10, https://www.weather.gov/source/dmx/GRIcons/Lsr_HeavyRain_Icons.png
+    Font: 1, 11, 1, "Courier New"
+
+    TimeRange: 2024-07-16T00:40:00Z 2024-07-16T01:00:00Z
+    Object: 41.75,-74.59
+    Threshold: 999
+    Icon: 0,0,0,4,13, Event: TSTM WND GST\nLSR Time: 2024-07-16T00:30:00Z\nSource: Mesonet\n59.0 mph TSTM WND GST\nMesonet station WBO
+    U Woodbourne.
+    END:
+
+    """
+    dtobj = datetime.strptime(dts, "%m/%d/%Y %H:%M")
+    end_dtobj = dtobj + timedelta(minutes=30)
+    start_tstr = dtobj.strftime("%Y-%m-%dT%H:%M:%SZ")
+    end_tstr = end_dtobj.strftime("%Y-%m-%dT%H:%M:%SZ")
+    timerange_line = f"TimeRange: {start_tstr} {end_tstr}\n"
+    return timerange_line
+
+
+
+def parse_contents(contents, filename):
+    """_summary_
+
+    """
+
+    icon_font_text = '\n\nRefresh: 1\
+    \nThreshold: 999\
+    \nTitle: Notifications -- for radar simulation\
+    \nColor: 255 200 255\
+    \nIconFile: 1, 18, 32, 2, 31, "https://mesonet.agron.iastate.edu/request/grx/windbarbs.png"\
+    \nIconFile: 2, 15, 15, 8, 8, "https://mesonet.agron.iastate.edu/request/grx/cloudcover.png"\
+    \nIconFile: 3, 25, 25, 12, 12, "https://mesonet.agron.iastate.edu/request/grx/rwis_cr.png"\
+    \nIconFile: 4, 13, 24, 2, 23, "https://rssic.nws.noaa.gov/assets/iconfiles/windbarbs-small.png"\
+    \nFont: 1, 11, 1, "Arial"\
+    \nFont: 2, 14, 1, "Arial"\n\n'
+
+    _content_type, content_string = contents.split(',')
+    decoded = base64.b64decode(content_string)
+    try:
+        if 'csv' in filename:
+            fout = open('simulation.txt', 'w', encoding='utf-8')
+            fout.write(icon_font_text)
+            # Assume that the user uploaded a CSV file
+            df = pd.read_csv(io.StringIO(decoded.decode('utf-8')), dtype=str)
+            df['full_dts'] = df['utc_date'] + ' ' + df['utc_hour'] + ':' + df['utc_minute']
+            df.fillna('M', inplace=True)
+
+            for _index,row in df.iterrows():
+                try:
+                    dts = row.get('full_dts',"")
+                    lat = row.get('latitude',"")
+                    lon = row.get('longitude',"")
+                    if 'M' not in lat and 'M' not in lon and 'M' not in dts:
+                        tr_line = convert_datetimes(dts)
+                        obj_line = f'Object: {lat},{lon}\n'
+                        comments = row.get('comments',"")
+                        icon_line = f"Threshold: 999\nIcon: 0,0,0,4,13, {comments}\nEnd:\n"
+                        print(tr_line,obj_line,icon_line)
+                        fout.write(tr_line)
+                        fout.write(obj_line)
+                        fout.write(icon_line)       
+                except (pd.errors.ParserError, pd.errors.EmptyDataError, ValueError) as e:
+                    return None, f"Error processing file: {e}"
+            fout.close()
+            return df, None
+        return None, f"Unsupported file type: {filename}"
+
+    except (pd.errors.ParserError, pd.errors.EmptyDataError, ValueError) as e:
+        return None, f"Error processing file: {e}"
+
+@app.callback(Output('show_upload_feedback', 'children'),
+              Input('upload-data', 'contents'),
+              State('upload-data', 'filename'),
+              prevent_initial_call=True)
+def update_output(contents, filename):
+    if contents is not None:
+        df, error = parse_contents(contents, filename)
+        if error:
+            return html.Div([
+                html.H5(error)
+            ])
+        else:
+            return html.Div([
+                html.H5(f"File uploaded successfully: {filename}"),
+            ])
+    return html.Div([
+        html.H5("No file uploaded")
+    ])
+
+################################################################################################
 # ----------------------------- Start app  -----------------------------------------------------
 ################################################################################################
 
@@ -1471,23 +1577,3 @@ if __name__ == '__main__':
         else:
             app.run(debug=True, port=8050, threaded=True,
                     dev_tools_hot_reload=False)
-
-# ################################################################################################
-# # ----------------------------- Toggle Placefiles Section --------------------------------------
-# ################################################################################################
-
-
-# @app.callback(
-#     [Output('placefiles_section', 'style'),
-#      Output('toggle_placefiles_section_btn', 'children')],
-#     Input('toggle_placefiles_section_btn', 'n_clicks'),
-#     prevent_initial_call=True)
-# def toggle_placefiles_section(n) -> dict:
-#     """
-#     based on button click, show or hide the map by returning a css style dictionary
-#     to modify the associated html element
-#     """
-#     btn_text = 'Links Section'
-#     if n % 2 == 1:
-#         return {'display': 'none'}, f'Show {btn_text}'
-#     return lc.section_box_pad, f'Hide {btn_text}'

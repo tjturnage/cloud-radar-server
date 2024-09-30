@@ -155,6 +155,55 @@ top_banner = html.Div([
         style={"padding": "1.7em", "text-align": "center"}),
 ])
 
+
+################################################################################################
+# ----------------------------- Upload components  -------------------------------------------
+################################################################################################
+STEP_UPLOAD_OPTIONAL = "Optional: Upload a CSV file to create a placefile"
+
+step_upload_optional = dbc.Container(
+    dbc.Col(html.Div(children=STEP_UPLOAD_OPTIONAL, style=steps_center)))
+
+upload_feedback_readout = dbc.Col(html.Div(id='show_upload_feedback',
+                                          style=feedback), width=12,
+                                 style={'vertical-align': 'top'})
+
+upload_component = dbc.Container(
+    html.Div([
+        dcc.Upload(
+            id='upload-data',
+            children=html.Div([
+                'Drag and Drop or ',
+                html.A('Select a CSV File')
+            ]),
+            style={
+                'width': '100%',
+                'height': '60px',
+                'lineHeight': '60px',
+                'borderWidth': '1px',
+                'borderStyle': 'dashed',
+                'borderRadius': '5px',
+                'textAlign': 'center',
+                'margin': '10px'
+            },
+            multiple=False
+        ),
+        html.Div(id='output-data-upload')
+    ]),
+    className="mb-3"
+)
+
+upload_section = dbc.Container(html.Div([
+    dbc.Row(step_upload_optional),
+    spacer_mini,
+    dbc.Row(upload_component),
+    dbc.Row(upload_feedback_readout)]))
+
+
+full_upload_section = dbc.Container(
+    dbc.Container([html.Div([upload_section], style=section_box_pad)])
+)
+
 ################################################################################################
 # ----------------------------- Time/duration components  --------------------------------------
 ################################################################################################

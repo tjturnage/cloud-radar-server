@@ -176,7 +176,7 @@ class Munger():
         munges radar files to start at the reference time
         also changes RDA location
         """
-        fout = open(f'{self.assets_dir}/file_times.txt', 'w', encoding='utf-8')
+        fout = open(f'{self.assets_dir}/file_times.txt', 'a', encoding='utf-8')
         os.chdir(self.source_directory)
         self.source_files = list(self.source_directory.glob('*uncompressed'))
         for uncompressed_file in self.uncompressed_files:
