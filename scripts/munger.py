@@ -183,10 +183,11 @@ class Munger():
             file_datetime_str = str(uncompressed_file.parts[-1])
             orig_file_timestr = file_datetime_str[4:19]
             file_datetime_obj = datetime.strptime(orig_file_timestr, '%Y%m%d_%H%M%S').replace(tzinfo=pytz.UTC)
+            file_list_str = datetime.strftime(file_datetime_obj, '%Y/%m/%d %H:%M:%S')
             new_time_obj = file_datetime_obj + timedelta(seconds=self.seconds_shift)
             new_time_str = datetime.strftime(new_time_obj, '%Y/%m/%d %H:%M:%S')
             new_filename_date_string = datetime.strftime(new_time_obj, '%Y%m%d_%H%M%S')
-            fout.write(f'{file_datetime_str[:19]} -- {new_time_str}\n')
+            fout.write(f'{file_datetime_str[0:4]} {file_list_str} --- {new_time_str}\n')
             command_line = f'./l2munger {self.new_rda} {new_time_str} 1 {file_datetime_str}'
             print(command_line)
             os.system(command_line)
