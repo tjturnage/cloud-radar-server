@@ -486,6 +486,7 @@ def generate_layout(layout_has_initialized, children, configs):
              lc.spacer_mini,
                 dbc.Row(
                  [
+                     dbc.Col(dbc.ListGroupItem("All elements"), style=lc.group_item_style, width=2),
                      dbc.Col(dbc.ListGroupItem("Regular font",
                                 href=f"{configs['PLACEFILES_LINKS']}/latest_surface_observations_updated.txt",
                                 target="_blank"), style={'color':lc.obs_c}, width=2),
@@ -495,19 +496,29 @@ def generate_layout(layout_has_initialized, children, configs):
                      dbc.Col(dbc.ListGroupItem("Small font",
                                 href=f"{configs['PLACEFILES_LINKS']}/latest_surface_observations_xlg_updated.txt",
                                 target="_blank"), style={'color':lc.obs_c}, width=2),
-                        dbc.Col(dbc.ListGroupItem("Wind only",
+                ],
+                 style={"display": "flex", "flexWrap": "wrap"}
+                ),
+                dbc.Row(
+                 [
+                     dbc.Col(dbc.ListGroupItem("Single element"), style=lc.group_item_style, width=2),
+                        dbc.Col(dbc.ListGroupItem("Wind",
                                 href=f"{configs['PLACEFILES_LINKS']}/wind_updated.txt",
                                 target="_blank"), style={'color':lc.obs_c}, width=2),
-                     dbc.Col(dbc.ListGroupItem("Temp only",
+                     dbc.Col(dbc.ListGroupItem("Temperature",
                                 href=f"{configs['PLACEFILES_LINKS']}/temp_updated.txt",
                                 target="_blank"), style={'color':lc.obs_c}, width=2),
-                     dbc.Col(dbc.ListGroupItem("Dwpt only",
+                     dbc.Col(dbc.ListGroupItem("Dewpoint",
                                 href=f"{configs['PLACEFILES_LINKS']}/dwpt_updated.txt",
+                                target="_blank"), style={'color':lc.obs_c}, width=2),
+                     dbc.Col(dbc.ListGroupItem("Relative Humidity",
+                                href=f"{configs['PLACEFILES_LINKS']}/rh_updated.txt",
                                 target="_blank"), style={'color':lc.obs_c}, width=2),
                  ],
                  style={"display": "flex", "flexWrap": "wrap"}
                 ),
                 dbc.Row([
+                    dbc.Col(dbc.ListGroupItem("Reports"), style=lc.group_item_style, width=2),
                     dbc.Col(dbc.ListGroupItem("LSRs",
                                 href=f"{configs['PLACEFILES_LINKS']}/LSRs_updated.txt",
                                 target="_blank"),style={'color':lc.obs_c}, width=2),

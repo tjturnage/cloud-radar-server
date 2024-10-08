@@ -443,8 +443,8 @@ PLACEFILES_BANNER_TEXT = "Set up GR2Analyst polling and add placefiles using lin
 placefiles_banner = dbc.Row(
     dbc.Col(html.Div(children=PLACEFILES_BANNER_TEXT, style=steps_center)))
 
-group_item_style = {'font-weight': 'bold', 'font-style': 'italic', 'color': 'white', 'border-right': '1px white solid',
-                    'font-size': '1.3em', 'text-align': 'right'}
+group_item_style = {'font-weight': 'bold', 'color': '#bbbbbb', 'border-right': '1.5px solid #10c4c4',
+                    'font-size': '1.0em', 'text-align': 'right'}
 
 group_header_style = {'padding': '0.1em','font-weight': 'bold', 'font-style': 'italic', 'color': 'white',
                     'font-size': '1.3em', 'text-align': 'left', 'text-decoration': 'underline'}

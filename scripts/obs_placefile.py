@@ -16,10 +16,9 @@ from datetime import datetime, timedelta
 import pytz
 import requests
 from dotenv import load_dotenv
-#from config import PLACEFILES_DIR
 load_dotenv()
-API_TOKEN = os.getenv("SYNOPTIC_API_TOKEN")
-#PLACEFILES_DIR = os.path.join(os.getcwd(),'assets','placefiles')
+#API_TOKEN = os.getenv("SYNOPTIC_API_TOKEN")
+API_TOKEN = '292d36a692d74badb6ca011f4413ae1b'
 API_ROOT = "https://api.synopticdata.com/v2/"
 
 parts = Path.cwd().parts
@@ -43,7 +42,9 @@ station_dict = {
     'public': {
         't': {'threshold': public_t_zoom, 'color': '225 75 75', 'position': '-17,13, 2,'},
         'dp': {'threshold': public_t_zoom, 'color': '0 255 0', 'position': '-17,-13, 2,'},
+        'rh': {'threshold': public_t_zoom, 'color': '180 180 255', 'position': '-17,0, 2,'},
         'vis': {'threshold': public_t_zoom, 'color': '180 180 255', 'position': '17,-13, 2,'},
+
         'wind': {'threshold': rwis_wind_zoom, 'color': gray, 'position': 'NA'},
         'wspd': {'threshold': public_wind_zoom, 'color': white, 'position': 'NA'},
         'wdir': {'threshold': public_wind_zoom, 'color': white, 'position': 'NA'},
@@ -73,7 +74,7 @@ short_dict = {'air_temp_value_1':'t',
         'wind_direction_value_1':'wdir',
         'wind_gust_value_1':'wgst',
         'visibility_value_1':'vis',
-        'road_temp_value_1': 'rt'
+        #'road_temp_value_1': 'rt'
         }
 
 class Mesowest():
@@ -107,7 +108,7 @@ class Mesowest():
             now = datetime.now(pytz.utc)
             round_down = now.minute%5
             round_up = round_down + 20
-            self.base_time = now + timedelta(minutes=round_up)
+            self.base_time = now  - timedelta(minutes=round_down) - timedelta(minutes=60)
             self.place_time = now - timedelta(minutes=round_down)
         else:
             self.base_time = datetime.strptime(self.event_timestr,'%Y-%m-%d %H:%M')
@@ -129,6 +130,7 @@ class Mesowest():
         self.place_title = f'Air Temperature {place_text}'
         self.wind_place_title = f'Wind and Gust {place_text}'
         self.dewpoint_place_title = f'Dewpoint Temperature {place_text}'
+        self.rh_place_title = f'Relative Humidity {place_text}'
         self.times = self.time_shift()
         self.build_placefile()
 
@@ -214,6 +216,7 @@ class Mesowest():
         self.placefile = 'Title: Mesowest ' + self.place_title + icon_font_text
         self.wind_placefile = 'Title: Mesowest ' + self.wind_place_title + icon_font_text
         self.dewpoint_placefile = 'Title: Mesowest ' + self.dewpoint_place_title + icon_font_text
+        self.rh_placefile = 'Title: Mesowest ' + self.rh_place_title + icon_font_text
         self.all_placefile = 'Title: Mesowest ' + self.all_title + icon_font_text
 
         for _t,this_time in enumerate(self.times):
@@ -230,6 +233,7 @@ class Mesowest():
             self.placefile += time_text
             self.wind_placefile += time_text
             self.dewpoint_placefile += time_text
+            self.rh_placefile += time_text
             self.all_placefile += time_text
             for j,station in enumerate(jas['STATION']):
                 temp_txt = ''
@@ -296,6 +300,11 @@ class Mesowest():
                 if dp_str != 'NA':
                     self.all_placefile += f'{obj_head}{dp_txt} End:\n\n'
                     self.dewpoint_placefile += f'{obj_head}{dp_txt} End:\n\n'
+                if t_str != 'NA' and dp_str != 'NA':
+                    rh_obj = self.return_rh_object(t_str, dp_str)
+                    #self.all_placefile += obj_head + rh_obj
+                    self.rh_placefile += obj_head + rh_obj
+
 
                 if wgst_str != 'NA' and wdir_str != 'NA':
                     wgst_text = self.gust_obj(wdir_str, wgst_str, this_dict)
@@ -315,6 +324,9 @@ class Mesowest():
 
         with open(os.path.join(self.placefiles_dir, 'dwpt.txt'), 'w', encoding='utf8') as outfile:
             outfile.write(self.dewpoint_placefile)
+
+        with open(os.path.join(self.placefiles_dir, 'rh.txt'), 'w', encoding='utf8') as outfile:
+            outfile.write(self.rh_placefile)
 
         with open(os.path.join(self.placefiles_dir, 'latest_surface_observations.txt'), 'w', encoding='utf8') as outfile:
             outfile.write(self.all_placefile)
@@ -400,6 +412,37 @@ class Mesowest():
             code = '1'
 
         return code
+
+
+
+    def return_rh_object(self, temp_f, dewpoint_f):
+        """
+        Calculate the relative humidity from temperature and dewpoint in degrees Fahrenheit.
+
+        Args:
+            temp_f (float): Temperature in degrees Fahrenheit.
+            dewpoint_f (float): Dewpoint in degrees Fahrenheit.
+
+        Returns:
+            float: Relative humidity as a percentage.
+        """
+        # Convert Fahrenheit to Celsius
+        temp_c = (int(temp_f[2:-2]) - 32) * 5.0 / 9.0
+        dewpoint_c = (int(dewpoint_f[2:-2]) - 32) * 5.0 / 9.0
+
+        # Calculate relative humidity
+        rh = 100 * (math.exp((17.625 * dewpoint_c) / (243.04 + dewpoint_c)) / math.exp((17.625 * temp_c) / (243.04 + temp_c)))
+
+        final_rh = round(rh)
+        
+        threshold = 600
+        color = '255 165 0'
+        position = '-16,0, 1,'
+        thresh_line = f'Threshold: {threshold}\n'
+        color_line = f'  Color: {color}\n'
+        position = f'  Text: {position} " {final_rh} "\n'
+        rh_object = thresh_line + color_line + position + 'End:\n\n'
+        return rh_object
 
     def convert_met_values(self,num,short,this_dict):
         """_summary_
@@ -518,5 +561,6 @@ class Mesowest():
 
 
 if __name__ == "__main__":
-    test = Mesowest(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5])
-    #test = Mesowest(42.9634, -85.6681, '2024-06-01 23:15:20 UTC', 60)
+    #test = Mesowest(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5])
+    #test = Mesowest(42.9634, -85.6681, '2024-10-02 22:00', 'C:/data/scripts/cloud-radar-server',60)
+    test = Mesowest(42.9634, -85.6681, None, 'C:/data/scripts/cloud-radar-server',60)
