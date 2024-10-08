@@ -159,7 +159,7 @@ top_banner = html.Div([
 ################################################################################################
 # ----------------------------- Upload components  -------------------------------------------
 ################################################################################################
-STEP_UPLOAD_OPTIONAL = "Optional: Upload a CSV file to create a placefile"
+STEP_UPLOAD_OPTIONAL = "Optional -- Upload a CSV file to create a placefile"
 
 step_upload_optional = dbc.Container(
     dbc.Col(html.Div(children=STEP_UPLOAD_OPTIONAL, style=steps_center)))

@@ -17,8 +17,7 @@ import pytz
 import requests
 from dotenv import load_dotenv
 load_dotenv()
-#API_TOKEN = os.getenv("SYNOPTIC_API_TOKEN")
-API_TOKEN = '292d36a692d74badb6ca011f4413ae1b'
+API_TOKEN = os.getenv("SYNOPTIC_API_TOKEN")
 API_ROOT = "https://api.synopticdata.com/v2/"
 
 parts = Path.cwd().parts
@@ -107,7 +106,7 @@ class Mesowest():
         if self.event_timestr is None:
             now = datetime.now(pytz.utc)
             round_down = now.minute%5
-            round_up = round_down + 20
+            #round_up = round_down + 20
             self.base_time = now  - timedelta(minutes=round_down) - timedelta(minutes=60)
             self.place_time = now - timedelta(minutes=round_down)
         else:
@@ -437,7 +436,7 @@ class Mesowest():
         
         threshold = 600
         color = '255 165 0'
-        position = '-16,0, 1,'
+        position = '16,-16, 2,'
         thresh_line = f'Threshold: {threshold}\n'
         color_line = f'  Color: {color}\n'
         position = f'  Text: {position} " {final_rh} "\n'
@@ -561,6 +560,6 @@ class Mesowest():
 
 
 if __name__ == "__main__":
-    #test = Mesowest(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5])
+    test = Mesowest(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5])
     #test = Mesowest(42.9634, -85.6681, '2024-10-02 22:00', 'C:/data/scripts/cloud-radar-server',60)
-    test = Mesowest(42.9634, -85.6681, None, 'C:/data/scripts/cloud-radar-server',60)
+    # test = Mesowest(42.9634, -85.6681, None, 'C:/data/scripts/cloud-radar-server',60)

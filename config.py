@@ -43,7 +43,7 @@ app = Dash(__name__, external_stylesheets=[dbc.themes.CYBORG],
 # server = flask.Flask(__name__)
 # app = Dash(__name__, external_stylesheets=[dbc.themes.CYBORG],
 #           suppress_callback_exceptions=True, update_title=None, server=server)
-app.title = "Radar Simulator"
+app.title = "RSSiC"
 
 
 def init_layout():
