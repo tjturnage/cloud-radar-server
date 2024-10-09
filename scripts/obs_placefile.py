@@ -454,6 +454,7 @@ class Mesowest():
         Returns:
             _type_: _description_
         """
+        text_info = 'ignore'
         numfloat = float(num)
         if (num != 'NA' ):
             if (short == 't') or (short == 'dp') or (short == 'rt'):
@@ -466,7 +467,6 @@ class Mesowest():
                 text_info = self.build_object(new_str,short,this_dict)
                 new_str = str(new)
             elif short == 'vis':
-                #print (numfloat)
                 final = '10'
                 if numfloat < 6.5:
                     final = str(int(round(numfloat)))
@@ -501,11 +501,9 @@ class Mesowest():
             elif short == 'wspd':
                 new = self.placefile_wind_speed_code(numfloat)
                 new_str = str(new)
-                text_info = 'ignore'
             elif short == 'wdir':
                 new = int(num)
                 new_str = str(new)
-                text_info = 'ignore'
 
             return new_str, text_info
 
