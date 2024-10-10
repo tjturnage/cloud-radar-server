@@ -17,6 +17,7 @@ SCALAR_PARAMS = {
     'nst': 'Non-Supercell Tornado Parameter',
     'deviance': 'Perceived Tornado Deviance',
     'snsq': 'Snow Squall Parameter',
+    'dcape': 'Downdraft CAPE (J/kg)',
     #'fzl-lfc-diff': 'Freezing Level - MU LFC thickness (m)',
     #'el-lfc-diff': 'MU Parcel EL - LFC thickness (m)',
     #'mu-el': 'MU Parcel Equilibrium Level (m)',
@@ -150,6 +151,13 @@ PLOTCONFIGS = {
         'linewidths': [1, 1, 2, 2, 2, 3, 3]
     },
 
+    'dcape': {
+        'levels': [200, 400, 600, 800, 1000, 1200, 1400, 1600, 1800, 2000, 3000, 4000, 5000],
+        'colors': ['#d2a663', '#d2a663', '#d2a663', '#df6641', '#90322b', '#90322b', '#90322b',
+                   '#90322b', '#90322b', '#90322b', '#90322b', '#90322b', '#90322b', '#90322b'],
+        'linewidths': [1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2]
+    },
+
     # Vectors/barbs
     'rm5': {
         'skip': 2
@@ -244,4 +252,8 @@ FILTER_SPECS = {
         'mucape': ['>', 100],
         'ebwd': ['>', 20],
     },
+
+    'dcape': {
+        'mucape': ['>', 1]
+    }
 }

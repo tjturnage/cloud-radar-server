@@ -10,6 +10,7 @@ import sharptab.interp as interp
 import sharptab.winds as winds
 import sharptab.utils as utils
 import sharptab.params as params
+import sharptab.thermo as thermo
 from calc.vector import transform
 
 @njit
@@ -255,3 +256,66 @@ def ebwd(prof, mupcl, eff_inflow):
     if ~np.isfinite(u): u = 0.
     if ~np.isfinite(v): v = 0.
     return (u, v)
+
+@njit 
+def dcape(prof):    
+    sfc_pres = prof.pres[prof.sfc]
+    pres = prof.pres
+    hght = prof.hght
+    #dwpc = prof.dwpc
+    tmpc = prof.tmpc
+    idx = np.where(pres >= sfc_pres - 400.)[0]
+
+    # Find the minimum average theta-e in a 100 mb layer
+    mine = 1000.0
+    minp = -999.0
+    for i in idx:
+        thta_e_mean = params.mean_thetae(prof, pbot=pres[i], ptop=pres[i]-100.)
+        if thta_e_mean < mine:
+            minp = pres[i] - 50.
+            mine = thta_e_mean
+
+    upper = minp
+    uptr = np.where(pres >= upper)[0]
+    uptr = uptr[-1]
+    
+    # Define parcel starting point
+    tp1 = thermo.wetbulb(upper, interp.temp(prof, upper), interp.dwpt(prof, upper))
+    pe1 = upper
+    te1 = interp.temp(prof, pe1)
+    h1 = interp.hght(prof, pe1)
+    tote = 0
+    lyre = 0
+
+    # To keep track of the parcel trace from the downdraft
+    #ttrace = [tp1] 
+    #ptrace = [upper]
+
+    # Lower the parcel to the surface moist adiabatically and compute
+    # total energy (DCAPE)
+    iter_ranges = range(uptr, -1, -1)
+    ttraces = np.zeros(len(iter_ranges))
+    ptraces = np.zeros(len(iter_ranges))
+    for i in iter_ranges:
+        pe2 = pres[i]
+        te2 = tmpc[i]
+        h2 = hght[i]
+        tp2 = thermo.wetlift3(pe1, tp1, pe2)
+
+        #if utils.QC(te1) and utils.QC(te2):
+        tdef1 = (tp1 - te1) / (thermo.ctok(te1))
+        tdef2 = (tp2 - te2) / (thermo.ctok(te2))
+        lyrlast = lyre
+        lyre = 9.8 * (tdef1 + tdef2) / 2.0 * (h2 - h1)
+        tote += lyre
+
+        ttraces[i] = tp2
+        ptraces[i] = pe2
+
+        pe1 = pe2
+        te1 = te2
+        h1 = h2
+        tp1 = tp2
+    #drtemp = tp2 # Downrush temp in Celsius
+
+    return tote
