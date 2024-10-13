@@ -1570,13 +1570,14 @@ def parse_contents(contents, filename, cfg):
 
     _content_type, content_string = contents.split(',')
     decoded = base64.b64decode(content_string)
+    orig_df = pd.read_csv(io.StringIO(decoded.decode('utf-8')), dtype=str)
+    df = orig_df.loc[orig_df['event'] != 'No_Event']
 
-    with open(f'{cfg['PLACEFILES_DIR']}/notifications.txt', 'w', encoding='utf-8') as fout:
-        fout.write("; RSSiC notifications file\n")
+    if 'csv' in filename:
+        notifications_file = f"{cfg['PLACEFILES_DIR']}/notifications.txt"
+        print(notifications_file)
+        fout = open(notifications_file, 'a', encoding='utf-8')
         fout.write(header)
-        # Assume that the user uploaded a CSV file
-        orig_df = pd.read_csv(io.StringIO(decoded.decode('utf-8')), dtype=str)
-        df = orig_df.loc[orig_df['event'] != 'No_Event']
         for _index,row in df.iterrows():
             try:
                 time_line = create_datetime(row)
@@ -1593,9 +1594,14 @@ def parse_contents(contents, filename, cfg):
                 fout.write(time_line)
                 fout.write(obj_line)
                 fout.write(icon_line)
+
             except (pd.errors.ParserError, pd.errors.EmptyDataError, ValueError) as e:
+                fout.close()
                 return None, f"Error processing {filename}: {e}"
-    return df, None
+        fout.close()
+        return df, None
+
+    return None, f"Unsupported file type: {filename}"
 
 
 @app.callback(Output('show_upload_feedback', 'children'),
