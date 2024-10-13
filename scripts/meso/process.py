@@ -2,7 +2,8 @@ import os, sys
 import argparse
 import numpy as np
 from glob import glob
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
+import pytz
 from time import time
 import re
 
@@ -129,7 +130,7 @@ def parse_logic(args):
     timestr_fmt = '%Y-%m-%d/%H'
     dt_end = None
     if args.realtime:
-        dt_start = datetime.utcnow() - timedelta(minutes=52)
+        dt_start = datetime.now(timezone.utc) - timedelta(minutes=52)
     else:
         if args.time_str is not None:
             dt_start = datetime.strptime(args.time_str, timestr_fmt)
@@ -138,9 +139,12 @@ def parse_logic(args):
             dt_start = dt_start - timedelta(hours=1)
             dt_end = datetime.strptime(args.end_time, timestr_fmt)
             dt_end = dt_end - timedelta(hours=1)
+            dt_end = dt_end.replace(tzinfo=pytz.UTC)
         else:
             log.error("Missing one of -rt, -t, or -start/-end flags")
             sys.exit(1)
+
+    dt_start = dt_start.replace(tzinfo=pytz.UTC)
 
     if args.hodo is None and args.meso is None:
         log.error("Missing one of -hodo, -meso")

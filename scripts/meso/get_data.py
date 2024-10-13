@@ -1,4 +1,5 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone 
+import pytz 
 import requests
 import os, sys, shutil
 from pathlib import Path
@@ -203,7 +204,7 @@ def download_data(dts, data_path, model='RAP', num_hours=1,
             # Online source checks
             ##############################################################################
             # If it's too early, don't try to use the FTPPRD backup site (slower download)
-            delta = abs((datetime.utcnow() - dt).total_seconds())
+            delta = abs((datetime.now(timezone.utc) - dt).total_seconds())
             if delta < 3900:
                 if 'FTPPRD' in sources: sources.remove('FTPPRD')
             full_name = "%s/%s" % (download_dir, filename)
@@ -306,7 +307,7 @@ def parse_logic(args):
     #log.info("----> New download processing")
 
     # USER has specified the -rt flag or a specific cycle time
-    curr_time = datetime.utcnow()
+    curr_time = datetime.now(timezone.utc)
     if args.realtime or args.time_str:
         args.start_time, args.end_time = None, None
         if args.realtime:
@@ -341,8 +342,10 @@ def parse_logic(args):
         log.error("Missing time flags. Need one of -rt, -t, or -s and -e")
         sys.exit(1)
 
+    cycle_dt = [dt.replace(tzinfo=pytz.UTC) for dt in cycle_dt]
+
     # RAP/RUC data via NCEI. Analyses and 1-hour forecasts only.
-    if args.model in ['RAP', None] and cycle_dt[-1] < datetime(2021, 2, 21, 23):
+    if args.model in ['RAP', None] and cycle_dt[-1] < datetime(2021,2,21,23,tzinfo=pytz.UTC):
         log.warning("Only 1 hour of forecast data available. Setting -n to 1")
         args.num_hours=1
 

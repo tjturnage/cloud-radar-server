@@ -478,7 +478,7 @@ def vapor_pressure(pressure, mixing):
     """Calculate water vapor (partial) pressure.
     Given total `pressure` and water vapor `mixing` ratio, calculates the partial
     pressure of water vapor."""
-    return pressure * mixing / (mpconsts.epsilon + mixing)
+    return pressure * mixing / (eps + mixing)
 
 def equivalent_potential_temperature(pressure, temperature, dewpoint):
     """Calculate equivalent potential temperature.
@@ -920,6 +920,49 @@ def theta(p, t, p2=1000.0):
     Potential temperature (C)
     """
     return ((t + ZEROCNK) * np.power((p2 / p), ROCP)) - ZEROCNK
+
+@njit
+def thetae(p, t, td):
+    '''
+    Returns the equivalent potential temperature (C) of a parcel.
+
+    Parameters
+    ----------
+    p : number
+        The pressure of the parcel (hPa)
+    t : number
+        Temperature of the parcel (C)
+    td : number
+        Dew point of parcel (C)
+
+    Returns
+    -------
+    Equivalent potential temperature (C)
+
+    '''
+    p2, t2 = drylift(p, t, td)
+    return theta(100., wetlift3(p2, t2, 100.), 1000.)
+
+@njit
+def wetbulb(p, t, td):
+    '''
+    Calculates the wetbulb temperature (C) for the given parcel
+
+    Parameters
+    ----------
+    p : number
+        Pressure of parcel (hPa)
+    t : number
+        Temperature of parcel (C)
+    td : number
+        Dew Point of parcel (C)
+
+    Returns
+    -------
+    Wetbulb temperature (C)
+    '''
+    p2, t2 = drylift(p, t, td)
+    return wetlift3(p2, t2, p)
 
 @njit
 def virtemp(p, t, td):
