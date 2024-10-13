@@ -46,7 +46,6 @@ class UpdatePlacefiles():
         """
         #time_str = timerange_line.split(' ')[-1][:-1]   # last element, remove newline
         time_str = timerange_line.split(' ')[1]         # first element
-        print(f"Time string: {time_str}")
         timestamp = datetime.strptime(time_str, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=pytz.UTC).timestamp()
         timestamp = timestamp - 600 # subract 10 minutes to check time
         return timestamp

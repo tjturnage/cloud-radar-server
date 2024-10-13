@@ -1555,54 +1555,64 @@ def icon_value(event_type):
         return 3
     return 3
 
-def parse_contents(contents, filename, cfg):
-    """_summary_
 
+# class NotificationsPlacefile:
+#     def __init__(self, filename, contents, cfg):
+#         self.filename = filename
+#         self.contents = contents
+#         self.cfg = cfg
+#         
+#         self.df = self.make_dataframe()
+
+
+    
+def make_dataframe(contents):
+    """as
+    This function creates a dataframe from the uploaded file
     """
+    try:
+        _content_type, content_string = contents.split(',')
+        decoded = base64.b64decode(content_string)
+        orig_df = pd.read_csv(io.StringIO(decoded.decode('utf-8')), dtype=str)
+        df = orig_df.loc[orig_df['event'] != 'No_Event']
+        return df, None
+    except (pd.errors.ParserError, pd.errors.EmptyDataError, ValueError) as e:
+        return None, f"Error: {e}"
 
-    header = 'Refresh: 1\
+
+def make_placefile(df, placefile_path) -> None:
+    """
+    This function creates the placefile for the radar simulation
+    """
+    top_section = 'Refresh: 1\
     \nThreshold: 999\
     \nTitle: Notifications -- for radar simulation\
     \nColor: 255 200 255\
     \nIconFile: 1, 150, 150, 50, 50, https://raw.githubusercontent.com/tjturnage/cloud-radar-server/main/assets/iconfiles/wessl-three.png\
-    \nFont: 1, 11, 1, "Arial"\
-    \nFont: 2, 14, 1, "Arial"\n\n'
+    \nFont: 1, 11, 1, "Arial"\n\n'
 
-    _content_type, content_string = contents.split(',')
-    decoded = base64.b64decode(content_string)
-    orig_df = pd.read_csv(io.StringIO(decoded.decode('utf-8')), dtype=str)
-    df = orig_df.loc[orig_df['event'] != 'No_Event']
-
-    if 'csv' in filename:
-        notifications_file = f"{cfg['PLACEFILES_DIR']}/notifications.txt"
-        print(notifications_file)
-        fout = open(notifications_file, 'a', encoding='utf-8')
-        fout.write(header)
+    fout = open(placefile_path, 'a', encoding='utf-8')
+    fout.write(top_section)
+    try:
         for _index,row in df.iterrows():
-            try:
-                time_line = create_datetime(row)
-                comments = create_comments(row)
-                event_type = row.get('event_input_type',"")
-                icon_code = icon_value(event_type)
+            time_line = create_datetime(row)
+            comments = create_comments(row)
+            event_type = row.get('event_input_type',"")
+            icon_code = icon_value(event_type)
 
-                lat = row.get('latitude',"")
-                lon = row.get('longitude',"")
-                obj_line = f'Object: {lat}, {lon}\n'
-                icon_line = f'Threshold: 999\nIcon: 0, 0, 000, 1, {icon_code}, {comments}'
+            lat = row.get('latitude',"")
+            lon = row.get('longitude',"")
+            obj_line = f'Object: {lat}, {lon}\n'
+            icon_line = f'Threshold: 999\nIcon: 0, 0, 000, 1, {icon_code}, {comments}'
 
-                print(time_line,obj_line,icon_line)
-                fout.write(time_line)
-                fout.write(obj_line)
-                fout.write(icon_line)
-
-            except (pd.errors.ParserError, pd.errors.EmptyDataError, ValueError) as e:
-                fout.close()
-                return None, f"Error processing {filename}: {e}"
+            fout.write(time_line)
+            fout.write(obj_line)
+            fout.write(icon_line)
         fout.close()
-        return df, None
-
-    return None, f"Unsupported file type: {filename}"
-
+        print(f"Placefile created: {placefile_path}")
+    except (pd.errors.ParserError, pd.errors.EmptyDataError, ValueError) as e:
+        fout.close()
+        print(f"Error creating placefile: {e}")
 
 @app.callback(Output('show_upload_feedback', 'children'),
               [Input('upload-data', 'contents'),
@@ -1613,25 +1623,21 @@ def update_output(contents, filename, cfg):
     """
     This function is called when the user uploads a file. It will parse the contents and write
     """
-    if contents is not None:
+    placefile_path = f"{cfg['PLACEFILES_DIR']}/notifications.txt"
+    if 'csv' in filename:
         try:
-            _df, error = parse_contents(contents, filename, cfg)
-            if error:
-                return html.Div([
-                html.H5(error)
-                ])
+            df, error = make_dataframe(contents)
+            if error is not None:
+                return html.Div([html.H5(error)])            
+            make_placefile(df, placefile_path)
+            return html.Div([
+            html.H5(f"File uploaded successfully: {filename}"),])
 
-            return html.Div([
-            html.H5(f"File uploaded successfully: {filename}"),
-            ])
-            
         except (KeyError,pd.errors.ParserError, pd.errors.EmptyDataError, ValueError) as e:
-            return html.Div([
-                html.H5(f"Error processing file: {e}")
-            ])
+            return html.Div([html.H5(f"Error processing file: {e}")])
+    
     return html.Div([
-        html.H5("No file uploaded")
-    ])
+        html.H5(f"Error: {filename} is not a csv file")])
 
 ################################################################################################
 # ----------------------------- Start app  -----------------------------------------------------
