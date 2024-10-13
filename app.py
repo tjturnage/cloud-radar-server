@@ -522,7 +522,7 @@ def generate_layout(layout_has_initialized, children, configs):
                     dbc.Col(dbc.ListGroupItem("LSRs",
                                 href=f"{configs['PLACEFILES_LINKS']}/LSRs_updated.txt",
                                 target="_blank"),style={'color':lc.obs_c}, width=2),
-                    dbc.Col(dbc.ListGroupItem("Notifications (only works after successful CSV uploads)",
+                    dbc.Col(dbc.ListGroupItem("Notifications (only works with CSV uploads)",
                                 href=f"{configs['PLACEFILES_LINKS']}/notifications_updated.txt",
                                 target="_blank"),style={'color':lc.obs_c}, width=6),
                 ],
@@ -592,12 +592,20 @@ def generate_layout(layout_has_initialized, children, configs):
                      dbc.Col(dbc.ListGroupItem("0-3km LR",
                                 href=f"{configs['PLACEFILES_LINKS']}/lr03km_updated.txt",
                                 target="_blank"), style={'color':lc.nse_c}, width=2),
+                     dbc.Col(dbc.ListGroupItem("Deviance",
+                                href=f"{configs['PLACEFILES_LINKS']}/deviance_updated.txt",
+                                target="_blank"), style={'color':lc.nse_c}, width=2),
 
                  ],
                  style={"display": "flex", "flexWrap": "wrap"},
                 ),
                 dbc.Row(
-                 [dbc.Col("",width=2),dbc.Col("",width=2),
+                 [   dbc.Col(dbc.ListGroupItem("DCAPE",
+                                href=f"{configs['PLACEFILES_LINKS']}/dcape_updated.txt",
+                                target="_blank"), style={'color':lc.nse_c}, width=2),
+                  dbc.Col(dbc.ListGroupItem("MLLCL",
+                                href=f"{configs['PLACEFILES_LINKS']}/mllcl_updated.txt",
+                                target="_blank"), style={'color':lc.nse_c}, width=2),
                      dbc.Col(dbc.ListGroupItem("MLCIN (fill)",
                                 href=f"{configs['PLACEFILES_LINKS']}/mlcin_cf_updated.txt",
                                 target="_blank"), style={'color':lc.nse_c}, width=2),
@@ -606,6 +614,9 @@ def generate_layout(layout_has_initialized, children, configs):
                                 target="_blank"), style={'color':lc.nse_c}, width=2),
                      dbc.Col(dbc.ListGroupItem("0-3km LR (fill)",
                                 href=f"{configs['PLACEFILES_LINKS']}/lr03km_cf_updated.txt",
+                                target="_blank"), style={'color':lc.nse_c}, width=2),
+                     dbc.Col(dbc.ListGroupItem("DevTor",
+                                href=f"{configs['PLACEFILES_LINKS']}/devtor_updated.txt",
                                 target="_blank"), style={'color':lc.nse_c}, width=2),
                  ],
                  style={"display": "flex", "flexWrap": "wrap"},
@@ -1555,17 +1566,7 @@ def icon_value(event_type):
         return 3
     return 3
 
-
-# class NotificationsPlacefile:
-#     def __init__(self, filename, contents, cfg):
-#         self.filename = filename
-#         self.contents = contents
-#         self.cfg = cfg
-#         
-#         self.df = self.make_dataframe()
-
-
-    
+   
 def make_dataframe(contents):
     """as
     This function creates a dataframe from the uploaded file
@@ -1580,7 +1581,7 @@ def make_dataframe(contents):
         return None, f"Error: {e}"
 
 
-def make_placefile(df, placefile_path) -> None:
+def make_placefile(df, cfg) -> None:
     """
     This function creates the placefile for the radar simulation
     """
@@ -1590,29 +1591,28 @@ def make_placefile(df, placefile_path) -> None:
     \nColor: 255 200 255\
     \nIconFile: 1, 150, 150, 50, 50, https://raw.githubusercontent.com/tjturnage/cloud-radar-server/main/assets/iconfiles/wessl-three.png\
     \nFont: 1, 11, 1, "Arial"\n\n'
+    placefiles_dir = Path(cfg['PLACEFILES_DIR'])
+    placefile_path = placefiles_dir / 'notifications.txt'
+    with open(placefile_path, 'w', encoding='utf-8') as fout:
+        fout.write(top_section)
+        try:
+            for _index,row in df.iterrows():
+                time_line = create_datetime(row)
+                comments = create_comments(row)
+                event_type = row.get('event_input_type',"")
+                icon_code = icon_value(event_type)
 
-    fout = open(placefile_path, 'a', encoding='utf-8')
-    fout.write(top_section)
-    try:
-        for _index,row in df.iterrows():
-            time_line = create_datetime(row)
-            comments = create_comments(row)
-            event_type = row.get('event_input_type',"")
-            icon_code = icon_value(event_type)
+                lat = row.get('latitude',"")
+                lon = row.get('longitude',"")
+                obj_line = f'Object: {lat}, {lon}\n'
+                icon_line = f'Threshold: 999\nIcon: 0, 0, 000, 1, {icon_code}, {comments}'
 
-            lat = row.get('latitude',"")
-            lon = row.get('longitude',"")
-            obj_line = f'Object: {lat}, {lon}\n'
-            icon_line = f'Threshold: 999\nIcon: 0, 0, 000, 1, {icon_code}, {comments}'
-
-            fout.write(time_line)
-            fout.write(obj_line)
-            fout.write(icon_line)
-        fout.close()
-        print(f"Placefile created: {placefile_path}")
-    except (pd.errors.ParserError, pd.errors.EmptyDataError, ValueError) as e:
-        fout.close()
-        print(f"Error creating placefile: {e}")
+                fout.write(time_line)
+                fout.write(obj_line)
+                fout.write(icon_line)
+            print(f"Placefile created: {placefile_path}")
+        except (pd.errors.ParserError, pd.errors.EmptyDataError, ValueError) as e:
+            print(f"Error creating placefile: {e}")
 
 @app.callback(Output('show_upload_feedback', 'children'),
               [Input('upload-data', 'contents'),
@@ -1623,13 +1623,13 @@ def update_output(contents, filename, cfg):
     """
     This function is called when the user uploads a file. It will parse the contents and write
     """
-    placefile_path = f"{cfg['PLACEFILES_DIR']}/notifications.txt"
+
     if 'csv' in filename:
         try:
             df, error = make_dataframe(contents)
             if error is not None:
                 return html.Div([html.H5(error)])            
-            make_placefile(df, placefile_path)
+            make_placefile(df, cfg)
             return html.Div([
             html.H5(f"File uploaded successfully: {filename}"),])
 
