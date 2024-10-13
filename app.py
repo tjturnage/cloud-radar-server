@@ -1478,17 +1478,13 @@ def update_day_dropdown(selected_year, selected_month):
 # ----------------------------- Upload callback  -----------------------------------------------
 ################################################################################################
 
-def convert_datetimes(dts):
+def create_datetime(row):
     """
     Refresh: 1
     Threshold: 999
-    Title: Notifications -- for radar simulation
-    IconFile: 1, 25, 25, 10, 10, https://www.weather.gov/source/dmx/GRIcons/lsr_icons_96.png
-    IconFile: 2, 25, 32, 10, 10, https://www.weather.gov/source/dmx/GRIcons/Lsr_Hail_Icons.png
-    IconFile: 3, 25, 32, 10, 10, https://www.weather.gov/source/dmx/GRIcons/wind_icons_96.png
-    IconFile: 4, 25, 32, 10, 10, https://www.weather.gov/source/dmx/GRIcons/Lsr_TstmWndGst_Icons.png
-    IconFile: 5, 25, 32, 10, 10, https://www.weather.gov/source/dmx/GRIcons/Lsr_NonTstmWndGst_Icons.png
-    IconFile: 6, 25, 32, 10, 10, https://www.weather.gov/source/dmx/GRIcons/Lsr_HeavyRain_Icons.png
+    Title: Supplemental info -- for radar simulation
+    IconFile: 1, 150, 150, 30, 30, https://raw.githubusercontent.com/tjturnage/cloud-radar-server/main/assets/iconfiles/wessl-icons.png
+
     Font: 1, 11, 1, "Courier New"
 
     TimeRange: 2024-07-16T00:40:00Z 2024-07-16T01:00:00Z
@@ -1499,66 +1495,108 @@ def convert_datetimes(dts):
     END:
 
     """
-    dtobj = datetime.strptime(dts, "%m/%d/%Y %H:%M")
-    end_dtobj = dtobj + timedelta(minutes=30)
+    #print(row)
+    date_str = row.get('utc_date',"")
+    hour = row.get('utc_hour',"")
+    minute = row.get('utc_minute',"")
+    delay =  row.get('delay_min',"")
+    # Handle missing hour or minute values
+    if pd.isna(hour):
+        hour = 0
+    if pd.isna(minute):
+        minute = 0
+    if pd.isna(delay):
+        delay = 0
+
+    # Combine the date, hour, and minute into a datetime object
+    datetime_str = f"{date_str} {int(hour):02d}:{int(minute):02d}"
+    #print(datetime_str)
+    init_dtobj = datetime.strptime(datetime_str, '%m/%d/%Y %H:%M')
+
+    dtobj = init_dtobj + timedelta(minutes=int(delay))
     start_tstr = dtobj.strftime("%Y-%m-%dT%H:%M:%SZ")
-    end_tstr = end_dtobj.strftime("%Y-%m-%dT%H:%M:%SZ")
+    dtobj_end = dtobj + timedelta(minutes=10)
+    end_tstr = dtobj_end.strftime("%Y-%m-%dT%H:%M:%SZ")
     timerange_line = f"TimeRange: {start_tstr} {end_tstr}\n"
     return timerange_line
 
 
+def create_comments(row):
+    """
+    This function creates the pop-up text for the placefiles
+
+    """
+    event= row.get('event',"")
+    event_input_type = row.get('event_input_type',"")
+    magnitude = row.get('magnitude',"")
+    if magnitude == "nan" or magnitude == "No_Magnitude":
+        magnitude_line = ""
+    else:
+        magnitude_line = f"Magnitude: {magnitude}\\n"
+    source = row.get('source',"")
+    #fake_rpt = row.get('fake_rpt',"")
+    comments = row.get('comments',"")
+    if event == 'Question':
+        comments_line = f'"{event}\\nSource: {source}\\n{comments} "\nEnd:\n\n'
+    else:
+        comments_line = f'"{event} -- {event_input_type}\\n{magnitude_line}Source: {source}\\nComments: {comments} "\nEnd:\n\n'
+    return comments_line
+
+
+def icon_value(event_type):
+    """
+    This function assigns an icon value based on the event type
+    """
+    if event_type == 'Verified':
+        return 1
+    if event_type == 'Unverified':
+        return 2
+    if event_type == 'Question':
+        return 3
+    return 3
 
 def parse_contents(contents, filename, cfg):
     """_summary_
 
     """
 
-    icon_font_text = 'Refresh: 1\
+    header = 'Refresh: 1\
     \nThreshold: 999\
     \nTitle: Notifications -- for radar simulation\
     \nColor: 255 200 255\
-    \nIconFile: 1, 18, 32, 2, 31, "https://mesonet.agron.iastate.edu/request/grx/windbarbs.png"\
-    \nIconFile: 2, 15, 15, 8, 8, "https://mesonet.agron.iastate.edu/request/grx/cloudcover.png"\
-    \nIconFile: 3, 25, 25, 12, 12, "https://mesonet.agron.iastate.edu/request/grx/rwis_cr.png"\
-    \nIconFile: 4, 13, 24, 2, 23, "https://rssic.nws.noaa.gov/assets/iconfiles/windbarbs-small.png"\
+    \nIconFile: 1, 150, 150, 50, 50, https://raw.githubusercontent.com/tjturnage/cloud-radar-server/main/assets/iconfiles/wessl-three.png\
     \nFont: 1, 11, 1, "Arial"\
     \nFont: 2, 14, 1, "Arial"\n\n'
 
     _content_type, content_string = contents.split(',')
     decoded = base64.b64decode(content_string)
 
-    try:
-        if 'csv' in filename:
-            fout = open(f'{cfg['PLACEFILES_DIR']}/notifications.txt', 'w', encoding='utf-8')
-            fout.write("//RSSiC notifications file\n")
-            fout.write(icon_font_text)
-            # Assume that the user uploaded a CSV file
-            df = pd.read_csv(io.StringIO(decoded.decode('utf-8')), dtype=str)
-            df['full_dts'] = df['utc_date'] + ' ' + df['utc_hour'] + ':' + df['utc_minute']
-            df.fillna('M', inplace=True)
+    with open(f'{cfg['PLACEFILES_DIR']}/notifications.txt', 'w', encoding='utf-8') as fout:
+        fout.write("; RSSiC notifications file\n")
+        fout.write(header)
+        # Assume that the user uploaded a CSV file
+        orig_df = pd.read_csv(io.StringIO(decoded.decode('utf-8')), dtype=str)
+        df = orig_df.loc[orig_df['event'] != 'No_Event']
+        for _index,row in df.iterrows():
+            try:
+                time_line = create_datetime(row)
+                comments = create_comments(row)
+                event_type = row.get('event_input_type',"")
+                icon_code = icon_value(event_type)
 
-            for _index,row in df.iterrows():
-                try:
-                    dts = row.get('full_dts',"")
-                    lat = row.get('latitude',"")
-                    lon = row.get('longitude',"")
-                    if 'M' not in lat and 'M' not in lon and 'M' not in dts:
-                        tr_line = convert_datetimes(dts)
-                        obj_line = f'Object: {lat},{lon}\n'
-                        comments = row.get('comments',"")
-                        icon_line = f"Threshold: 999\nIcon: 0,0,0,4,13, {comments}\nEnd:\n\n"
-                        print(tr_line,obj_line,icon_line)
-                        fout.write(tr_line)
-                        fout.write(obj_line)
-                        fout.write(icon_line)
-                except (pd.errors.ParserError, pd.errors.EmptyDataError, ValueError) as e:
-                    return None, f"Error processing file: {e}"
-            fout.close()
-            return df, None
-        return None, f"Unsupported file type: {filename}"
+                lat = row.get('latitude',"")
+                lon = row.get('longitude',"")
+                obj_line = f'Object: {lat}, {lon}\n'
+                icon_line = f'Threshold: 999\nIcon: 0, 0, 000, 1, {icon_code}, {comments}'
 
-    except (pd.errors.ParserError, pd.errors.EmptyDataError, ValueError) as e:
-        return None, f"Error processing file: {e}"
+                print(time_line,obj_line,icon_line)
+                fout.write(time_line)
+                fout.write(obj_line)
+                fout.write(icon_line)
+            except (pd.errors.ParserError, pd.errors.EmptyDataError, ValueError) as e:
+                return None, f"Error processing {filename}: {e}"
+    return df, None
+
 
 @app.callback(Output('show_upload_feedback', 'children'),
               [Input('upload-data', 'contents'),
@@ -1566,17 +1604,21 @@ def parse_contents(contents, filename, cfg):
               State('configs', 'data')],
               prevent_initial_call=True)
 def update_output(contents, filename, cfg):
+    """
+    This function is called when the user uploads a file. It will parse the contents and write
+    """
     if contents is not None:
         try:
-            df, error = parse_contents(contents, filename, cfg)
+            _df, error = parse_contents(contents, filename, cfg)
             if error:
                 return html.Div([
                 html.H5(error)
                 ])
-            else:
-                return html.Div([
-                html.H5(f"File uploaded successfully: {filename}"),
-                ])
+
+            return html.Div([
+            html.H5(f"File uploaded successfully: {filename}"),
+            ])
+            
         except (KeyError,pd.errors.ParserError, pd.errors.EmptyDataError, ValueError) as e:
             return html.Div([
                 html.H5(f"Error processing file: {e}")
