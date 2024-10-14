@@ -890,11 +890,11 @@ def run_with_cancel_button(cfg, sim_times, radar_info):
     """
     UpdateHodoHTML('None', cfg['HODOGRAPHS_DIR'], cfg['HODOGRAPHS_PAGE'])
 
-    # clean out old files and directories
-    try:
-        remove_files_and_dirs(cfg)
-    except KeyError as e:
-        logging.exception("Error removing files and directories: %s",e,exc_info=True)
+    # clean out old files and directories - no longer needed since custom dirs created now
+    # try:
+    #     remove_files_and_dirs(cfg)
+    # except KeyError as e:
+    #     logging.exception("Error removing files and directories: %s",e,exc_info=True)
 
     # based on list of selected radars, create a dictionary of radar metadata
     try:
@@ -1404,10 +1404,6 @@ def manage_clock_(nclicks, _n_intervals, new_time, _playback_running, playback_s
 
     if triggered_id == 'playback_running_store':
         pass
-        # if not playback_running:
-        #     interval_disabled = True
-        #     status = 'Paused'
-        #     playback_btn_text = 'Resume Simulation'
 
     # Without this, a change to either the playback speed or playback time will restart
     # a paused simulation
@@ -1534,10 +1530,12 @@ def create_comments(row):
     source = row.get('source',"")
     #fake_rpt = row.get('fake_rpt',"")
     comments = row.get('comments',"")
+    if comments == "nan" or comments == "No_Comments" or comments == "M":
+        comments = "No comments"
     if event == 'Question':
-        comments_line = f'"{event}\\nSource: {source}\\n{comments} "\nEnd:\n\n'
+        comments_line = f'{event}\\nSource: {source}\\n{comments} "\nEnd:\n\n'
     else:
-        comments_line = f'"{event} -- {event_input_type}\\n{magnitude_line}Source: {source}\\nComments: {comments} "\nEnd:\n\n'
+        comments_line = f'"{event}\\n{event_input_type}\\n{magnitude_line}Source: {source}\\n{comments} "\nEnd:\n\n'
     return comments_line
 
 
@@ -1553,20 +1551,6 @@ def icon_value(event_type):
         return 3
     return 3
 
-   
-def make_dataframe(contents):
-    """as
-    This function creates a dataframe from the uploaded file
-    """
-    try:
-        _content_type, content_string = contents.split(',')
-        decoded = base64.b64decode(content_string)
-        orig_df = pd.read_csv(io.StringIO(decoded.decode('utf-8')), dtype=str)
-        df = orig_df.loc[orig_df['event'] != 'No_Event']
-        return df, None
-    except (pd.errors.ParserError, pd.errors.EmptyDataError, ValueError) as e:
-        return None, f"Error: {e}"
-
 def make_placefile(contents, filename, cfg) -> None:
     """
     This function creates the placefile for the radar simulation
@@ -1576,6 +1560,7 @@ def make_placefile(contents, filename, cfg) -> None:
     \nTitle: Notifications -- for radar simulation\
     \nColor: 255 200 255\
     \nIconFile: 1, 150, 150, 50, 50, https://raw.githubusercontent.com/tjturnage/cloud-radar-server/main/assets/iconfiles/wessl-three.png\
+    \nIconFile: 2, 90, 90, 30, 30, https://raw.githubusercontent.com/tjturnage/cloud-radar-server/main/assets/iconfiles/wessl-three-small.png\
     \nFont: 1, 11, 1, "Arial"\n\n'
 
 
@@ -1585,7 +1570,7 @@ def make_placefile(contents, filename, cfg) -> None:
     try:
         if 'csv' in filename:
             fout = open(f'{cfg['PLACEFILES_DIR']}/notifications.txt', 'w', encoding='utf-8')
-            #fout.write("//RSSiC notifications file\n")
+            fout.write("; RSSiC notifications file\n")
             fout.write(top_section)
             # Assume that the user uploaded a CSV file
             df = pd.read_csv(io.StringIO(decoded.decode('utf-8')), dtype=str)
@@ -1598,9 +1583,9 @@ def make_placefile(contents, filename, cfg) -> None:
                     if 'M' not in lat and 'M' not in lon and 'M' not in dts:
                         tr_line = create_datetime(row)
                         obj_line = f'Object: {lat},{lon}\n'
-                        comments = row.get('comments',"")
+                        comments = create_comments(row)
                         icon_code = icon_value(row.get('event_input_type',"")) 
-                        icon_line = f"Threshold: 999\nIcon: 0,0,0,1,{icon_code}, {comments}\nEnd:\n\n"
+                        icon_line = f"Threshold: 999\nIcon: 0,0,0,2,{icon_code}, {comments}"
                         print(tr_line,obj_line,icon_line)
                         fout.write(tr_line)
                         fout.write(obj_line)

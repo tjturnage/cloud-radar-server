@@ -1,10 +1,16 @@
+"""
+create LSRs for the radar simulation
+"""
 import os
 import sys
+from datetime import datetime, timedelta
 import requests
 import pandas as pd
-from datetime import datetime, timedelta
 
 class LsrCreator:
+    """
+    Create a placefile of Local Storm Reports (LSRs) for the radar simulation
+    """
     def __init__(self, sim_start, event_duration, data_path, output_path):
         self.sim_start = datetime.strptime(sim_start, '%Y-%m-%d %H:%M')
         self.sim_end = self.sim_start + timedelta(minutes=int(event_duration))
@@ -34,8 +40,10 @@ class LsrCreator:
         self.write_placefile()
         self.delete_file()
 
-    # Download the LSR csv file from IEM
-    def download_and_save_file(self):         
+    def download_and_save_file(self):
+        """
+        Download the LSR csv file from the IEM website
+        """
         try:
             response = requests.get(self.url, timeout=10)
             response.raise_for_status()
@@ -44,18 +52,24 @@ class LsrCreator:
                 file.write(response.content)
             print(f"Downloaded {self.lsr_file}")
 
-        except Exception as e:
-            print(f"An error occurred: {e}")
+        except requests.exceptions.RequestException as e:
+            print(f"An error occurred during the HTTP request: {e}")
+        except OSError as e:
+            print(f"An error occurred while writing the file: {e}")
 
-    # Delete files when needed. CSV file is deleted when complete
     def delete_file(self):
+        """
+        Delete the LSR csv file after the placefile has been created
+        """
         if os.path.exists(self.lsr_file):
             os.remove(self.lsr_file)
 
-    # Open the outputFile for writing
     def write_placefile(self):
-        icon_url = "https://www.weather.gov/source/dmx/GRIcons"
-        
+        """
+        Write the LSR data to a placefile
+        """
+        #icon_url = "https://www.weather.gov/source/dmx/GRIcons"
+        icon_url = "https://raw.githubusercontent.com/tjturnage/cloud-radar-server/main/assets/iconfiles/IconSheets"
         # Read the CSV file 
         # df = pd.read_csv(self.lsr_file, low_memory=False)
         df = pd.read_csv(self.lsr_file, low_memory=False, on_bad_lines='warn')
@@ -63,7 +77,7 @@ class LsrCreator:
 
         keyword1 = ["FATAL"]
         keyword2 = ["INJ"]
-        with open(self.output_file, "w") as f:
+        with open(self.output_file, "w", encoding="utf-8") as f:
             f.write("//Created by the NWS Central Region Convective Warning Improvement Project (CWIP Team) 2024\n")
             f.write("Refresh: 1\n")
             f.write("Threshold: 999\n")
@@ -83,9 +97,10 @@ class LsrCreator:
             for index, row in df.iterrows():
                 event = row.get("TYPETEXT", "")
                 source = row.get("SOURCE", "")
-                location = row.get("CITY", "")
-                county = row.get("COUNTY", "")
-                state = row.get("STATE", "")
+                # commented these out to remove specific location and county
+                #location = row.get("CITY", "")
+                #county = row.get("COUNTY", "")
+                #state = row.get("STATE", "")
                 remark = row.get("REMARK", "")
                 magnitude = row.get("MAG", 0)
                 original_time_str = row.get("VALID2", "")
@@ -153,14 +168,14 @@ class LsrCreator:
                     f.write('Threshold: 999\n')
                     f.write(
                         f'{icon} Event: {event}\\nLSR Time: {lsr_datetime_str}\\n'
-                        #f'Place: {location} {state}\\nCounty: {county}\\n'    Removed specific location and county
+                        #  Omit specific location and county to conceal the actual location
+                        #f'Place: {location} {state}\\nCounty: {county}\\n'
                         f'Source: {source}\\n{mag} {event}\\n{remark}\n')
 
                     if any(keyword in str(remark) for keyword in keyword1):
                         f.write(f'{icon2}\n')
                     elif any(keyword in str(remark) for keyword in keyword2):
-                        f.write(f'{icon3}\n')
-                        
+                        f.write(f'{icon3}\n')                    
                     f.write('END:\n\n')
 
 
