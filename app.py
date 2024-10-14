@@ -1523,19 +1523,21 @@ def create_comments(row):
     event= row.get('event',"")
     event_input_type = row.get('event_input_type',"")
     magnitude = row.get('magnitude',"")
-    if magnitude == "nan" or magnitude == "No_Magnitude":
+    #if magnitude == "nan" or magnitude == "No_Magnitude":
+    if magnitude in ("nan", "No_Magnitude"):
         magnitude_line = ""
     else:
         magnitude_line = f"Magnitude: {magnitude}\\n"
     source = row.get('source',"")
     #fake_rpt = row.get('fake_rpt',"")
     comments = row.get('comments',"")
-    if comments == "nan" or comments == "No_Comments" or comments == "M":
+    #if comments == "nan" or comments == "No_Comments" or comments == "M":
+    if comments in ("nan", "No_Comments", "M"):
         comments = "No comments"
     if event == 'Question':
-        comments_line = f'{event}\\nSource: {source}\\n{comments} "\nEnd:\n\n'
+        comments_line = f'{event}\\nSource: {source}\\n{comments}\nEnd:\n\n'
     else:
-        comments_line = f'"{event}\\n{event_input_type}\\n{magnitude_line}Source: {source}\\n{comments} "\nEnd:\n\n'
+        comments_line = f'{event}\\n{event_input_type}\\n{magnitude_line}Source: {source}\\n{comments}\nEnd:\n\n'
     return comments_line
 
 
@@ -1559,8 +1561,8 @@ def make_placefile(contents, filename, cfg) -> None:
     \nThreshold: 999\
     \nTitle: Notifications -- for radar simulation\
     \nColor: 255 200 255\
-    \nIconFile: 1, 150, 150, 50, 50, https://raw.githubusercontent.com/tjturnage/cloud-radar-server/main/assets/iconfiles/wessl-three.png\
-    \nIconFile: 2, 90, 90, 30, 30, https://raw.githubusercontent.com/tjturnage/cloud-radar-server/main/assets/iconfiles/wessl-three-small.png\
+    \nIconFile: 1, 50, 50, 25, 15, https://raw.githubusercontent.com/tjturnage/cloud-radar-server/main/assets/iconfiles/wessl-three.png\
+    \nIconFile: 2, 30, 30, 15, 10, https://raw.githubusercontent.com/tjturnage/cloud-radar-server/main/assets/iconfiles/wessl-three-small.png\
     \nFont: 1, 11, 1, "Arial"\n\n'
 
 
@@ -1573,8 +1575,8 @@ def make_placefile(contents, filename, cfg) -> None:
             fout.write("; RSSiC notifications file\n")
             fout.write(top_section)
             # Assume that the user uploaded a CSV file
-            df = pd.read_csv(io.StringIO(decoded.decode('utf-8')), dtype=str)
-            df.fillna('M', inplace=True)
+            df_orig = pd.read_csv(io.StringIO(decoded.decode('utf-8')), dtype=str)
+            df = df_orig.loc[df_orig['event'] != 'No_Event']
             for _index,row in df.iterrows():
                 try:
                     dts = row.get('full_dts',"")
@@ -1584,7 +1586,7 @@ def make_placefile(contents, filename, cfg) -> None:
                         tr_line = create_datetime(row)
                         obj_line = f'Object: {lat},{lon}\n'
                         comments = create_comments(row)
-                        icon_code = icon_value(row.get('event_input_type',"")) 
+                        icon_code = icon_value(row.get('event_input_type',""))
                         icon_line = f"Threshold: 999\nIcon: 0,0,0,2,{icon_code}, {comments}"
                         print(tr_line,obj_line,icon_line)
                         fout.write(tr_line)

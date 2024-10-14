@@ -25,8 +25,8 @@ class LsrCreator:
 
         # Entries are in minutes. lsr_delay = how long to withhold lsr after event occurrence.
         # lsr_duration = how long to display lsr
-        self.lsr_delay = 10
-        self.lsr_duration = 30
+        self.lsr_delay = 12
+        self.lsr_duration = 20
 
         # URL for downloading the LSR Data
         URL_BASE = "https://mesonet.agron.iastate.edu/cgi-bin/request/gis/lsr.py?sts"
