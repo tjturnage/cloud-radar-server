@@ -1491,20 +1491,7 @@ def update_day_dropdown(selected_year, selected_month):
 
 def create_datetime(row):
     """
-    Refresh: 1
-    Threshold: 999
-    Title: Supplemental info -- for radar simulation
-    IconFile: 1, 150, 150, 30, 30, https://raw.githubusercontent.com/tjturnage/cloud-radar-server/main/assets/iconfiles/wessl-icons.png
-
-    Font: 1, 11, 1, "Courier New"
-
-    TimeRange: 2024-07-16T00:40:00Z 2024-07-16T01:00:00Z
-    Object: 41.75,-74.59
-    Threshold: 999
-    Icon: 0,0,0,4,13, Event: TSTM WND GST\nLSR Time: 2024-07-16T00:30:00Z\nSource: Mesonet\n59.0 mph TSTM WND GST\nMesonet station WBO
-    U Woodbourne.
-    END:
-
+    This function creates the datetime string for the placefiles
     """
     #print(row)
     date_str = row.get('utc_date',"")
@@ -1580,8 +1567,7 @@ def make_dataframe(contents):
     except (pd.errors.ParserError, pd.errors.EmptyDataError, ValueError) as e:
         return None, f"Error: {e}"
 
-
-def make_placefile(df, cfg) -> None:
+def make_placefile(contents, filename, cfg) -> None:
     """
     This function creates the placefile for the radar simulation
     """
@@ -1591,28 +1577,42 @@ def make_placefile(df, cfg) -> None:
     \nColor: 255 200 255\
     \nIconFile: 1, 150, 150, 50, 50, https://raw.githubusercontent.com/tjturnage/cloud-radar-server/main/assets/iconfiles/wessl-three.png\
     \nFont: 1, 11, 1, "Arial"\n\n'
-    placefiles_dir = Path(cfg['PLACEFILES_DIR'])
-    placefile_path = placefiles_dir / 'notifications.txt'
-    with open(placefile_path, 'w', encoding='utf-8') as fout:
-        fout.write(top_section)
-        try:
+
+
+    _content_type, content_string = contents.split(',')
+    decoded = base64.b64decode(content_string)
+
+    try:
+        if 'csv' in filename:
+            fout = open(f'{cfg['PLACEFILES_DIR']}/notifications.txt', 'w', encoding='utf-8')
+            #fout.write("//RSSiC notifications file\n")
+            fout.write(top_section)
+            # Assume that the user uploaded a CSV file
+            df = pd.read_csv(io.StringIO(decoded.decode('utf-8')), dtype=str)
+            df.fillna('M', inplace=True)
             for _index,row in df.iterrows():
-                time_line = create_datetime(row)
-                comments = create_comments(row)
-                event_type = row.get('event_input_type',"")
-                icon_code = icon_value(event_type)
+                try:
+                    dts = row.get('full_dts',"")
+                    lat = row.get('latitude',"")
+                    lon = row.get('longitude',"")
+                    if 'M' not in lat and 'M' not in lon and 'M' not in dts:
+                        tr_line = create_datetime(row)
+                        obj_line = f'Object: {lat},{lon}\n'
+                        comments = row.get('comments',"")
+                        icon_code = icon_value(row.get('event_input_type',"")) 
+                        icon_line = f"Threshold: 999\nIcon: 0,0,0,1,{icon_code}, {comments}\nEnd:\n\n"
+                        print(tr_line,obj_line,icon_line)
+                        fout.write(tr_line)
+                        fout.write(obj_line)
+                        fout.write(icon_line)
+                except (pd.errors.ParserError, pd.errors.EmptyDataError, ValueError) as e:
+                    return None, f"Error processing file: {e}"
+            fout.close()
+            return df, None
+        return None, f"Unsupported file type: {filename}"
 
-                lat = row.get('latitude',"")
-                lon = row.get('longitude',"")
-                obj_line = f'Object: {lat}, {lon}\n'
-                icon_line = f'Threshold: 999\nIcon: 0, 0, 000, 1, {icon_code}, {comments}'
-
-                fout.write(time_line)
-                fout.write(obj_line)
-                fout.write(icon_line)
-            print(f"Placefile created: {placefile_path}")
-        except (pd.errors.ParserError, pd.errors.EmptyDataError, ValueError) as e:
-            print(f"Error creating placefile: {e}")
+    except (pd.errors.ParserError, pd.errors.EmptyDataError, ValueError) as e:
+        return None, f"Error processing file: {e}"
 
 @app.callback(Output('show_upload_feedback', 'children'),
               [Input('upload-data', 'contents'),
@@ -1624,20 +1624,22 @@ def update_output(contents, filename, cfg):
     This function is called when the user uploads a file. It will parse the contents and write
     """
 
-    if 'csv' in filename:
+    if contents is not None:
         try:
-            df, error = make_dataframe(contents)
-            if error is not None:
-                return html.Div([html.H5(error)])            
-            make_placefile(df, cfg)
+            _df, error = make_placefile(contents, filename, cfg)
+            if error:
+                return html.Div([html.H5(error)])
             return html.Div([
             html.H5(f"File uploaded successfully: {filename}"),])
 
         except (KeyError,pd.errors.ParserError, pd.errors.EmptyDataError, ValueError) as e:
-            return html.Div([html.H5(f"Error processing file: {e}")])
-    
+            return html.Div([
+                html.H5(f"Error processing file: {e}")
+            ])
     return html.Div([
-        html.H5(f"Error: {filename} is not a csv file")])
+        html.H5("No file uploaded")
+    ])
+
 
 ################################################################################################
 # ----------------------------- Start app  -----------------------------------------------------
