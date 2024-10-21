@@ -890,12 +890,6 @@ def run_with_cancel_button(cfg, sim_times, radar_info):
     """
     UpdateHodoHTML('None', cfg['HODOGRAPHS_DIR'], cfg['HODOGRAPHS_PAGE'])
 
-    # clean out old files and directories - no longer needed since custom dirs created now
-    # try:
-    #     remove_files_and_dirs(cfg)
-    # except KeyError as e:
-    #     logging.exception("Error removing files and directories: %s",e,exc_info=True)
-
     # based on list of selected radars, create a dictionary of radar metadata
     try:
         create_radar_dict(radar_info)
@@ -980,6 +974,16 @@ def run_with_cancel_button(cfg, sim_times, radar_info):
                         cfg['SESSION_ID'])
     if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
         return
+
+    # create file and event times text file. Not monitored currently due to how quick this executes
+    #         event_times = WriteEventTimes(time_delta, src_dir, dest_dir, radar_dir)
+    args = [str(sim_times['simulation_seconds_shift']), cfg['DATA_DIR'], cfg['ASSETS_DIR'],
+            cfg['RADAR_DIR']]
+    res = call_function(utils.exec_script, Path(cfg['NOTIF_TIMES_SCRIPT_PATH']), args,
+                        cfg['SESSION_ID'])
+    if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
+        return
+
 
     # Surface observations
     args = [str(radar_info['lat']), str(radar_info['lon']),
@@ -1485,11 +1489,10 @@ def update_day_dropdown(selected_year, selected_month):
 # ----------------------------- Upload callback  -----------------------------------------------
 ################################################################################################
 
-def create_datetime(row):
+def make_timerange_line(row):
     """
     This function creates the datetime string for the placefiles
     """
-    #print(row)
     date_str = row.get('utc_date',"")
     hour = row.get('utc_hour',"")
     minute = row.get('utc_minute',"")
@@ -1504,56 +1507,61 @@ def create_datetime(row):
 
     # Combine the date, hour, and minute into a datetime object
     datetime_str = f"{date_str} {int(hour):02d}:{int(minute):02d}"
-    #print(datetime_str)
-    init_dtobj = datetime.strptime(datetime_str, '%m/%d/%Y %H:%M')
 
-    dtobj = init_dtobj + timedelta(minutes=int(delay))
-    start_tstr = dtobj.strftime("%Y-%m-%dT%H:%M:%SZ")
+    orig_dtobj = datetime.strptime(datetime_str, '%m/%d/%Y %H:%M')
+
+    dtobj = orig_dtobj + timedelta(minutes=int(delay))
     dtobj_end = dtobj + timedelta(minutes=10)
-    end_tstr = dtobj_end.strftime("%Y-%m-%dT%H:%M:%SZ")
-    timerange_line = f"TimeRange: {start_tstr} {end_tstr}\n"
+
+    time_range_start = dtobj.strftime("%Y-%m-%dT%H:%M:%SZ")
+    time_range_end = dtobj_end.strftime("%Y-%m-%dT%H:%M:%SZ")
+    timerange_line = f"TimeRange: {time_range_start} {time_range_end}\n"
+
     return timerange_line
 
-
-def create_comments(row):
+def create_remark(row):
     """
     This function creates the pop-up text for the placefiles
 
     """
-    event= row.get('event',"")
-    event_input_type = row.get('event_input_type',"")
-    magnitude = row.get('magnitude',"")
+    typetext= row.get('TYPETEXT',"")
+    qualifier = row.get('QUALIFIER',"")
+    mag = row.get('MAG',"")
+    mag_line = ""
     #if magnitude == "nan" or magnitude == "No_Magnitude":
-    if magnitude in ("nan", "No_Magnitude"):
-        magnitude_line = ""
+    if mag in ("nan", "NO MAG", "NA", "No_Magnitude"):
+        mag_line = "NA"
     else:
-        magnitude_line = f"Magnitude: {magnitude}\\n"
+        if typetext == 'TSTM WND GST':
+            mag_line = f"Wind Gust: {mag} mph\\n"
+        if typetext in ('HAIL', 'RAIN', 'SNOW'):
+            mag_line = f"{mag} inches\\n"
     source = row.get('source',"")
     #fake_rpt = row.get('fake_rpt',"")
-    comments = row.get('comments',"")
-    #if comments == "nan" or comments == "No_Comments" or comments == "M":
-    if comments in ("nan", "No_Comments", "M"):
-        comments = "No comments"
-    if event == 'Question':
-        comments_line = f'{event}\\nSource: {source}\\n{comments}\nEnd:\n\n'
+    remark = row.get('REMARK',"")
+    if remark in ("nan", "No_Comments", "M","NA"):
+        remark_line = "NA"
+    if typetext == 'QUESTION':
+        remark_line = f'{typetext}\\nSource: {source}\\n{remark}\nEnd:\n\n'
     else:
-        comments_line = f'{event}\\n{event_input_type}\\n{magnitude_line}Source: {source}\\n{comments}\nEnd:\n\n'
-    return comments_line
+        remark_line = f'{typetext}\\n{qualifier}\\n{mag_line}Source: {source}\\n{remark}\nEnd:\n\n'
+    return remark_line
 
 
 def icon_value(event_type):
     """
     This function assigns an icon value based on the event type
     """
-    if event_type == 'Verified':
+    if event_type == 'VERIFIED':
         return 1
-    if event_type == 'Unverified':
+    if event_type == 'UNVERIFIED':
         return 2
-    if event_type == 'Question':
+    if event_type == 'QUESTION':
         return 3
     return 3
+   
 
-def make_placefile(contents, filename, cfg) -> None:
+def make_placefile(contents, filename, cfg, seconds_shift) -> None:
     """
     This function creates the placefile for the radar simulation
     """
@@ -1571,30 +1579,35 @@ def make_placefile(contents, filename, cfg) -> None:
 
     try:
         if 'csv' in filename:
-            fout = open(f'{cfg['PLACEFILES_DIR']}/notifications.txt', 'w', encoding='utf-8')
-            fout.write("; RSSiC notifications file\n")
-            fout.write(top_section)
+            place_fout = open(f'{cfg['PLACEFILES_DIR']}/notifications.txt', 'w', encoding='utf-8')
+            #notifications_csv = open(f'{cfg['DATA_DIR']}/notifications.csv', 'w', encoding='utf-8')
+            notifications_csv = f'{cfg['DATA_DIR']}/notifications.csv'
+            place_fout.write("; RSSiC notifications file\n")
+            place_fout.write(top_section)
             # Assume that the user uploaded a CSV file
             df_orig = pd.read_csv(io.StringIO(decoded.decode('utf-8')), dtype=str)
-            df = df_orig.loc[df_orig['event'] != 'No_Event']
+            df = df_orig.loc[df_orig['TYPETEXT'] != 'NO EVENT']
+            df.fillna("NA", inplace=True)
+            df.to_csv(notifications_csv, index=False, encoding='utf-8')
+            
+            
             for _index,row in df.iterrows():
-                try:
-                    dts = row.get('full_dts',"")
-                    lat = row.get('latitude',"")
-                    lon = row.get('longitude',"")
-                    if 'M' not in lat and 'M' not in lon and 'M' not in dts:
-                        tr_line = create_datetime(row)
-                        obj_line = f'Object: {lat},{lon}\n'
-                        comments = create_comments(row)
-                        icon_code = icon_value(row.get('event_input_type',""))
-                        icon_line = f"Threshold: 999\nIcon: 0,0,0,2,{icon_code}, {comments}"
-                        print(tr_line,obj_line,icon_line)
-                        fout.write(tr_line)
-                        fout.write(obj_line)
-                        fout.write(icon_line)
+                try:        
+                    lat = row.get('LAT',"")
+                    lon = row.get('LON',"")
+                    obj_line = f'Object: {lat},{lon}\n'
+                    
+                    tr_line = make_timerange_line(row)
+                    comments = create_remark(row)
+                    icon_code = icon_value(row.get('event_input_type',""))
+                    icon_line = f"Threshold: 999\nIcon: 0,0,0,2,{icon_code}, {comments}"
+                    print(tr_line,obj_line,icon_line)
+                    place_fout.write(tr_line)
+                    place_fout.write(obj_line)
+                    place_fout.write(icon_line)
                 except (pd.errors.ParserError, pd.errors.EmptyDataError, ValueError) as e:
                     return None, f"Error processing file: {e}"
-            fout.close()
+            place_fout.close()
             return df, None
         return None, f"Unsupported file type: {filename}"
 
@@ -1604,16 +1617,18 @@ def make_placefile(contents, filename, cfg) -> None:
 @app.callback(Output('show_upload_feedback', 'children'),
               [Input('upload-data', 'contents'),
               State('upload-data', 'filename'),
-              State('configs', 'data')],
+              State('configs', 'data'),
+              State('sim_times', 'data')],
               prevent_initial_call=True)
-def update_output(contents, filename, cfg):
+def update_output(contents, filename, configs, sim_times):
     """
     This function is called when the user uploads a file. It will parse the contents and write
     """
-
+    seconds_shift = sim_times['simulation_seconds_shift']
+    print(f"Seconds shift: {seconds_shift}")
     if contents is not None:
         try:
-            _df, error = make_placefile(contents, filename, cfg)
+            _df, error = make_placefile(contents, filename, configs, seconds_shift)
             if error:
                 return html.Div([html.H5(error)])
             return html.Div([

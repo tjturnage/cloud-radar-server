@@ -33,12 +33,12 @@ class LsrCreator:
         self.url = (f'{URL_BASE}={self.start_date}T{self.start_time}Z&ets={self.end_date}'
                     f'T{self.end_time}Z&wfo=ALL&fmt=csv')
         # Filename for downloaded file
-        self.lsr_file = f"{self.data_path}/LSR_extracted.csv"  
+        self.lsr_file = f"{self.data_path}/LSR_extracted.csv"
 
         # Download data, generate placefile, and purge .csv from disk
         self.download_and_save_file()
         self.write_placefile()
-        self.delete_file()
+        #self.delete_file()
 
     def download_and_save_file(self):
         """
@@ -68,11 +68,11 @@ class LsrCreator:
         """
         Write the LSR data to a placefile
         """
-        #icon_url = "https://www.weather.gov/source/dmx/GRIcons"
         icon_url = "https://raw.githubusercontent.com/tjturnage/cloud-radar-server/main/assets/iconfiles/IconSheets"
         # Read the CSV file 
-        # df = pd.read_csv(self.lsr_file, low_memory=False)
-        df = pd.read_csv(self.lsr_file, low_memory=False, on_bad_lines='warn')
+        columns = ['VALID','VALID2','LAT','LON','MAG','WFO','TYPECODE','TYPETEXT','CITY','COUNTY','STATE','SOURCE','REMARK','UGC','UGCNAME','QUALIFIER']
+        #columns = ['VALID2', 'LAT', 'LON', 'TYPETEXT', 'MAG', 'REMARK', 'SOURCE']
+        df = pd.read_csv(self.lsr_file, usecols=columns,low_memory=False, on_bad_lines='warn')
         df['REMARK'] = df['REMARK'].fillna(' ') # removing nan values from output text in LSR hover text
 
         keyword1 = ["FATAL"]
@@ -175,9 +175,15 @@ class LsrCreator:
                     if any(keyword in str(remark) for keyword in keyword1):
                         f.write(f'{icon2}\n')
                     elif any(keyword in str(remark) for keyword in keyword2):
-                        f.write(f'{icon3}\n')                    
+                        f.write(f'{icon3}\n')
                     f.write('END:\n\n')
 
 
 if __name__ == '__main__':
-    LsrCreator(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])
+    if sys.platform.startswith('win'):
+        LsrCreator('2024-05-07 22:00','120', os.getcwd(), os.getcwd())
+    else:
+        #str(sim_times['event_start_str']), str(sim_times['event_duration']),
+        #cfg['DATA_DIR'], cfg['PLACEFILES_DIR']]
+        LsrCreator(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])
+

@@ -25,7 +25,7 @@ def exec_script(script_path, args, session_id):
         PYTHON = r"C:\\Users\\lee.carlaw\\environments\\cloud-radar\\Scripts\python.exe"
 
     output = {}
-    env = os.environ.copy() 
+    env = os.environ.copy()
     env['session_id'] = session_id # add the unique session id to the process
     try:
         # Execute scripts as python module to allow config import from higher-level dir:
