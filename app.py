@@ -978,7 +978,7 @@ def run_with_cancel_button(cfg, sim_times, radar_info):
     # create file and event times text file. Not monitored currently due to how quick this executes
     #         event_times = WriteEventTimes(time_delta, src_dir, dest_dir, radar_dir)
     args = [str(sim_times['simulation_seconds_shift']), cfg['DATA_DIR'], cfg['ASSETS_DIR'],
-            cfg['RADAR_DIR']]
+            cfg['USER_DOWNLOADS_DIR']]
     res = call_function(utils.exec_script, Path(cfg['NOTIF_TIMES_SCRIPT_PATH']), args,
                         cfg['SESSION_ID'])
     if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
@@ -1586,8 +1586,9 @@ def make_placefile(contents, filename, cfg, seconds_shift) -> None:
             place_fout.write(top_section)
             # Assume that the user uploaded a CSV file
             df_orig = pd.read_csv(io.StringIO(decoded.decode('utf-8')), dtype=str)
+            df_orig.fillna("NA", inplace=True)
             df = df_orig.loc[df_orig['TYPETEXT'] != 'NO EVENT']
-            df.fillna("NA", inplace=True)
+
             df.to_csv(notifications_csv, index=False, encoding='utf-8')
             
             

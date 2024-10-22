@@ -21,7 +21,7 @@ class WriteEventTimes:
     def __init__(self, seconds_shift, source_dir, destination_dir, rdir):
         self.seconds_shift = int(seconds_shift)
         self.source_dir = source_dir
-        self.notifications_csv = os.path.join(self.source_dir, 'notif.csv')
+        self.notifications_csv = os.path.join(self.source_dir, 'notifications.csv')
         #self.lsrs_csv = os.path.join(self.source_dir, 'lsrs.csv')
         self.lsrs_csv = os.path.join(self.source_dir, 'LSR_extracted.csv')
         self.destination_dir = destination_dir
@@ -108,6 +108,7 @@ class WriteEventTimes:
                 forig_time = f"{row['orig_time']:<15}"
                 fnew_time = f"{row['new_time']:<15}"
                 fremark = row.get("REMARK", "")
+                fremark = fremark[0:45]
                 output_line = f"{fnew_time} | {forig_time} | {flat} | {flon} | {ftypetext} | {fqualifier} | {fmag} | {fsource} | {fremark}\n"
                 fout.write(output_line)
             except (pd.errors.ParserError, pd.errors.EmptyDataError, ValueError) as e:
