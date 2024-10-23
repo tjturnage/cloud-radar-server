@@ -3,7 +3,8 @@ This script processes input files to convert times and extract values.
 """
 import sys
 import os
-import glob
+#import glob
+import json
 from datetime import datetime, timedelta
 import pytz
 import pandas as pd
@@ -43,7 +44,7 @@ class WriteEventTimes:
         try:
             self.write_radar_files()
         except ValueError as e:
-            print(f"Error processing file: {e}")
+            print(f"Error processing radar files: {e}")
 
 
         # Sort the file_times.txt file by the first column
@@ -78,18 +79,41 @@ class WriteEventTimes:
         extracts timestring from names of downloaded radar files
         writes new and original timestrings to file_times.txt
         """
-        fout = open(self.destination_path, 'a', encoding='utf-8')
-        os.chdir(self.rdir)
-        files = list(glob.glob('*'))
-        for file in files:
-            rda = file[0:4]
-            orig_file_timestr = file[4:19]
-            orig_datetime_obj = datetime.strptime(orig_file_timestr, '%Y%m%d_%H%M%S').replace(tzinfo=pytz.UTC)
-            new_datetime_obj = orig_datetime_obj + timedelta(seconds=self.seconds_shift)
-            orig_tstr = datetime.strftime(orig_datetime_obj, '%Y-%m-%d %H:%M')
-            new_tstr = datetime.strftime(new_datetime_obj, '%Y-%m-%d %H:%M')
-            output_line = f"{new_tstr} | {orig_tstr} |                      | {rda} VST\n"
-            fout.write(output_line)
+        try:
+            fout = open(self.destination_path, 'a', encoding='utf-8')
+            radar_info = os.path.join(self.rdir, 'radarinfo.json')
+            with open(radar_info, 'r', encoding='utf-8') as f:
+                data = json.dumps(f)
+                keys = data.keys()
+                #print(keys)
+        except FileNotFoundError as e:
+            print(f"Error processing file: {e}")
+
+        try:
+            for key in keys:
+                rda = key[0:4]
+                orig_file_timestr = key[4:19]
+                orig_datetime_obj = datetime.strptime(orig_file_timestr, '%Y%m%d_%H%M%S').replace(tzinfo=pytz.UTC)
+                new_datetime_obj = orig_datetime_obj + timedelta(seconds=self.seconds_shift)
+                orig_tstr = datetime.strftime(orig_datetime_obj, '%Y-%m-%d %H:%M')
+                new_tstr = datetime.strftime(new_datetime_obj, '%Y-%m-%d %H:%M')
+                output_line = f"{new_tstr} | {orig_tstr} |                      | {rda} VST\n"
+                fout.write(output_line)
+        except ValueError as e:
+            print(f"Error processing file: {e}")
+        
+        #os.chdir(self.rdir)
+        #print(f"Radar downloads directory: {os.getcwd()}")
+        #files = list(glob.glob('*'))
+        # for file in files:
+        #     rda = file[0:4]
+        #     orig_file_timestr = file[4:19]
+        #     orig_datetime_obj = datetime.strptime(orig_file_timestr, '%Y%m%d_%H%M%S').replace(tzinfo=pytz.UTC)
+        #     new_datetime_obj = orig_datetime_obj + timedelta(seconds=self.seconds_shift)
+        #     orig_tstr = datetime.strftime(orig_datetime_obj, '%Y-%m-%d %H:%M')
+        #     new_tstr = datetime.strftime(new_datetime_obj, '%Y-%m-%d %H:%M')
+        #     output_line = f"{new_tstr} | {orig_tstr} |                      | {rda} VST\n"
+        #     fout.write(output_line)
 
     def write_output(self, df) -> None:
         """
@@ -108,7 +132,7 @@ class WriteEventTimes:
                 forig_time = f"{row['orig_time']:<15}"
                 fnew_time = f"{row['new_time']:<15}"
                 fremark = row.get("REMARK", "")
-                fremark = fremark[0:45]
+                fremark = fremark[0:80]
                 output_line = f"{fnew_time} | {forig_time} | {flat} | {flon} | {ftypetext} | {fqualifier} | {fmag} | {fsource} | {fremark}\n"
                 fout.write(output_line)
             except (pd.errors.ParserError, pd.errors.EmptyDataError, ValueError) as e:

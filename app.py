@@ -961,11 +961,6 @@ def run_with_cancel_button(cfg, sim_times, radar_info):
     except KeyError as e:
         logging.exception("Error removing munged radar files ", exc_info=True)
 
-    # Now that all radar files are in assets/{}/downloads dir, zip them up
-    try:
-        zip_downloadable_radar_files(cfg)
-    except KeyError as e:
-        logging.exception("Error zipping radar files ", exc_info=True)
         
     # LSR Placefiles. Not monitored currently due to how quick this executes
     args = [str(sim_times['event_start_str']), str(sim_times['event_duration']),
@@ -975,15 +970,20 @@ def run_with_cancel_button(cfg, sim_times, radar_info):
     if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
         return
 
-    # create file and event times text file. Not monitored currently due to how quick this executes
-    #         event_times = WriteEventTimes(time_delta, src_dir, dest_dir, radar_dir)
+    # File and event times text file
+    # event_times = WriteEventTimes(time_delta, src_dir, dest_dir, radar_dir)
     args = [str(sim_times['simulation_seconds_shift']), cfg['DATA_DIR'], cfg['ASSETS_DIR'],
-            cfg['USER_DOWNLOADS_DIR']]
+            cfg['RADAR_DIR']]
     res = call_function(utils.exec_script, Path(cfg['NOTIF_TIMES_SCRIPT_PATH']), args,
                         cfg['SESSION_ID'])
     if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
         return
 
+    # Now that all radar files are in assets/{}/downloads dir, zip them up
+    try:
+        zip_downloadable_radar_files(cfg)
+    except KeyError as e:
+        logging.exception("Error zipping radar files ", exc_info=True)
 
     # Surface observations
     args = [str(radar_info['lat']), str(radar_info['lon']),
@@ -1602,7 +1602,7 @@ def make_placefile(contents, filename, cfg, seconds_shift) -> None:
                     comments = create_remark(row)
                     icon_code = icon_value(row.get('event_input_type',""))
                     icon_line = f"Threshold: 999\nIcon: 0,0,0,2,{icon_code}, {comments}"
-                    print(tr_line,obj_line,icon_line)
+                    #print(tr_line,obj_line,icon_line)
                     place_fout.write(tr_line)
                     place_fout.write(obj_line)
                     place_fout.write(icon_line)
