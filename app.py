@@ -892,8 +892,8 @@ def run_with_cancel_button(cfg, sim_times, radar_info):
     """
     UpdateHodoHTML('None', cfg['HODOGRAPHS_DIR'], cfg['HODOGRAPHS_PAGE'])
     # writes a black event_times.txt file to the assets directory
-    args = [str(sim_times['simulation_seconds_shift']), 'None', cfg['EVENTS_HTML_FILE'],
-           cfg['EVENTS_TEXT_FILE']]
+    args = [str(sim_times['simulation_seconds_shift']), 'None', cfg['RADAR_DIR'],
+            cfg['EVENTS_HTML_FILE'], cfg['EVENTS_TEXT_FILE']]
     res = call_function(utils.exec_script, Path(cfg['EVENT_TIMES_SCRIPT_PATH']), args,
                         cfg['SESSION_ID'])
     if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
@@ -984,9 +984,9 @@ def run_with_cancel_button(cfg, sim_times, radar_info):
         return
 
     # event times text file
-    # event_times = WriteEventTimes(time_delta, src_dir, dest_dir, radar_dir)
-    args = [str(sim_times['simulation_seconds_shift']), cfg['DATA_DIR'], cfg['EVENTS_HTML_FILE'],
-           cfg['EVENTS_TEXT_FILE']]
+    # seconds_shift, csv_dir, radar_dir, html_file, text_file
+    args = [str(sim_times['simulation_seconds_shift']), cfg['DATA_DIR'], cfg['RADAR_DIR'],
+            cfg['EVENTS_HTML_FILE'], cfg['EVENTS_TEXT_FILE']]
     res = call_function(utils.exec_script, Path(cfg['EVENT_TIMES_SCRIPT_PATH']), args,
                         cfg['SESSION_ID'])
     if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
@@ -1574,13 +1574,13 @@ def icon_value(event_type):
     return 3
    
 
-def make_placefile(contents, filename, cfg) -> None:
+def make_events_placefile(contents, filename, cfg) -> None:
     """
-    This function creates the placefile for the radar simulation
+    This function creates the Event Notification placefile for the radar simulation
     """
     top_section = 'Refresh: 1\
     \nThreshold: 999\
-    \nTitle: Notifications -- for radar simulation\
+    \nTitle: Event Notifications -- for radar simulation\
     \nColor: 255 200 255\
     \nIconFile: 1, 50, 50, 25, 15, https://raw.githubusercontent.com/tjturnage/cloud-radar-server/main/assets/iconfiles/wessl-three.png\
     \nIconFile: 2, 30, 30, 15, 10, https://raw.githubusercontent.com/tjturnage/cloud-radar-server/main/assets/iconfiles/wessl-three-small.png\
@@ -1592,7 +1592,7 @@ def make_placefile(contents, filename, cfg) -> None:
 
     try:
         if 'csv' in filename:
-            place_fout = open(f'{cfg['PLACEFILES_DIR']}/ events.txt', 'w', encoding='utf-8')
+            place_fout = open(f'{cfg['PLACEFILES_DIR']}/events.txt', 'w', encoding='utf-8')
             #notifications_csv = open(f'{cfg['DATA_DIR']}/notifications.csv', 'w', encoding='utf-8')
             events_csv = f'{cfg['DATA_DIR']}/events.csv'
             place_fout.write("; RSSiC events file\n")
@@ -1615,7 +1615,7 @@ def make_placefile(contents, filename, cfg) -> None:
                     comments = create_remark(row)
                     icon_code = icon_value(row.get('event_input_type',""))
                     icon_line = f"Threshold: 999\nIcon: 0,0,0,2,{icon_code}, {comments}"
-                    #print(tr_line,obj_line,icon_line)
+                    print(tr_line,obj_line,icon_line)
                     place_fout.write(tr_line)
                     place_fout.write(obj_line)
                     place_fout.write(icon_line)
@@ -1642,7 +1642,7 @@ def update_output(contents, filename, configs, sim_times):
     print(f"Seconds shift: {seconds_shift}")
     if contents is not None:
         try:
-            _df, error = make_placefile(contents, filename, configs)
+            _df, error = make_events_placefile(contents, filename, configs)
             if error:
                 return html.Div([html.H5(error)])
             return html.Div([

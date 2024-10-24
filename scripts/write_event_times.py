@@ -56,6 +56,7 @@ TAIL = """</pre>
 class BaseEventTimes:
     """
     A base class containing common attributes for event times processing.
+    #seconds_shift, csv_dir, radar_dir, html_file, text_file
     """
     seconds_shift: str
     csv_dir: str
@@ -80,13 +81,8 @@ class WriteEventTimes(BaseEventTimes):
     notifications_csv: str = field(init=False)
     lsrs_csv: str = field(init=False)
 
-        # self.seconds_shift = int(seconds_shift)
-        # self.csv_dir = csv_dir
-        # self.radar_dir = radar_dir
-        # self.html_file = html_file
-        # self.text_file = text_file
+
     def __post_init__(self):
-        self.seconds_shift = int(self.seconds_shift)
         self.notifications_csv = os.path.join(self.csv_dir, 'notifications.csv')
         self.lsrs_csv = os.path.join(self.csv_dir, 'LSR_extracted.csv')
 
@@ -113,15 +109,6 @@ class WriteEventTimes(BaseEventTimes):
 
             # Sort the file_times.txt file by the first column
             self.sort_times_and_write_file()
-
-    # def delete_event_times_file(self) -> None:
-    #     """
-    #     Deletes the file_times.txt file if it exists
-    #     """
-    #     if os.path.exists(self.destination_text):
-    #         os.remove(self.destination_text)
-    #     if os.path.exists(self.destination_html):
-    #         os.remove(self.destination_html)
 
 
     def make_blank_event_times_page(self) -> None:
