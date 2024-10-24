@@ -15,8 +15,8 @@ if 'C:\\' in dir_parts:
 #    HODOGRAPHS_PAGE = 'C:/data/scripts/cloud-radar-server/assets/hodographs.html'
 #    #link_base = "http://localhost:8050/assets"
 #    #cloud = False
-#else:
-#    from config import HODOGRAPHS_DIR, HODOGRAPHS_PAGE
+else:
+    PLATFORM = 'not_windows'
 
 
 HEAD = """<!DOCTYPE html>

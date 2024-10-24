@@ -102,7 +102,7 @@ def shift_placefiles(PLACEFILES_DIR, sim_times, radar_info) -> None:
                     new_line = shift_time(
                         line, sim_times['simulation_seconds_shift'])
 
-                # Shift this line in space. Only perform if both an original and 
+                # Shift this line in space. Only perform if both an original and
                 # transpose radar have been specified.
                 if radar_info['new_radar'] != 'None' and radar_info['radar'] is not None:
                     regex = re.findall(LAT_LON_REGEX, line)
@@ -402,9 +402,9 @@ def generate_layout(layout_has_initialized, children, configs):
 
         # Initialize configurable variables for load in
         event_start_year = 2024
-        event_start_month = 7
-        event_start_day = 16
-        event_start_hour = 0
+        event_start_month = 5
+        event_start_day = 7
+        event_start_hour = 21
         event_start_minute = 30
         event_duration = 60
         playback_speed = 1.0
@@ -522,8 +522,8 @@ def generate_layout(layout_has_initialized, children, configs):
                     dbc.Col(dbc.ListGroupItem("LSRs",
                                 href=f"{configs['PLACEFILES_LINKS']}/LSRs_updated.txt",
                                 target="_blank"),style={'color':lc.obs_c}, width=2),
-                    dbc.Col(dbc.ListGroupItem("Notifications (only works with CSV uploads)",
-                                href=f"{configs['PLACEFILES_LINKS']}/notifications_updated.txt",
+                    dbc.Col(dbc.ListGroupItem("Events (requires CSV upload)",
+                                href=f"{configs['PLACEFILES_LINKS']}/events_updated.txt",
                                 target="_blank"),style={'color':lc.obs_c}, width=6),
                 ],
                 style={"display": "flex", "flexWrap": "wrap"}),
@@ -629,16 +629,18 @@ def generate_layout(layout_has_initialized, children, configs):
              lc.spacer_mini,
                     dbc.Row(
                  [
-                     dbc.Col(dbc.ListGroupItem("Hodographs Page (click to open)",
+                     dbc.Col(dbc.ListGroupItem("Hodographs Page",
                                 href=f"{configs['LINK_BASE']}/hodographs.html",
-                                target="_blank"),style={'color':lc.graphics_c},width=4),
-
-                     dbc.Col(dbc.ListGroupItem("Radar File Times (click to open)",
-                                href=f"{configs['LINK_BASE']}/file_times.txt",
-                                target="_blank"), style={'color':lc.graphics_c},width=4),
+                                target="_blank"),style={'color':lc.graphics_c},width=3),
+                     dbc.Col(dbc.ListGroupItem("Events Page",
+                                href=f"{configs['LINK_BASE']}/events.html",
+                                target="_blank"),style={'color':lc.graphics_c},width=3),
+                     dbc.Col(dbc.ListGroupItem("Events List",
+                                href=f"{configs['LINK_BASE']}/events.txt",
+                                target="_blank"), style={'color':lc.graphics_c},width=3),
                      dbc.Col(dbc.ListGroupItem("Click to Download Radar Files",
                                 href=f"{configs['LINK_BASE']}/downloads/radar_files.zip"),
-                                style={'color':lc.graphics_c},width=4),
+                                style={'color':lc.graphics_c},width=3),
                  ],
                  style={"display": "flex", "flexWrap": "wrap"}
                 ),
@@ -889,6 +891,14 @@ def run_with_cancel_button(cfg, sim_times, radar_info):
     This version of the script-launcher trying to work in cancel button
     """
     UpdateHodoHTML('None', cfg['HODOGRAPHS_DIR'], cfg['HODOGRAPHS_PAGE'])
+    # writes a black event_times.txt file to the assets directory
+    args = [str(sim_times['simulation_seconds_shift']), 'None', cfg['EVENTS_HTML_FILE'],
+           cfg['EVENTS_TEXT_FILE']]
+    res = call_function(utils.exec_script, Path(cfg['EVENT_TIMES_SCRIPT_PATH']), args,
+                        cfg['SESSION_ID'])
+    if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
+        return
+
 
     # based on list of selected radars, create a dictionary of radar metadata
     try:
@@ -963,18 +973,21 @@ def run_with_cancel_button(cfg, sim_times, radar_info):
 
         
     # LSR Placefiles. Not monitored currently due to how quick this executes
-    args = [str(sim_times['event_start_str']), str(sim_times['event_duration']),
+    #args = [str(sim_times['event_start_str']), str(sim_times['event_duration']),
+    #        cfg['DATA_DIR'], cfg['PLACEFILES_DIR']]
+    args = [str(radar_info['lat']), str(radar_info['lon']),
+            str(sim_times['event_start_str']), str(sim_times['event_duration']),
             cfg['DATA_DIR'], cfg['PLACEFILES_DIR']]
     res = call_function(utils.exec_script, Path(cfg['LSR_SCRIPT_PATH']), args,
                         cfg['SESSION_ID'])
     if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
         return
 
-    # File and event times text file
+    # event times text file
     # event_times = WriteEventTimes(time_delta, src_dir, dest_dir, radar_dir)
-    args = [str(sim_times['simulation_seconds_shift']), cfg['DATA_DIR'], cfg['ASSETS_DIR'],
-            cfg['RADAR_DIR']]
-    res = call_function(utils.exec_script, Path(cfg['NOTIF_TIMES_SCRIPT_PATH']), args,
+    args = [str(sim_times['simulation_seconds_shift']), cfg['DATA_DIR'], cfg['EVENTS_HTML_FILE'],
+           cfg['EVENTS_TEXT_FILE']]
+    res = call_function(utils.exec_script, Path(cfg['EVENT_TIMES_SCRIPT_PATH']), args,
                         cfg['SESSION_ID'])
     if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
         return
@@ -1561,7 +1574,7 @@ def icon_value(event_type):
     return 3
    
 
-def make_placefile(contents, filename, cfg, seconds_shift) -> None:
+def make_placefile(contents, filename, cfg) -> None:
     """
     This function creates the placefile for the radar simulation
     """
@@ -1579,21 +1592,21 @@ def make_placefile(contents, filename, cfg, seconds_shift) -> None:
 
     try:
         if 'csv' in filename:
-            place_fout = open(f'{cfg['PLACEFILES_DIR']}/notifications.txt', 'w', encoding='utf-8')
+            place_fout = open(f'{cfg['PLACEFILES_DIR']}/ events.txt', 'w', encoding='utf-8')
             #notifications_csv = open(f'{cfg['DATA_DIR']}/notifications.csv', 'w', encoding='utf-8')
-            notifications_csv = f'{cfg['DATA_DIR']}/notifications.csv'
-            place_fout.write("; RSSiC notifications file\n")
+            events_csv = f'{cfg['DATA_DIR']}/events.csv'
+            place_fout.write("; RSSiC events file\n")
             place_fout.write(top_section)
             # Assume that the user uploaded a CSV file
             df_orig = pd.read_csv(io.StringIO(decoded.decode('utf-8')), dtype=str)
             df_orig.fillna("NA", inplace=True)
             df = df_orig.loc[df_orig['TYPETEXT'] != 'NO EVENT']
 
-            df.to_csv(notifications_csv, index=False, encoding='utf-8')
+            df.to_csv(events_csv, index=False, encoding='utf-8')
             
             
             for _index,row in df.iterrows():
-                try:        
+                try:  
                     lat = row.get('LAT',"")
                     lon = row.get('LON',"")
                     obj_line = f'Object: {lat},{lon}\n'
@@ -1629,7 +1642,7 @@ def update_output(contents, filename, configs, sim_times):
     print(f"Seconds shift: {seconds_shift}")
     if contents is not None:
         try:
-            _df, error = make_placefile(contents, filename, configs, seconds_shift)
+            _df, error = make_placefile(contents, filename, configs)
             if error:
                 return html.Div([html.H5(error)])
             return html.Div([

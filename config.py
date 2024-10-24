@@ -97,6 +97,8 @@ def setup_paths_and_dirs(n_intervals, session_id):
         dirs['USER_DOWNLOADS_DIR'] = f"{dirs['ASSETS_DIR']}/downloads"
         dirs['HODOGRAPHS_PAGE'] = f"{dirs['ASSETS_DIR']}/hodographs.html"
         dirs['HODO_HTML_PAGE'] = dirs['HODOGRAPHS_PAGE']
+        dirs['EVENTS_HTML_FILE'] = f"{dirs['ASSETS_DIR']}/events.html"
+        dirs['EVENTS_TEXT_FILE'] = f"{dirs['ASSETS_DIR']}/events.txt"
         dirs['POLLING_DIR'] = f"{dirs['ASSETS_DIR']}/polling"
         dirs['MODEL_DIR'] = f"{dirs['DATA_DIR']}/model_data"
         dirs['RADAR_DIR'] = f"{dirs['DATA_DIR']}/radar"
@@ -111,7 +113,7 @@ def setup_paths_and_dirs(n_intervals, session_id):
         dirs['SCRIPTS_DIR'] = f'{BASE_DIR}/scripts'
         dirs['OBS_SCRIPT_PATH'] = f'{dirs['SCRIPTS_DIR']}/obs_placefile.py'
         dirs['LSR_SCRIPT_PATH'] = f'{dirs['SCRIPTS_DIR']}/lsrs.py'
-        dirs['NOTIF_TIMES_SCRIPT_PATH'] = f'{dirs['SCRIPTS_DIR']}/notification_times.py'
+        dirs['EVENT_TIMES_SCRIPT_PATH'] = f'{dirs['SCRIPTS_DIR']}/write_event_times.py'
         dirs['HODO_SCRIPT_PATH'] = f'{dirs['SCRIPTS_DIR']}/hodo_plot.py'
         dirs['NEXRAD_SCRIPT_PATH'] = f'{dirs['SCRIPTS_DIR']}/Nexrad.py'
         dirs['L2MUNGER_FILEPATH'] = f'{dirs['SCRIPTS_DIR']}/l2munger'

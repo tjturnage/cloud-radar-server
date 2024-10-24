@@ -10,14 +10,15 @@ import pandas as pd
 class LsrCreator:
     """
     Create a placefile of Local Storm Reports (LSRs) for the radar simulation
+    #lat, lon, event_start_str, duration, 'DATA_DIR', 'PLACEFILES_DIR
     """
-    def __init__(self, sim_start, event_duration, data_path, output_path):
+    def __init__(self, lat, lon, sim_start, event_duration, data_path, output_path):
+        self.lat = lat
+        self.lon = lon
         self.sim_start = datetime.strptime(sim_start, '%Y-%m-%d %H:%M')
         self.sim_end = self.sim_start + timedelta(minutes=int(event_duration))
-        self.start_date = datetime.strftime(self.sim_start, "%Y-%m-%d")
-        self.start_time = datetime.strftime(self.sim_start, "%H:%M")
-        self.end_date = datetime.strftime(self.sim_end, "%Y-%m-%d")
-        self.end_time = datetime.strftime(self.sim_end, "%H:%M")
+        self.new_start = datetime.strftime(self.sim_start, '%Y-%m-%dT%H:%MZ')
+        self.new_end = datetime.strftime(self.sim_end, '%Y-%m-%dT%H:%MZ')
         self.output_folder = output_path
         self.data_path = data_path
         self.outfilename = "LSRs.txt"
@@ -28,10 +29,17 @@ class LsrCreator:
         self.lsr_delay = 12
         self.lsr_duration = 20
 
+        self.lat1, self.lat2, self.lon1, self.lon2 = self.bounding_box()
         # URL for downloading the LSR Data
-        URL_BASE = "https://mesonet.agron.iastate.edu/cgi-bin/request/gis/lsr.py?sts"
-        self.url = (f'{URL_BASE}={self.start_date}T{self.start_time}Z&ets={self.end_date}'
-                    f'T{self.end_time}Z&wfo=ALL&fmt=csv')
+        #URL_BASE = "https://mesonet.agron.iastate.edu/cgi-bin/request/gis/lsr.py?sts"
+        #self.url = (f'{URL_BASE}={self.start_date}T{self.start_time}Z&ets={self.end_date}'
+        #            f'T{self.end_time}Z&wfo=ALL&fmt=csv')
+        #  ... ?west=-96.5&east=-90.5&north=43.5&south=40.5&sts=2024-01-01T00:00Z&ets=2024-12-31T23:59Z
+        box_base = "https://mesonet.agron.iastate.edu/cgi-bin/request/gis/lsr.py"
+        bounds = f"?west={self.lon1}&east={self.lon2}&north={self.lat2}&south={self.lat1}"
+        times = f"&sts={self.new_start}&ets={self.new_end}"
+        self.url = f'{box_base}{bounds}{times}&fmt=csv'
+
         # Filename for downloaded file
         self.lsr_file = f"{self.data_path}/LSR_extracted.csv"
 
@@ -39,6 +47,19 @@ class LsrCreator:
         self.download_and_save_file()
         self.write_placefile()
         #self.delete_file()
+
+    def bounding_box(self):
+        """
+        Create a bounding box for the LSR data
+        """
+        distance = 3 # degrees
+        lat = float(self.lat)
+        lon = float(self.lon)
+        lat1 = lat - distance
+        lat2 = lat + distance
+        lon1 = lon - distance
+        lon2 = lon + distance
+        return lat1, lat2, lon1, lon2
 
     def download_and_save_file(self):
         """
@@ -181,9 +202,9 @@ class LsrCreator:
 
 if __name__ == '__main__':
     if sys.platform.startswith('win'):
-        LsrCreator('2024-05-07 22:00','120', os.getcwd(), os.getcwd())
+        LsrCreator('42','-85','2024-05-07 22:00','120', os.getcwd(), os.getcwd())
     else:
         #str(sim_times['event_start_str']), str(sim_times['event_duration']),
         #cfg['DATA_DIR'], cfg['PLACEFILES_DIR']]
-        LsrCreator(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])
-
+        #lat, lon, event_start_str, duration, 'DATA_DIR', 'PLACEFILES_DIR
+        LsrCreator(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], sys.argv[6])
