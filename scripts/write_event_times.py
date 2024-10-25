@@ -15,19 +15,12 @@ notif_columns = ['TYPETEXT','QUALIFIER','MAG','SOURCE','utc_date', 'utc_hour', '
 lsr_columns = ['VALID','VALID2','LAT','LON','MAG','WFO','TYPECODE','TYPETEXT',
                'CITY','COUNTY','STATE','SOURCE','REMARK','UGC','UGCNAME','QUALIFIER']
 
-HEAD = """<!DOCTYPE html>
-<html>
-<head>
-<title>Events</title>
-</head>
-<body>
-<ul>"""
 
 HEAD = """<!DOCTYPE html>
 <html>
 <head>
 <title>Events</title>
-<link rel="icon" type="image/x-icon" href="./favicon.ico">
+<link rel="icon" href="https://rssic.nws.noaa.gov/assets/favicon.ico" type="image/x-icon">
 <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootswatch/4.5.2/cyborg/bootstrap.min.css">
 </head>
 <body>
@@ -37,7 +30,7 @@ HEAD_NOPRE = """<!DOCTYPE html>
 <html>
 <head>
 <title>Events</title>
-<link rel="icon" type="image/x-icon" href="./favicon.ico">
+<link rel="icon" href="https://rssic.nws.noaa.gov/assets/favicon.ico" type="image/x-icon">
 <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootswatch/4.5.2/cyborg/bootstrap.min.css">
 </head>
 <body>
@@ -64,51 +57,44 @@ class BaseEventTimes:
     html_file: str
     text_file: str
 
-
 @dataclass
 class WriteEventTimes(BaseEventTimes):
     """
     A class to process input files to convert times and extract values.
     """
 
-    #def __init__(self, seconds_shift, csv_dir, radar_dir, html_file, text_file):
-    #simulation_seconds_shift, DATA_DIR, EVENTS_HTML_FILE, EVENTS_TEXT_FILE
-    #seconds_shift: str
-    #csv_dir: str
-    #radar_dir: str
-    #html_file: str
-    #text_file: str
-    notifications_csv: str = field(init=False)
+    events_csv: str = field(init=False)
     lsrs_csv: str = field(init=False)
 
-
     def __post_init__(self):
-        self.notifications_csv = os.path.join(self.csv_dir, 'notifications.csv')
+        self.events_csv = os.path.join(self.csv_dir, 'events.csv')
         self.lsrs_csv = os.path.join(self.csv_dir, 'LSR_extracted.csv')
 
         self.events_list = []
-        # Remove the existing file_times.txt file if it exists
-        if self.csv_dir == 'None':
-            self.make_blank_event_times_page()
-        else:
-            #self.delete_event_times_file()
-            try:
-                self.lsr_df = self.make_lsr_dataframe()
-                self.append_output(self.lsr_df)
-            except ValueError as e:
-                print(f"Error processing file: {e}")
-            try:
-                self.make_notifications_df = self.make_notifications_dataframe()
-                self.append_output(self.make_notifications_df)
-            except ValueError as e:
-                print(f"Error processing file: {e}")
-            try:
-                self.append_radar_file_info()
-            except ValueError as e:
-                print(f"Error processing radar files: {e}")
+        try:
+            self.append_radar_file_info()
+        except ValueError as e:
+            print(f"Error processing radar files: {e}")
+        try:
+            self.lsr_df = self.make_lsr_dataframe()
+            self.append_output(self.lsr_df)
+        except ValueError as e:
+            print(f"Error processing file: {e}")
+            
+        #if self.csv_dir == 'None':
+        #    self.make_blank_event_times_page()
 
-            # Sort the file_times.txt file by the first column
-            self.sort_times_and_write_file()
+        if os.path.exists(self.events_csv):
+            try:
+                self.events_df = self.make_events_dataframe()
+                self.append_output(self.events_df)
+            except ValueError as e:
+                print(f"Error processing file: {e}")
+        else:
+            print(f"{self.events_csv} not found")
+
+        # Sort the file contents by the first column
+        self.sort_times_and_write_file()
 
 
     def make_blank_event_times_page(self) -> None:
@@ -118,13 +104,13 @@ class WriteEventTimes(BaseEventTimes):
         with open(self.html_file, 'w', encoding='utf-8') as fout:
             fout.write(HEAD_NOPRE)
             fout.write('<br><br>\n')
-            fout.write('<h3>Notifications not available. Did you upload a csv?</h3>\n')
+            fout.write('<h3>Event Notifications not available. Did you upload a csv?</h3>\n')
             fout.write(TAIL_NOPRE)
 
         with open(self.text_file, 'w', encoding='utf-8') as fout:
-            fout.write('Events not available. Did you upload a csv?\n')
+            fout.write('Event Notifications not available. Did you upload a csv?\n')
 
-    def make_notifications_new_times(self, row):
+    def make_events_new_times(self, row):
         """
         This function creates the datetime string for the placefiles
         """
@@ -157,7 +143,7 @@ class WriteEventTimes(BaseEventTimes):
             with open(radar_info, 'r', encoding='utf-8') as f:
                 data = json.load(f)
                 keys = list(data.keys())
-                print(keys)
+                #print(keys)
                 return keys
         except (FileNotFoundError, json.JSONDecodeError) as e:
             print(f"Error processing file: {e}")
@@ -166,7 +152,7 @@ class WriteEventTimes(BaseEventTimes):
     def append_radar_file_info(self) -> None:
         """
         extracts timestring from names of downloaded radar files
-        writes new and original timestrings to file_times.txt
+        writes new and original timestrings to output files
         """
         try:
             files = self.get_radar_filenames()
@@ -175,10 +161,11 @@ class WriteEventTimes(BaseEventTimes):
                 orig_file_timestr = filename[4:19]
                 orig_datetime_obj = datetime.strptime(orig_file_timestr, \
                                                     '%Y%m%d_%H%M%S').replace(tzinfo=pytz.UTC)
-                new_datetime_obj = orig_datetime_obj + timedelta(seconds=self.seconds_shift)
+                new_datetime_obj = orig_datetime_obj + timedelta(seconds=int(self.seconds_shift))
                 orig_tstr = datetime.strftime(orig_datetime_obj, '%Y-%m-%d %H:%M')
                 new_tstr = datetime.strftime(new_datetime_obj, '%Y-%m-%d %H:%M')
-                output_line = f"{new_tstr} | {orig_tstr} |                      | {rda} VST\n"
+                #output_line = f"{new_tstr} | {orig_tstr} |                      | {rda} VST\n"
+                output_line = f"{new_tstr} | {orig_tstr} ******** {rda} *********\n"
                 self.events_list.append(output_line)
                 #fout.write(output_line)
         except ValueError as e:
@@ -201,8 +188,7 @@ class WriteEventTimes(BaseEventTimes):
                 fnew_time = f"{row['new_time']:<15}"
                 fremark = row.get("REMARK", "")
                 fremark = fremark[0:80]
-                output_line = f"{fnew_time} | {forig_time} | {flat} | {flon} | {ftypetext} | \
-                                {fqualifier} | {fmag} | {fsource} | {fremark}\n"
+                output_line = f"{fnew_time} | {forig_time} | {flat} | {flon} | {ftypetext} | {fqualifier} | {fmag} | {fsource} | {fremark}\n"
                 self.events_list.append(output_line)
             except (pd.errors.ParserError, pd.errors.EmptyDataError, ValueError) as e:
                 print(f"Error processing file: {e}")
@@ -216,7 +202,7 @@ class WriteEventTimes(BaseEventTimes):
         df = df.fillna(' ')
         try:
             df['dts_orig_obj'] = pd.to_datetime(df['VALID'], format='%Y%m%d%H%M')
-            df['dts_new_obj'] = df['dts_orig_obj'] + pd.Timedelta(seconds=self.seconds_shift)
+            df['dts_new_obj'] = df['dts_orig_obj'] + pd.Timedelta(seconds=int(self.seconds_shift))
             df['orig_time'] = df['dts_orig_obj'].dt.strftime('%Y-%m-%d %H:%M')
             df['new_time'] = df['dts_new_obj'].dt.strftime('%Y-%m-%d %H:%M')
             self.append_output(df)
@@ -225,12 +211,12 @@ class WriteEventTimes(BaseEventTimes):
             print(f"Error processing file: {e}")
             return None
 
-    def make_notifications_dataframe(self):
+    def make_events_dataframe(self):
         """
         This function reads the notifications CSV file and creates a new column with the new time
         """
-        notifications_csv = open(self.notifications_csv, 'r', encoding='utf-8')
-        df_orig = pd.read_csv(notifications_csv, usecols=notif_columns, dtype=str)
+        events_csv = open(self.events_csv, 'r', encoding='utf-8')
+        df_orig = pd.read_csv(events_csv, usecols=notif_columns, dtype=str)
         df = df_orig.loc[df_orig['TYPETEXT'] != 'NO EVENT']
         df = df.fillna('NA')
         df.replace('QUESTION', 'QUES', inplace=True)
@@ -244,7 +230,7 @@ class WriteEventTimes(BaseEventTimes):
         try:
             df['dts_orig_obj'] = pd.to_datetime(df['full_dts'], format='%m/%d/%Y %H:%M', \
                                 errors='coerce')
-            df['dts_new_obj'] = df['dts_orig_obj'] + pd.Timedelta(seconds=self.seconds_shift)
+            df['dts_new_obj'] = df['dts_orig_obj'] + pd.Timedelta(seconds=int(self.seconds_shift))
             df['orig_time'] = df['dts_orig_obj'].dt.strftime('%Y-%m-%d %H:%M')
             df['new_time'] = df['dts_new_obj'].dt.strftime('%Y-%m-%d %H:%M')
             self.append_output(df)
@@ -266,6 +252,11 @@ class WriteEventTimes(BaseEventTimes):
         with open(self.text_file, 'w', encoding='utf-8') as file:
             file.writelines(lines)
 
+        with open(self.html_file, 'w', encoding='utf-8') as fout:
+            fout.write(HEAD)
+            for line in lines:
+                fout.write(line)
+            fout.write(TAIL)
 
 if __name__ == '__main__':
     if sys.platform.startswith('win'):
@@ -275,7 +266,7 @@ if __name__ == '__main__':
         #dest_dir = 'C:/data/scripts/cloud-radar-server'
         #radar_dir = 'C:/data/scripts/cloud-radar-server/data/radar'
         #time_delta = str(60*60*24*32*5 + 497)
-        ##time_delta = datetime(2024, 10, 20, 20, 30) - datetime(2024, 5, 7, 21, 30)        
+        ##time_delta = datetime(2024, 10, 20, 20, 30) - datetime(2024, 5, 7, 21, 30)
         #event_times = WriteEventTimes(time_delta, src_dir, dest_dir, radar_dir)
     #seconds_shift, csv_dir, radar_dir, html_file, text_file
     event_times = WriteEventTimes(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5])

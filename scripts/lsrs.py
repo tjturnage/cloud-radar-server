@@ -90,7 +90,7 @@ class LsrCreator:
         Write the LSR data to a placefile
         """
         icon_url = "https://raw.githubusercontent.com/tjturnage/cloud-radar-server/main/assets/iconfiles/IconSheets"
-        # Read the CSV file 
+        # Read the CSV file
         columns = ['VALID','VALID2','LAT','LON','MAG','WFO','TYPECODE','TYPETEXT','CITY','COUNTY','STATE','SOURCE','REMARK','UGC','UGCNAME','QUALIFIER']
         #columns = ['VALID2', 'LAT', 'LON', 'TYPETEXT', 'MAG', 'REMARK', 'SOURCE']
         df = pd.read_csv(self.lsr_file, usecols=columns,low_memory=False, on_bad_lines='warn')

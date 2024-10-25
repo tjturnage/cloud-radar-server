@@ -1606,7 +1606,7 @@ def make_events_placefile(contents, filename, cfg) -> None:
             
             
             for _index,row in df.iterrows():
-                try:  
+                try:
                     lat = row.get('LAT',"")
                     lon = row.get('LON',"")
                     obj_line = f'Object: {lat},{lon}\n'
@@ -1615,7 +1615,7 @@ def make_events_placefile(contents, filename, cfg) -> None:
                     comments = create_remark(row)
                     icon_code = icon_value(row.get('event_input_type',""))
                     icon_line = f"Threshold: 999\nIcon: 0,0,0,2,{icon_code}, {comments}"
-                    print(tr_line,obj_line,icon_line)
+                    #print(tr_line,obj_line,icon_line)
                     place_fout.write(tr_line)
                     place_fout.write(obj_line)
                     place_fout.write(icon_line)
@@ -1639,7 +1639,7 @@ def update_output(contents, filename, configs, sim_times):
     This function is called when the user uploads a file. It will parse the contents and write
     """
     seconds_shift = sim_times['simulation_seconds_shift']
-    print(f"Seconds shift: {seconds_shift}")
+    #print(f"Seconds shift: {seconds_shift}")
     if contents is not None:
         try:
             _df, error = make_events_placefile(contents, filename, configs)
