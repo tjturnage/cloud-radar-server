@@ -15,6 +15,10 @@ notif_columns = ['TYPETEXT','QUALIFIER','MAG','SOURCE','utc_date', 'utc_hour', '
 lsr_columns = ['VALID','VALID2','LAT','LON','MAG','WFO','TYPECODE','TYPETEXT',
                'CITY','COUNTY','STATE','SOURCE','REMARK','UGC','UGCNAME','QUALIFIER']
 
+dashes = '-' * 130 + '\n'
+head1 = 'NEW TIME         | OLD TIME         | LAT / LON (OR RADAR) '
+head2 = '| LON       | EVENT |QUALIFY | MAG    | SOURCE             | REMARKS\n'
+header = head1 + head2
 
 HEAD = """<!DOCTYPE html>
 <html>
@@ -69,8 +73,8 @@ class WriteEventTimes(BaseEventTimes):
     def __post_init__(self):
         self.events_csv = os.path.join(self.csv_dir, 'events.csv')
         self.lsrs_csv = os.path.join(self.csv_dir, 'LSR_extracted.csv')
-
-        self.events_list = []
+        # Create a column delimited text file, starting with the header 
+        self.events_list = [dashes, header, dashes]
         try:
             self.append_radar_file_info()
         except ValueError as e:

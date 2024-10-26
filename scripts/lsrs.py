@@ -3,47 +3,66 @@ create LSRs for the radar simulation
 """
 import os
 import sys
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 import requests
 import pandas as pd
 
-class LsrCreator:
+@dataclass
+class LsrBase:
+    """
+    Base class for creating a placefile of Local Storm Reports (LSRs) for the radar simulation
+    """
+    lat: str
+    lon: str
+    sim_start: str
+    event_duration: int
+    data_path: str
+    output_path: str
+
+class LsrCreator(LsrBase):
     """
     Create a placefile of Local Storm Reports (LSRs) for the radar simulation
     #lat, lon, event_start_str, duration, 'DATA_DIR', 'PLACEFILES_DIR
     """
-    def __init__(self, lat, lon, sim_start, event_duration, data_path, output_path):
-        self.lat = lat
-        self.lon = lon
-        self.sim_start = datetime.strptime(sim_start, '%Y-%m-%d %H:%M')
-        self.sim_end = self.sim_start + timedelta(minutes=int(event_duration))
+    def __post_init__(self):
+        self.sim_start = datetime.strptime(self.sim_start, '%Y-%m-%d %H:%M')
+        self.sim_end = self.sim_start + timedelta(minutes=int(self.event_duration))
         self.new_start = datetime.strftime(self.sim_start, '%Y-%m-%dT%H:%MZ')
         self.new_end = datetime.strftime(self.sim_end, '%Y-%m-%dT%H:%MZ')
-        self.output_folder = output_path
-        self.data_path = data_path
+        self.output_folder = self.output_path
+        self.data_path = self.data_path
         self.outfilename = "LSRs.txt"
         self.output_file = os.path.join(self.output_folder, self.outfilename)
+    
+    # def __init__(self, lat, lon, sim_start, event_duration, data_path, output_path):
+    #     self.lat = lat
+    #     self.lon = lon
+    #     self.sim_start = datetime.strptime(sim_start, '%Y-%m-%d %H:%M')
+    #     self.sim_end = self.sim_start + timedelta(minutes=int(event_duration))
+    #     self.new_start = datetime.strftime(self.sim_start, '%Y-%m-%dT%H:%MZ')
+    #     self.new_end = datetime.strftime(self.sim_end, '%Y-%m-%dT%H:%MZ')
+    #     self.output_folder = output_path
+    #     self.data_path = data_path
+    #     self.outfilename = "LSRs.txt"
+    #     self.output_file = os.path.join(self.output_folder, self.outfilename)
 
         # Entries are in minutes. lsr_delay = how long to withhold lsr after event occurrence.
         # lsr_duration = how long to display lsr
-        self.lsr_delay = 12
+        self.lsr_delay = 10
         self.lsr_duration = 20
 
         self.lat1, self.lat2, self.lon1, self.lon2 = self.bounding_box()
         # URL for downloading the LSR Data
-        #URL_BASE = "https://mesonet.agron.iastate.edu/cgi-bin/request/gis/lsr.py?sts"
-        #self.url = (f'{URL_BASE}={self.start_date}T{self.start_time}Z&ets={self.end_date}'
-        #            f'T{self.end_time}Z&wfo=ALL&fmt=csv')
-        #  ... ?west=-96.5&east=-90.5&north=43.5&south=40.5&sts=2024-01-01T00:00Z&ets=2024-12-31T23:59Z
-        box_base = "https://mesonet.agron.iastate.edu/cgi-bin/request/gis/lsr.py"
+        url_base = "https://mesonet.agron.iastate.edu/cgi-bin/request/gis/lsr.py"
         bounds = f"?west={self.lon1}&east={self.lon2}&north={self.lat2}&south={self.lat1}"
         times = f"&sts={self.new_start}&ets={self.new_end}"
-        self.url = f'{box_base}{bounds}{times}&fmt=csv'
+        self.url = f'{url_base}{bounds}{times}&fmt=csv'
 
         # Filename for downloaded file
         self.lsr_file = f"{self.data_path}/LSR_extracted.csv"
 
-        # Download data, generate placefile, and purge .csv from disk
+        # Download data, generate placefile, keep csv for future use
         self.download_and_save_file()
         self.write_placefile()
         #self.delete_file()
@@ -91,10 +110,11 @@ class LsrCreator:
         """
         icon_url = "https://raw.githubusercontent.com/tjturnage/cloud-radar-server/main/assets/iconfiles/IconSheets"
         # Read the CSV file
-        columns = ['VALID','VALID2','LAT','LON','MAG','WFO','TYPECODE','TYPETEXT','CITY','COUNTY','STATE','SOURCE','REMARK','UGC','UGCNAME','QUALIFIER']
+        columns = ['VALID','VALID2','LAT','LON','MAG','WFO','TYPECODE','TYPETEXT','CITY',
+                   'COUNTY','STATE','SOURCE','REMARK','UGC','UGCNAME','QUALIFIER']
         #columns = ['VALID2', 'LAT', 'LON', 'TYPETEXT', 'MAG', 'REMARK', 'SOURCE']
         df = pd.read_csv(self.lsr_file, usecols=columns,low_memory=False, on_bad_lines='warn')
-        df['REMARK'] = df['REMARK'].fillna(' ') # removing nan values from output text in LSR hover text
+        df['REMARK'] = df['REMARK'].fillna(' ') # removing nan values from LSR hover text
 
         keyword1 = ["FATAL"]
         keyword2 = ["INJ"]
