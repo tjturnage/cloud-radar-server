@@ -3,10 +3,16 @@ create LSRs for the radar simulation
 """
 import os
 import sys
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 import requests
 import pandas as pd
+
+HEAD = """//Created by the NWS Central Region Convective Warning Improvement Project (CWIP Team) 2024
+Refresh: 1
+Threshold: 999
+Title: Local Storm Reports -- for radar simulation
+"""
 
 @dataclass
 class LsrBase:
@@ -16,56 +22,51 @@ class LsrBase:
     lat: str
     lon: str
     sim_start: str
-    event_duration: int
-    data_path: str
-    output_path: str
+    event_duration: str
+    data_dir: str
+    output_dir: str
 
+@dataclass
 class LsrCreator(LsrBase):
     """
     Create a placefile of Local Storm Reports (LSRs) for the radar simulation
     #lat, lon, event_start_str, duration, 'DATA_DIR', 'PLACEFILES_DIR
     """
+
+    output_filepath: str = field(init=False)
+    start_api: str = field(init=False)
+    end_api: str = field(init=False)
+
     def __post_init__(self):
+        self.placefile_name = "LSRs.txt"
+        self.lsr_csv_path = f"{self.data_dir}/LSR_extracted.csv"
+        self.output_file = os.path.join(self.output_dir, self.placefile_name)
         self.sim_start = datetime.strptime(self.sim_start, '%Y-%m-%d %H:%M')
         self.sim_end = self.sim_start + timedelta(minutes=int(self.event_duration))
-        self.new_start = datetime.strftime(self.sim_start, '%Y-%m-%dT%H:%MZ')
-        self.new_end = datetime.strftime(self.sim_end, '%Y-%m-%dT%H:%MZ')
-        self.output_folder = self.output_path
-        self.data_path = self.data_path
-        self.outfilename = "LSRs.txt"
-        self.output_file = os.path.join(self.output_folder, self.outfilename)
-    
-    # def __init__(self, lat, lon, sim_start, event_duration, data_path, output_path):
-    #     self.lat = lat
-    #     self.lon = lon
-    #     self.sim_start = datetime.strptime(sim_start, '%Y-%m-%d %H:%M')
-    #     self.sim_end = self.sim_start + timedelta(minutes=int(event_duration))
-    #     self.new_start = datetime.strftime(self.sim_start, '%Y-%m-%dT%H:%MZ')
-    #     self.new_end = datetime.strftime(self.sim_end, '%Y-%m-%dT%H:%MZ')
-    #     self.output_folder = output_path
-    #     self.data_path = data_path
-    #     self.outfilename = "LSRs.txt"
-    #     self.output_file = os.path.join(self.output_folder, self.outfilename)
 
-        # Entries are in minutes. lsr_delay = how long to withhold lsr after event occurrence.
-        # lsr_duration = how long to display lsr
+        # Format the start and end time strings for the LSR API request syntax
+        self.start_api = datetime.strftime(self.sim_start, '%Y-%m-%dT%H:%MZ')
+        self.end_api = datetime.strftime(self.sim_end, '%Y-%m-%dT%H:%MZ')
+
         self.lsr_delay = 10
         self.lsr_duration = 20
-
-        self.lat1, self.lat2, self.lon1, self.lon2 = self.bounding_box()
-        # URL for downloading the LSR Data
-        url_base = "https://mesonet.agron.iastate.edu/cgi-bin/request/gis/lsr.py"
-        bounds = f"?west={self.lon1}&east={self.lon2}&north={self.lat2}&south={self.lat1}"
-        times = f"&sts={self.new_start}&ets={self.new_end}"
-        self.url = f'{url_base}{bounds}{times}&fmt=csv'
-
-        # Filename for downloaded file
-        self.lsr_file = f"{self.data_path}/LSR_extracted.csv"
-
+        self.url = self.construct_lsr_request_str()
         # Download data, generate placefile, keep csv for future use
         self.download_and_save_file()
         self.write_placefile()
-        #self.delete_file()
+
+    def construct_lsr_request_str(self) -> str:
+        """
+        construct the URL for the LSR data request with needed arguments
+        defining the bounding box for the LSR data is part of the URL
+        """
+        lat1, lat2, lon1, lon2 = self.bounding_box()
+
+        url_base = "https://mesonet.agron.iastate.edu/cgi-bin/request/gis/lsr.py"
+        bounds = f"?west={lon1}&east={lon2}&north={lat2}&south={lat1}"
+        times = f"&sts={self.start_api}&ets={self.end_api}"
+        url = f'{url_base}{bounds}{times}&fmt=csv'
+        return url
 
     def bounding_box(self):
         """
@@ -88,9 +89,9 @@ class LsrCreator(LsrBase):
             response = requests.get(self.url, timeout=10)
             response.raise_for_status()
 
-            with open(self.lsr_file, 'wb') as file:
+            with open(self.lsr_csv_path, 'wb') as file:
                 file.write(response.content)
-            print(f"Downloaded {self.lsr_file}")
+            print(f"Downloaded {self.lsr_csv_path}")
 
         except requests.exceptions.RequestException as e:
             print(f"An error occurred during the HTTP request: {e}")
@@ -100,9 +101,10 @@ class LsrCreator(LsrBase):
     def delete_file(self):
         """
         Delete the LSR csv file after the placefile has been created
+        Currently not used since the csv file is kept for future use.
         """
-        if os.path.exists(self.lsr_file):
-            os.remove(self.lsr_file)
+        if os.path.exists(self.lsr_csv_path):
+            os.remove(self.lsr_csv_path)
 
     def write_placefile(self):
         """
@@ -112,36 +114,34 @@ class LsrCreator(LsrBase):
         # Read the CSV file
         columns = ['VALID','VALID2','LAT','LON','MAG','WFO','TYPECODE','TYPETEXT','CITY',
                    'COUNTY','STATE','SOURCE','REMARK','UGC','UGCNAME','QUALIFIER']
-        #columns = ['VALID2', 'LAT', 'LON', 'TYPETEXT', 'MAG', 'REMARK', 'SOURCE']
-        df = pd.read_csv(self.lsr_file, usecols=columns,low_memory=False, on_bad_lines='warn')
+        df = pd.read_csv(self.lsr_csv_path, usecols=columns,low_memory=False, on_bad_lines='warn')
         df['REMARK'] = df['REMARK'].fillna(' ') # removing nan values from LSR hover text
 
         keyword1 = ["FATAL"]
         keyword2 = ["INJ"]
         with open(self.output_file, "w", encoding="utf-8") as f:
-            f.write("//Created by the NWS Central Region Convective Warning Improvement Project (CWIP Team) 2024\n")
-            f.write("Refresh: 1\n")
-            f.write("Threshold: 999\n")
-            f.write('Title: Local Storm Reports -- for radar simulation\n')
-            f.write(f'IconFile: 1, 25, 25, 10, 10, {icon_url}/lsr_icons_96.png\n')
-            f.write(f'IconFile: 2, 25, 32, 10, 10, {icon_url}/Lsr_Hail_Icons.png\n')
-            f.write(f'IconFile: 3, 25, 32, 10, 10, {icon_url}/wind_icons_96.png\n')
-            f.write(f'IconFile: 4, 25, 32, 10, 10, {icon_url}/Lsr_TstmWndGst_Icons.png\n')
-            f.write(f'IconFile: 5, 25, 32, 10, 10, {icon_url}/Lsr_NonTstmWndGst_Icons.png\n')
-            f.write(f'IconFile: 6, 25, 32, 10, 10, {icon_url}/Lsr_HeavyRain_Icons.png\n')
-            f.write('Font: 1, 11, 1, "Courier New"\n\n')
 
-            # Define the format of the original time
+            #---------- begin writing placefile top section --------------------
+            f.write(HEAD)
+
+            # Icon definition lines
+            filenames = ['lsr_icons_96', 'Lsr_Hail_Icons', 'wind_icons_96',
+                         'Lsr_TstmWndGst_Icons', 'Lsr_NonTstmWndGst_Icons',
+                         'Lsr_HeavyRain_Icons']
+
+            for number, name in zip(range(1,7), filenames):
+                f.write(f'IconFile: {number}, 25, 32, 10, 10, {icon_url}/{name}.png\n')
+
+            # Font definition(s)
+            f.write('Font: 1, 11, 1, "Courier New"\n\n')
+            #---------- end writing placefile top section --------------------
+
             original_time_format = "%Y/%m/%d %H:%M"
 
             # Iterate over each row in DataFrame
             for index, row in df.iterrows():
                 event = row.get("TYPETEXT", "")
                 source = row.get("SOURCE", "")
-                # commented these out to remove specific location and county
-                #location = row.get("CITY", "")
-                #county = row.get("COUNTY", "")
-                #state = row.get("STATE", "")
                 remark = row.get("REMARK", "")
                 magnitude = row.get("MAG", 0)
                 original_time_str = row.get("VALID2", "")
@@ -149,9 +149,9 @@ class LsrCreator(LsrBase):
                 lon = row.get("LON", 0)
 
                 wIcon = min(magnitude/5 + 1, 20)
-                hIcon = (magnitude*4 +1)
+                hIcon = magnitude*4 + 1
                 rIcon = magnitude * 2 + 1 if magnitude < 6 else magnitude + 7
-                
+
                 icon2 = 'Icon: 0,0,0,1,7,'
                 icon3 = 'Icon: 0,0,0,1,15,'
 
@@ -224,7 +224,5 @@ if __name__ == '__main__':
     if sys.platform.startswith('win'):
         LsrCreator('42','-85','2024-05-07 22:00','120', os.getcwd(), os.getcwd())
     else:
-        #str(sim_times['event_start_str']), str(sim_times['event_duration']),
-        #cfg['DATA_DIR'], cfg['PLACEFILES_DIR']]
         #lat, lon, event_start_str, duration, 'DATA_DIR', 'PLACEFILES_DIR
         LsrCreator(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], sys.argv[6])

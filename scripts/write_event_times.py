@@ -15,10 +15,10 @@ notif_columns = ['TYPETEXT','QUALIFIER','MAG','SOURCE','utc_date', 'utc_hour', '
 lsr_columns = ['VALID','VALID2','LAT','LON','MAG','WFO','TYPECODE','TYPETEXT',
                'CITY','COUNTY','STATE','SOURCE','REMARK','UGC','UGCNAME','QUALIFIER']
 
-dashes = '-' * 130 + '\n'
-head1 = 'NEW TIME         | OLD TIME         | LAT / LON (OR RADAR) '
-head2 = '| LON       | EVENT |QUALIFY | MAG    | SOURCE             | REMARKS\n'
-header = head1 + head2
+DASHES = '-' * 150 + '\n'
+HEAD1 = '| PLAYBACK TIME    | ORIGINAL TIME    | LAT / LON (OR RADAR) '
+HEAD2 = '| EVENT             |QUALIFY | MAG    | SOURCE             | REMARKS\n'
+HEADER = HEAD1 + HEAD2
 
 HEAD = """<!DOCTYPE html>
 <html>
@@ -48,33 +48,32 @@ TAIL = """</pre>
 </body>
 </html>"""
 
-
 @dataclass
 class BaseEventTimes:
     """
     A base class containing common attributes for event times processing.
-    #seconds_shift, csv_dir, radar_dir, html_file, text_file
     """
-    seconds_shift: str
-    csv_dir: str
-    radar_dir: str
-    html_file: str
-    text_file: str
+    seconds_shift: str  #  Input   --  Number of seconds between original and playback times
+    csv_dir: str        #  Input   --  DATA directory containing the CSV files
+    radar_dir: str      #  Input   --  RADAR DATA directory containing radarinfo.json file
+    html_file: str      #  Output  --  HTML file in ASSETS directory for event times
+    text_file: str      #  Output  --  TEXT file in ASSETS directory for event times
 
 @dataclass
 class WriteEventTimes(BaseEventTimes):
     """
     A class to process input files to convert times and extract values.
+    CSV files are parsed and times reformatted to reflect the original and playback times.
     """
 
-    events_csv: str = field(init=False)
-    lsrs_csv: str = field(init=False)
+    events_csv: str = field(init=False)     #  Input  --  CSV file containing notifications
+    lsrs_csv: str = field(init=False)       #  Input  --  CSV file containing LSRs
 
     def __post_init__(self):
         self.events_csv = os.path.join(self.csv_dir, 'events.csv')
         self.lsrs_csv = os.path.join(self.csv_dir, 'LSR_extracted.csv')
-        # Create a column delimited text file, starting with the header 
-        self.events_list = [dashes, header, dashes]
+        self.events_list = []
+
         try:
             self.append_radar_file_info()
         except ValueError as e:
@@ -84,15 +83,12 @@ class WriteEventTimes(BaseEventTimes):
             self.append_output(self.lsr_df)
         except ValueError as e:
             print(f"Error processing file: {e}")
-            
-        #if self.csv_dir == 'None':
-        #    self.make_blank_event_times_page()
 
         if os.path.exists(self.events_csv):
             try:
                 self.events_df = self.make_events_dataframe()
                 self.append_output(self.events_df)
-            except ValueError as e:
+            except (ValueError) as e:
                 print(f"Error processing file: {e}")
         else:
             print(f"{self.events_csv} not found")
@@ -168,10 +164,10 @@ class WriteEventTimes(BaseEventTimes):
                 new_datetime_obj = orig_datetime_obj + timedelta(seconds=int(self.seconds_shift))
                 orig_tstr = datetime.strftime(orig_datetime_obj, '%Y-%m-%d %H:%M')
                 new_tstr = datetime.strftime(new_datetime_obj, '%Y-%m-%d %H:%M')
-                #output_line = f"{new_tstr} | {orig_tstr} |                      | {rda} VST\n"
-                output_line = f"{new_tstr} | {orig_tstr} ******** {rda} *********\n"
+
+                output_line = f"| {new_tstr} | {orig_tstr} |------- {rda} ---------|   \n"
                 self.events_list.append(output_line)
-                #fout.write(output_line)
+
         except ValueError as e:
             print(f"Error processing file: {e}")
 
@@ -187,12 +183,13 @@ class WriteEventTimes(BaseEventTimes):
                 fsource = f"{row['SOURCE']:<18}"
                 flat = f"{row['LAT']:<8}"
                 flon = f"{row['LON']:<9}"
-                #comments = create_remark(row)
                 forig_time = f"{row['orig_time']:<15}"
                 fnew_time = f"{row['new_time']:<15}"
                 fremark = row.get("REMARK", "")
-                fremark = fremark[0:80]
-                output_line = f"{fnew_time} | {forig_time} | {flat} | {flon} | {ftypetext} | {fqualifier} | {fmag} | {fsource} | {fremark}\n"
+                fremark = fremark[0:76]
+                out1 = f"| {fnew_time} | {forig_time} | {flat} | {flon} | {ftypetext} "
+                out2 = f"| {fqualifier} | {fmag} | {fsource} | {fremark}\n"
+                output_line = out1 + out2
                 self.events_list.append(output_line)
             except (pd.errors.ParserError, pd.errors.EmptyDataError, ValueError) as e:
                 print(f"Error processing file: {e}")
@@ -252,6 +249,9 @@ class WriteEventTimes(BaseEventTimes):
 
         # Sort lines by the first column (date and time)
         lines.sort(key=lambda line: line.split('|')[0].strip())
+
+        # Insert the header after sorting is done
+        lines = [DASHES, HEADER, DASHES] + lines
 
         with open(self.text_file, 'w', encoding='utf-8') as file:
             file.writelines(lines)
