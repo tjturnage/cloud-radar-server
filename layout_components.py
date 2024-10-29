@@ -446,6 +446,9 @@ placefiles_banner = dbc.Row(
 group_item_style = {'font-weight': 'bold', 'color': '#bbbbbb', 'border-right': '1.5px solid #10c4c4',
                     'font-size': '1.0em', 'text-align': 'right'}
 
+group_item_style_links = {'font-weight': 'bold', 'color': '#ffffff', 'border-right': '1.5px solid #ffffff',
+                    'font-size': '1.0em', 'text-align': 'right'}
+
 group_header_style = {'padding': '0.1em','font-weight': 'bold', 'font-style': 'italic', 'color': 'white',
                     'font-size': '1.3em', 'text-align': 'left', 'text-decoration': 'underline'}
 
@@ -462,6 +465,7 @@ group_header_sfc_obs = replace_in_dict(group_header_style, 'white', obs_c)
 
 group_header_nse = replace_in_dict(group_header_style, 'white', nse_c)
 
+group_header_links = replace_in_dict(group_header_style, 'white', graphics_c)
 
 group_item_style_no_border = {'font-weight': 'bold', 'color': '#cccc99',
                               'font-size': '1.2em', 'text-align': 'right'}

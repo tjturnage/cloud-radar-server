@@ -9,7 +9,9 @@ radar data generation, including the handling of time shifts and geographical co
 # from flask import Flask, render_template
 import os
 import shutil
-import gzip
+import zipfile
+#import gzip
+
 import re
 import subprocess
 from pathlib import Path
@@ -270,7 +272,21 @@ def zip_downloadable_radar_files(cfg) -> None:
     zips up the radar files already in the user downloads directory.
     """
     shutil.make_archive('radar_files', 'zip', cfg['USER_DOWNLOADS_DIR'])
-    shutil.move('radar_files.zip', f"{cfg['USER_DOWNLOADS_DIR']}/radar_files.zip")
+    shutil.move('radar_files.zip', f"{cfg['USER_DOWNLOADS_DIR']}/original_radar_files.zip")
+
+
+def zip_original_placefiles(cfg) -> None:
+    """
+    After the placefiles have been shifted and are ready for download, this function
+    zips up the original placefiles.
+    """
+    zip_filepath = f"{cfg['USER_DOWNLOADS_DIR']}/original_placefiles.zip"
+    with zipfile.ZipFile(zip_filepath, 'w') as zipf:
+        for root, _, files in os.walk(cfg['PLACEFILES_DIR']):
+            for file in files:
+                if 'txt' in file and 'updated' not in file and 'shifted' not in file:
+                    file_path = os.path.join(root, file)
+                    zipf.write(file_path, file)
 
 def date_time_string(dt) -> str:
     """
@@ -621,26 +637,36 @@ def generate_layout(layout_has_initialized, children, configs):
                  ],
                  style={"display": "flex", "flexWrap": "wrap"},
                 ),
-                lc.spacer_mini,
+                lc.spacer_mini, lc.spacer_mini,
                 dbc.Row(
                  [
-                     dbc.Col("Simulation Links", style=lc.group_header_style, width=6),
+                     dbc.Col("Links", style=lc.group_header_style, width=6),
                  ], style={"display": "flex", "flexWrap": "wrap"}),
-             lc.spacer_mini,
+             lc.spacer_mini,lc.spacer_mini,
                     dbc.Row(
-                 [
-                     dbc.Col(dbc.ListGroupItem("Hodographs Page",
+                 [dbc.Col(dbc.ListGroupItem("Web Pages"), style=lc.group_item_style_links, width=2),
+                     dbc.Col(dbc.ListGroupItem("Hodographs",
                                 href=f"{configs['LINK_BASE']}/hodographs.html",
-                                target="_blank"),style={'color':lc.graphics_c},width=3),
-                     dbc.Col(dbc.ListGroupItem("Events Page",
+                                target="_blank"),style={'color':lc.graphics_c},width=2),
+                     dbc.Col(dbc.ListGroupItem("Events",
                                 href=f"{configs['LINK_BASE']}/events.html",
-                                target="_blank"),style={'color':lc.graphics_c},width=3),
-                     dbc.Col(dbc.ListGroupItem("Events List",
+                                target="_blank"),style={'color':lc.graphics_c},width=2),
+                     dbc.Col(dbc.ListGroupItem("Events (text)",
                                 href=f"{configs['LINK_BASE']}/events.txt",
-                                target="_blank"), style={'color':lc.graphics_c},width=3),
-                     dbc.Col(dbc.ListGroupItem("Click to Download Radar Files",
-                                href=f"{configs['LINK_BASE']}/downloads/radar_files.zip"),
-                                style={'color':lc.graphics_c},width=3),
+                                target="_blank"), style={'color':lc.graphics_c},width=2),
+                 ],
+                 style={"display": "flex", "flexWrap": "wrap"}
+                ),
+
+
+                dbc.Row(
+                 [dbc.Col(dbc.ListGroupItem("Download Original Data"), style=lc.group_item_style_links, width=2),
+                     dbc.Col(dbc.ListGroupItem("Radar Files",
+                                href=f"{configs['USER_DOWNLOADS_DIR']}/original_radar_files.zip"),
+                                style={'color':lc.graphics_c},width=2),
+                     dbc.Col(dbc.ListGroupItem("Placefiles",
+                                href=f"{configs['USER_DOWNLOADS_DIR']}/original_placefiles.zip"),
+                                style={'color':lc.graphics_c},width=2),
                  ],
                  style={"display": "flex", "flexWrap": "wrap"}
                 ),
@@ -1015,10 +1041,14 @@ def run_with_cancel_button(cfg, sim_times, radar_info):
     if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
         return
 
-    # Since there will always be a timeshift associated with a simulation, this
-    # script needs to execute every time, even if a user doesn't select a radar
-    # to transpose to.
+    # Now that all original placefiles should be available, zip them up
+    try:
+        zip_original_placefiles(cfg)
+    except KeyError as e:
+        logging.exception("Error zipping original placefiles ", exc_info=True)
 
+    # There always is a timeshift with a simulation, so this script needs to
+    # execute every time, even if a user doesn't select a radar to transpose to.
     logging.info("Entering function run_transpose_script")
     run_transpose_script(cfg['PLACEFILES_DIR'], sim_times, radar_info)
 
@@ -1634,12 +1664,10 @@ def make_events_placefile(contents, filename, cfg) -> None:
               State('configs', 'data'),
               State('sim_times', 'data')],
               prevent_initial_call=True)
-def update_output(contents, filename, configs, sim_times):
+def update_output(contents, filename, configs, _sim_times):
     """
     This function is called when the user uploads a file. It will parse the contents and write
     """
-    seconds_shift = sim_times['simulation_seconds_shift']
-    #print(f"Seconds shift: {seconds_shift}")
     if contents is not None:
         try:
             _df, error = make_events_placefile(contents, filename, configs)
