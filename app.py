@@ -563,6 +563,9 @@ def generate_layout(layout_has_initialized, children, configs):
                     dbc.Col(dbc.ListGroupItem("Non Supercell Tor",
                                 href=f"{configs['PLACEFILES_LINKS']}/nst_updated.txt",
                                 target="_blank"), style={'color':lc.nse_c}, width=2),
+                    dbc.Col(dbc.ListGroupItem("ProbSevere V2",
+                                href=f"{configs['PLACEFILES_LINKS']}/ProbSevere_updated.txt",
+                                target="_blank"),style={'color':lc.nse_c}, width=2),
                      dbc.Col(dbc.ListGroupItem("Snow Squall Parameter",
                                 href=f"{configs['PLACEFILES_LINKS']}/snsq_updated.txt",
                                 target="_blank"), style={'color':lc.nse_c}, width=2),
@@ -662,10 +665,10 @@ def generate_layout(layout_has_initialized, children, configs):
                 dbc.Row(
                  [dbc.Col(dbc.ListGroupItem("Download Original Data"), style=lc.group_item_style_links, width=2),
                      dbc.Col(dbc.ListGroupItem("Radar Files",
-                                href=f"{configs['USER_DOWNLOADS_DIR']}/original_radar_files.zip"),
+                                href=f"{configs['LINK_BASE']}/downloads/original_radar_files.zip"),
                                 style={'color':lc.graphics_c},width=2),
                      dbc.Col(dbc.ListGroupItem("Placefiles",
-                                href=f"{configs['USER_DOWNLOADS_DIR']}/original_placefiles.zip"),
+                                href=f"{configs['LINK_BASE']}/downloads/original_placefiles.zip"),
                                 style={'color':lc.graphics_c},width=2),
                  ],
                  style={"display": "flex", "flexWrap": "wrap"}
@@ -1029,6 +1032,23 @@ def run_with_cancel_button(cfg, sim_times, radar_info):
             sim_times['event_start_str'], cfg['PLACEFILES_DIR'],
             str(sim_times['event_duration'])]
     res = call_function(utils.exec_script, Path(cfg['OBS_SCRIPT_PATH']), args,
+                        cfg['SESSION_ID'])
+    if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
+        return
+
+    # ProbSevere download
+    args = [str(sim_times['event_start_str']), str(sim_times['event_duration']),
+            cfg['PROBSEVERE_DIR']]
+    res = call_function(utils.exec_script, Path(cfg['PROBSEVERE_DOWNLOAD_SCRIPT_PATH']), args,
+                        cfg['SESSION_ID'])
+    if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
+        return
+
+    # ProbSevere placefile
+    # # center lat, center lon, data source directory, placefile output directory
+    args = [str(radar_info['lat']), str(radar_info['lon']),cfg['PROBSEVERE_DIR'],
+            cfg['PLACEFILES_DIR']]
+    res = call_function(utils.exec_script, Path(cfg['PROBSEVERE_PLACEFILE_SCRIPT_PATH']), args,
                         cfg['SESSION_ID'])
     if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
         return

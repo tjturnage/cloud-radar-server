@@ -102,6 +102,7 @@ def setup_paths_and_dirs(n_intervals, session_id):
         dirs['POLLING_DIR'] = f"{dirs['ASSETS_DIR']}/polling"
         dirs['MODEL_DIR'] = f"{dirs['DATA_DIR']}/model_data"
         dirs['RADAR_DIR'] = f"{dirs['DATA_DIR']}/radar"
+        dirs['PROBSEVERE_DIR'] = f"{dirs['DATA_DIR']}/probsevere"
         dirs['LOG_DIR'] = f"{dirs['BASE_DIR']}/data/logs"
 
         # Need to be updated
@@ -116,6 +117,8 @@ def setup_paths_and_dirs(n_intervals, session_id):
         dirs['EVENT_TIMES_SCRIPT_PATH'] = f'{dirs['SCRIPTS_DIR']}/write_event_times.py'
         dirs['HODO_SCRIPT_PATH'] = f'{dirs['SCRIPTS_DIR']}/hodo_plot.py'
         dirs['NEXRAD_SCRIPT_PATH'] = f'{dirs['SCRIPTS_DIR']}/Nexrad.py'
+        dirs['PROBSEVERE_DOWNLOAD_SCRIPT_PATH'] = f'{dirs['SCRIPTS_DIR']}/ProbSevere.py'
+        dirs['PROBSEVERE_PLACEFILE_SCRIPT_PATH'] = f'{dirs['SCRIPTS_DIR']}/probsevere_placefile.py'
         dirs['L2MUNGER_FILEPATH'] = f'{dirs['SCRIPTS_DIR']}/l2munger'
         dirs['MUNGER_SCRIPT_FILEPATH'] = f'{dirs['SCRIPTS_DIR']}/munger.py'
         dirs['MUNGE_DIR'] = f'{dirs['SCRIPTS_DIR']}/munge'
@@ -125,6 +128,7 @@ def setup_paths_and_dirs(n_intervals, session_id):
 
         os.makedirs(dirs['MODEL_DIR'], exist_ok=True)
         os.makedirs(dirs['RADAR_DIR'], exist_ok=True)
+        os.makedirs(dirs['PROBSEVERE_DIR'], exist_ok=True)
         os.makedirs(dirs['HODOGRAPHS_DIR'], exist_ok=True)
         os.makedirs(dirs['USER_DOWNLOADS_DIR'], exist_ok=True)
         os.makedirs(dirs['PLACEFILES_DIR'], exist_ok=True)

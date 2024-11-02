@@ -100,6 +100,7 @@ class WriteEventTimes(BaseEventTimes):
     def make_blank_event_times_page(self) -> None:
         """
         Initializes the file times page with a message that csv wasn't processed
+        Not needed anymore since a page is always created with at least radar/LSR times
         """
         with open(self.html_file, 'w', encoding='utf-8') as fout:
             fout.write(HEAD_NOPRE)
@@ -247,8 +248,8 @@ class WriteEventTimes(BaseEventTimes):
         lines = self.events_list
         lines = list(set(lines)) # Remove duplicates
 
-        # Sort lines by the first column (date and time)
-        lines.sort(key=lambda line: line.split('|')[0].strip())
+        # Sort lines by the first section (date and time)
+        lines.sort(key=lambda line: line.split('|')[1].strip())
 
         # Insert the header after sorting is done
         lines = [DASHES, HEADER, DASHES] + lines
