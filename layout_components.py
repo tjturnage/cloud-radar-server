@@ -57,21 +57,21 @@ bold = {'font-weight': 'bold'}
 
 feedback = {'border': '1px gray solid', 'padding': '0.4em',
             'border-radius': feedback_border_radius, 'font-weight': 'bold',
-            'font-size': '1.4em', 'text-align': 'center', 'vertical-align': 'center',
+            'font-size': '1.4em', 'text-align': 'center', 'vertical-align': 'middle',
             'height': '6vh'}
 
 feedback_smaller = replace_in_dict(feedback, '1.4em', '1.2em')
 
 feedback_green = {'border': '1px gray solid', 'padding': '0.4em',
                   'border-radius': feedback_border_radius, 'font-weight': 'bold',
-                  'font-size': '1.4em', 'text-align': 'center', 'vertical-align': 'center',
+                  'font-size': '1.4em', 'text-align': 'center', 'vertical-align': 'middle',
                   'height': '6vh', 'color': 'black', 'background-color': '#06DB42'}
 
 feedback_yellow = replace_in_dict(feedback_green, '#06DB42', '#bfbf19')
 
 playback_times_style = {'border': '1px gray solid', 'padding': '0.4em', 
                         'border-radius': feedback_border_radius,'font-weight': 'bold',
-                        'font-size': '1.4em', 'text-align': 'center', 'vertical-align': 'center',
+                        'font-size': '1.4em', 'text-align': 'center', 'vertical-align': 'middle',
                         'height': '6vh', 'color': 'white', 'background-color': '#555555'}
 
 steps = {'padding': '0.4em', 'border': '0.3em', 'border-radius': '15px', 'font-weight': 'bold',
@@ -265,7 +265,7 @@ map_instructions_component = dbc.Row(
     dbc.Col(html.Div(children=MAP_INSTRUCTIONS, style=steps_center)))
 radar_feedback_readout = dbc.Col(html.Div(id='show_radar_selection_feedback',
                                           style=feedback), width=4,
-                                 style={'vertical-align': 'top'})
+                                 style={'vertical-align': 'middle'})
 
 radar_select_section = dbc.Container(html.Div([map_instructions_component, spacer,
                                                dbc.Row([radar_quantity_section,

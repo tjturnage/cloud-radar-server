@@ -13,18 +13,17 @@ Refresh: 1
 Threshold: 999
 Title: Local Storm Reports -- for radar simulation
 """
-
 @dataclass
 class LsrBase:
     """
     Base class for creating a placefile of Local Storm Reports (LSRs) for the radar simulation
     """
-    lat: str
-    lon: str
-    sim_start: str
-    event_duration: str
-    data_dir: str
-    output_dir: str
+    lat:            str     # latitude to build a bounding box that filters reports
+    lon:            str     # longitude to build a bounding box that filters reports
+    sim_start:      str     # start time of the simulation in the format 'YYYY-MM-DD HH:MM'
+    event_duration: str     # duration of the simulation in minutes
+    data_dir:       str     # directory with the LSR csv file
+    output_dir:     str     # directory for the placefile
 
 @dataclass
 class LsrCreator(LsrBase):
@@ -71,6 +70,7 @@ class LsrCreator(LsrBase):
     def bounding_box(self):
         """
         Create a bounding box for the LSR data
+        An arbitrary distance of +/- 3 degrees lat/lon from the radar location is used
         """
         distance = 3 # degrees
         lat = float(self.lat)
@@ -121,16 +121,26 @@ class LsrCreator(LsrBase):
         keyword2 = ["INJ"]
         with open(self.output_file, "w", encoding="utf-8") as f:
 
+            #f.write(f'IconFile: 1, 25, 25, 10, 10, {icon_url}/lsr_icons_96.png\n')
+            #f.write(f'IconFile: 2, 25, 32, 10, 10, {icon_url}/Lsr_Hail_Icons.png\n')
+            #f.write(f'IconFile: 3, 25, 32, 10, 10, {icon_url}/wind_icons_96.png\n')
+            #f.write(f'IconFile: 4, 25, 32, 10, 10, {icon_url}/Lsr_TstmWndGst_Icons.png\n')
+            #f.write(f'IconFile: 5, 25, 32, 10, 10, {icon_url}/Lsr_NonTstmWndGst_Icons.png\n')
+            #f.write(f'IconFile: 6, 25, 32, 10, 10, {icon_url}/Lsr_HeavyRain_Icons.png\n')
+
             #---------- begin writing placefile top section --------------------
             f.write(HEAD)
 
             # Icon definition lines
-            filenames = ['lsr_icons_96', 'Lsr_Hail_Icons', 'wind_icons_96',
+            file_stems = ['lsr_icons_96', 'Lsr_Hail_Icons', 'wind_icons_96',
                          'Lsr_TstmWndGst_Icons', 'Lsr_NonTstmWndGst_Icons',
                          'Lsr_HeavyRain_Icons']
 
-            for number, name in zip(range(1,7), filenames):
-                f.write(f'IconFile: {number}, 25, 32, 10, 10, {icon_url}/{name}.png\n')
+            for number, name in zip(range(1,7), file_stems):
+                if number == 1:
+                    f.write(f'IconFile: {number}, 25, 25, 10, 10, {icon_url}/{name}.png\n')
+                else:
+                    f.write(f'IconFile: {number}, 25, 32, 10, 10, {icon_url}/{name}.png\n')
 
             # Font definition(s)
             f.write('Font: 1, 11, 1, "Courier New"\n\n')

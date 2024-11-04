@@ -670,6 +670,9 @@ def generate_layout(layout_has_initialized, children, configs):
                      dbc.Col(dbc.ListGroupItem("Placefiles",
                                 href=f"{configs['LINK_BASE']}/downloads/original_placefiles.zip"),
                                 style={'color':lc.graphics_c},width=2),
+                     dbc.Col(dbc.ListGroupItem("Hodograph Creation Instructions",
+                                href="https://docs.google.com/document/d/1pRT0l27Zo3WusVnGS-nvJiQXcW3AkyJ91RH8gISqoDQ/edit", target="_blank"),
+                                style={'color':lc.graphics_c},width=4),
                  ],
                  style={"display": "flex", "flexWrap": "wrap"}
                 ),
@@ -1000,10 +1003,10 @@ def run_with_cancel_button(cfg, sim_times, radar_info):
     except KeyError as e:
         logging.exception("Error removing munged radar files ", exc_info=True)
 
-        
-    # LSR Placefiles. Not monitored currently due to how quick this executes
-    #args = [str(sim_times['event_start_str']), str(sim_times['event_duration']),
-    #        cfg['DATA_DIR'], cfg['PLACEFILES_DIR']]
+
+    # --------- LSR Placefiles -----------------------------------------------------
+    #  Not monitored currently due to how quick this executes
+    # center lat, center lon, event start, duration, LSR csv source dir, placefile output dir
     args = [str(radar_info['lat']), str(radar_info['lon']),
             str(sim_times['event_start_str']), str(sim_times['event_duration']),
             cfg['DATA_DIR'], cfg['PLACEFILES_DIR']]
@@ -1012,8 +1015,8 @@ def run_with_cancel_button(cfg, sim_times, radar_info):
     if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
         return
 
-    # event times text file
-    # seconds_shift, csv_dir, radar_dir, html_file, text_file
+    # --------- event times text file ----------------------------------------------
+    # -- seconds_shift, csv_dir, radar_dir, html_file, text_file -------------------
     args = [str(sim_times['simulation_seconds_shift']), cfg['DATA_DIR'], cfg['RADAR_DIR'],
             cfg['EVENTS_HTML_FILE'], cfg['EVENTS_TEXT_FILE']]
     res = call_function(utils.exec_script, Path(cfg['EVENT_TIMES_SCRIPT_PATH']), args,
@@ -1027,7 +1030,7 @@ def run_with_cancel_button(cfg, sim_times, radar_info):
     except KeyError as e:
         logging.exception("Error zipping radar files ", exc_info=True)
 
-    # Surface observations
+    # --------- Surface observations placefiles -------------------------------------
     args = [str(radar_info['lat']), str(radar_info['lon']),
             sim_times['event_start_str'], cfg['PLACEFILES_DIR'],
             str(sim_times['event_duration'])]
@@ -1036,7 +1039,7 @@ def run_with_cancel_button(cfg, sim_times, radar_info):
     if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
         return
 
-    # ProbSevere download
+    # --------- ProbSevere download -------------------------------------------------
     args = [str(sim_times['event_start_str']), str(sim_times['event_duration']),
             cfg['PROBSEVERE_DIR']]
     res = call_function(utils.exec_script, Path(cfg['PROBSEVERE_DOWNLOAD_SCRIPT_PATH']), args,
@@ -1044,8 +1047,8 @@ def run_with_cancel_button(cfg, sim_times, radar_info):
     if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
         return
 
-    # ProbSevere placefile
-    # # center lat, center lon, data source directory, placefile output directory
+    # --------- ProbSevere placefiles -----------------------------------------------
+    # -- center lat, center lon, data source directory, placefile output directory --
     args = [str(radar_info['lat']), str(radar_info['lon']),cfg['PROBSEVERE_DIR'],
             cfg['PLACEFILES_DIR']]
     res = call_function(utils.exec_script, Path(cfg['PROBSEVERE_PLACEFILE_SCRIPT_PATH']), args,
@@ -1053,7 +1056,7 @@ def run_with_cancel_button(cfg, sim_times, radar_info):
     if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
         return
 
-    # NSE placefiles
+    # --------- NSE placefiles ------------------------------------------------------
     args = [str(sim_times['event_start_str']), str(sim_times['event_duration']),
             cfg['SCRIPTS_DIR'], cfg['DATA_DIR'], cfg['PLACEFILES_DIR']]
     res = call_function(utils.exec_script, Path(cfg['NSE_SCRIPT_PATH']), args,
@@ -1072,7 +1075,7 @@ def run_with_cancel_button(cfg, sim_times, radar_info):
     logging.info("Entering function run_transpose_script")
     run_transpose_script(cfg['PLACEFILES_DIR'], sim_times, radar_info)
 
-    # Hodographs
+    # --------- Hodographs ---------------------------------------------------------
     for radar, data in radar_info['radar_dict'].items():
         try:
             asos_one = data['asos_one']
@@ -1653,14 +1656,13 @@ def make_events_placefile(contents, filename, cfg) -> None:
             df = df_orig.loc[df_orig['TYPETEXT'] != 'NO EVENT']
 
             df.to_csv(events_csv, index=False, encoding='utf-8')
-            
-            
+
             for _index,row in df.iterrows():
                 try:
                     lat = row.get('LAT',"")
                     lon = row.get('LON',"")
                     obj_line = f'Object: {lat},{lon}\n'
-                    
+
                     tr_line = make_timerange_line(row)
                     comments = create_remark(row)
                     icon_code = icon_value(row.get('event_input_type',""))

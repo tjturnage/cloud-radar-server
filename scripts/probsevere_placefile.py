@@ -71,7 +71,7 @@ class ProbSeverePlacefile:
         Create a Pathlib list of json files in the data directory
         """
         with open(self.placefile_path, 'w', encoding='utf-8') as pf:
-            pf.write('Title: ProbSevere objects loop - for radar simulation\nRefresh: 1\n\n')
+            pf.write('Title: ProbSevere objects loop -- for radar simulation\nRefresh: 1\n\n')
             for n, file in enumerate(self.files):
                 timrange_line = f"{self.timerange_lines[n]}\n\n"
                 pf.write(timrange_line)
@@ -81,9 +81,9 @@ class ProbSeverePlacefile:
                         coordinates = storm['geometry']['coordinates'][0]
                         in_bounds = self.check_bounds(coordinates)
                         if in_bounds:
-                            probsvr_models = storm['models']['probsevere']
+                            probsvr_model = storm['models']['probsevere']
                             coordinate_lines = self.get_coordinate_lines(coordinates)
-                            combined_string, percent = self.feature_property_text(probsvr_models)
+                            combined_string, percent = self.feature_property_text(probsvr_model)
 
                             color_line = f"Color: {color[(int(percent))]}\n"
                             pf.write(color_line)
@@ -98,10 +98,10 @@ class ProbSeverePlacefile:
         Returns:
         --------
         combined_string: str
-            A string of feature properties
+            The pop-up text string of feature properties
         percentage: str
             The percentage of the ProbSevere object
-            Will be used to determine the color of the object
+            This is used to select the color of the object
         """
         strings_list = []
         for _key, value in probsvr_models.items():
@@ -140,20 +140,22 @@ class ProbSeverePlacefile:
     def make_placefile_timerange_lines(self) -> list:
         """
         Create a list of GR2Analyst placefile TimeRange lines for looping capability.
+        This uses the previously created timestrings list to build the TimeRange lines.
         """
         timeranges = []
         tstr_length = len(self.timestrings)
         for t in range(1, tstr_length):
             timeranges.append(f'TimeRange: {self.timestrings[t-1]} {self.timestrings[t]}\n')
-            #print(timeranges)
 
         timerange_lines = sorted(timeranges)
 
         # Here we need to supply an extra final time to end the timerange associated
-        # with the very last file in the list
+        # with the very last file in the list.
         final_time = datetime.strptime(self.timestrings[-1], '%Y-%m-%dT%H:%M:%SZ') + \
                 timedelta(minutes=2)
         final_formatted = final_time.strftime('%Y-%m-%dT%H:%M:%SZ')
+
+        # Now we can define the final TimeRange and append it to the list of timeranges.
         timerange_lines.append(f'TimeRange: {self.timestrings[-1]} {final_formatted}\n')
         return timerange_lines
 

@@ -28,7 +28,6 @@ class NexradDownloader:
     duration: str
         The duration of the simulation in minutes
     
-    
     """
 
 
