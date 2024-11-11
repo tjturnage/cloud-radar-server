@@ -1031,9 +1031,10 @@ def run_with_cancel_button(cfg, sim_times, radar_info):
         logging.exception("Error zipping radar files ", exc_info=True)
 
     # --------- Surface observations placefiles -------------------------------------
+    # center lat, center lon, start timestr, duration, placefile output directory
     args = [str(radar_info['lat']), str(radar_info['lon']),
-            sim_times['event_start_str'], cfg['PLACEFILES_DIR'],
-            str(sim_times['event_duration'])]
+            sim_times['event_start_str'], str(sim_times['event_duration']),
+            cfg['PLACEFILES_DIR']]
     res = call_function(utils.exec_script, Path(cfg['OBS_SCRIPT_PATH']), args,
                         cfg['SESSION_ID'])
     if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
@@ -1596,21 +1597,23 @@ def create_remark(row):
     mag_line = ""
     #if magnitude == "nan" or magnitude == "No_Magnitude":
     if mag in ("nan", "NO MAG", "NA", "No_Magnitude"):
-        mag_line = "NA"
+        mag_line = "No Magnitude given"
     else:
         if typetext == 'TSTM WND GST':
-            mag_line = f"Wind Gust: {mag} mph\\n"
-        if typetext in ('HAIL', 'RAIN', 'SNOW'):
-            mag_line = f"{mag} inches\\n"
-    source = row.get('source',"")
+            mag_line = f"Wind Gust: {mag} mph"
+        if typetext in ('HAIL'):
+            mag_line = f"Size: {mag} inches"
+        if typetext in ('RAIN', 'SNOW'):
+            mag_line = f"Accum: {mag} inches"
+    source = row.get('SOURCE',"")
     #fake_rpt = row.get('fake_rpt',"")
     remark = row.get('REMARK',"")
-    if remark in ("nan", "No_Comments", "M","NA"):
-        remark_line = "NA"
+    if remark in ("nan", "No_Comments", "M","NA", "NO MAG"):
+        remark_line = ""
     if typetext == 'QUESTION':
         remark_line = f'{typetext}\\nSource: {source}\\n{remark}\nEnd:\n\n'
     else:
-        remark_line = f'{typetext}\\n{qualifier}\\n{mag_line}Source: {source}\\n{remark}\nEnd:\n\n'
+        remark_line = f'{typetext}\\n{qualifier}\\n{mag_line}\\nSource: {source}\\n{remark}\nEnd:\n\n'
     return remark_line
 
 

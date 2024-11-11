@@ -68,7 +68,9 @@ class ProbSeverePlacefile:
 
     def loop_files(self) -> None:
         """
-        Create a Pathlib list of json files in the data directory
+        Loop through the json files and create a placefile for each file.
+        Calls get_coordinate_lines and feature_property_text methods.
+        
         """
         with open(self.placefile_path, 'w', encoding='utf-8') as pf:
             pf.write('Title: ProbSevere objects loop -- for radar simulation\nRefresh: 1\n\n')
