@@ -52,7 +52,7 @@ station_dict = {
         't': {'threshold': PUBLIC_T_ZOOM, 'color': '225 75 75', 'position': '-17,13, 2'},
         'td': {'threshold': PUBLIC_T_ZOOM, 'color': '0 255 0', 'position': '-17,-13, 2'},
         'rh': {'threshold': PUBLIC_T_ZOOM, 'color': '255 165 0', 'position': '17,-17, 2'},
-        'vis': {'threshold': PUBLIC_T_ZOOM, 'color': '180 180 255', 'position': '17,-13, 2'},
+        'vsby': {'threshold': PUBLIC_T_ZOOM, 'color': '0 190 255', 'position': '0,-13, 2'},
         'wind': {'threshold': PUBLIC_WIND_ZOOM, 'color': WHITE, 'position': 'NA'},
         'wspd': {'threshold': PUBLIC_WIND_ZOOM, 'color': WHITE, 'position': 'NA'},
         'wdir': {'threshold': PUBLIC_WIND_ZOOM, 'color': WHITE, 'position': 'NA'},
@@ -64,7 +64,7 @@ station_dict = {
         't': {'threshold': RWIS_T_ZOOM, 'color': '200 100 100', 'position': '-16,12, 1'},
         'td': {'threshold': RWIS_T_ZOOM, 'color': '25 225 25', 'position': '-16,-12, 1'},
         'rh': {'threshold': RWIS_T_ZOOM, 'color': '255 165 0', 'position': '16,-16, 1'},
-        'vis': {'threshold': RWIS_T_ZOOM, 'color': '180 180 255', 'position': '16,-12, 1'},
+        'vsby': {'threshold': RWIS_T_ZOOM, 'color': '0 165 222', 'position': '0,-12, 1'},
         'rt': {'threshold': RWIS_T_ZOOM, 'color': '255 255 0', 'position': '16,12, 1'},
         'wind': {'threshold': RWIS_WIND_ZOOM, 'color': GRAY, 'position': 'NA'},
         'wspd': {'threshold': RWIS_WIND_ZOOM, 'color': GRAY, 'position': 'NA'},
@@ -81,7 +81,7 @@ short_dict = {'air_temp_value_1':'t',
         'wind_speed_value_1':'wspd',
         'wind_direction_value_1':'wdir',
         'wind_gust_value_1':'wgst',
-        'visibility_value_1':'vis',
+        'visibility_value_1':'vsby',
         #'road_temp_value_1': 'rt'
         }
 
@@ -97,8 +97,8 @@ class MesowestBase():
     duration:           str     #  Input -- duration of event in minutes
     output_directory:   str     #  Output -- directory for placefiles
 
-    api:                str = 'mesowest'              #  Define network
-    steps:              int = field(init=False)       #  Derived based on duration
+    api:                str = 'mesowest'             #  Define network
+    steps:              int = field(init=False)      #  Derived based on duration
     d_t:                int = 5                      #  Time interval in minutes
 
 
@@ -140,6 +140,7 @@ class Mesowest(MesowestBase):
         self.t_title = f'Air Temperature {place_text}'
         self.wind_place_title = f'Wind and Gust {place_text}'
         self.td_place_title = f'Dewpoint Temperature {place_text}'
+        self.vsby_place_title = f'Visibility {place_text}'
         self.rh_place_title = f'Relative Humidity {place_text}'
         self.times = self.time_shift()
         self.build_placefile()
@@ -164,7 +165,6 @@ class Mesowest(MesowestBase):
                 |  text_info  | str   | threshold, color, and position
         -------------------------------------------------------------------------------
         """
-        #text_info = 'ignore'
         numfloat = float(num)
         new_str = 'NA'
         if num != 'NA':
@@ -174,7 +174,7 @@ class Mesowest(MesowestBase):
             elif short == 'wgst':
                 new_value = int(round(numfloat,1))
                 new_str = '" ' + str(new_value) + ' "'
-            elif short == 'vis':
+            elif short == 'vsby':
                 vis_string = self.visibility_code(num)
                 new_str = '" ' + vis_string + ' "'
             elif short == 'wspd':
@@ -193,6 +193,7 @@ class Mesowest(MesowestBase):
         self.t_placefile = f'Title: Mesowest {self.t_title}{ICON_FONT_TEXT}'
         self.wind_placefile = f'Title: Mesowest {self.wind_place_title}{ICON_FONT_TEXT}'
         self.td_placefile = f'Title: Mesowest {self.td_place_title}{ICON_FONT_TEXT}'
+        self.vsby_placefile = f'Title: Mesowest {self.vsby_place_title}{ICON_FONT_TEXT}'
         self.rh_placefile = f'Title: Mesowest {self.rh_place_title}{ICON_FONT_TEXT}'
         self.all_placefile = f'Title: Mesowest {self.all_title}{ICON_FONT_TEXT}'
 
@@ -209,13 +210,14 @@ class Mesowest(MesowestBase):
             self.t_placefile += time_text
             self.wind_placefile += time_text
             self.td_placefile += time_text
+            self.vsby_placefile += time_text
             self.rh_placefile += time_text
             self.all_placefile += time_text
 
             for j,station in enumerate(jas['STATION']):
                 try:
                     t_str, td_str, wdir_str, wspd_str = 'NA', 'NA', 'NA', 'NA'
-                    wgst_str, vis_str, rt_str = 'NA', 'NA', 'NA'
+                    wgst_str, vsby_str, rt_str = 'NA', 'NA', 'NA'
                     lon = station['LONGITUDE']
                     lat = station['LATITUDE']
                     object_line = f'Object: {lat},{lon}\n'
@@ -241,10 +243,8 @@ class Mesowest(MesowestBase):
                                 td_str = self.convert_met_values(data,short_name)
                             elif short_name == 'rt':
                                 rt_str = self.convert_met_values(data,short_name)
-                            elif short_name == 'vis':
-                                vis_str = 'NA'
-                                if int(network) != 162:
-                                    vis_str = self.convert_met_values(data,short_name)
+                            elif short_name == 'vsby':
+                                vsby_str = self.convert_met_values(data,short_name)
                             elif short_name == 'wspd':
                                 wspd_str = self.convert_met_values(data,short_name)
                             elif short_name == 'wdir':
@@ -274,10 +274,11 @@ class Mesowest(MesowestBase):
                             self.all_placefile += new_text
                             self.td_placefile += new_text
 
-                        if vis_str != 'NA':
-                            add_text = self.build_object(net_dict['vis'], vis_str)
-                            new_text = f'{object_line} {add_text}'
-                            self.all_placefile += new_text
+                        if vsby_str != 'NA':
+                            add_text = self.build_object(net_dict['vsby'], vsby_str)
+                            if 'P6SM' not in vsby_str:
+                                new_text = f'{object_line} {add_text}'
+                                self.vsby_placefile += new_text
 
                         if t_str != 'NA' and td_str != 'NA':
                             rh_text = self.return_rh_object(t_str, td_str)
@@ -288,7 +289,6 @@ class Mesowest(MesowestBase):
                             location, wgust_popup = self.gust_obj(wdir_str, wgst_str)
                             font_code = net_dict['font_code']
                             color_line = f'  Color: {net_dict['wgst']['color']}\n'
-                            #print(color_line)
                             new_text1 = f'{object_line}  Threshold: {wind_zoom}\n' 
                             new_text2 = f'Text: {location},{font_code},{wgust_popup}\n End:\n\n'
                             final_text = f'{new_text1} {color_line} {new_text2}'
@@ -314,6 +314,9 @@ class Mesowest(MesowestBase):
 
         with open((self.placefiles_dir / 'dwpt.txt'), 'w', encoding='utf8') as outfile:
             outfile.write(self.td_placefile)
+
+        with open((self.placefiles_dir / 'vsby.txt'), 'w', encoding='utf8') as outfile:
+            outfile.write(self.vsby_placefile)
 
         with open((self.placefiles_dir / 'rh.txt'), 'w', encoding='utf8') as outfile:
             outfile.write(self.rh_placefile)
@@ -343,7 +346,6 @@ class Mesowest(MesowestBase):
                         else:
                             largefout.write(line)
                             xlargefout.write(line)
-
 
 
     def build_object(self,element_dict,text_str):
@@ -382,7 +384,7 @@ class Mesowest(MesowestBase):
         ------------------------------------------------------------------------------------
         Input   |  temp      | str   | Temperature in degrees Fahrenheit
         Input   |  dewpoint  | str   | Dewpoint in degrees Fahrenheit
-        Returns |            | str   | Relative humidity in percent
+        Returns |            | str   | Formatted relative humidity in percent
         ------------------------------------------------------------------------------------
         """
         # Convert Fahrenheit to Celsius
@@ -402,19 +404,20 @@ class Mesowest(MesowestBase):
         ------------------------------------------------------------------------------------
          Input   |  v  | str   | Visibility in miles
          Returns |     | str   | String representing factional visibility in statute miles
+                               | vsby >= 6.5 miles returns 'P6SM' (Plus 6 Statute Miles) 
         ------------------------------------------------------------------------------------
         """
         vis = float(v)
         visibility_ranges = [
-        (0.0, '0'), (0.125, '1/8'), (0.25, '1/4'), (0.5, '1/2'), (0.75, '3/4'),
-        (1.0, '1'), (1.25, '1 1/4'), (1.5, '1 1/2'), (1.75, '1 3/4'), (2.0, '2'),
-        (2.25, '2 1/4'), (2.5, '2 1/2'), (2.75, '2 3/4'), (3.0, '3'), (4.0, '4'),
-        (5.0, '5'), (6.0, '6'),(6.5, '7+')]
+        (0.0625, '0'), (0.1875, '1/8'), (0.375, '1/4'), (0.625, '1/2'), (0.875, '3/4'),
+        (1.125, '1'), (1.375, '1 1/4'), (1.625, '1 1/2'), (1.875, '1 3/4'), (2.125, '2'),
+        (2.375, '2 1/4'), (2.625, '2 1/2'), (2.875, '2 3/4'), (3.5, '3'), (4.5, '4'),
+        (5.5, '5'), (6.5, '6')]
 
         for vis_threshold, label in visibility_ranges:
-            if vis <= vis_threshold:
+            if vis < vis_threshold:
                 return label
-        return '7+'
+        return 'P6SM'
 
 
     def gust_obj(self,wdir, wgst):
@@ -440,25 +443,23 @@ class Mesowest(MesowestBase):
         """
         Returns list of timestrings associated with a list of time intervals
         -------------------------------------------------------------------------------
-        Input   |  timeStr   | str   | 'YYYYmmddHHMM' format
-                |  num       | int   | number of time steps
-                |  dt        | int   | number of minutes per step
-                |  direction | str   | 'backward' or 'forward'
-                |  api       | str   | 'mesowest' or 'mping' format
-                                         - 'mesowest' - '2020-01-10T06:35:12Z'
-                                         = 'mping'    - '2020-01-10 06:35:12'
-        Returns |  times     | list  | list of time intervals
-                                     | [YYYYmmddHHMM, str, str]
-                                     | [YYYYmmddHHMM, interval start time, interval end time]
+        Input   |self.base_time | datetime | start of simulation
+                |    self.steps | int      | number of time intervals
+                |      self.d_t | int      | number of minutes per step
+                |           api | str      | 'mesowest' or 'mping' format
+                                           - 'mesowest' - '2020-01-10T06:35:12Z'
+                                           = 'mping'    - '2020-01-10 06:35:12'
+
+        Returns |         times | list     | list of time interval string lists
+                                           | [str, str, str]
+                                           | [YYYYmmddHHMM, interval start, interval end]
         -------------------------------------------------------------------------------
         """
         times = []
-        init_time = self.base_time
-        orig_time = init_time
 
         for step in range(0,self.steps):
             mins = step * self.d_t
-            new_time = orig_time + timedelta(minutes=mins)
+            new_time = self.base_time + timedelta(minutes=mins)
             next_time = new_time + timedelta(minutes=self.d_t)
             new_str = datetime.strftime(new_time, '%Y%m%d%H%M')
             if self.api == 'mesowest':
