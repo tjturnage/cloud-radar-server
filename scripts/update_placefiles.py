@@ -23,7 +23,6 @@ class UpdatePlacefiles():
 
         self.current_playback_timestr = current_playback_timestr
         self.placefiles_directory = Path(PLACEFILES_DIR)
-        print(self.placefiles_directory)
         self.current_playback_time = None
         try:
             self.playback_timestamp = datetime.strptime(self.current_playback_timestr, \
@@ -40,14 +39,13 @@ class UpdatePlacefiles():
             extracts first time string from TimeRange line in placefile
             Example: TimeRange: 2019-03-06T23:14:39Z 2019-03-06T23:16:29Z 
         - returns: time --> float
-            timestamp associated with second time string
+            timestamp associated with first time string plus 5 minutes
             Example: 2019-03-06T23:16:39Z --> 1551900879.0
 '
         """
-        #time_str = timerange_line.split(' ')[-1][:-1]   # last element, remove newline
         time_str = timerange_line.split(' ')[1]         # first element
         timestamp = datetime.strptime(time_str, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=pytz.UTC).timestamp()
-        timestamp = timestamp - 600 # subract 10 minutes to check time
+        timestamp = timestamp + 300 # add 5 minutes to check time
         return timestamp
 
     def extract_placefile_lines(self, placefile: str) -> list:

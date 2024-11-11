@@ -1718,7 +1718,7 @@ def update_output(contents, filename, configs, _sim_times):
 if __name__ == '__main__':
 
     if config.CLOUD:
-        app.run_server(host="0.0.0.0", port=8050, threaded=True, debug=True, use_reloader=False,
+        app.run_server(host="0.0.0.0", port=8050, threaded=True, debug=False, use_reloader=False,
                        dev_tools_hot_reload=False)
     else:
         if config.PLATFORM == 'DARWIN':

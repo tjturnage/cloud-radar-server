@@ -115,7 +115,7 @@ class Mesowest(MesowestBase):
 
     def __post_init__(self):
         self.placefiles_dir = Path(self.output_directory)
-        self.bbox = f'{self.lon-4},{self.lat-4},{self.lon+4},{self.lat+4}'
+        self.bbox = self.bounding_box(self.lon,self.lat)
  
         self.api_args = {"token":API_TOKEN,
                 "bbox":self.bbox,
@@ -144,6 +144,14 @@ class Mesowest(MesowestBase):
         self.times = self.time_shift()
         self.build_placefile()
 
+    def bounding_box(self,lon,lat):
+        """
+        Create a bounding box for the Mesowest API request
+        """
+        lon = float(lon)
+        lat = float(lat)
+        bbox = f'{lon-4},{lat-4},{lon+4},{lat+4}'
+        return bbox
 
     def convert_met_values(self,num,short):
         """
@@ -491,4 +499,5 @@ if __name__ == "__main__":
         #  center lat, center lon, start_timestr, duration, placefile dir
 
     else:
+        #test = Mesowest(42.9634, -85.6681, '2024-05-07 20:30', 45, '/data')
         test = Mesowest(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5])
