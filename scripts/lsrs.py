@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 import requests
 import pandas as pd
 
-HEAD = """//Created by the NWS Central Region Convective Warning Improvement Project (CWIP Team) 2024
+HEAD = """//Created by the NWS Central Region Convective Warning Improvement Project (CWIP Team)
 Refresh: 1
 Threshold: 999
 Title: Local Storm Reports -- for radar simulation

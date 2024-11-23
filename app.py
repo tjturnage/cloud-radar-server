@@ -24,11 +24,14 @@ import json
 import logging
 import mimetypes
 import signal
-import psutil
-import pytz
-import base64
-import pandas as pd
 import io
+import base64
+import psutil
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+import pytz
+import pandas as pd
 
 # from time import sleep
 from dash import Dash, html, Input, Output, dcc, ctx, State  # , callback
@@ -1103,6 +1106,28 @@ def run_with_cancel_button(cfg, sim_times, radar_info):
             print("Error updating hodo html: ", e)
             logging.exception("Error updating hodo html: %s",e, exc_info=True)
 
+def send_email(subject, body, to_email):
+    from_email = "your_email@example.com"
+    from_password = "your_password"
+
+    msg = MIMEMultipart()
+    msg['From'] = from_email
+    msg['To'] = to_email
+    msg['Subject'] = subject
+
+    msg.attach(MIMEText(body, 'plain'))
+
+    try:
+        server = smtplib.SMTP('smtp.example.com', 587)
+        server.starttls()
+        server.login(from_email, from_password)
+        text = msg.as_string()
+        server.sendmail(from_email, to_email, text)
+        server.quit()
+        print("Email sent successfully")
+    except (smtplib.SMTPException, ConnectionError) as e:
+        print(f"Failed to send email: {e}")
+
 
 @app.callback(
     Output('show_script_progress', 'children', allow_duplicate=True),
@@ -1140,6 +1165,14 @@ def launch_simulation(n_clicks, configs, sim_times, radar_info):
         raise PreventUpdate
     else:
         if config.PLATFORM != 'WINDOWS':
+            try:
+                send_email(
+                    subject="RSSiC simulation launched",
+                    body="RSSiC simulation launched",
+                    to_email="thomas.turnage@noaa.gov"
+                )
+            except (smtplib.SMTPException, ConnectionError) as e:
+                print(f"Failed to send email: {e}")
             run_with_cancel_button(configs, sim_times, radar_info)
 
 ################################################################################################
@@ -1631,7 +1664,7 @@ def icon_value(event_type):
     if event_type == 'QUESTION':
         return 3
     return 3
-   
+
 
 def make_events_placefile(contents, filename, cfg) -> None:
     """
