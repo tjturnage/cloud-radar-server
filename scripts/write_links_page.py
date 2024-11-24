@@ -89,10 +89,9 @@ class WriteLinksPage():
     A class to write a shareable links page for simulation participants not having access to the
     main RSSiC user interface
     """
-    assets_dir:         str   #  Input   --  unique id of session related to epoch time
-    place_link:         str   #  Input   --  html address of placefiles
-    polling_dir:        str   #  Input   --  directory for radar polling
-    links_page:         str   #  Input   --  html page to be written to
+    link_base:          str   #  Input   --  html base link
+    places_links:       str   #  Input   --  html base of placefiles
+    links_page:         str   #  Input   --  filepath to links page
 
 
     def __post_init__(self):
@@ -107,7 +106,7 @@ class WriteLinksPage():
         fout.write(f'<h3>{title}</h3>\n')
         for key, value in files.items():
             placename = f'{key}_updated.txt'
-            fout.write(f'<a href="{self.place_link}/{placename}" {TAR}{value}</a></br>\n')
+            fout.write(f'<a href="{self.places_links}/{placename}" {TAR}{value}</a></br>\n')
 
     def create_links_page(self) -> None:
         """
@@ -122,7 +121,7 @@ class WriteLinksPage():
             fout.write('<br><br>\n')
                        
             fout.write('<h3>Copy this polling link into GR2Analyst</h3>\n')
-            this_polling_link = f'{self.assets_dir}/polling'
+            this_polling_link = f'{self.link_base}/polling'
             fout.write(f'<h4><a href="{this_polling_link}">{this_polling_link}</a></h4>\n<br>\n')
             titles = ['Observations','Reports','Stability','Shear','Composite']
             for title, files in zip(titles,[obs,reports,stability,shear,comp]):
@@ -131,21 +130,20 @@ class WriteLinksPage():
             fout.write('<br>')
             fout.write('<h3>Links</h3>\n')
             #for key, value in links.items():
-            fout.write(f'<a href="{self.assets_dir}/hodographs.html" {TAR}Hodographs Page</a></br>\n')
-            fout.write(f'<a href="{self.assets_dir}/downloads/original_radar_files.zip" {TAR}Download Original Radar</a></br>\n')
-            fout.write(f'<a href="{self.assets_dir}/downloads/original_placefiles.zip" {TAR}Download Original Placefiles</a></br>\n')
+            fout.write(f'<a href="{self.link_base}/hodographs.html" {TAR}Hodographs Page</a></br>\n')
+            fout.write(f'<a href="{self.link_base}/downloads/original_radar_files.zip">Download Original Radar</a></br>\n')
+            fout.write(f'<a href="{self.link_base}/downloads/original_placefiles.zip">Download Original Placefiles</a></br>\n')
             fout.write(TAIL)
 
 
 if __name__ == '__main__':
     if sys.platform.startswith('win'):
         session_id = '1234567890'
-        assets_dir = f'https://rssic.nws.noaa.gov/assets/{session_id}'
-        placefile_links = f'{assets_dir}/placefiles'
+        link_base = f'https://rssic.nws.noaa.gov/assets/{session_id}'
+        placefile_links = f'{link_base}/placefiles'
         #configs['PLACEFILES_LINKS']
-        polling_dir = f'{assets_dir}/polling'
         FOUT = 'C:/data/links.html'
-        links_page = WriteLinksPage(assets_dir, placefile_links, polling_dir, FOUT)
+        links_page = WriteLinksPage(link_base, placefile_links, FOUT)
     else:
-        #cfg['ASSETS_DIR'], cfg['PLACEFILES_LINKS'], cfg['POLLING_DIR'], cfg['LINKS_HTML_PAGE']
-        links_page = WriteLinksPage(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])
+        #cfg['LINK_BASE'], cfg['PLACEFILES_LINKS'], cfg['LINKS_HTML_PAGE']
+        links_page = WriteLinksPage(sys.argv[1], sys.argv[2], sys.argv[3])

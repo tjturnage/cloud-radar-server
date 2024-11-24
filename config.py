@@ -98,7 +98,7 @@ def setup_paths_and_dirs(n_intervals, session_id):
         dirs['HODOGRAPHS_PAGE'] = f"{dirs['ASSETS_DIR']}/hodographs.html"
         dirs['LINKS_HTML_PAGE'] = f"{dirs['ASSETS_DIR']}/links.html"
         dirs['HODO_HTML_PAGE'] = dirs['HODOGRAPHS_PAGE']
-        dirs['EVENTS_HTML_FILE'] = f"{dirs['ASSETS_DIR']}/events.html"
+        dirs['EVENTS_HTML_PAGE'] = f"{dirs['ASSETS_DIR']}/events.html"
         dirs['EVENTS_TEXT_FILE'] = f"{dirs['ASSETS_DIR']}/events.txt"
         dirs['POLLING_DIR'] = f"{dirs['ASSETS_DIR']}/polling"
         dirs['MODEL_DIR'] = f"{dirs['DATA_DIR']}/model_data"

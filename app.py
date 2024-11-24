@@ -934,7 +934,7 @@ def run_with_cancel_button(cfg, sim_times, radar_info):
     UpdateHodoHTML('None', cfg['HODOGRAPHS_DIR'], cfg['HODOGRAPHS_PAGE'])
     # writes a black event_times.txt file to the assets directory
     args = [str(sim_times['simulation_seconds_shift']), 'None', cfg['RADAR_DIR'],
-            cfg['EVENTS_HTML_FILE'], cfg['EVENTS_TEXT_FILE']]
+            cfg['EVENTS_HTML_PAGE'], cfg['EVENTS_TEXT_FILE']]
     res = call_function(utils.exec_script, Path(cfg['EVENT_TIMES_SCRIPT_PATH']), args,
                         cfg['SESSION_ID'])
     if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
@@ -979,9 +979,8 @@ def run_with_cancel_button(cfg, sim_times, radar_info):
                 logging.exception("Error defining new radar: %s",e,exc_info=True)
 
             # --------- Links Page -----------------------------------------------------
-            #cfg['ASSETS_DIR'], cfg['PLACEFILES_LINKS'], cfg['POLLING_DIR'], cfg['LINKS_HTML_PAGE']
-            args = [cfg['ASSETS_DIR'], cfg['PLACEFILES_LINKS'], cfg['POLLING_DIR'],
-                    cfg['LINKS_HTML_PAGE']]
+            #cfg['LINK_BASE'], cfg['PLACEFILES_LINKS'], cfg['LINKS_HTML_PAGE']
+            args = [cfg['LINK_BASE'], cfg['PLACEFILES_LINKS'], cfg['LINKS_HTML_PAGE']]
             res = call_function(utils.exec_script, Path(cfg['LINKS_PAGE_SCRIPT_PATH']),
                                 args, cfg['SESSION_ID'])
             if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
@@ -1036,7 +1035,7 @@ def run_with_cancel_button(cfg, sim_times, radar_info):
     # --------- event times text file ----------------------------------------------
     # -- seconds_shift, csv_dir, radar_dir, html_file, text_file -------------------
     args = [str(sim_times['simulation_seconds_shift']), cfg['DATA_DIR'], cfg['RADAR_DIR'],
-            cfg['EVENTS_HTML_FILE'], cfg['EVENTS_TEXT_FILE']]
+            cfg['EVENTS_HTML_PAGE'], cfg['EVENTS_TEXT_FILE']]
     res = call_function(utils.exec_script, Path(cfg['EVENT_TIMES_SCRIPT_PATH']), args,
                         cfg['SESSION_ID'])
     if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
