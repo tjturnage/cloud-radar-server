@@ -90,7 +90,7 @@ class WriteLinksPage():
     main RSSiC user interface
     """
     assets_dir:         str   #  Input   --  unique id of session related to epoch time
-    place_dir:          str   #  Input   --  filepath of the links html page
+    place_link:         str   #  Input   --  html address of placefiles
     polling_dir:        str   #  Input   --  directory for radar polling
     links_page:         str   #  Input   --  html page to be written to
 
@@ -107,7 +107,7 @@ class WriteLinksPage():
         fout.write(f'<h3>{title}</h3>\n')
         for key, value in files.items():
             placename = f'{key}_updated.txt'
-            fout.write(f'<a href="{self.place_dir}/{placename}">{value}</a></br>\n')
+            fout.write(f'<a href="{self.place_link}/{placename}">{value}</a></br>\n')
     
     def create_links_page(self) -> None:
         """
@@ -119,7 +119,8 @@ class WriteLinksPage():
             fout.write('<br><br>\n')
                        
             fout.write('<h3>Copy this polling link into GR2Analyst</h3>\n')
-            fout.write(f'<h4><a href="{self.polling_dir}">{self.polling_dir}</a></h4>\n<br>\n')
+            polling_link = f'{self.assets_dir}/polling'
+            fout.write(f'<h4><a href="{polling_link}">{polling_link}</a></h4>\n<br>\n')
             titles = ['Observations','Reports','Stability','Shear','Composite']
             for title, files in zip(titles,[obs,reports,stability,shear,comp]):
                 self.write_placefile_section(title,files,fout)
@@ -136,10 +137,11 @@ if __name__ == '__main__':
     if sys.platform.startswith('win'):
         session_id = '1234567890'
         assets_dir = f'https://rssic.nws.noaa.gov/assets/{session_id}'
-        placefiles_dir = f'{assets_dir}/placefiles'
+        placefile_links = f'{assets_dir}/placefiles'
+        #configs['PLACEFILES_LINKS']
         polling_dir = f'{assets_dir}/polling'
         FOUT = 'C:/data/links.html'
-        links_page = WriteLinksPage(assets_dir, placefiles_dir, polling_dir, FOUT)
+        links_page = WriteLinksPage(assets_dir, placefile_links, polling_dir, FOUT)
     else:
-        #cfg['ASSETS_DIR'], cfg['PLACEFILES_DIR'], cfg['POLLING_DIR'], cfg['LINKS_HTML_PAGE']
+        #cfg['ASSETS_DIR'], cfg['PLACEFILES_LINKS'], cfg['POLLING_DIR'], cfg['LINKS_HTML_PAGE']
         links_page = WriteLinksPage(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])

@@ -489,7 +489,7 @@ def generate_layout(layout_has_initialized, children, configs):
                 dbc.Row([
                     dbc.Col(dbc.ListGroupItem("Polling address for GR2Analyst"),
                         style=lc.polling_address_label, width=4),
-                    dbc.Col(dbc.ListGroupItem(f"{configs['LINK_BASE']}/polling", 
+                    dbc.Col(dbc.ListGroupItem(f"{configs['LINK_BASE']}/polling",
                         href="", target="_blank", style={'color': '#555555'}, id="polling_link"),
                         style=lc.polling_link, width=8)
                 ])
@@ -979,8 +979,8 @@ def run_with_cancel_button(cfg, sim_times, radar_info):
                 logging.exception("Error defining new radar: %s",e,exc_info=True)
 
             # --------- Links Page -----------------------------------------------------
-            #cfg['ASSETS_DIR'], cfg['PLACEFILES_DIR'], cfg['POLLING_DIR'], cfg['LINKS_HTML_PAGE']
-            args = [cfg['ASSETS_DIR'], cfg['PLACEFILES_DIR'], cfg['POLLING_DIR'], 
+            #cfg['ASSETS_DIR'], cfg['PLACEFILES_LINKS'], cfg['POLLING_DIR'], cfg['LINKS_HTML_PAGE']
+            args = [cfg['ASSETS_DIR'], cfg['PLACEFILES_LINKS'], cfg['POLLING_DIR'],
                     cfg['LINKS_HTML_PAGE']]
             res = call_function(utils.exec_script, Path(cfg['LINKS_PAGE_SCRIPT_PATH']),
                                 args, cfg['SESSION_ID'])
