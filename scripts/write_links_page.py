@@ -58,8 +58,6 @@ stability = {
 shear = {
     'ebwd': 'Effective Bulk Shear',
     'esrh': 'Effective Storm Relative Helicity',
-    'estp': 'Effective Sig Tor Parameter',
-    'rm5': 'Right Mover 5km',
     'shr1': '0-1km Shear',
     'shr3': '0-3km Shear',
     'shr6': '0-6km Shear',
@@ -82,6 +80,8 @@ comp = {
 links = {'hodographs.html': 'Hodographs Browser Page',
          'original_radar_files.zip': 'Download original radar files',
          'original_placefiles.zip': 'Download original placefiles'}
+
+TAR = 'target="_blank">'
 
 @dataclass
 class WriteLinksPage():
@@ -107,29 +107,33 @@ class WriteLinksPage():
         fout.write(f'<h3>{title}</h3>\n')
         for key, value in files.items():
             placename = f'{key}_updated.txt'
-            fout.write(f'<a href="{self.place_link}/{placename}">{value}</a></br>\n')
-    
+            fout.write(f'<a href="{self.place_link}/{placename}" {TAR}{value}</a></br>\n')
+
     def create_links_page(self) -> None:
         """
         creates the links page ... can be done all at once
         """
+        
+        #ahref = f'<a href="{self.assets_dir}'
+        
         #with open(self.links_page, 'w', encoding='utf-8') as fout:
         with open(self.links_page, 'w', encoding='utf-8') as fout:
             fout.write(HEAD)
             fout.write('<br><br>\n')
                        
             fout.write('<h3>Copy this polling link into GR2Analyst</h3>\n')
-            polling_link = f'{self.assets_dir}/polling'
-            fout.write(f'<h4><a href="{polling_link}">{polling_link}</a></h4>\n<br>\n')
+            this_polling_link = f'{self.assets_dir}/polling'
+            fout.write(f'<h4><a href="{this_polling_link}">{this_polling_link}</a></h4>\n<br>\n')
             titles = ['Observations','Reports','Stability','Shear','Composite']
             for title, files in zip(titles,[obs,reports,stability,shear,comp]):
                 self.write_placefile_section(title,files,fout)
 
             fout.write('<br>')
             fout.write('<h3>Links</h3>\n')
-            for key, value in links.items():
-                fout.write(f'<a href="{self.assets_dir}/{key}">{value}</a></br>\n')
-
+            #for key, value in links.items():
+            fout.write(f'<a href="{self.assets_dir}/hodographs.html" {TAR}Hodographs Page</a></br>\n')
+            fout.write(f'<a href="{self.assets_dir}/downloads/original_radar_files.zip" {TAR}Download Original Radar</a></br>\n')
+            fout.write(f'<a href="{self.assets_dir}/downloads/original_placefiles.zip" {TAR}Download Original Placefiles</a></br>\n')
             fout.write(TAIL)
 
 
