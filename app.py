@@ -1176,14 +1176,14 @@ def launch_simulation(n_clicks, configs, sim_times, radar_info):
         raise PreventUpdate
     else:
         if config.PLATFORM != 'WINDOWS':
-            try:
-                send_email(
-                    subject="RSSiC simulation launched",
-                    body="RSSiC simulation launched",
-                    to_email="thomas.turnage@noaa.gov"
-                )
-            except (smtplib.SMTPException, ConnectionError) as e:
-                print(f"Failed to send email: {e}")
+            # try:
+            #     send_email(
+            #         subject="RSSiC simulation launched",
+            #         body="RSSiC simulation launched",
+            #         to_email="thomas.turnage@noaa.gov"
+            #     )
+            # except (smtplib.SMTPException, ConnectionError) as e:
+            #     print(f"Failed to send email: {e}")
             run_with_cancel_button(configs, sim_times, radar_info)
 
 ################################################################################################
