@@ -116,6 +116,7 @@ def setup_paths_and_dirs(n_intervals, session_id):
         dirs['OBS_SCRIPT_PATH'] = f'{dirs['SCRIPTS_DIR']}/obs_placefile.py'
         dirs['LSR_SCRIPT_PATH'] = f'{dirs['SCRIPTS_DIR']}/lsrs.py'
         dirs['EVENT_TIMES_SCRIPT_PATH'] = f'{dirs['SCRIPTS_DIR']}/write_event_times.py'
+        dirs['LINKS_PAGE_SCRIPT_PATH'] = f'{dirs['SCRIPTS_DIR']}/write_links_page.py'
         dirs['HODO_SCRIPT_PATH'] = f'{dirs['SCRIPTS_DIR']}/hodo_plot.py'
         dirs['NEXRAD_SCRIPT_PATH'] = f'{dirs['SCRIPTS_DIR']}/Nexrad.py'
         dirs['PROBSEVERE_DOWNLOAD_SCRIPT_PATH'] = f'{dirs['SCRIPTS_DIR']}/ProbSevere.py'

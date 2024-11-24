@@ -26,10 +26,10 @@ import mimetypes
 import signal
 import io
 import base64
-import psutil
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+import psutil
 import pytz
 import pandas as pd
 
@@ -654,6 +654,9 @@ def generate_layout(layout_has_initialized, children, configs):
              lc.spacer_mini,lc.spacer_mini,
                     dbc.Row(
                  [dbc.Col(dbc.ListGroupItem("Web Pages"), style=lc.group_item_style_links, width=2),
+                     dbc.Col(dbc.ListGroupItem("Links",
+                                href=f"{configs['LINK_BASE']}/links.html",
+                                target="_blank"),style={'color':lc.graphics_c},width=2),
                      dbc.Col(dbc.ListGroupItem("Hodographs",
                                 href=f"{configs['LINK_BASE']}/hodographs.html",
                                 target="_blank"),style={'color':lc.graphics_c},width=2),
@@ -974,6 +977,14 @@ def run_with_cancel_button(cfg, sim_times, radar_info):
                     new_radar = radar_info['new_radar'].upper()
             except (IOError, ValueError, KeyError) as e:
                 logging.exception("Error defining new radar: %s",e,exc_info=True)
+
+            # Links page
+            #cfg['ASSETS_DIR'], cfg['PLACEFILES_DIR'], cfg['POLLING_DIR']
+            args = [cfg['ASSETS_DIR'], cfg['PLACEFILES_DIR'], cfg['POLLING_DIR']]
+            res = call_function(utils.exec_script, Path(cfg['LINKS_PAGE_SCRIPT_PATH']),
+                                args, cfg['SESSION_ID'])
+            if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
+                return
 
             # Radar download
             args = [radar, str(sim_times['event_start_str']),
