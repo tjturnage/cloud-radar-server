@@ -92,6 +92,8 @@ class WriteLinksPage():
     assets_dir:         str   #  Input   --  unique id of session related to epoch time
     place_dir:          str   #  Input   --  filepath of the links html page
     polling_dir:        str   #  Input   --  directory for radar polling
+    links_page:         str   #  Input   --  html page to be written to
+
 
     def __post_init__(self):
         self.create_links_page()
@@ -112,7 +114,7 @@ class WriteLinksPage():
         creates the links page ... can be done all at once
         """
         #with open(self.links_page, 'w', encoding='utf-8') as fout:
-        with open('links.html', 'w', encoding='utf-8') as fout:
+        with open(self.links_page, 'w', encoding='utf-8') as fout:
             fout.write(HEAD)
             fout.write('<br><br>\n')
                        
@@ -136,7 +138,8 @@ if __name__ == '__main__':
         assets_dir = f'https://rssic.nws.noaa.gov/assets/{session_id}'
         placefiles_dir = f'{assets_dir}/placefiles'
         polling_dir = f'{assets_dir}/polling'
-        links_page = WriteLinksPage(assets_dir, placefiles_dir, polling_dir)        
+        FOUT = 'C:/data/links.html'
+        links_page = WriteLinksPage(assets_dir, placefiles_dir, polling_dir, FOUT)
     else:
-        #cfg['ASSETS_DIR'], cfg['PLACEFILES_DIR'], cfg['POLLING_DIR']
-        links_page = WriteLinksPage(sys.argv[1], sys.argv[2], sys.argv[3])
+        #cfg['ASSETS_DIR'], cfg['PLACEFILES_DIR'], cfg['POLLING_DIR'], cfg['LINKS_HTML_PAGE']
+        links_page = WriteLinksPage(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])

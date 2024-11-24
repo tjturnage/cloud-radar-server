@@ -978,9 +978,10 @@ def run_with_cancel_button(cfg, sim_times, radar_info):
             except (IOError, ValueError, KeyError) as e:
                 logging.exception("Error defining new radar: %s",e,exc_info=True)
 
-            # Links page
-            #cfg['ASSETS_DIR'], cfg['PLACEFILES_DIR'], cfg['POLLING_DIR']
-            args = [cfg['ASSETS_DIR'], cfg['PLACEFILES_DIR'], cfg['POLLING_DIR']]
+            # --------- Links Page -----------------------------------------------------
+            #cfg['ASSETS_DIR'], cfg['PLACEFILES_DIR'], cfg['POLLING_DIR'], cfg['LINKS_HTML_PAGE']
+            args = [cfg['ASSETS_DIR'], cfg['PLACEFILES_DIR'], cfg['POLLING_DIR'], 
+                    cfg['LINKS_HTML_PAGE']]
             res = call_function(utils.exec_script, Path(cfg['LINKS_PAGE_SCRIPT_PATH']),
                                 args, cfg['SESSION_ID'])
             if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
