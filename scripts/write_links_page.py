@@ -43,6 +43,20 @@ h4 {
     color: #cc6666;
     text-decoration: none; /* Remove underline */
 }
+.main-title {
+    font-size: 2.2em;
+    color: #cccccc;
+    font-weight: bold;
+    }
+.title {
+    font-size: 1.5em;
+    color: #bdaf35;
+    font-weight: bold;
+    }
+.desc {
+    font-size: 1.0em;
+    color: #cccccc;
+    }
 .rpts:hover {
     color: #ffaaaa; /* Change color on hover */
 }
@@ -51,6 +65,11 @@ h4 {
 }
 .nse:hover {
     color: #FFFF00; /* Change color on hover */
+}
+.flex-image {
+    width: 100%; /* Make the image flexible in size */
+    max-width: 800px; /* Optional: Set a maximum width */
+    height: auto; /* Maintain aspect ratio */
 }
 </style>
 </head>
@@ -147,92 +166,175 @@ h4 {
     </div></div>
 </div>
 <br><hr><br>
-<div id="main">
-    <div id="content" class="container">
-        <header>
-                <h2><strong>Product Descriptions</strong> (from CWIP)</h2>
-        </header>
-        <h4>Instability</h4>
-        <ul>	
-            <li><b>Mixed Layer CAPE</b></li>
-                <ul><li>MLCAPE (Mixed Layer Convective Available Potential Energy) 
-                is a measure of instability in the troposphere. This value represents the mean potential energy conditions 
-                available to parcels of air located in the lowest 100-mb when lifted to the level of free convection (LFC). 
-                No parcel entrainment is considered. The CAPE and CIN calculations use the virtual temperature correction. 
-                </li></ul>
-            <br>
-            <li><b>Mixed Layer CIN</b></li>
-                <ul><li>CIN (Convective INhibition) represents the "negative" area on a sounding that must be overcome before storm initiation can occur.
-                </li></ul><br>
-            <li><b>Mixed Layer LCL</b></li>
-                <ul><li>The LCL (Lifting Condensation Level) is the level at which a parcel becomes saturated. It is a reasonable estimate of cloud base height when parcels experience forced ascent.
-                </li></ul><br>
-            <li><b>Most Unstable CAPE</b></li>
-                <ul><li> MUCAPE (Most Unstable Convective Available Potential Energy) is a measure of instability in the troposphere. This value represents the total amount of potential energy available to the maximum equivalent potential temperature (within the lowest 300-mb of the atmosphere) while being lifted to its level of free convection (LFC). No parcel entrainment is considered. The CAPE and CIN calculations use the virtual temperature correction.
-                </li></ul><br>
-            <li><b>0-3km CAPE</b></li>
-                <ul><li>CAPE in the lowest 3-km above ground level. Areas of large 0-3-km CAPE tend to favor strong low-level stretching, and can support tornado formation when co-located with significant vertical vorticity near the ground.
-                <br></li></ul><br>
-            <li><b>0-3km Lapse Rate</b></li>
-                <ul><li>A lapse rate is the rate of temperature change with height. The faster the temperature decreases with height, the "steeper" the lapse rate and the more "unstable" the atmosphere becomes. The 0-3 km lapse rates, also referred to as low-level lapse rates, are meant to identify regions of deeper mixing (e.g., steeper lapse rates) that often result in weakening convective inhibition that precedes surface-based thunderstorm development, as well as the potential for strong downdrafts in the low levels.
-                <br></li></ul>
-        </ul>
+    <div class="container">
+        <div class="d-flex flex-wrap title">
+        <h2><strong>Product Descriptions</strong> (from CWIP)</h2>
+        </div>
+        <div class="d-flex flex-wrap main-title">Instability</div>
         <br>
-        <h4>Shear</h4>
-        <ul>
-            <li><b>0-1km Shear</b></li>
-                <ul><li>Surface-1-km Vertical Shear is the difference between the surface wind and the wind at 1-km above ground level. These data are plotted as vectors. 0-1-km shear magnitudes greater than 15-20 knots tend to favor supercell tornadoes.
-                </li></ul><br>
-            <li><b>0-3km Shear</b></li>
-                <ul><li>Surface-3-km Vertical Shear is the difference between the surface wind and the wind at 3-km above ground level. Line-normal 0-3 km shear magnitudes of 30 kt or higher indicate a favorable environment for the development of mesovortices and/or tornadoes in QLCSs (Schaumann and Przybylinski 2012). These data are plotted as vectors.
-                </li></ul><br>
-            <li><b>0-6km Shear</b></li>
-                <ul><li>The surface through 6-km above ground level shear vector denotes the change in wind throughout this height. Thunderstorms tend to become more organized and persistent as vertical shear increases. Supercells are commonly associated with vertical shear values of 35-40 knots and greater through this depth.
-                </li></ul><br>
-            <li><b>0-8km Shear</b></li>
-                <ul><li>The surface through 8 km above ground level shear vector denotes the change in wind throughout this height. Thunderstorms tend to become more organized and persistent as vertical shear increases. Bunkers et al. 2006 found that long-lived supercells occur in environments with much stronger 0-8-km bulk wind shear ( > 50 kt) than that observed with short-lived supercells.
-                </li></ul><br>
-            <li><b>Effective Bulk Shear</b></li>
-                <ul><li>The magnitude of the vector wind difference from the effective inflow base upward to 50% of the equilibrium level height for the most unstable parcel in the lowest 300 mb. This parameter is similar to the 0-6 km bulk wind difference, though it accounts for storm depth (effective inflow base to EL) and is designed to identify both surface-based and "elevated" supercell environments. Supercells become more probable as the effective bulk wind difference increases in magnitude through the range of 25-40 kt and greater.
-                </li></ul><br>
-            <li><b>0-500m Storm Relative Helicity</b></li>
-                <ul><li>SRH (Storm Relative Helicity) in the lowest 500 m AGL has been found by Coffer et al. (2019), October issue of Weather and Forecasting, to be a better discriminator than effective SRH between significant tornadoes and nontornadic supercells. This calculation of 0-500 m SRH is limited to within the effective inflow layer, as long as the inflow base is at the ground.
-                </li></ul><br>
-            <li><b>0-1km Storm Relative Helicity</b></li>
-                <ul><li>SRH (Storm Relative Helicity) is a measure of the potential for cyclonic updraft rotation in right-moving supercells. There is no clear threshold value for SRH when forecasting supercells, since the formation of supercells appears to be related more strongly to the deeper layer vertical shear. Larger values of 0-1-km SRH (greater than 100 m2 s-2), however, do suggest an increased threat of tornadoes with supercells. For SRH, larger values are generally better, but there are no clear thresholds between non-tornadic and significant tornadic supercells.
-                </li></ul><br>
-            <li><b>Effective Storm Relative Helicity</b></li>
-                <ul><li>Effective SRH (Storm Relative Helicity) is based on threshold values of lifted parcel CAPE (100 J kg-1) and CIN (-250 J kg-1). These parcel constraints are meant to confine the SRH layer calculation to the part of a sounding where lifted parcels are buoyant, but not too strongly capped.
-                </li></ul><br>
-        </ul>
+        <div class="d-flex flex-wrap title">Mixed Layer CAPE</div>
+        <div class="d-flex flex-wrap desc">
+            MLCAPE (Mixed Layer Convective Available Potential Energy) is a measure of instability in the troposphere. 
+            This value represents the mean potential energy conditions available to parcels of air located in the 
+            lowest 100-mb when lifted to the level of free convection (LFC). No parcel entrainment is considered. 
+            The CAPE and CIN calculations use the virtual temperature correction. 
+        </div>
         <br>
-        <h4>Composite Parameters</h4>
-        <ul>
+        <div class="d-flex flex-wrap title">Mixed Layer CIN</div>
+        <div class="d-flex flex-wrap desc">
+            CIN (Convective INhibition) represents the "negative" area on a sounding that must be overcome before 
+            storm initiation can occur.
+        </div>
+        <br>
+        <div class="d-flex flex-wrap title">Mixed Layer LCL</div>
+        <div class="d-flex flex-wrap desc">
+            The LCL (Lifting Condensation Level) is the level at which a parcel becomes saturated. 
+            It is a reasonable estimate of cloud base height when parcels experience forced ascent.
+        </div>
+        <br>
+        
+        <div class="d-flex flex-wrap title">Most Unstable CAPE</div>
+        <div class="d-flex flex-wrap desc">
+        MUCAPE (Most Unstable Convective Available Potential Energy) is a measure of instability in the troposphere. 
+        This value represents the total amount of potential energy available to the maximum equivalent potential temperature 
+        (within the lowest 300-mb of the atmosphere) while being lifted to its level of free convection (LFC). No parcel 
+        entrainment is considered. The CAPE and CIN calculations use the virtual temperature correction.
+        </div>
+        <br>
+        <div class="d-flex flex-wrap title">0-3km CAPE</div>
+        <div class="d-flex flex-wrap desc">
+            CAPE in the lowest 3-km above ground level. Areas of large 0-3-km CAPE tend to favor strong low-level 
+            stretching, and can support tornado formation when co-located with significant vertical vorticity near the ground.
+        </div>
+        <br>
+        <div class="d-flex flex-wrap title">0-3km Lapse Rate</div>
+        <div class="d-flex flex-wrap desc">
+            A lapse rate is the rate of temperature change with height. The faster the temperature decreases with 
+            height, the "steeper" the lapse rate and the more "unstable" the atmosphere becomes. The 0-3 km lapse rates, 
+            also referred to as low-level lapse rates, are meant to identify regions of deeper mixing (e.g., steeper lapse rates) 
+            that often result in weakening convective inhibition that precedes surface-based thunderstorm development, as well 
+            as the potential for strong downdrafts in the low levels.
+        </div>
+        <br>
+
+        <div class="d-flex flex-wrap main-title">Shear</div>
+        <br>
+        <div class="d-flex flex-wrap title">0-1km Shear</div>
+        <div class="d-flex flex-wrap desc">Surface-1-km Vertical Shear is the difference between the surface wind and the wind at 1-km above ground level. 
+        These data are plotted as vectors. 0-1-km shear magnitudes greater than 15-20 knots tend to favor supercell tornadoes.<div>
+        <br>
+        <div class="d-flex flex-wrap title">0-3km Shear</div>
+        <div class="d-flex flex-wrap desc">Surface-3-km Vertical Shear is the difference between the surface wind and the wind 
+        at 3-km above ground level. Line-normal 0-3 km shear magnitudes of 30 kt or higher indicate a favorable environment for the development of mesovortices and/or tornadoes in QLCSs (Schaumann and Przybylinski 2012). These data are plotted as vectors.
+        </div>
+        <br>
+        <div class="d-flex flex-wrap title">0-6km Shear</div>
+        <div class="d-flex flex-wrap desc">The surface through 6-km above ground level shear vector denotes the change in wind throughout this height. Thunderstorms tend to become more organized and persistent as vertical shear increases. Supercells are commonly associated with vertical shear values of 35-40 knots and greater through this depth.
+                </div><br>
+        <div class="d-flex flex-wrap title">0-8km Shear</div>
+            <div class="d-flex flex-wrap desc">
+            The surface through 8 km above ground level shear vector denotes the change in wind throughout this height. 
+                Thunderstorms tend to become more organized and persistent as vertical shear increases. Bunkers et al. 2006 found 
+                that long-lived supercells occur in environments with much stronger 0-8-km bulk wind shear ( > 50 kt) than that 
+                observed with short-lived supercells.
+            </div>
             <br>
-            <li><b>Effective SigTor</b></li>
-                <ul><li>Significant Tornado Parameter (effective layer)<br>
-                A multiple ingredient, composite index that includes effective bulk wind difference (EBWD), effective storm-relative helicity (ESRH), 100-mb mean parcel CAPE (mlCAPE), 100-mb mean parcel CIN (mlCIN), and 100-mb mean parcel LCL height (mlLCL).
+            <div class="d-flex flex-wrap title">Effective Bulk Shear</div>
+            <div class="d-flex flex-wrap desc">
+                The magnitude of the vector wind difference from the effective inflow base upward to 50% of the equilibrium level 
+                height for the most unstable parcel in the lowest 300 mb. This parameter is similar to the 0-6 km bulk wind 
+                difference, though it accounts for storm depth (effective inflow base to EL) and is designed to identify both 
+                surface-based and "elevated" supercell environments. Supercells become more probable as the effective bulk wind 
+                difference increases in magnitude through the range of 25-40 kt and greater.
+            </div>
+            <br>
+            <div class="d-flex flex-wrap title">0-500m Storm Relative Helicity</div>
+            <div class="d-flex flex-wrap desc">
+                SRH (Storm Relative Helicity) in the lowest 500 m AGL has been found by Coffer et al. (2019), October issue of 
+                Weather and Forecasting, to be a better discriminator than effective SRH between significant tornadoes and 
+                nontornadic supercells. This calculation of 0-500 m SRH is limited to within the effective inflow layer, as 
+                long as the inflow base is at the ground.
+            </div>
+            <br>
+            <div class="d-flex flex-wrap title">0-1km Storm Relative Helicity</div>
+            <div class="d-flex flex-wrap desc">
+                SRH (Storm Relative Helicity) is a measure of the potential for cyclonic updraft rotation in right-moving 
+                supercells. There is no clear threshold value for SRH when forecasting supercells, since the formation of 
+                supercells appears to be related more strongly to the deeper layer vertical shear. Larger values of 0-1-km SRH 
+                (greater than 100 m2 s-2), however, do suggest an increased threat of tornadoes with supercells. For SRH, larger 
+                values are generally better, but there are no clear thresholds between non-tornadic and significant tornadic supercells.
+            </div>
+            <br>
+            <div class="d-flex flex-wrap title">Effective Storm Relative Helicity</div>
+            <div class="d-flex flex-wrap desc">
+                Effective SRH (Storm Relative Helicity) is based on threshold values of lifted parcel CAPE 
+                (100 J kg-1) and CIN (-250 J kg-1). These parcel constraints are meant to confine the SRH layer 
+                calculation to the part of a sounding where lifted parcels are buoyant, but not too strongly capped.
+            </div>
+            <br>
+        <div class="d-flex flex-wrap main-title">Composite Parameters</div>
+            <br>
+            <div class="d-flex flex-wrap title">Effective SigTor</div>
+            <div class="d-flex flex-wrap desc">
+                The Significant Tornado Parameter (effective layer) is a
+                a multiple ingredient, composite index that includes effective bulk wind difference (EBWD), effective 
+                storm-relative helicity (ESRH), 100-mb mean parcel CAPE (mlCAPE), 100-mb mean parcel CIN (mlCIN), and 100-mb 
+                mean parcel LCL height (mlLCL).
                 The index is formulated as follows:
+            </div>    
+            <br>
+            <div class="d-flex flex-wrap desc">
+                <img src = "https://meteor.geol.iastate.edu/~zhiris/images/effSigTor.png" class="flex-image">
+            </div>
+            <br>
+            <div class="d-flex flex-wrap desc">
+                The mlLCL term is set to 1.0 when mlLCL < 1000 m, and set to 0.0 when mlLCL > 2000 m; the mlCIN term is set to 
+                1.0 when mlCIN > -50 J kg-1, and set to 0.0 when mlCIN < -200; the EBWD term is capped at a value of 1.5 for EBWD > 
+                30 m s-1, and set to 0.0 when EBWD < 12.5 m s-1. Lastly, the entire index is set to 0.0 when the effective inflow 
+                base is above the ground. A majority of significant tornadoes (F2 or greater damage) have been associated with STP 
+                values greater than 1 within an hour of tornado occurrence, while most non-tornadic supercells have been associated with 
+                values less than 1 in a large sample of RAP analysis proximity soundings.
+            </div>
+            <br><br>
+            <div class="d-flex flex-wrap title">Non-Supercell Tornado</div>
+            <div class="d-flex flex-wrap desc">
+                The non-supercell tornado parameter (NST) is the normalized product of the following terms:
+            </div>
+            <br>    
+            <div class="d-flex flex-wrap">
+                    <img src="https://meteor.geol.iastate.edu/~zhiris/images/NonSupTor.png" class="flex-image">
+            </div>
+            <br>
+            <div class="d-flex flex-wrap desc">
+                This normalized parameter is meant to highlight areas where steep low-level lapse rates correspond with low-level instability, 
+                little convective inhibition, weak deep-layer vertical shear, and large cyclonic surface vorticity. Values > 1 suggest an 
+                enhanced potential for non-mesocyclone tornadoes.
+                <br><br>
+                <i>Note that this placefile uses the same Baumgardt and Cook relative vorticity divisor (in term 5) as the SPC mesoanalysis. 
+                However, these placefiles run on a 13km grid (vs. 40km for SPC) and thus the magnitude of NST output may be higher than what 
+                appears on the SPC page.</i>
+            </div>
+            <br>
+            <div class="d-flex flex-wrap title">Bunkers Right & Right Motions</div>
+            <div class="d-flex flex-wrap desc">
+                The "ID method", also known as the "Bunkers" method, was developed by Bunkers et al. (2000) as an estimate of 
+                supercell motion. The Bunkers method is gallilean invariant, thus it does not depend on the orientation of the 
+                ground-relative winds. The Bunkers motion provides results similar to the "30 degrees right and 75% of the mean 
+                wind speed" estimates for typical southwest flow regimes, while the Bunkers motion estimate offers substantial 
+                improvements over the 30R75 technique in less common flow regimes (e.g., NW flow or SE flow associated with tropical cyclones). 
+                Graphically, the Bunkers storm motion can be estimated by 1) plotting the shear vector from the 0-500 m AGL mean wind to the 
+                5500-6000 m AGL mean wind on a hodograph, 2) plotting the 0-6 km mean wind (pressure weighted), and 3) drawing a vector 
+                (of 7.5 m s-1 magnitude) perpendicular to the shear vector from the 0-6 km mean wind. A perpendicular vector to the right 
+                represents the right (cyclonic in northern hemisphere) supercell motion, and a left vector represents the left (anticyclonic 
+                in northern hemisphere) supercell motion
+                </div>
                 <br>
-                <img src = "https://meteor.geol.iastate.edu/~zhiris/images/effSigTor.png">
+            <div class="d-flex flex-wrap title">Deviant Tornado Motion</div>
+            <div class="d-flex flex-wrap desc">
+                This parameter was derived by Cameron Nixon and is described in the February 2021 issue 
+                of <i><a href="https://journals.ametsoc.org/view/journals/wefo/36/1/WAF-D-20-0056.1.xml" target="_blank">Weather and Forecasting</a></i>
+            </div>
                 <br>
-                The mlLCL term is set to 1.0 when mlLCL < 1000 m, and set to 0.0 when mlLCL > 2000 m; the mlCIN term is set to 1.0 when mlCIN > -50 J kg-1, and set to 0.0 when mlCIN < -200; the EBWD term is capped at a value of 1.5 for EBWD > 30 m s-1, and set to 0.0 when EBWD < 12.5 m s-1. Lastly, the entire index is set to 0.0 when the effective inflow base is above the ground.
-                A majority of significant tornadoes (F2 or greater damage) have been associated with STP values greater than 1 within an hour of tornado occurrence, while most non-tornadic supercells have been associated with values less than 1 in a large sample of RAP analysis proximity soundings.
-                </li></ul><br>
-            <li><b>Non-Supercell Tornado</b></li>
-                <ul><li>The non-supercell tornado parameter (NST) is the normalized product of the following terms:<br>
-                <img src = "https://meteor.geol.iastate.edu/~zhiris/images/NonSupTor.png">
-                <br>
-                This normalized parameter is meant to highlight areas where steep low-level lapse rates correspond with low-level instability, little convective inhibition, weak deep-layer vertical shear, and large cyclonic surface vorticity. Values > 1 suggest an enhanced potential for non-mesocyclone tornadoes.
-                <br><i>Note that this placefile uses the same Baumgardt and Cook relative vorticity divisor (in term 5) as the SPC mesoanalysis. However, these placefiles run on a 13km grid (vs. 40km for SPC) and thus the magnitude of NST output may be higher than what appears on the SPC page.</i>
-                </li></ul><br>
-            <li><b>Bunkers Right & Right Motions</b></li>
-                <ul><li align = "left">The "ID method", also known as the "Bunkers" method, was developed by Bunkers et al. (2000) as an estimate of supercell motion. The Bunkers method is gallilean invariant, thus it does not depend on the orientation of the ground-relative winds. The Bunkers motion provides results similar to the "30 degrees right and 75% of the mean wind speed" estimates for typical southwest flow regimes, while the Bunkers motion estimate offers substantial improvements over the 30R75 technique in less common flow regimes (e.g., NW flow or SE flow associated with tropical cyclones). Graphically, the Bunkers storm motion can be estimated by 1) plotting the shear vector from the 0-500 m AGL mean wind to the 5500-6000 m AGL mean wind on a hodograph, 2) plotting the 0-6 km mean wind (pressure weighted), and 3) drawing a vector (of 7.5 m s-1 magnitude) perpendicular to the shear vector from the 0-6 km mean wind. A perpendicular vector to the right represents the right (cyclonic in northern hemisphere) supercell motion, and a left vector represents the left (anticyclonic in northern hemisphere) supercell motion
-                </li></ul><br>
-            <li><b>Deviant Tornado Motion</b></li>
-                <ul><li>This parameter was derived by Cameron Nixon and is described in the February 2021 issue of <a href = "https://journals.ametsoc.org/view/journals/wefo/36/1/WAF-D-20-0056.1.xml" target="_blank"><i>Weather and Forecasting</i></a>
-                </li></ul><br>
-        </ul>
     </div>
 </div>
 </body>
