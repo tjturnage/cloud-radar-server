@@ -8,6 +8,10 @@ from datetime import datetime, timedelta
 import requests
 import pandas as pd
 
+ICON_URL = "https://raw.githubusercontent.com/tjturnage/cloud-radar-server/"
+URL_DIRECTORY = "main/assets/iconfiles/IconSheets"
+ICON_DIRECTORY = f"{ICON_URL}{URL_DIRECTORY}"
+
 HEAD = """//Created by the NWS Central Region Convective Warning Improvement Project (CWIP Team)
 Refresh: 1
 Threshold: 999
@@ -110,7 +114,7 @@ class LsrCreator(LsrBase):
         """
         Write the LSR data to a placefile
         """
-        icon_url = "https://raw.githubusercontent.com/tjturnage/cloud-radar-server/main/assets/iconfiles/IconSheets"
+
         # Read the CSV file
         columns = ['VALID','VALID2','LAT','LON','MAG','WFO','TYPECODE','TYPETEXT','CITY',
                    'COUNTY','STATE','SOURCE','REMARK','UGC','UGCNAME','QUALIFIER']
@@ -136,11 +140,11 @@ class LsrCreator(LsrBase):
                          'Lsr_TstmWndGst_Icons', 'Lsr_NonTstmWndGst_Icons',
                          'Lsr_HeavyRain_Icons']
 
-            for number, name in zip(range(1,7), file_stems):
+            for number, stem in zip(range(1,7), file_stems):
                 if number == 1:
-                    f.write(f'IconFile: {number}, 25, 25, 10, 10, {icon_url}/{name}.png\n')
+                    f.write(f'IconFile: {number}, 25, 25, 10, 10, {ICON_DIRECTORY}/{stem}.png\n')
                 else:
-                    f.write(f'IconFile: {number}, 25, 32, 10, 10, {icon_url}/{name}.png\n')
+                    f.write(f'IconFile: {number}, 25, 32, 10, 10, {ICON_DIRECTORY}/{stem}.png\n')
 
             # Font definition(s)
             f.write('Font: 1, 11, 1, "Courier New"\n\n')
@@ -158,9 +162,9 @@ class LsrCreator(LsrBase):
                 lat = row.get("LAT", 0)
                 lon = row.get("LON", 0)
 
-                wIcon = min(magnitude/5 + 1, 20)
-                hIcon = magnitude*4 + 1
-                rIcon = magnitude * 2 + 1 if magnitude < 6 else magnitude + 7
+                wind_icon = min(magnitude/5 + 1, 20)
+                hail_icon = magnitude*4 + 1
+                rain_icon = magnitude * 2 + 1 if magnitude < 6 else magnitude + 7
 
                 icon2 = 'Icon: 0,0,0,1,7,'
                 icon3 = 'Icon: 0,0,0,1,15,'
@@ -187,13 +191,13 @@ class LsrCreator(LsrBase):
                         icon = 'Icon: 0,0,0,1,22,'
                         mag = " "
                     elif event == "TSTM WND GST":
-                        icon = f'Icon: 0,0,0,4,{round(wIcon)},'
+                        icon = f'Icon: 0,0,0,4,{round(wind_icon)},'
                         mag = str(magnitude) + " mph"
                     elif event == "HAIL":
-                        icon = f'Icon: 0,0,0,2,{round(hIcon)},'
+                        icon = f'Icon: 0,0,0,2,{round(hail_icon)},'
                         mag = str(magnitude) + " inch"
                     elif event == "RAIN":
-                        icon = f'Icon: 0,0,0,6,{round(rIcon)},'
+                        icon = f'Icon: 0,0,0,6,{round(rain_icon)},'
                         mag = str(magnitude) + " inches"
                     elif event == "FUNNEL CLOUD":
                         icon = 'Icon: 0,0,0,1,11,'
@@ -202,7 +206,7 @@ class LsrCreator(LsrBase):
                         icon = 'Icon: 0,0,0,1,17,'
                         mag = " "
                     elif event == "NON-TSTM WND GST":
-                        icon = f'Icon: 0,0,0,5,{round(wIcon)},'
+                        icon = f'Icon: 0,0,0,5,{round(wind_icon)},'
                         mag = str(magnitude) + " mph"
                     elif event == "FLOOD":
                         icon = 'Icon: 0,0,0,1,9,'

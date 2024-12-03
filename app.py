@@ -26,9 +26,9 @@ import mimetypes
 import signal
 import io
 import base64
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
+#import smtplib
+#from email.mime.text import MIMEText
+#from email.mime.multipart import MIMEMultipart
 import psutil
 import pytz
 import pandas as pd
@@ -498,155 +498,6 @@ def generate_layout(layout_has_initialized, children, configs):
         links_section = dbc.Container(dbc.Container(dbc.Container(html.Div(
             [lc.placefiles_banner, lc.spacer, polling_section,
              lc.spacer,
-            #     dbc.Row(
-            #      [
-            #          dbc.Col("Surface Observations Placefiles", style=lc.group_header_sfc_obs, width=6),
-            #      ], style={"display": "flex", "flexWrap": "wrap"}),
-            #  lc.spacer_mini,
-            #     dbc.Row(
-            #      [
-            #          dbc.Col(dbc.ListGroupItem("All elements"), style=lc.group_item_style, width=2),
-            #          dbc.Col(dbc.ListGroupItem("Regular font",
-            #                     href=f"{configs['PLACEFILES_LINKS']}/latest_surface_observations_updated.txt",
-            #                     target="_blank"), style={'color':lc.obs_c}, width=2),
-            #          dbc.Col(dbc.ListGroupItem("Large font",
-            #                     href=f"{configs['PLACEFILES_LINKS']}/latest_surface_observations_lg_updated.txt",
-            #                     target="_blank"), style={'color':lc.obs_c}, width=2),
-            #          dbc.Col(dbc.ListGroupItem("Small font",
-            #                     href=f"{configs['PLACEFILES_LINKS']}/latest_surface_observations_xlg_updated.txt",
-            #                     target="_blank"), style={'color':lc.obs_c}, width=2),
-            #     ],
-            #      style={"display": "flex", "flexWrap": "wrap"}
-            #     ),
-            #     dbc.Row(
-            #      [
-            #          dbc.Col(dbc.ListGroupItem("Single element"), style=lc.group_item_style, width=2),
-            #             dbc.Col(dbc.ListGroupItem("Wind",
-            #                     href=f"{configs['PLACEFILES_LINKS']}/wind_updated.txt",
-            #                     target="_blank"), style={'color':lc.obs_c}, width=2),
-            #          dbc.Col(dbc.ListGroupItem("Temperature",
-            #                     href=f"{configs['PLACEFILES_LINKS']}/temp_updated.txt",
-            #                     target="_blank"), style={'color':lc.obs_c}, width=2),
-            #          dbc.Col(dbc.ListGroupItem("Dewpoint",
-            #                     href=f"{configs['PLACEFILES_LINKS']}/dwpt_updated.txt",
-            #                     target="_blank"), style={'color':lc.obs_c}, width=2),
-            #          dbc.Col(dbc.ListGroupItem("Visibility",
-            #                     href=f"{configs['PLACEFILES_LINKS']}/vsby_updated.txt",
-            #                     target="_blank"), style={'color':lc.obs_c}, width=2),
-            #          dbc.Col(dbc.ListGroupItem("Relative Humidity",
-            #                     href=f"{configs['PLACEFILES_LINKS']}/rh_updated.txt",
-            #                     target="_blank"), style={'color':lc.obs_c}, width=2),
-            #      ],
-            #      style={"display": "flex", "flexWrap": "wrap"}
-            #     ),
-            #     dbc.Row([
-            #         dbc.Col(dbc.ListGroupItem("Reports"), style=lc.group_item_style, width=2),
-            #         dbc.Col(dbc.ListGroupItem("LSRs",
-            #                     href=f"{configs['PLACEFILES_LINKS']}/LSRs_updated.txt",
-            #                     target="_blank"),style={'color':lc.obs_c}, width=2),
-            #         dbc.Col(dbc.ListGroupItem("Events (requires CSV upload)",
-            #                     href=f"{configs['PLACEFILES_LINKS']}/events_updated.txt",
-            #                     target="_blank"),style={'color':lc.obs_c}, width=6),
-            #     ],
-            #     style={"display": "flex", "flexWrap": "wrap"}),
-            #  lc.spacer,
-            #     dbc.Row(
-            #      [
-            #          dbc.Col("Near Storm Environment Placefiles", style=lc.group_header_nse, width=6),
-            #      ], style={"display": "flex", "flexWrap": "wrap"}),
-            #  lc.spacer_mini,
-            #     dbc.Row(
-            #      [
-            #          dbc.Col(dbc.ListGroupItem("Eff Shear",
-            #                     href=f"{configs['PLACEFILES_LINKS']}/ebwd_updated.txt",
-            #                     target="_blank"), style={'color':lc.nse_c}, width=2),
-            #          dbc.Col(dbc.ListGroupItem("Eff SRH",
-            #                     href=f"{configs['PLACEFILES_LINKS']}/esrh_updated.txt",
-            #                     target="_blank"), style={'color':lc.nse_c}, width=2),
-            #          dbc.Col(dbc.ListGroupItem("Eff Sig Tor",
-            #                     href=f"{configs['PLACEFILES_LINKS']}/estp_updated.txt",
-            #                     target="_blank"), style={'color':lc.nse_c}, width=2),
-            #         dbc.Col(dbc.ListGroupItem("Non Supercell Tor",
-            #                     href=f"{configs['PLACEFILES_LINKS']}/nst_updated.txt",
-            #                     target="_blank"), style={'color':lc.nse_c}, width=2),
-            #         dbc.Col(dbc.ListGroupItem("ProbSevere V2",
-            #                     href=f"{configs['PLACEFILES_LINKS']}/ProbSevere_updated.txt",
-            #                     target="_blank"),style={'color':lc.nse_c}, width=2),
-            #          dbc.Col(dbc.ListGroupItem("Snow Squall Parameter",
-            #                     href=f"{configs['PLACEFILES_LINKS']}/snsq_updated.txt",
-            #                     target="_blank"), style={'color':lc.nse_c}, width=2),
-
-            #      ],
-            #      style={"display": "flex", "flexWrap": "wrap"},
-            #     ),
-            #     dbc.Row(
-            #      [
-            #          dbc.Col(dbc.ListGroupItem("0-500m SRH",
-            #                     href=f"{configs['PLACEFILES_LINKS']}/srh500_updated.txt",
-            #                     target="_blank"), style={'color':lc.nse_c}, width=2),
-            #          dbc.Col(dbc.ListGroupItem("0-1km Shear",
-            #                     href=f"{configs['PLACEFILES_LINKS']}/shr1_updated.txt",
-            #                     target="_blank"), style={'color':lc.nse_c}, width=2),
-            #          dbc.Col(dbc.ListGroupItem("0-3km Shear",
-            #                     href=f"{configs['PLACEFILES_LINKS']}/shr3_updated.txt",
-            #                     target="_blank"), style={'color':lc.nse_c}, width=2),
-            #          dbc.Col(dbc.ListGroupItem("0-6km Shear",
-            #                     href=f"{configs['PLACEFILES_LINKS']}/shr6_updated.txt",
-            #                     target="_blank"), style={'color':lc.nse_c}, width=2),
-            #          dbc.Col(dbc.ListGroupItem("0-8km Shear",
-            #                     href=f"{configs['PLACEFILES_LINKS']}/shr8_updated.txt",
-            #                     target="_blank"), style={'color':lc.nse_c}, width=2),
-
-            #      ],
-            #      style={"display": "flex", "flexWrap": "wrap"},
-            #     ),
-            #     dbc.Row(
-            #      [
-            #          dbc.Col(dbc.ListGroupItem("MLCAPE",
-            #                     href=f"{configs['PLACEFILES_LINKS']}/mlcape_updated.txt",
-            #                     target="_blank"), style={'color':lc.nse_c}, width=2),
-            #          dbc.Col(dbc.ListGroupItem("MUCAPE",
-            #                     href=f"{configs['PLACEFILES_LINKS']}/mucape_updated.txt",
-            #                     target="_blank"), style={'color':lc.nse_c}, width=2),
-            #          dbc.Col(dbc.ListGroupItem("MLCIN",
-            #                     href=f"{configs['PLACEFILES_LINKS']}/mlcin_updated.txt",
-            #                     target="_blank"), style={'color':lc.nse_c}, width=2),
-            #          dbc.Col(dbc.ListGroupItem("0-3km MLCP",
-            #                     href=f"{configs['PLACEFILES_LINKS']}/cape3km_updated.txt",
-            #                     target="_blank"), style={'color':lc.nse_c}, width=2),
-            #          dbc.Col(dbc.ListGroupItem("0-3km LR",
-            #                     href=f"{configs['PLACEFILES_LINKS']}/lr03km_updated.txt",
-            #                     target="_blank"), style={'color':lc.nse_c}, width=2),
-            #          dbc.Col(dbc.ListGroupItem("Deviance",
-            #                     href=f"{configs['PLACEFILES_LINKS']}/deviance_updated.txt",
-            #                     target="_blank"), style={'color':lc.nse_c}, width=2),
-
-            #      ],
-            #      style={"display": "flex", "flexWrap": "wrap"},
-            #     ),
-            #     dbc.Row(
-            #      [   dbc.Col(dbc.ListGroupItem("DCAPE",
-            #                     href=f"{configs['PLACEFILES_LINKS']}/dcape_updated.txt",
-            #                     target="_blank"), style={'color':lc.nse_c}, width=2),
-            #       dbc.Col(dbc.ListGroupItem("MLLCL",
-            #                     href=f"{configs['PLACEFILES_LINKS']}/mllcl_updated.txt",
-            #                     target="_blank"), style={'color':lc.nse_c}, width=2),
-            #          dbc.Col(dbc.ListGroupItem("MLCIN (fill)",
-            #                     href=f"{configs['PLACEFILES_LINKS']}/mlcin_cf_updated.txt",
-            #                     target="_blank"), style={'color':lc.nse_c}, width=2),
-            #          dbc.Col(dbc.ListGroupItem("0-3km MLCP (fill)",
-            #                     href=f"{configs['PLACEFILES_LINKS']}/cape3km_cf_updated.txt",
-            #                     target="_blank"), style={'color':lc.nse_c}, width=2),
-            #          dbc.Col(dbc.ListGroupItem("0-3km LR (fill)",
-            #                     href=f"{configs['PLACEFILES_LINKS']}/lr03km_cf_updated.txt",
-            #                     target="_blank"), style={'color':lc.nse_c}, width=2),
-            #          dbc.Col(dbc.ListGroupItem("DevTor",
-            #                     href=f"{configs['PLACEFILES_LINKS']}/devtor_updated.txt",
-            #                     target="_blank"), style={'color':lc.nse_c}, width=2),
-            #      ],
-            #      style={"display": "flex", "flexWrap": "wrap"},
-            #     ),
-            #     lc.spacer_mini, lc.spacer_mini,
                 dbc.Row(
                  [
                      dbc.Col("Facilitator Links", style=lc.group_header_style, width=6),
@@ -1112,27 +963,27 @@ def run_with_cancel_button(cfg, sim_times, radar_info):
             print("Error updating hodo html: ", e)
             logging.exception("Error updating hodo html: %s",e, exc_info=True)
 
-def send_email(subject, body, to_email):
-    from_email = "your_email@example.com"
-    from_password = "your_password"
+# def send_email(subject, body, to_email):
+#     from_email = "your_email@example.com"
+#     from_password = "your_password"
 
-    msg = MIMEMultipart()
-    msg['From'] = from_email
-    msg['To'] = to_email
-    msg['Subject'] = subject
+#     msg = MIMEMultipart()
+#     msg['From'] = from_email
+#     msg['To'] = to_email
+#     msg['Subject'] = subject
 
-    msg.attach(MIMEText(body, 'plain'))
+#     msg.attach(MIMEText(body, 'plain'))
 
-    try:
-        server = smtplib.SMTP('smtp.example.com', 587)
-        server.starttls()
-        server.login(from_email, from_password)
-        text = msg.as_string()
-        server.sendmail(from_email, to_email, text)
-        server.quit()
-        print("Email sent successfully")
-    except (smtplib.SMTPException, ConnectionError) as e:
-        print(f"Failed to send email: {e}")
+#     try:
+#         server = smtplib.SMTP('smtp.example.com', 587)
+#         server.starttls()
+#         server.login(from_email, from_password)
+#         text = msg.as_string()
+#         server.sendmail(from_email, to_email, text)
+#         server.quit()
+#         print("Email sent successfully")
+#     except (smtplib.SMTPException, ConnectionError) as e:
+#         print(f"Failed to send email: {e}")
 
 
 @app.callback(
@@ -1411,7 +1262,7 @@ def initiate_playback(_nclick, playback_speed, cfg, sim_times, radar_info):
 def manage_clock_(nclicks, _n_intervals, new_time, _playback_running, playback_speed,
                   cfg, specs):
     """     
-    Test
+    This function manages the playback clock. It is called by the dcc.Interval component
     """
     triggered_id = ctx.triggered_id
 
@@ -1545,7 +1396,7 @@ def manage_clock_(nclicks, _n_intervals, new_time, _playback_running, playback_s
     Input('speed_dropdown', 'value'),
     prevent_initial_call=True
 )
-def update_playback_speed(selected_speed):
+def update_playback_speed(selected_speed) -> float:
     """
     Updates the playback speed in the sa object
     """
@@ -1598,7 +1449,7 @@ def update_day_dropdown(selected_year, selected_month):
 # ----------------------------- Upload callback  -----------------------------------------------
 ################################################################################################
 
-def make_timerange_line(row):
+def make_timerange_line(row) -> str:
     """
     This function creates the datetime string for the placefiles
     """
@@ -1628,10 +1479,9 @@ def make_timerange_line(row):
 
     return timerange_line
 
-def create_remark(row):
+def create_remark(row) -> str:
     """
     This function creates the pop-up text for the placefiles
-
     """
     typetext= row.get('TYPETEXT',"")
     qualifier = row.get('QUALIFIER',"")
@@ -1659,7 +1509,7 @@ def create_remark(row):
     return remark_line
 
 
-def icon_value(event_type):
+def icon_value(event_type) -> int:
     """
     This function assigns an icon value based on the event type
     """
@@ -1712,7 +1562,6 @@ def make_events_placefile(contents, filename, cfg) -> None:
                     comments = create_remark(row)
                     icon_code = icon_value(row.get('event_input_type',""))
                     icon_line = f"Threshold: 999\nIcon: 0,0,0,2,{icon_code}, {comments}"
-                    #print(tr_line,obj_line,icon_line)
                     place_fout.write(tr_line)
                     place_fout.write(obj_line)
                     place_fout.write(icon_line)

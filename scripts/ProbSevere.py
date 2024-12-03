@@ -15,7 +15,7 @@ from botocore.client import Config
 @dataclass
 class ProbSevereBase:
     """
-    Base class for creating a placefile of Local Storm Reports (LSRs) for the radar simulation
+    Base class for initiating downloads of ProbSevere data from the NOAA MRMS bucket
     """
     start_tstr:          str    # start time of the simulation in the format 'YYYY-MM-DD HH:MM'
     duration:            str    # duration of the simulation in minutes
