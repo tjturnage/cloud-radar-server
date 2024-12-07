@@ -1513,16 +1513,17 @@ def icon_value(event_type) -> int:
     """
     This function assigns an icon value based on the event type
     """
-    if event_type == 'VERIFIED':
+    #if event_type == 'VERIFIED':
+    if event_type in ('VERIFIED', 'MEASURED'):
         return 1
-    if event_type == 'UNVERIFIED':
+    if event_type in ('UNVERIFIED', 'ESTIMATED'):
         return 2
     if event_type == 'QUESTION':
         return 3
     return 3
 
 
-def make_events_placefile(contents, filename, cfg) -> None:
+def make_events_placefile(contents, filename, cfg):
     """
     This function creates the Event Notification placefile for the radar simulation
     """
@@ -1560,7 +1561,7 @@ def make_events_placefile(contents, filename, cfg) -> None:
 
                     tr_line = make_timerange_line(row)
                     comments = create_remark(row)
-                    icon_code = icon_value(row.get('event_input_type',""))
+                    icon_code = icon_value(row.get('QUALIFIER',""))
                     icon_line = f"Threshold: 999\nIcon: 0,0,0,2,{icon_code}, {comments}"
                     place_fout.write(tr_line)
                     place_fout.write(obj_line)
