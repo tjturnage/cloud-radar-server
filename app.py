@@ -92,6 +92,7 @@ def shift_placefiles(PLACEFILES_DIR, sim_times, radar_info) -> None:
     """
     filenames = glob(f"{PLACEFILES_DIR}/*.txt")
     filenames = [x for x in filenames if "shifted" not in x]
+    filenames = [x for x in filenames if "updated" not in x]
     for file_ in filenames:
         outfilename = f"{file_[0:file_.index('.txt')]}_shifted.txt"
         outfile = open(outfilename, 'w', encoding='utf-8')
@@ -1008,6 +1009,7 @@ def run_with_cancel_button(cfg, sim_times, radar_info):
         (Output('confirm_radars_btn', 'disabled'),
          True, False),  # added radar confirm btn
         (Output('playback_btn', 'disabled'), True, False),  # add start sim btn
+        (Output('refresh_polling_btn', 'disabled'), True, False),
         # (Output('pause_resume_playback_btn', 'disabled'), True, False), # add pause/resume btn
         # wait to enable change time dropdown
         (Output('change_time', 'disabled'), True, False),
@@ -1444,6 +1446,140 @@ def update_day_dropdown(selected_year, selected_month):
     day_options = [{'label': str(day), 'value': day}
                    for day in range(1, num_days+1)]
     return day_options
+
+################################################################################################
+# ------------------------Refresh Polling Times callback  --------------------------------------
+################################################################################################
+# After a certain time, radar data will become too "old" for GR to continue polling. This seems
+# be when radar data is more than 3 hours older than the current time. Clicking the "Refresh 
+# Polling Times" button will execute this callback which will regenerate new simulation times
+# based on the current real world time. It will rerun l2munger, shift_placefiles, and will 
+# regenerate dir.list, event_times, file_times, and hodographs. 
+@app.callback(
+    Output('sim_times', 'data', allow_duplicate=True),
+    Output('playback_btn', 'children', allow_duplicate=True),
+    Output('playback_btn', 'disabled', allow_duplicate=True),
+    Output('pause_resume_playback_btn', 'children', allow_duplicate=True),
+    Output('pause_resume_playback_btn', 'disabled', allow_duplicate=True),
+    [Input('refresh_polling_btn', 'n_clicks'),
+     State('configs', 'data'),
+     State('sim_times', 'data'),
+     State('radar_info', 'data')],
+    prevent_initial_call=True,
+    running=[
+        (Output('start_year', 'disabled'), True, False),
+        (Output('start_month', 'disabled'), True, False),
+        (Output('start_day', 'disabled'), True, False),
+        (Output('start_hour', 'disabled'), True, False),
+        (Output('start_minute', 'disabled'), True, False),
+        (Output('duration', 'disabled'), True, False),
+        (Output('radar_quantity', 'disabled'), True, False),
+        (Output('map_btn', 'disabled'), True, False),
+        (Output('new_radar_selection', 'disabled'), True, False),
+        (Output('run_scripts_btn', 'disabled'), True, False),
+        (Output('confirm_radars_btn', 'disabled'), True, False),  
+        (Output('playback_btn', 'disabled'), True, False),  
+        (Output('change_time', 'disabled'), True, False),
+        (Output('cancel_scripts', 'disabled'), False, True),
+        (Output('refresh_polling_btn', 'disabled'), True, False),
+        (Output('pause_resume_playback_btn', 'disabled'), True, True), # Force user to relaunch sim
+    ]
+)
+def refresh_polling(n_clicks, cfg, sim_times, radar_info):
+    logging.info(f"Re-syncing polling times to current time")
+    logging.info(f"Original sim times: {sim_times['playback_start_str']} {sim_times['playback_end_str']}")
+    
+    # Re-compute the simulation times and update the dictionary
+    dt = datetime.strptime(sim_times['event_start_str'], "%Y-%m-%d %H:%M").replace(tzinfo=timezone.utc)
+    sim_times = make_simulation_times(dt, sim_times['event_duration'])
+    logging.info(f"Updated sim times: {sim_times['playback_start_str']} {sim_times['playback_end_str']}")
+
+    # Remove the original file_times.txt file. This will get re-created by munger.py
+    try:
+        os.remove(f"{cfg['ASSETS_DIR']}/file_times.txt")
+    except FileNotFoundError:
+        pass
+
+    # --------- Munger ---------------------------------------------------------
+    if len(radar_info['radar_list']) > 0:
+        for _r, radar in enumerate(radar_info['radar_list']):
+            radar = radar.upper()
+            try:
+                if radar_info['new_radar'] == 'None':
+                    new_radar = radar
+                else:
+                    new_radar = radar_info['new_radar'].upper()
+            except (IOError, ValueError, KeyError) as e:
+                logging.exception("Error defining new radar: %s",e,exc_info=True)
+
+            # Remove the now-stale munged radar files
+            old_files = glob(f"{cfg['POLLING_DIR']}/{new_radar}/*.gz")
+            for f in old_files:
+                logging.info(f"Deleting {f}")
+                os.remove(f)
+
+            args = [radar, str(sim_times['playback_start_str']),
+                    str(sim_times['event_duration']),
+                    str(sim_times['simulation_seconds_shift']), cfg['RADAR_DIR'],
+                    cfg['POLLING_DIR'], cfg['USER_DOWNLOADS_DIR'], cfg['L2MUNGER_FILEPATH'], cfg['DEBZ_FILEPATH'],
+                    new_radar]
+            res = call_function(utils.exec_script, Path(cfg['MUNGER_SCRIPT_FILEPATH']),
+                                args, cfg['SESSION_ID'])
+            if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
+                return
+            
+    # Delete the uncompressed/munged radar files from the data directory
+    try:
+        remove_munged_radar_files(cfg)
+    except KeyError as e:
+        logging.exception("Error removing munged radar files ", exc_info=True)
+            
+    # --------- Hodographs ---------------------------------------------------------
+    # Remove original images
+    hodo_images = glob(f"{cfg['HODOGRAPHS_DIR']}/*.png")
+    for image in hodo_images:
+        try:
+            os.remove(image)
+        except: 
+            logging.exception(f"Error removing: {image}")
+
+    create_radar_dict(radar_info)
+    for radar, data in radar_info['radar_dict'].items():
+        try:
+            asos_one = data['asos_one']
+            asos_two = data['asos_two']
+        except KeyError as e:
+            logging.exception("Error getting radar metadata: ", exc_info=True)
+
+        # Execute hodograph script
+        args = [radar, radar_info['new_radar'], asos_one, asos_two,
+                str(sim_times['simulation_seconds_shift']), cfg['RADAR_DIR'],
+                cfg['HODOGRAPHS_DIR']]
+        res = call_function(utils.exec_script, Path(cfg['HODO_SCRIPT_PATH']), args,
+                            cfg['SESSION_ID'])
+        if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
+            return
+
+        try:
+            UpdateHodoHTML(
+                'None', cfg['HODOGRAPHS_DIR'], cfg['HODOGRAPHS_PAGE'])
+        except (IOError, ValueError, KeyError) as e:
+            print("Error updating hodo html: ", e)
+            logging.exception("Error updating hodo html: %s",e, exc_info=True)
+            
+    # --------- Update event times file --------------------------------------------------
+    args = [str(sim_times['simulation_seconds_shift']), cfg['DATA_DIR'], cfg['RADAR_DIR'],
+        cfg['EVENTS_HTML_PAGE'], cfg['EVENTS_TEXT_FILE']]
+    res = call_function(utils.exec_script, Path(cfg['EVENT_TIMES_SCRIPT_PATH']), args,
+                        cfg['SESSION_ID'])
+    if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
+        return
+    
+    # --------- Synchronize placefile times with the new sim times ------------------------
+    logging.info("Entering function run_transpose_script")
+    run_transpose_script(cfg['PLACEFILES_DIR'], sim_times, radar_info)
+
+    return sim_times, 'Launch Simulation', False, 'Pause Playback', True
 
 ################################################################################################
 # ----------------------------- Upload callback  -----------------------------------------------
