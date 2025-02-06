@@ -13,7 +13,7 @@ URL_DIRECTORY = "main/assets/iconfiles/IconSheets"
 ICON_DIRECTORY = f"{ICON_URL}{URL_DIRECTORY}"
 
 HEAD = """//Created by the NWS Central Region Convective Warning Improvement Project (CWIP Team)
-Refresh: 1
+RefreshSeconds: 5
 Threshold: 999
 Title: Local Storm Reports -- for radar simulation
 """

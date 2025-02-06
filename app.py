@@ -66,6 +66,10 @@ R = 6_378_137
 LAT_LON_REGEX = "[0-9]{1,2}.[0-9]{1,100},[ ]{0,1}[|\\s-][0-9]{1,3}.[0-9]{1,100}"
 TIME_REGEX = "[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z"
 
+# Stops flask from writing "POST /_dash-update-component HTTP/1.1" 200 to logs
+log = logging.getLogger('werkzeug')  # 'werkzeug' is the logger used by Flask
+log.setLevel(logging.WARNING)  # You can set it to ERROR or CRITICAL as well
+
 """
 Idea is to move all of these functions to some other utility file within the main dir
 to get them out of the app.
@@ -238,7 +242,7 @@ def remove_files_and_dirs(cfg) -> None:
     are not included in the current simulation.
     """
     dirs = [cfg['RADAR_DIR'], cfg['POLLING_DIR'], cfg['HODOGRAPHS_DIR'], cfg['MODEL_DIR'],
-            cfg['PLACEFILES_DIR'], cfg['USER_DOWNLOADS_DIR']]
+            cfg['PLACEFILES_DIR'], cfg['USER_DOWNLOADS_DIR'], cfg['PROBSEVERE_DIR']]
     for directory in dirs:
         for root, dirs, files in os.walk(directory, topdown=False):
             for name in files:
@@ -1032,6 +1036,7 @@ def launch_simulation(n_clicks, configs, sim_times, radar_info):
             #     )
             # except (smtplib.SMTPException, ConnectionError) as e:
             #     print(f"Failed to send email: {e}")
+            remove_files_and_dirs(configs)
             run_with_cancel_button(configs, sim_times, radar_info)
 
 ################################################################################################
@@ -1197,6 +1202,7 @@ def run_transpose_script(PLACEFILES_DIR, sim_times, radar_info) -> None:
     Output('change_time', 'options'),
     Output('speed_dropdown', 'disabled'),
     Output('playback_specs', 'data', allow_duplicate=True),
+    Output('refresh_polling_btn', 'disabled', allow_duplicate=True),
     [Input('playback_btn', 'n_clicks'),
      State('playback_speed_store', 'data'),
      State('configs', 'data'),
@@ -1241,8 +1247,12 @@ def initiate_playback(_nclick, playback_speed, cfg, sim_times, radar_info):
                 UpdateDirList(
                     radar, sim_times['playback_clock_str'], cfg['POLLING_DIR'])
 
+    refresh_polling_btn_disabled = False
+    if playback_running:
+        refresh_polling_btn_disabled = True
+
     return (btn_text, btn_disabled, False, playback_running, start, style, end, style, options,
-            False, playback_specs)
+            False, playback_specs, refresh_polling_btn_disabled)
 
 
 @app.callback(
@@ -1253,6 +1263,7 @@ def initiate_playback(_nclick, playback_speed, cfg, sim_times, radar_info):
     Output('current_readout', 'children'),
     Output('current_readout', 'style'),
     Output('playback_specs', 'data', allow_duplicate=True),
+    Output('refresh_polling_btn', 'disabled', allow_duplicate=True),
     [Input('pause_resume_playback_btn', 'n_clicks'),
      Input('playback_timer', 'n_intervals'),
      Input('change_time', 'value'),
@@ -1385,8 +1396,13 @@ def manage_clock_(nclicks, _n_intervals, new_time, _playback_running, playback_s
     specs['playback_paused'] = playback_paused
     specs['playback_btn_text'] = playback_btn_text
     specs['style'] = style
+
+    refresh_polling_btn_disabled = True
+    if playback_paused:
+        refresh_polling_btn_disabled = False
     return (specs['interval_disabled'], specs['status'], specs['style'],
-            specs['playback_btn_text'], readout_time, style, specs)
+            specs['playback_btn_text'], readout_time, style, specs,
+            refresh_polling_btn_disabled)
 
 ################################################################################################
 # ----------------------------- Playback Speed Callbacks  --------------------------------------
@@ -1750,7 +1766,7 @@ if __name__ == '__main__':
                        dev_tools_hot_reload=False)
     else:
         if config.PLATFORM == 'DARWIN':
-            app.run(host="0.0.0.0", port=8051, threaded=True, debug=True, use_reloader=False,
+            app.run(host="0.0.0.0", port=8051, threaded=True, debug=False, use_reloader=False,
                     dev_tools_hot_reload=False)
         else:
             app.run(debug=True, port=8050, threaded=True,

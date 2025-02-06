@@ -499,7 +499,7 @@ pause_resume_playback_btn = dbc.Col(html.Div([dbc.Button('Pause Playback', size=
 
 refresh_polling_btn = dbc.Col(html.Div([dbc.Button('Refresh Polling Times', size="lg",
                                                          id='refresh_polling_btn',
-                                                         disabled=False, n_clicks=0)],
+                                                         disabled=True, n_clicks=0)],
                                              className="d-grid gap-2 col-12 mx-auto"))
 
 playback_buttons_container = dbc.Container(

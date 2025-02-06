@@ -38,7 +38,7 @@ FONT_CODE = 2
 WIND_ICON_NUMBER = 1
 GUST_DISTANCE = 35
 
-ICON_FONT_TEXT = '\n\nRefresh: 1\
+ICON_FONT_TEXT = '\n\nRefreshSeconds: 5\
         \nColor: 255 200 255\
         \nIconFile: 1, 18, 32, 2, 31, "https://mesonet.agron.iastate.edu/request/grx/windbarbs.png"\
         \nIconFile: 2, 15, 15, 8, 8, "https://mesonet.agron.iastate.edu/request/grx/cloudcover.png"\
