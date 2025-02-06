@@ -74,7 +74,7 @@ class ProbSeverePlacefile:
         
         """
         with open(self.placefile_path, 'w', encoding='utf-8') as pf:
-            pf.write('Title: ProbSevere objects loop -- for radar simulation\nRefresh: 1\n\n')
+            pf.write('Title: ProbSevere objects loop -- for radar simulation\nRefreshSeconds: 5\n\n')
             for n, file in enumerate(self.files):
                 timrange_line = f"{self.timerange_lines[n]}\n\n"
                 pf.write(timrange_line)

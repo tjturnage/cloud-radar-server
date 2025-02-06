@@ -497,9 +497,14 @@ pause_resume_playback_btn = dbc.Col(html.Div([dbc.Button('Pause Playback', size=
                                                          disabled=True, n_clicks=0)],
                                              className="d-grid gap-2 col-12 mx-auto"))
 
+refresh_polling_btn = dbc.Col(html.Div([dbc.Button('Refresh Polling Times', size="lg",
+                                                         id='refresh_polling_btn',
+                                                         disabled=True, n_clicks=0)],
+                                             className="d-grid gap-2 col-12 mx-auto"))
+
 playback_buttons_container = dbc.Container(
     html.Div([dbc.Row([start_playback_btn,
-                       pause_resume_playback_btn])]))
+                       pause_resume_playback_btn, refresh_polling_btn])]))
 
 playback_start_label = html.Div(
     children="Simulation Start Time", style=time_headers)

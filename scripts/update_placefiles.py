@@ -5,7 +5,7 @@
 """
 from __future__ import print_function
 import sys
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 import os
 import pytz
@@ -86,6 +86,19 @@ class UpdatePlacefiles():
                         break
             try:
                 trimmed_lines = data[:line_num]
+
+                # Set the very last TimeRange value to be 10 minutes in the future from real time.
+                # This gets around a bug in GR where the last polled volume scan is presumed to be
+                # real world time, even if the scan time is old. Is the latest TimeRange going to 
+                # always be at the end of the file? 
+                idx = [i for i, line in enumerate(trimmed_lines) if "TimeRange" in line]
+                if len(idx) > 0:
+                    latest_tr_string = trimmed_lines[idx[-1]]
+                    now = datetime.now(pytz.utc) + timedelta(minutes=10)
+                    original_time = latest_tr_string.split(' ')[2]
+                    new_tr = latest_tr_string.replace(original_time, now.strftime('%Y-%m-%dT%H:%M:%SZ\n'))
+                    trimmed_lines[idx[-1]] = new_tr
+
                 fout_path.writelines(trimmed_lines)
                 fout_path.close()
 
