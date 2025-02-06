@@ -66,6 +66,10 @@ R = 6_378_137
 LAT_LON_REGEX = "[0-9]{1,2}.[0-9]{1,100},[ ]{0,1}[|\\s-][0-9]{1,3}.[0-9]{1,100}"
 TIME_REGEX = "[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z"
 
+# Stops flask from writing "POST /_dash-update-component HTTP/1.1" 200 to logs
+log = logging.getLogger('werkzeug')  # 'werkzeug' is the logger used by Flask
+log.setLevel(logging.WARNING)  # You can set it to ERROR or CRITICAL as well
+
 """
 Idea is to move all of these functions to some other utility file within the main dir
 to get them out of the app.
@@ -92,6 +96,7 @@ def shift_placefiles(PLACEFILES_DIR, sim_times, radar_info) -> None:
     """
     filenames = glob(f"{PLACEFILES_DIR}/*.txt")
     filenames = [x for x in filenames if "shifted" not in x]
+    filenames = [x for x in filenames if "updated" not in x]
     for file_ in filenames:
         outfilename = f"{file_[0:file_.index('.txt')]}_shifted.txt"
         outfile = open(outfilename, 'w', encoding='utf-8')
@@ -237,7 +242,7 @@ def remove_files_and_dirs(cfg) -> None:
     are not included in the current simulation.
     """
     dirs = [cfg['RADAR_DIR'], cfg['POLLING_DIR'], cfg['HODOGRAPHS_DIR'], cfg['MODEL_DIR'],
-            cfg['PLACEFILES_DIR'], cfg['USER_DOWNLOADS_DIR']]
+            cfg['PLACEFILES_DIR'], cfg['USER_DOWNLOADS_DIR'], cfg['PROBSEVERE_DIR']]
     for directory in dirs:
         for root, dirs, files in os.walk(directory, topdown=False):
             for name in files:
@@ -1008,6 +1013,7 @@ def run_with_cancel_button(cfg, sim_times, radar_info):
         (Output('confirm_radars_btn', 'disabled'),
          True, False),  # added radar confirm btn
         (Output('playback_btn', 'disabled'), True, False),  # add start sim btn
+        (Output('refresh_polling_btn', 'disabled'), True, False),
         # (Output('pause_resume_playback_btn', 'disabled'), True, False), # add pause/resume btn
         # wait to enable change time dropdown
         (Output('change_time', 'disabled'), True, False),
@@ -1030,6 +1036,7 @@ def launch_simulation(n_clicks, configs, sim_times, radar_info):
             #     )
             # except (smtplib.SMTPException, ConnectionError) as e:
             #     print(f"Failed to send email: {e}")
+            remove_files_and_dirs(configs)
             run_with_cancel_button(configs, sim_times, radar_info)
 
 ################################################################################################
@@ -1195,6 +1202,7 @@ def run_transpose_script(PLACEFILES_DIR, sim_times, radar_info) -> None:
     Output('change_time', 'options'),
     Output('speed_dropdown', 'disabled'),
     Output('playback_specs', 'data', allow_duplicate=True),
+    Output('refresh_polling_btn', 'disabled', allow_duplicate=True),
     [Input('playback_btn', 'n_clicks'),
      State('playback_speed_store', 'data'),
      State('configs', 'data'),
@@ -1239,8 +1247,12 @@ def initiate_playback(_nclick, playback_speed, cfg, sim_times, radar_info):
                 UpdateDirList(
                     radar, sim_times['playback_clock_str'], cfg['POLLING_DIR'])
 
+    refresh_polling_btn_disabled = False
+    if playback_running:
+        refresh_polling_btn_disabled = True
+
     return (btn_text, btn_disabled, False, playback_running, start, style, end, style, options,
-            False, playback_specs)
+            False, playback_specs, refresh_polling_btn_disabled)
 
 
 @app.callback(
@@ -1251,6 +1263,7 @@ def initiate_playback(_nclick, playback_speed, cfg, sim_times, radar_info):
     Output('current_readout', 'children'),
     Output('current_readout', 'style'),
     Output('playback_specs', 'data', allow_duplicate=True),
+    Output('refresh_polling_btn', 'disabled', allow_duplicate=True),
     [Input('pause_resume_playback_btn', 'n_clicks'),
      Input('playback_timer', 'n_intervals'),
      Input('change_time', 'value'),
@@ -1383,8 +1396,13 @@ def manage_clock_(nclicks, _n_intervals, new_time, _playback_running, playback_s
     specs['playback_paused'] = playback_paused
     specs['playback_btn_text'] = playback_btn_text
     specs['style'] = style
+
+    refresh_polling_btn_disabled = True
+    if playback_paused:
+        refresh_polling_btn_disabled = False
     return (specs['interval_disabled'], specs['status'], specs['style'],
-            specs['playback_btn_text'], readout_time, style, specs)
+            specs['playback_btn_text'], readout_time, style, specs,
+            refresh_polling_btn_disabled)
 
 ################################################################################################
 # ----------------------------- Playback Speed Callbacks  --------------------------------------
@@ -1444,6 +1462,140 @@ def update_day_dropdown(selected_year, selected_month):
     day_options = [{'label': str(day), 'value': day}
                    for day in range(1, num_days+1)]
     return day_options
+
+################################################################################################
+# ------------------------Refresh Polling Times callback  --------------------------------------
+################################################################################################
+# After a certain time, radar data will become too "old" for GR to continue polling. This seems
+# be when radar data is more than 3 hours older than the current time. Clicking the "Refresh 
+# Polling Times" button will execute this callback which will regenerate new simulation times
+# based on the current real world time. It will rerun l2munger, shift_placefiles, and will 
+# regenerate dir.list, event_times, file_times, and hodographs. 
+@app.callback(
+    Output('sim_times', 'data', allow_duplicate=True),
+    Output('playback_btn', 'children', allow_duplicate=True),
+    Output('playback_btn', 'disabled', allow_duplicate=True),
+    Output('pause_resume_playback_btn', 'children', allow_duplicate=True),
+    Output('pause_resume_playback_btn', 'disabled', allow_duplicate=True),
+    [Input('refresh_polling_btn', 'n_clicks'),
+     State('configs', 'data'),
+     State('sim_times', 'data'),
+     State('radar_info', 'data')],
+    prevent_initial_call=True,
+    running=[
+        (Output('start_year', 'disabled'), True, False),
+        (Output('start_month', 'disabled'), True, False),
+        (Output('start_day', 'disabled'), True, False),
+        (Output('start_hour', 'disabled'), True, False),
+        (Output('start_minute', 'disabled'), True, False),
+        (Output('duration', 'disabled'), True, False),
+        (Output('radar_quantity', 'disabled'), True, False),
+        (Output('map_btn', 'disabled'), True, False),
+        (Output('new_radar_selection', 'disabled'), True, False),
+        (Output('run_scripts_btn', 'disabled'), True, False),
+        (Output('confirm_radars_btn', 'disabled'), True, False),  
+        (Output('playback_btn', 'disabled'), True, False),  
+        (Output('change_time', 'disabled'), True, False),
+        (Output('cancel_scripts', 'disabled'), False, True),
+        (Output('refresh_polling_btn', 'disabled'), True, False),
+        (Output('pause_resume_playback_btn', 'disabled'), True, True), # Force user to relaunch sim
+    ]
+)
+def refresh_polling(n_clicks, cfg, sim_times, radar_info):
+    logging.info(f"Re-syncing polling times to current time")
+    logging.info(f"Original sim times: {sim_times['playback_start_str']} {sim_times['playback_end_str']}")
+    
+    # Re-compute the simulation times and update the dictionary
+    dt = datetime.strptime(sim_times['event_start_str'], "%Y-%m-%d %H:%M").replace(tzinfo=timezone.utc)
+    sim_times = make_simulation_times(dt, sim_times['event_duration'])
+    logging.info(f"Updated sim times: {sim_times['playback_start_str']} {sim_times['playback_end_str']}")
+
+    # Remove the original file_times.txt file. This will get re-created by munger.py
+    try:
+        os.remove(f"{cfg['ASSETS_DIR']}/file_times.txt")
+    except FileNotFoundError:
+        pass
+
+    # --------- Munger ---------------------------------------------------------
+    if len(radar_info['radar_list']) > 0:
+        for _r, radar in enumerate(radar_info['radar_list']):
+            radar = radar.upper()
+            try:
+                if radar_info['new_radar'] == 'None':
+                    new_radar = radar
+                else:
+                    new_radar = radar_info['new_radar'].upper()
+            except (IOError, ValueError, KeyError) as e:
+                logging.exception("Error defining new radar: %s",e,exc_info=True)
+
+            # Remove the now-stale munged radar files
+            old_files = glob(f"{cfg['POLLING_DIR']}/{new_radar}/*.gz")
+            for f in old_files:
+                logging.info(f"Deleting {f}")
+                os.remove(f)
+
+            args = [radar, str(sim_times['playback_start_str']),
+                    str(sim_times['event_duration']),
+                    str(sim_times['simulation_seconds_shift']), cfg['RADAR_DIR'],
+                    cfg['POLLING_DIR'], cfg['USER_DOWNLOADS_DIR'], cfg['L2MUNGER_FILEPATH'], cfg['DEBZ_FILEPATH'],
+                    new_radar]
+            res = call_function(utils.exec_script, Path(cfg['MUNGER_SCRIPT_FILEPATH']),
+                                args, cfg['SESSION_ID'])
+            if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
+                return
+            
+    # Delete the uncompressed/munged radar files from the data directory
+    try:
+        remove_munged_radar_files(cfg)
+    except KeyError as e:
+        logging.exception("Error removing munged radar files ", exc_info=True)
+            
+    # --------- Hodographs ---------------------------------------------------------
+    # Remove original images
+    hodo_images = glob(f"{cfg['HODOGRAPHS_DIR']}/*.png")
+    for image in hodo_images:
+        try:
+            os.remove(image)
+        except: 
+            logging.exception(f"Error removing: {image}")
+
+    create_radar_dict(radar_info)
+    for radar, data in radar_info['radar_dict'].items():
+        try:
+            asos_one = data['asos_one']
+            asos_two = data['asos_two']
+        except KeyError as e:
+            logging.exception("Error getting radar metadata: ", exc_info=True)
+
+        # Execute hodograph script
+        args = [radar, radar_info['new_radar'], asos_one, asos_two,
+                str(sim_times['simulation_seconds_shift']), cfg['RADAR_DIR'],
+                cfg['HODOGRAPHS_DIR']]
+        res = call_function(utils.exec_script, Path(cfg['HODO_SCRIPT_PATH']), args,
+                            cfg['SESSION_ID'])
+        if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
+            return
+
+        try:
+            UpdateHodoHTML(
+                'None', cfg['HODOGRAPHS_DIR'], cfg['HODOGRAPHS_PAGE'])
+        except (IOError, ValueError, KeyError) as e:
+            print("Error updating hodo html: ", e)
+            logging.exception("Error updating hodo html: %s",e, exc_info=True)
+            
+    # --------- Update event times file --------------------------------------------------
+    args = [str(sim_times['simulation_seconds_shift']), cfg['DATA_DIR'], cfg['RADAR_DIR'],
+        cfg['EVENTS_HTML_PAGE'], cfg['EVENTS_TEXT_FILE']]
+    res = call_function(utils.exec_script, Path(cfg['EVENT_TIMES_SCRIPT_PATH']), args,
+                        cfg['SESSION_ID'])
+    if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
+        return
+    
+    # --------- Synchronize placefile times with the new sim times ------------------------
+    logging.info("Entering function run_transpose_script")
+    run_transpose_script(cfg['PLACEFILES_DIR'], sim_times, radar_info)
+
+    return sim_times, 'Launch Simulation', False, 'Pause Playback', True
 
 ################################################################################################
 # ----------------------------- Upload callback  -----------------------------------------------
@@ -1614,7 +1766,7 @@ if __name__ == '__main__':
                        dev_tools_hot_reload=False)
     else:
         if config.PLATFORM == 'DARWIN':
-            app.run(host="0.0.0.0", port=8051, threaded=True, debug=True, use_reloader=False,
+            app.run(host="0.0.0.0", port=8051, threaded=True, debug=False, use_reloader=False,
                     dev_tools_hot_reload=False)
         else:
             app.run(debug=True, port=8050, threaded=True,
