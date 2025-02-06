@@ -115,7 +115,7 @@ def shift_placefiles(PLACEFILES_DIR, sim_times, radar_info) -> None:
                         idx = regex[0].index(',')
                         plat, plon = float(regex[0][0:idx]), float(regex[0][idx+1:])
                         lat_out, lon_out = move_point(plat, plon, radar_info['lat'],
-                                                      radar_info['lon'], 
+                                                      radar_info['lon'],
                                                       radar_info['new_lat'],
                                                       radar_info['new_lon'])
                         new_line = line.replace(regex[0], f"{lat_out}, {lon_out}")
@@ -160,7 +160,7 @@ def shift_time(line: str, simulation_seconds_shift: int) -> str:
         new_datestring = datetime.strftime(dt + simulation_time_shift,
                                            '%Y-%m-%dT%H:%M:%SZ')
         new_line = line.replace(regex[0], new_datestring)
-     
+
     return new_line
 
 
@@ -939,6 +939,14 @@ def run_with_cancel_button(cfg, sim_times, radar_info):
     logging.info("Entering function run_transpose_script")
     run_transpose_script(cfg['PLACEFILES_DIR'], sim_times, radar_info)
 
+    # get soundings
+    #for radar, data in radar_info['radar_dict'].items():
+    #    try:
+    #        asos_one = data['asos_one']
+    #        asos_two = data['asos_two']
+    #    except KeyError as e:
+    #        logging.exception("Error getting radar metadata: ", exc_info=True)
+
     # --------- Hodographs ---------------------------------------------------------
     for radar, data in radar_info['radar_dict'].items():
         try:
@@ -962,28 +970,6 @@ def run_with_cancel_button(cfg, sim_times, radar_info):
         except (IOError, ValueError, KeyError) as e:
             print("Error updating hodo html: ", e)
             logging.exception("Error updating hodo html: %s",e, exc_info=True)
-
-# def send_email(subject, body, to_email):
-#     from_email = "your_email@example.com"
-#     from_password = "your_password"
-
-#     msg = MIMEMultipart()
-#     msg['From'] = from_email
-#     msg['To'] = to_email
-#     msg['Subject'] = subject
-
-#     msg.attach(MIMEText(body, 'plain'))
-
-#     try:
-#         server = smtplib.SMTP('smtp.example.com', 587)
-#         server.starttls()
-#         server.login(from_email, from_password)
-#         text = msg.as_string()
-#         server.sendmail(from_email, to_email, text)
-#         server.quit()
-#         print("Email sent successfully")
-#     except (smtplib.SMTPException, ConnectionError) as e:
-#         print(f"Failed to send email: {e}")
 
 
 @app.callback(
