@@ -45,7 +45,7 @@ class UpdatePlacefiles():
         """
         time_str = timerange_line.split(' ')[1]         # first element
         timestamp = datetime.strptime(time_str, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=pytz.UTC).timestamp()
-        timestamp = timestamp + 300 # add 5 minutes to check time
+        #timestamp = timestamp + 300 # add 5 minutes to check time
         return timestamp
 
     def extract_placefile_lines(self, placefile: str) -> list:
