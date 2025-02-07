@@ -246,7 +246,7 @@ def remove_files_and_dirs(cfg) -> None:
     for directory in dirs:
         for root, dirs, files in os.walk(directory, topdown=False):
             for name in files:
-                if name != 'grlevel2.cfg':
+                if name not in ['grlevel2.cfg', 'events.txt']:
                     os.remove(os.path.join(root, name))
             for name in dirs:
                 os.rmdir(os.path.join(root, name))
@@ -1000,7 +1000,7 @@ def run_with_cancel_button(cfg, sim_times, radar_info):
          True, False),  # added radar confirm btn
         (Output('playback_btn', 'disabled'), True, False),  # add start sim btn
         (Output('refresh_polling_btn', 'disabled'), True, False),
-        # (Output('pause_resume_playback_btn', 'disabled'), True, False), # add pause/resume btn
+        (Output('pause_resume_playback_btn', 'disabled'), True, True), # add pause/resume btn
         # wait to enable change time dropdown
         (Output('change_time', 'disabled'), True, False),
         (Output('cancel_scripts', 'disabled'), False, True),
@@ -1503,6 +1503,9 @@ def refresh_polling(n_clicks, cfg, sim_times, radar_info):
         pass
 
     # --------- Munger ---------------------------------------------------------
+    # This for loop removes the now-stale munged radar files. We do this in a 
+    # first loop  to delete all of the files at once. Otherwise, the monitor bar 
+    # will bounce back-and-forth if the case has more than one radar.
     if len(radar_info['radar_list']) > 0:
         for _r, radar in enumerate(radar_info['radar_list']):
             radar = radar.upper()
@@ -1514,17 +1517,27 @@ def refresh_polling(n_clicks, cfg, sim_times, radar_info):
             except (IOError, ValueError, KeyError) as e:
                 logging.exception("Error defining new radar: %s",e,exc_info=True)
 
-            # Remove the now-stale munged radar files
             old_files = glob(f"{cfg['POLLING_DIR']}/{new_radar}/*.gz")
             for f in old_files:
                 logging.info(f"Deleting {f}")
                 os.remove(f)
 
+    if len(radar_info['radar_list']) > 0:
+        for _r, radar in enumerate(radar_info['radar_list']):
+            radar = radar.upper()
+            try:
+                if radar_info['new_radar'] == 'None':
+                    new_radar = radar
+                else:
+                    new_radar = radar_info['new_radar'].upper()
+            except (IOError, ValueError, KeyError) as e:
+                logging.exception("Error defining new radar: %s",e,exc_info=True)
+
             args = [radar, str(sim_times['playback_start_str']),
                     str(sim_times['event_duration']),
                     str(sim_times['simulation_seconds_shift']), cfg['RADAR_DIR'],
-                    cfg['POLLING_DIR'], cfg['USER_DOWNLOADS_DIR'], cfg['L2MUNGER_FILEPATH'], cfg['DEBZ_FILEPATH'],
-                    new_radar]
+                    cfg['POLLING_DIR'], cfg['USER_DOWNLOADS_DIR'], cfg['L2MUNGER_FILEPATH'], 
+                    cfg['DEBZ_FILEPATH'], new_radar]
             res = call_function(utils.exec_script, Path(cfg['MUNGER_SCRIPT_FILEPATH']),
                                 args, cfg['SESSION_ID'])
             if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
@@ -1571,7 +1584,7 @@ def refresh_polling(n_clicks, cfg, sim_times, radar_info):
             
     # --------- Update event times file --------------------------------------------------
     args = [str(sim_times['simulation_seconds_shift']), cfg['DATA_DIR'], cfg['RADAR_DIR'],
-        cfg['EVENTS_HTML_PAGE'], cfg['EVENTS_TEXT_FILE']]
+            cfg['EVENTS_HTML_PAGE'], cfg['EVENTS_TEXT_FILE']]
     res = call_function(utils.exec_script, Path(cfg['EVENT_TIMES_SCRIPT_PATH']), args,
                         cfg['SESSION_ID'])
     if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
