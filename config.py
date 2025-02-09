@@ -148,5 +148,6 @@ scripts_list = ["Nexrad", "munger", "obs_placefile", "nse", "wgrib2",
 # Names of surface placefiles for monitoring script
 surface_placefiles = [
     'wind.txt', 'temp.txt', 'latest_surface_observations.txt',
-    'latest_surface_observations_lg.txt', 'latest_surface_observations_xlg.txt'
+    'latest_surface_observations_lg.txt', 'latest_surface_observations_xlg.txt',
+    'ProbSevere.txt', 'LSRs.txt'
 ]

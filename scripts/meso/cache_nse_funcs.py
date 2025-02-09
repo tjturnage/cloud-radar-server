@@ -10,7 +10,7 @@ from plotconfigs import SCALAR_PARAMS, VECTOR_PARAMS
 from time import time
 
 if __name__ == '__main__':
-    set_num_threads(8)
+    set_num_threads(4)
     fname = '../../tests/standard.pickle'
     with open(fname, 'rb') as f: data = pickle.load(f)
 
