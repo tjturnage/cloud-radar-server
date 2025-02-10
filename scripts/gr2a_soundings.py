@@ -42,7 +42,12 @@ class Gr2aSoundings(Gr2aSoundingsBase):
     output_filepath: str = field(init=False)
 
     def __post_init__(self):
-        pass
+        """
+        Initialize the class
+        """
+        self.define_model_soundings()
+        
+        self.request_model_sounding(self.get_model_sounding_url(self.sim_start[:10], self.sim_start[11:13], self.radar_info['lat'], self.radar_info['lon']))
 
     def find_hours_in_range(self) -> list:
         """
@@ -71,10 +76,9 @@ class Gr2aSoundings(Gr2aSoundingsBase):
         """
         Define the radar/model timesCreate the start and end time strings for the API request
         """
-
-
         # Create the output file path
         self.output_filepath = 'model_sounding.txt'
+
     def request_model_sounding(self,url):
         """
         Requests data from the Iowa State site
@@ -100,13 +104,14 @@ class Gr2aSoundings(Gr2aSoundingsBase):
             return f"Sounding creation failed! Error: {e}"
 
 
-    def get_model_sounding_url(self, UTC_date, UTC_hour, lat, lon):
+    def get_model_sounding_url(self, utc_date, utc_hour, lat, lon):
         """
         Retrieves model from ISU json Bufkit API:
         https://mesonet.agron.iastate.edu/api/1/nws/bufkit.json
         """
-        hour_str = f"{UTC_hour}:01:00"
-        address = f"{MODEL_BASE_URL}?time={UTC_date}T{hour_str}&lon={lon}&lat={lat}&gr=1"
+        hour_minute_str = f"{utc_hour}:01:00"
+        full_time = f"{utc_date}T{hour_minute_str}"
+        address = f"{MODEL_BASE_URL}?time={full_time}&lon={lon}&lat={lat}&gr=1"
         return address
 
 
