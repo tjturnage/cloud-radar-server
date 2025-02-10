@@ -15,6 +15,7 @@ import requests
 import os
 import sys
 import warnings
+warnings.filterwarnings('ignore', category=UserWarning)
 from multiprocessing import Pool, freeze_support
 from pathlib import Path
 
