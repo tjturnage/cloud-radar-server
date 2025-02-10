@@ -24,7 +24,8 @@ WIND_ICONS = 'https://rssic.nws.noaa.gov/assets/iconfiles/windicons.png'
 SHEAR1_ICONS = 'https://rssic.nws.noaa.gov/assets/iconfiles/shr1icons.png'
 DEVTOR_ICONS = 'https://rssic.nws.noaa.gov/assets/iconfiles/devtor.png'
 
-NUM_THREADS = 8     # Maximum number of threads for numba to use. 
+# Specifies number of threads for numba to use. 
+NUM_THREADS = 4     
 
 ##########################################################################################
 # Download configurations
