@@ -489,7 +489,7 @@ def barbs(lon, lat, U, V, time_str, timerange_str, **kwargs):
     for j in range(U.shape[0])[::skip]:
         for i in range(V.shape[1])[::skip]:
             wdir, wspd = winds.comp2vec(float(U[j,i]), float(V[j,i]))
-            wspd = np.clip(wspd, 2.5, 52) # For time being, limit max storm speed
+            wspd = np.clip(wspd, 2.5, 100) 
             if wspd > 0:
                 wspd_rounded = 5 * round(wspd/5)
                 numref = int(wspd_rounded//5)
