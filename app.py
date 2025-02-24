@@ -944,13 +944,19 @@ def run_with_cancel_button(cfg, sim_times, radar_info):
     logging.info("Entering function run_transpose_script")
     run_transpose_script(cfg['PLACEFILES_DIR'], sim_times, radar_info)
 
-    # get soundings
-    #for radar, data in radar_info['radar_dict'].items():
-    #    try:
-    #        asos_one = data['asos_one']
-    #        asos_two = data['asos_two']
-    #    except KeyError as e:
-    #        logging.exception("Error getting radar metadata: ", exc_info=True)
+    # --------- Soundings ---------------------------------------------------------
+   #radar_dict = {'KGRR': {'lat':42.8939, 'lon':-85.54479},
+   #               'KDTX': {'lat':42.69997, 'lon':-83.47167}}
+    #SIM_START = '2024-05-07 21:30'
+    #ASSETS_DIR = '/data/cloud-radar-server/assets'
+    #if sys.platform.startswith('win'):
+    #    Gr2aSoundings(radar_dict, SIM_START, '120', '24835500', ASSETS_DIR)
+    #args = [radar_info, str(sim_times['event_start_str']), str(sim_times['event_duration']),
+    #            str(sim_times['simulation_seconds_shift']), cfg['ASSETS_DIR']]
+    #res = call_function(utils.exec_script, Path(cfg['SOUNDINGS_SCRIPT_PATH']), args,
+    #                    cfg['SESSION_ID'])
+    #if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
+    #    return
 
     # --------- Hodographs ---------------------------------------------------------
     for radar, data in radar_info['radar_dict'].items():
@@ -1555,7 +1561,7 @@ def refresh_polling(n_clicks, cfg, sim_times, radar_info):
     for image in hodo_images:
         try:
             os.remove(image)
-        except: 
+        except:
             logging.exception(f"Error removing: {image}")
 
     create_radar_dict(radar_info)

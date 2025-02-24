@@ -119,6 +119,7 @@ def setup_paths_and_dirs(n_intervals, session_id):
         dirs['LINKS_PAGE_SCRIPT_PATH'] = f'{dirs['SCRIPTS_DIR']}/write_links_page.py'
         dirs['HODO_SCRIPT_PATH'] = f'{dirs['SCRIPTS_DIR']}/hodo_plot.py'
         dirs['NEXRAD_SCRIPT_PATH'] = f'{dirs['SCRIPTS_DIR']}/Nexrad.py'
+        dirs['SOUNDINGS_SCRIPT_PATH'] = f'{dirs['SCRIPTS_DIR']}/gr2a_soundings.py'
         dirs['PROBSEVERE_DOWNLOAD_SCRIPT_PATH'] = f'{dirs['SCRIPTS_DIR']}/ProbSevere.py'
         dirs['PROBSEVERE_PLACEFILE_SCRIPT_PATH'] = f'{dirs['SCRIPTS_DIR']}/probsevere_placefile.py'
         dirs['L2MUNGER_FILEPATH'] = f'{dirs['SCRIPTS_DIR']}/l2munger'
