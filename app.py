@@ -1203,6 +1203,7 @@ def run_transpose_script(PLACEFILES_DIR, sim_times, radar_info) -> None:
     Output('speed_dropdown', 'disabled'),
     Output('playback_specs', 'data', allow_duplicate=True),
     Output('refresh_polling_btn', 'disabled', allow_duplicate=True),
+    Output('run_scripts_btn', 'disabled', allow_duplicate=True),
     [Input('playback_btn', 'n_clicks'),
      State('playback_speed_store', 'data'),
      State('configs', 'data'),
@@ -1248,11 +1249,13 @@ def initiate_playback(_nclick, playback_speed, cfg, sim_times, radar_info):
                     radar, sim_times['playback_clock_str'], cfg['POLLING_DIR'])
 
     refresh_polling_btn_disabled = False
+    run_scripts_btn_disabled = False
     if playback_running:
         refresh_polling_btn_disabled = True
+        run_scripts_btn_disabled = True
 
     return (btn_text, btn_disabled, False, playback_running, start, style, end, style, options,
-            False, playback_specs, refresh_polling_btn_disabled)
+            False, playback_specs, refresh_polling_btn_disabled, run_scripts_btn_disabled)
 
 
 @app.callback(
@@ -1264,6 +1267,7 @@ def initiate_playback(_nclick, playback_speed, cfg, sim_times, radar_info):
     Output('current_readout', 'style'),
     Output('playback_specs', 'data', allow_duplicate=True),
     Output('refresh_polling_btn', 'disabled', allow_duplicate=True),
+    Output('run_scripts_btn', 'disabled', allow_duplicate=True),
     [Input('pause_resume_playback_btn', 'n_clicks'),
      Input('playback_timer', 'n_intervals'),
      Input('change_time', 'value'),
@@ -1398,11 +1402,13 @@ def manage_clock_(nclicks, _n_intervals, new_time, _playback_running, playback_s
     specs['style'] = style
 
     refresh_polling_btn_disabled = True
+    run_scripts_btn_disabled = True
     if playback_paused:
         refresh_polling_btn_disabled = False
+        run_scripts_btn_disabled = False
     return (specs['interval_disabled'], specs['status'], specs['style'],
             specs['playback_btn_text'], readout_time, style, specs,
-            refresh_polling_btn_disabled)
+            refresh_polling_btn_disabled, run_scripts_btn_disabled)
 
 ################################################################################################
 # ----------------------------- Playback Speed Callbacks  --------------------------------------
