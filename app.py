@@ -262,7 +262,9 @@ def remove_munged_radar_files(cfg) -> None:
     downloaded by the user if desired.
     """
     regex_pattern = r'^(.{4})(\d{8})_(\d{6})$'
-    raw_pattern = r'^(.{4})(\d{8})_(\d{6})_(V\d{2})$'
+    #raw_pattern = r'^(.{4})(\d{8})_(\d{6})_(V\d{2})$'
+    # Searches for filenames with either Vxx or .gz. Older radar files are gzipped.
+    raw_pattern = r'^.{4}\d{8}_\d{6}(_V\d{2}|\.gz)$'
     for root, _, files in os.walk(cfg['RADAR_DIR']):
         if Path(root).name == 'downloads':
             for name in files:
