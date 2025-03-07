@@ -996,9 +996,9 @@ def run_with_cancel_button(cfg, sim_times, radar_info):
         (Output('new_radar_selection', 'disabled'), True, False),
         (Output('run_scripts_btn', 'disabled'), True, False),
         # (Output('playback_clock_store', 'disabled'), True, False),
-        (Output('confirm_radars_btn', 'disabled'),
-         True, False),  # added radar confirm btn
+        (Output('confirm_radars_btn', 'disabled'), True, False),  # added radar confirm btn
         (Output('playback_btn', 'disabled'), True, False),  # add start sim btn
+        (Output('playback_btn', 'children'), 'Launch Simulation', 'Launch Simulation'), 
         (Output('refresh_polling_btn', 'disabled'), True, False),
         (Output('pause_resume_playback_btn', 'disabled'), True, True), # add pause/resume btn
         # wait to enable change time dropdown
