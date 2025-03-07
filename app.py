@@ -251,6 +251,12 @@ def remove_files_and_dirs(cfg) -> None:
             for name in dirs:
                 os.rmdir(os.path.join(root, name))
 
+    # Remove the original file_times.txt file. This will get re-created by munger.py
+    try:
+        os.remove(f"{cfg['ASSETS_DIR']}/file_times.txt")
+    except FileNotFoundError:
+        pass
+
 
 def remove_munged_radar_files(cfg) -> None:
     """
