@@ -978,7 +978,8 @@ def run_with_cancel_button(cfg, sim_times, radar_info):
 
 
 @app.callback(
-    Output('show_script_progress', 'children', allow_duplicate=True),
+    #Output('show_script_progress', 'children', allow_duplicate=True),
+    Output('sim_times', 'data', allow_duplicate=True),
     [Input('run_scripts_btn', 'n_clicks'),
      State('configs', 'data'),
      State('sim_times', 'data'),
@@ -1010,6 +1011,11 @@ def launch_simulation(n_clicks, configs, sim_times, radar_info):
     This function is called when the "Run Scripts" button is clicked. It will execute the
     necessary scripts to simulate radar operations, create hodographs, and transpose placefiles.
     """
+    # Update the simulation times. 
+    event_dt = datetime.strptime(sim_times['event_start_str'], '%Y-%m-%d %H:%M')
+    event_dt = pytz.utc.localize(event_dt)
+    sim_times = make_simulation_times(event_dt, sim_times['event_duration'])
+
     if n_clicks == 0:
         raise PreventUpdate
     else:
@@ -1024,6 +1030,8 @@ def launch_simulation(n_clicks, configs, sim_times, radar_info):
             #     print(f"Failed to send email: {e}")
             remove_files_and_dirs(configs)
             run_with_cancel_button(configs, sim_times, radar_info)
+    
+    return sim_times
 
 ################################################################################################
 # ----------------------------- Monitoring and reporting script status  ------------------------
