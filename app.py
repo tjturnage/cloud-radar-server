@@ -1508,6 +1508,14 @@ def refresh_polling(n_clicks, cfg, sim_times, radar_info):
     except FileNotFoundError:
         pass
 
+    # Delete the uncompressed/munged radar files from the data directory. Needed if a user
+    # canceled a previous refresh before mungering finishes, leaving orphaned .uncompressed
+    # files in the radar data directory.
+    try:
+        remove_munged_radar_files(cfg)
+    except KeyError as e:
+        logging.exception("Error removing munged radar files ", exc_info=True)
+
     # --------- Munger ---------------------------------------------------------
     # This for loop removes the now-stale munged radar files. We do this in a 
     # first loop  to delete all of the files at once. Otherwise, the monitor bar 
