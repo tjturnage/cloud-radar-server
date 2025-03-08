@@ -82,7 +82,7 @@ def shift_time(line, timeshift):
     new_line = line
     if 'Valid:' in line:
         idx = line.find('Valid:')
-        valid_timestring = line[idx+len('Valid:')+1:-1] # Leave off \n character 
+        valid_timestring = line[idx+len('Valid:')+1:-1] # Leave off \n character
         dt = datetime.strptime(valid_timestring, '%H:%MZ %a %b %d %Y')
         new_validstring = datetime.strftime(dt + timedelta(minutes=timeshift),
                                             '%H:%MZ %a %b %d %Y')
@@ -91,14 +91,14 @@ def shift_time(line, timeshift):
     if 'TimeRange' in line:
         regex = re.findall(TIME_REGEX, line)
         dt = datetime.strptime(regex[0], '%Y-%m-%dT%H:%M:%SZ')
-        new_datestring_1 = datetime.strftime(dt + timedelta(minutes=timeshift), 
+        new_datestring_1 = datetime.strftime(dt + timedelta(minutes=timeshift),
                                             '%Y-%m-%dT%H:%M:%SZ')
         dt = datetime.strptime(regex[1], '%Y-%m-%dT%H:%M:%SZ')
-        new_datestring_2 = datetime.strftime(dt + timedelta(minutes=timeshift), 
+        new_datestring_2 = datetime.strftime(dt + timedelta(minutes=timeshift),
                                             '%Y-%m-%dT%H:%M:%SZ')
         new_line = line.replace(f"{regex[0]} {regex[1]}",
-                                f"{new_datestring_1} {new_datestring_2}") 
-    return new_line 
+                                f"{new_datestring_1} {new_datestring_2}")
+    return new_line
 
 def shift_placefiles(source, target, filepath, timeshift):
     filenames = glob(f"{filepath}/*.txt")
@@ -111,7 +111,7 @@ def shift_placefiles(source, target, filepath, timeshift):
         for line in data:
             new_line = line
 
-            if timeshift is not None and any(x in line for x in ['Valid', 'TimeRange']): 
+            if timeshift is not None and any(x in line for x in ['Valid', 'TimeRange']):
                 new_line = shift_time(line, int(timeshift))
 
             # Shift this line in space

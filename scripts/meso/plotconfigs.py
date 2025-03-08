@@ -17,6 +17,7 @@ SCALAR_PARAMS = {
     'nst': 'Non-Supercell Tornado Parameter',
     'deviance': 'Perceived Tornado Deviance',
     'snsq': 'Snow Squall Parameter',
+    'dcape': 'Downdraft CAPE (J/kg)',
     #'fzl-lfc-diff': 'Freezing Level - MU LFC thickness (m)',
     #'el-lfc-diff': 'MU Parcel EL - LFC thickness (m)',
     #'mu-el': 'MU Parcel Equilibrium Level (m)',
@@ -56,9 +57,9 @@ PLOTCONFIGS = {
     },
 
     'lr03km': {
-        'colors': 'k',
-        'levels': [6, 7, 8, 9, 10],
-        'linewidths': 0.75,
+        'colors': ['#6da55d', '#6da55d', '#ed8433', '#da4238', '#da4238', '#000000'],
+        'levels': [6, 6.5, 7, 8, 9, 10],
+        'linewidths': [0.75, 0.75, 1.5, 2, 2, 2.5],
         'fill_levels': [6.5, 999],
         'fill_colors': ['#f1a95d', '#f1a95d']
     },
@@ -66,19 +67,19 @@ PLOTCONFIGS = {
     'esrh': {
         'colors': ['#81b6f7', '#81b6f7', '#3c6193', '#3c6193', '#3c6193', '#3c6193'],
         'levels': [50, 100, 200, 300, 400, 500, 600, 700, 800],
-        'linewidths': [1, 1, 2, 2, 2, 3, 3, 3, 3]
+        'linewidths': [1, 1, 2, 2, 2, 2, 2, 3, 3]
     },
 
     'srh01km': {
         'colors': ['#81b6f7', '#81b6f7', '#3c6193', '#3c6193', '#3c6193', '#3c6193'],
         'levels': [50, 100, 200, 300, 400, 500, 600, 700, 800],
-        'linewidths': [1, 1, 2, 2, 2, 3, 3, 3, 3]
+        'linewidths': [1, 1, 2, 2, 2, 2, 2, 3, 3]
     },
 
     'srh500': {
         'colors': ['#81b6f7', '#81b6f7', '#3c6193', '#3c6193', '#3c6193', '#3c6193'],
         'levels': [25, 50, 100, 200, 300, 400, 500, 600, 800],
-        'linewidths': [1, 1, 2, 2, 2, 3, 3, 3, 3]
+        'linewidths': [1, 1, 2, 2, 2, 2, 2, 3, 3]
     },
 
     'shr1': {
@@ -87,24 +88,24 @@ PLOTCONFIGS = {
 
     'mucape': {
         'colors': ['#ea908c', '#ea908c', '#da453a', '#da453a', '#da453a', '#c03c32',
-                   '#c03c32', '#c03c32', '#c03c32'],
+                   '#811811', '#811811', '#811811'],
         'levels': [100, 250, 500, 1000, 2000, 3000, 4000, 5000, 6000],
-        'linewidths': [1, 1, 1, 2, 2, 3, 3, 3, 3]
+        'linewidths': [0.75, 1, 1, 2, 2, 2, 2, 2, 3]
     },
 
     'mlcape': {
         'colors': ['#ea908c', '#ea908c', '#da453a', '#da453a', '#da453a', '#c03c32',
-                   '#c03c32', '#c03c32', '#c03c32'],
-        'levels': [100, 250, 500, 1000, 2000, 2500, 3000, 3500, 4000],
-        'linewidths': [1, 1, 1, 2, 2, 3, 3, 3, 3]
+                   '#c03c32', '#c03c32', '#811811', '#811811'],
+        'levels': [100, 250, 500, 1000, 2000, 2500, 3000, 3500, 4000, 6000],
+        'linewidths': [0.75, 1, 1, 2, 2, 2, 2, 2, 2, 3]
     },
 
     'cape3km': {
-        #'colors': ['#dd564e', '#dd564e', '#dd564e', '#bb2d1d', '#bb2d1d',
-        #           '#bb2d1d', '#841f18', '#841f18'],
-        'colors': 'k',
+        'colors': ['#ea908c', '#ea908c', '#da453a', '#bb2d1d', '#bb2d1d',
+                   '#bb2d1d', '#841f18', '#841f18'],
+        #'colors': 'k',
         'levels': [25, 75, 100, 150, 300, 500],
-        'linewidths': [0.5, 0.5, 1, 1, 1.5, 1.5],
+        'linewidths': [0.75, 0.75, 1, 2, 2, 3],
         'fill_levels': [50, 9999],
         'fill_colors': ['#f1b1bc']
     },
@@ -148,6 +149,13 @@ PLOTCONFIGS = {
         'levels': [9000, 10000, 11000, 12000, 13000, 14000, 15000],
         'colors': ['#000000'],
         'linewidths': [1, 1, 2, 2, 2, 3, 3]
+    },
+
+    'dcape': {
+        'levels': [200, 400, 600, 800, 1000, 1200, 1400, 1600, 1800, 2000, 3000, 4000, 5000],
+        'colors': ['#d2a663', '#d2a663', '#d2a663', '#df6641', '#90322b', '#90322b', '#90322b',
+                   '#90322b', '#90322b', '#90322b', '#90322b', '#90322b', '#90322b', '#90322b'],
+        'linewidths': [1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2]
     },
 
     # Vectors/barbs
@@ -244,4 +252,8 @@ FILTER_SPECS = {
         'mucape': ['>', 100],
         'ebwd': ['>', 20],
     },
+
+    'dcape': {
+        'mucape': ['>', 1]
+    }
 }

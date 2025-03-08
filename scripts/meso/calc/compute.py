@@ -52,7 +52,6 @@ def worker(pres, tmpc, hght, dwpc, wspd, wdir, vort, SCALARS, VECTORS):
     --------
     d : Numba typed Dictionary
         Dictionary containing the derived values. [Key,j,i]
-
     """
 
     # Declare 'jit-able' dictionary and fill it with empty arrays
@@ -65,7 +64,7 @@ def worker(pres, tmpc, hght, dwpc, wspd, wdir, vort, SCALARS, VECTORS):
     for vector in VECTORS:
         d[vector+'_u'] = np.zeros((tmpc.shape[1], tmpc.shape[2]), dtype='float64')
         d[vector+'_v'] = np.zeros((tmpc.shape[1], tmpc.shape[2]), dtype='float64')
-
+        
     for j in prange(tmpc.shape[1]):
         for i in prange(tmpc.shape[2]):
             prof = profile.create_profile(pres=pres[:,j,i], tmpc=tmpc[:,j,i],
@@ -102,6 +101,8 @@ def worker(pres, tmpc, hght, dwpc, wspd, wdir, vort, SCALARS, VECTORS):
                 d['mllcl'][j,i] = mlpcl.lclhght
             if 'snsq' in SCALARS:
                 d['snsq'][j,i] = derived.snsq(prof)
+            if 'dcape' in SCALARS:
+                d['dcape'][j,i] = derived.dcape(prof) 
 
             # Vectors: returned as (u, v) tuples
             if 'ebwd' in VECTORS:

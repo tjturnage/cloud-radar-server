@@ -224,6 +224,13 @@ class DefineParcel(object):
         else: self.pbot = ma.masked
     """
 
+def integrate_parcel(pres, tbot):
+    pcl_tmpc = np.empty(pres.shape, dtype=pres.dtype)
+    pcl_tmpc[0] = tbot
+    for idx in range(1, len(pres)):
+        pcl_tmpc[idx] = thermo.wetlift(pres[idx - 1], pcl_tmpc[idx - 1], pres[idx])
+
+    return pcl_tmpc
 
 @njit
 def parcelx(prof, flag, *args):
@@ -957,6 +964,65 @@ def mean_theta(prof, pbot=None, ptop=None, exact=False):
         #    cw += p[ind]
         # thta = c / cw
     return thta
+
+@njit
+def mean_thetae(prof, pbot=None, ptop=None, dp=-1, exact=False):
+    '''
+    Calculates the mean theta-e from a profile object within the
+    specified layer.
+    
+    Parameters
+    ----------
+    prof : profile object
+        Profile Object
+    pbot : number (optional; default surface)
+        Pressure of the bottom level (hPa)
+    ptop : number (optional; default 400 hPa)
+        Pressure of the top level (hPa)
+    dp : negative integer (optional; default = -1)
+        The pressure increment for the interpolated sounding (mb)
+    exact : bool (optional; default = False)
+        Switch to choose between using the exact data (slower) or using
+        interpolated sounding at 'dp' pressure levels (faster)
+    
+    Returns
+    -------
+    Mean Theta-E : number
+    
+    '''
+    if not pbot: pbot = prof.pres[prof.sfc]
+    if not ptop: ptop = prof.pres[prof.sfc] - 100.
+    if exact:
+        ind1 = np.where(pbot > prof.pres)[0].min()
+        ind2 = np.where(ptop < prof.pres)[0].max()
+        thetae1 = thermo.thetae(pbot, interp.temp(prof, pbot), interp.dwpt(prof, pbot))
+        thetae2 = thermo.thetae(ptop, interp.temp(prof, ptop), interp.dwpt(prof, pbot))
+        thetae = np.zeros(prof.pres[ind1:ind2+1].shape)
+        for i in np.arange(0, len(thetae), 1):
+            thetae[i] = thermo.thetae(prof.pres[ind1:ind2+1][i],  prof.tmpc[ind1:ind2+1][i], 
+                                      prof.dwpc[ind1:ind2+1][i])
+        #mask = ~thetae.mask
+        #thetae = np.concatenate([[thetae1], thetae[mask], thetae[mask], [thetae2]])
+        # no numba support to lists in np.concatenate?
+        # theta = np.concatenate([[theta1], [theta], [theta2]])
+        thetae_out = ()
+        thetae_out = np.append(thetae_out, thetae1)
+        thetae_out = np.append(thetae_out, thetae)
+        thetae_out = np.append(thetae_out, thetae)
+        thetae_out = np.append(thetae_out, thetae2)
+        thetae = thetae_out
+        tott = thetae.sum() / 2.
+        num = float(len(thetae)) / 2.
+        thtae = tott / num
+    else:
+        dp = -1
+        p = np.arange(pbot, ptop+dp, dp, dtype=type(pbot))
+        thetae = interp.thetae(prof, p)
+        # Numba does not support np.average(). Without weights, this is the same
+        # as np.mean, but with weights=p we must make some alterations.
+        #thtae = ma.average(thetae, weights=p)
+        thtae = utils.weighted_average(thetae, p)
+    return thtae
 
 ###############################################################################
 #

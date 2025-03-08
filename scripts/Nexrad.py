@@ -28,7 +28,6 @@ class NexradDownloader:
     duration: str
         The duration of the simulation in minutes
     
-    
     """
 
 
@@ -120,7 +119,7 @@ class NexradDownloader:
 
 
 if __name__ == "__main__":
-    #NexradDownloader('KDTX', '2013-05-20 22:45', 30, False)
+    #NexradDownloader('KDTX', '2013-05-20 22:45', 30, Download ('True','False'), Download_Dir)
     download_flag = sys.argv[4]
     if type(download_flag) == str:
         download_flag = ast.literal_eval(download_flag)

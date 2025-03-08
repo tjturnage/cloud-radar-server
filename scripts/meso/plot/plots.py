@@ -76,7 +76,7 @@ def contour(lon, lat, data, time_str, timerange_str, **kwargs):
     
     out = []
     out.append('Title: %s -- for radar simulation\n' % (plotinfo))
-    out.append('RefreshSeconds: 60\n')
+    out.append('RefreshSeconds: 5\n')
     out.append('Font: 1, 14, 1, "Arial"\n')
     out.append('TimeRange: %s\n' % (timerange_str))
 
@@ -174,7 +174,7 @@ def contour(lon, lat, data, time_str, timerange_str, **kwargs):
 
     out = []
     out.append('Title: %s | %s\n' % (plotinfo, time_str))
-    out.append('RefreshSeconds: 60\n')
+    out.append('RefreshSeconds: 5\n')
     out.append('Font: 1, 14, 1, "Arial"\n')
     out.append('TimeRange: %s\n' % (timerange_str))
 
@@ -269,7 +269,7 @@ def contourf(lon, lat, data, time_str, timerange_str, **kwargs):
 
     out = []
     out.append('Title: %s Filled Contour -- for radar simulation\n' % (plotinfo))
-    out.append('RefreshSeconds: 60\n')
+    out.append('RefreshSeconds: 5\n')
     out.append('TimeRange: %s\n' % (timerange_str))
     rgb = hex2rgb(colors[0])
     for collection in c.collections:
@@ -481,7 +481,7 @@ def barbs(lon, lat, U, V, time_str, timerange_str, **kwargs):
     skip = kwargs.get('skip', 6)
     out = []
     out.append('Title: %s -- for radar simulation\n' % (plotinfo))
-    out.append('RefreshSeconds: 60\n')
+    out.append('RefreshSeconds: 5\n')
     out.append('TimeRange: %s\n' % (timerange_str))
     out.append('Color: 255 255 255\n')
     out.append('IconFile: 1, 28, 28, 14, 14, "%s"\n' % (iconfile))
@@ -489,7 +489,7 @@ def barbs(lon, lat, U, V, time_str, timerange_str, **kwargs):
     for j in range(U.shape[0])[::skip]:
         for i in range(V.shape[1])[::skip]:
             wdir, wspd = winds.comp2vec(float(U[j,i]), float(V[j,i]))
-            wspd = np.clip(wspd, 2.5, 52) # For time being, limit max storm speed
+            wspd = np.clip(wspd, 2.5, 100) 
             if wspd > 0:
                 wspd_rounded = 5 * round(wspd/5)
                 numref = int(wspd_rounded//5)
@@ -542,7 +542,7 @@ def barbs_devtor(lon, lat, U, V, deviance, time_str, timerange_str, **kwargs):
     skip = kwargs.get('skip', 3)
     out = []
     out.append('Title: %s -- for radar simulation\n' % (plotinfo))
-    out.append('RefreshSeconds: 60\n')
+    out.append('RefreshSeconds: 5\n')
     out.append('TimeRange: %s\n' % (timerange_str))
     out.append('Color: 255 255 255\n')
     out.append('IconFile: 1, 28, 28, 14, 14, "%s"\n' % (iconfile))

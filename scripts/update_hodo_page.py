@@ -15,8 +15,8 @@ if 'C:\\' in dir_parts:
 #    HODOGRAPHS_PAGE = 'C:/data/scripts/cloud-radar-server/assets/hodographs.html'
 #    #link_base = "http://localhost:8050/assets"
 #    #cloud = False
-#else:
-#    from config import HODOGRAPHS_DIR, HODOGRAPHS_PAGE
+else:
+    PLATFORM = 'not_windows'
 
 
 HEAD = """<!DOCTYPE html>
@@ -145,7 +145,7 @@ class UpdateHodoHTML():
             <html>
             <head>
             <title>Hodographs</title>
-            <link rel="icon" href="./favicon.ico" type="image/x-icon">
+            <link rel="icon" href="https://rssic.nws.noaa.gov/assets/favicon.ico" type="image/x-icon">
             <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootswatch/4.5.2/cyborg/bootstrap.min.css">
             <style>
             img {{ max-width: 90%; height: auto; }} /* Display images at 90% size */
@@ -195,6 +195,38 @@ class UpdateHodoHTML():
             </div>
             <div class="slider-text-container">Choose which half of the slider to use based on desired hodo type</div>
 
+            <hr>
+            <br>
+            <h2>Storm-Relative Hodograph Interpretation</h2>
+            <br>
+            <h3 style="color:#800080;">Purple: 0-1km</h3></div>
+            <ul>
+            <li>Governs the strength of a supercell’s low-level mesocyclone</li>
+            <li>Especially large curved or sickle-shaped segments are favorable for tornadoes</li>
+            <li>Surface storm-relative inflow > 40kt becomes more favorable for longer-tracked tornadoes</li>
+            </ul>
+            <br>
+            <h3 style="color:#FF0000;">Red: 1-3km</h3>
+            <ul>
+            <li>Governs the strength of a supercell’s mid-level mesocyclone</li>
+            <li>Especially long segments here are favorable for robust supercell formation</li>
+            <li>Straighter segments are more favorable for storm splitting</li>
+            </ul>
+            <br>
+            <h3 style="color:#008000;">Green: 3-6km</h3>
+            <ul>
+            <li>May govern precipitation ventilation especially within the foward flank “vault” region</li>
+            <li>Especially segments lying outside the 15kt range ring may be more favorable for clean “vault” regions</li>
+            <li>Curved segments at constant storm-relative wind becomes more favorable for deep “mothership” structures</li>
+            </ul>
+            <br>
+            <h3 style="color:#FFD700;">Yellow: 6-8km</h3>
+            <ul>
+            <li>May govern precipitation ventilation especially within the rear-flank downdraft region</li>
+            <li>Segments lying outside the 40kt range ring may be more favorable for “low-precipitation” mode</li>
+            <li>Segments lying inside the 20kt range ring may be more favorable for “high-precipitation” mode</li>
+            <li>Longer, straighter segments oriented radial to storm motion means storms are more favored to be “tilted”, back-sheared, and without anvils</li>
+            </ul>
 
             <script>
             var allImages = {link_list};

@@ -6,16 +6,21 @@ import logging
 from scipy.ndimage import gaussian_filter
 from configs import SIGMA
 from plotconfigs import SCALAR_PARAMS, VECTOR_PARAMS, FILTER_SPECS
+import operator
 
-def eval_binary(op1, oper, op2, val):
-    import operator
+def eval_binary(op1, oper, op2, val, scalar=True):
     ops = {
         '>': operator.gt,
         '>=': operator.ge,
         '<': operator.lt,
         '<=': operator.le
     }
-    return np.where(ops[oper](op1, op2), val, np.nan)
+    
+    if scalar: 
+        ret = np.where(ops[oper](op1, op2), val, 0.)
+    else:
+        ret = np.where(ops[oper](op1, op2), val, np.nan)
+    return ret
 
 def _execute_filtering(data):
     """
@@ -53,11 +58,13 @@ def _execute_filtering(data):
                         magnitude = np.sqrt(data[t][v[idx_2[0]]]**2 + \
                                             data[t][v[idx_2[1]]]**2)
                         data[t][v[idx[0]]] = eval_binary(magnitude, operand[0],
-                                                         operand[1], data[t][v[idx[0]]])
+                                                         operand[1], data[t][v[idx[0]]], 
+                                                         scalar=False)
                         if len(idx) == 2:
                             data[t][v[idx[1]]] = eval_binary(magnitude, operand[0],
                                                              operand[1],
-                                                             data[t][v[idx[1]]])
+                                                             data[t][v[idx[1]]],
+                                                             scalar=False)
 
                     # Scalar value
                     elif len(idx_2) == 1:

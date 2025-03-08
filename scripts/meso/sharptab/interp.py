@@ -117,6 +117,29 @@ def dwpt(prof, p):
     return generic_interp_pres(np.log10(p), prof.logp[::-1], prof.dwpc[::-1])
 
 @njit
+def thetae(prof, p):
+    '''
+    Interpolates the given data to calculate theta-e at a given pressure
+
+    Parameters
+    ----------
+    prof : profile object
+    Profile object
+    p : number, numpy array
+    Pressure (hPa) of the level for which temperature is desired
+
+    Returns
+    -------
+    Theta-E (C) at the given pressure : number, numpy array
+
+    '''
+    # Note: numpy's interpolation routine expects the interpolation
+    # routine to be in ascending order. Because pressure decreases in the
+    # vertical, we must reverse the order of the two arrays to satisfy
+    # this requirement.
+    return generic_interp_pres(np.log10(p), prof.logp[::-1], prof.thetae[::-1])
+
+@njit
 def temp(prof, p):
     """Interpolates the given data to calculate a temperature at a given pressure
 
