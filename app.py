@@ -1706,7 +1706,7 @@ def make_events_placefile(contents, filename, cfg):
     """
     This function creates the Event Notification placefile for the radar simulation
     """
-    top_section = 'Refresh: 1\
+    top_section = 'RefreshSeconds: 5\
     \nThreshold: 999\
     \nTitle: Event Notifications -- for radar simulation\
     \nColor: 255 200 255\
