@@ -1298,7 +1298,9 @@ def create_hodos(filename):
 	except:
 	    pass
 	#Add Title and Legend and Save Figure
-	        
+	del sfc_angle, sfc_u, sfc_v
+        sr_hodo_fp = HODO_IMAGES / f'SR_Hodograph_{radar_label}_{r_date}_{r_time}.png'
+        plt.savefig(sr_hodo_fp, bbox_inches='tight')
 
 def execute_multiprocessing():
     # Limited to 8 processes on the AWS instance
