@@ -833,240 +833,472 @@ def create_hodos(filename):
     hodo_fname = f'Hodograph_{radar_label}_{r_date}_{r_time}.png'
     hodo_fp = HODO_IMAGES / hodo_fname
     plt.savefig(hodo_fp, bbox_inches='tight')
+    try:
+        #Create Figure
+        fig = plt.figure(figsize=(16,9), facecolor='white', edgecolor="black", linewidth = 6)
+        ax=fig.add_subplot(1,1,1)
+        if range_type == 'Dynamic':
+            #Determine Component Ring For Dynamic
+            magar = []
+            magar.append(speed.max())
+            magar.append(mean_mag)
+            magar.append(rmag)
+            magar.append(lmag)
+            magar.append(cor_d_mag)
+            magar.append(cor_u_mag)
+            magar.append(dtm_mag)
+            max2 = max(magar)
+           hodo_rang = round_up_nearest(max2+10)
+            h = Hodograph(ax, component_range = hodo_rang)
+        if range_type == 'Static':
+            h = Hodograph(ax, component_range = static_value)
+        h.add_grid(increment = 10)
 
-    #Create Figure
-    fig = plt.figure(figsize=(16,9), facecolor='white', edgecolor="black", linewidth = 6)
-    ax=fig.add_subplot(1,1,1)
-    if range_type == 'Dynamic':
-        #Determine Component Ring For Dynamic
-        magar = []
-        magar.append(speed.max())
-        magar.append(mean_mag)
-        magar.append(rmag)
-        magar.append(lmag)
-        magar.append(cor_d_mag)
-        magar.append(cor_u_mag)
-        magar.append(dtm_mag)
-        max2 = max(magar)
-        hodo_rang = round_up_nearest(max2+10)
-        h = Hodograph(ax, component_range = hodo_rang)
-    if range_type == 'Static':
-        h = Hodograph(ax, component_range = static_value)
-    h.add_grid(increment = 10)
+        #Create Colormap
+        boundaries = np.array([0,1000,3000,6000,8000])
+        colors = ['purple', 'red', 'green', 'gold']
 
-    #Create Colormap
-    boundaries = np.array([0,1000,3000,6000,8000])
-    colors = ['purple', 'red', 'green', 'gold']
+        #Plot Hodograph and Winds
+        l = h.plot_colormapped(sr_u, sr_v, zlevels, intervals = boundaries, colors = colors)
 
-    #Plot Hodograph and Winds
-    l = h.plot_colormapped(sr_u, sr_v, zlevels, intervals = boundaries, colors = colors)
+        try:
+            mw = ax.scatter(sr_mw_u, sr_mw_v, color = 'darkorange', marker = 's', label = f"0-6km MW: {'{:.0f}'.format(mean_dirmet)}°/{'{:.0f} kt'.format(mean_mag)}", s = 125)
+        except:
+            mw = ax.scatter(sr_mw_u, sr_mw_v, color = 'darkorange', marker = 's', label = f"0-6km MW: {mean_dirmet}°/{mean_mag} kt", s = 125)
+        try:
+            rm = ax.scatter(sr_br_u, sr_br_v, color = 'red', marker = 'o', label = f"Bunkers RM: {'{:.0f}'.format(rang)}°/{'{:.0f} kt'.format(rmag)}", s = 125)
+        except:
+            rm = ax.scatter(sr_br_u, sr_br_v, color = 'red', marker = 'o', label = f"Bunkers RM: {rang}°/{rmag} kt", s = 125)
+        try:
+            lm = ax.scatter(sr_bl_u, sr_bl_v, color = 'blue', marker = 'o', label = f"Bunkers LM: {'{:.0f}'.format(lang)}°/{'{:.0f} kt'.format(lmag)}", s = 125)
+        except:
+            lm = ax.scatter(sr_bl_u, sr_bl_v, color = 'blue', marker = 'o', label = f"Bunkers LM: {f'{lang}'}°/{f'{lmag} kt'}", s = 125)
+        try:
+            cd = ax.scatter(sr_cd_u, sr_cd_v, color = 'deeppink', marker = 'd', s = 125, label = f"Corfidi DS: {'{:.0f}'.format(down_adj)}°/{'{:.0f} kt'.format(cor_d_mag)}")
+        except:
+            cd = ax.scatter(sr_cd_u, sr_cd_v, color = 'deeppink', marker = 'd', s = 125, label = f"Corfidi DS: {f'{down_adj}°/{cor_d_mag} kt'}")
+        try:
+            cu = ax.scatter(sr_cu_u, sr_cu_v, color = 'green', marker = 'd', s = 125, label = f"Corfidi US: {'{:.0f}'.format(up_adj)}°/{'{:.0f} kt'.format(cor_u_mag)}")
+        except:
+            cu = ax.scatter(sr_cu_u, sr_cu_v, color = 'green', marker = 'd', s = 125, label = f"Corfidi US: {f'{up_adj}°/{cor_u_mag} kt'}")
+        try:
+            dtm = ax.scatter(sr_dtm_u, sr_dtm_v, color = 'black', marker = 'v', s = 125, label = f"DTM: {'{:.0f}'.format(dtm_dir_cor)}°/{'{:.0f} kt'.format(dtm_mag)} ")
+        except:
+            dtm = ax.scatter(sr_dtm_u, sr_dtm_v, color = 'black', marker = 'v', s = 125, label = f"DTM: {f'{dtm_dir_cor}°/{dtm_mag} kt'} ")
 
-    try:
-        mw = ax.scatter(sr_mw_u, sr_mw_v, color = 'darkorange', marker = 's', label = f"0-6km MW: {'{:.0f}'.format(mean_dirmet)}°/{'{:.0f} kt'.format(mean_mag)}", s = 125)
-    except:
-        mw = ax.scatter(sr_mw_u, sr_mw_v, color = 'darkorange', marker = 's', label = f"0-6km MW: {mean_dirmet}°/{mean_mag} kt", s = 125)
-    try:
-        rm = ax.scatter(sr_br_u, sr_br_v, color = 'red', marker = 'o', label = f"Bunkers RM: {'{:.0f}'.format(rang)}°/{'{:.0f} kt'.format(rmag)}", s = 125)
-    except:
-        rm = ax.scatter(sr_br_u, sr_br_v, color = 'red', marker = 'o', label = f"Bunkers RM: {rang}°/{rmag} kt", s = 125)
-    try:
-        lm = ax.scatter(sr_bl_u, sr_bl_v, color = 'blue', marker = 'o', label = f"Bunkers LM: {'{:.0f}'.format(lang)}°/{'{:.0f} kt'.format(lmag)}", s = 125)
-    except:
-        lm = ax.scatter(sr_bl_u, sr_bl_v, color = 'blue', marker = 'o', label = f"Bunkers LM: {f'{lang}'}°/{f'{lmag} kt'}", s = 125)
-    try:
-        cd = ax.scatter(sr_cd_u, sr_cd_v, color = 'deeppink', marker = 'd', s = 125, label = f"Corfidi DS: {'{:.0f}'.format(down_adj)}°/{'{:.0f} kt'.format(cor_d_mag)}")
-    except:
-        cd = ax.scatter(sr_cd_u, sr_cd_v, color = 'deeppink', marker = 'd', s = 125, label = f"Corfidi DS: {f'{down_adj}°/{cor_d_mag} kt'}")
-    try:
-        cu = ax.scatter(sr_cu_u, sr_cu_v, color = 'green', marker = 'd', s = 125, label = f"Corfidi US: {'{:.0f}'.format(up_adj)}°/{'{:.0f} kt'.format(cor_u_mag)}")
-    except:
-        cu = ax.scatter(sr_cu_u, sr_cu_v, color = 'green', marker = 'd', s = 125, label = f"Corfidi US: {f'{up_adj}°/{cor_u_mag} kt'}")
-    try:
-        dtm = ax.scatter(sr_dtm_u, sr_dtm_v, color = 'black', marker = 'v', s = 125, label = f"DTM: {'{:.0f}'.format(dtm_dir_cor)}°/{'{:.0f} kt'.format(dtm_mag)} ")
-    except:
-        dtm = ax.scatter(sr_dtm_u, sr_dtm_v, color = 'black', marker = 'v', s = 125, label = f"DTM: {f'{dtm_dir_cor}°/{dtm_mag} kt'} ")
+        if storm_motion_method == 'User Selected':
+            us = ax.scatter(sr_sm_u, sr_sm_v, color = 'black', marker = 'x', label = f"User SM: {'{:.0f}'.format(sm_dir)}/{'{:.0f}'.format(sm_speed)}", s = 125)
+        if sfc_status != 'None':
+            sfc = ax.scatter(sr_sfc_u, sr_sfc_v, color = 'purple', marker = 'x', s = 85, label = f"Sfc. Wind: {'{:.0f}'.format(sfc_dir)}°/{'{:.0f} kt'.format(sfc_spd)}")
+            plt.plot([sr_sfc_u, sr_u[0]], [sr_sfc_v, sr_v[0]], color="purple", linestyle = '--', linewidth = 2)
 
-    if storm_motion_method == 'User Selected':
-        us = ax.scatter(sr_sm_u, sr_sm_v, color = 'black', marker = 'x', label = f"User SM: {'{:.0f}'.format(sm_dir)}/{'{:.0f}'.format(sm_speed)}", s = 125)
-    if sfc_status != 'None':
-        sfc = ax.scatter(sr_sfc_u, sr_sfc_v, color = 'purple', marker = 'x', s = 85, label = f"Sfc. Wind: {'{:.0f}'.format(sfc_dir)}°/{'{:.0f} kt'.format(sfc_spd)}")
-        plt.plot([sr_sfc_u, sr_u[0]], [sr_sfc_v, sr_v[0]], color="purple", linestyle = '--', linewidth = 2)
+        #Add Colorbar and Fig Text
+        CS = plt.colorbar(l, pad=0.00)
+        CS.set_label('Meters Above Radar')
 
-    #Add Colorbar and Fig Text
-    CS = plt.colorbar(l, pad=0.00)
-    CS.set_label('Meters Above Radar')
+    	plt.figtext(0.91, 0.9, "BS", fontsize = 14, weight = 'bold')
+	    plt.figtext(0.955, 0.9, "SRH", fontsize = 14, weight = 'bold')
+	    plt.figtext(1.01, 0.9, "SRW", fontsize = 14, weight = 'bold')
+	    plt.figtext(1.055, 0.9, "SWζ%", fontsize = 14, weight = 'bold')
+	    plt.figtext(1.11, 0.9, f"SWζ", fontsize = 14, weight = 'bold')
 
-    plt.figtext(0.91, 0.9, "BS", fontsize = 14, weight = 'bold')
-    plt.figtext(0.955, 0.9, "SRH", fontsize = 14, weight = 'bold')
-    plt.figtext(1.01, 0.9, "SRW", fontsize = 14, weight = 'bold')
-    plt.figtext(1.055, 0.9, "SWζ%", fontsize = 14, weight = 'bold')
-    plt.figtext(1.11, 0.9, f"SWζ", fontsize = 14, weight = 'bold')
+	    try:
+		plt.figtext(0.85,0.85, f" 0-500m:", fontsize = 12, weight = 'bold', color = 'purple')
+	    except:
+		plt.figtext(0.85,0.85, f" 0-500m:", fontsize = 12, weight = 'bold', color = 'purple')
+	    try:
+		plt.figtext(0.91,0.85, f"{'{:.0f}'.format(shr005)} kt", fontsize = 12, weight = 'bold', color = 'purple')
+	    except:
+		plt.figtext(0.91,0.85, f"{shr005} kt", fontsize = 12, weight = 'bold', color = 'purple')
+	    try:
+		plt.figtext(0.95,0.85, f"{'{:.0f}'.format(SRH05) * SRH_units:~P}", fontsize = 12, weight = 'bold', color = 'purple')
+	    except:
+		plt.figtext(0.95,0.85, f"{SRH05 * SRH_units:~P}", fontsize = 12, weight = 'bold', color = 'purple')
+	    try:
+		plt.figtext(1.01,0.85, f"{'{:.0f}'.format(SR05)} kt", fontsize = 12, weight = 'bold', color = 'purple')
+	    except:
+		plt.figtext(1.01,0.85, f"{SR05} kt", fontsize = 12, weight = 'bold', color = 'purple')
+	    try:
+		plt.figtext(1.055,0.85, f"{'{:.0f}'.format(swper05) } %", fontsize = 12, weight = 'bold', color = 'purple')
+	    except:
+		plt.figtext(1.055,0.85, f"{swper05} %", fontsize = 12, weight = 'bold', color = 'purple')
+	    try:
+		plt.figtext(1.11,0.85, f"{'{:.3f}'.format(swvort05)} ", fontsize = 12, weight = 'bold', color = 'purple')
+	    except:
+		plt.figtext(1.11,0.85, f"{swvort05} ", fontsize = 12, weight = 'bold', color = 'purple')
 
-    try:
-        plt.figtext(0.85,0.85, f" 0-500m:", fontsize = 12, weight = 'bold', color = 'purple')
-    except:
-        plt.figtext(0.85,0.85, f" 0-500m:", fontsize = 12, weight = 'bold', color = 'purple')
-    try:
-        plt.figtext(0.91,0.85, f"{'{:.0f}'.format(shr005)} kt", fontsize = 12, weight = 'bold', color = 'purple')
-    except:
-        plt.figtext(0.91,0.85, f"{shr005} kt", fontsize = 12, weight = 'bold', color = 'purple')
-    try:
-        plt.figtext(0.95,0.85, f"{'{:.0f}'.format(SRH05) * SRH_units:~P}", fontsize = 12, weight = 'bold', color = 'purple')
-    except:
-        plt.figtext(0.95,0.85, f"{SRH05 * SRH_units:~P}", fontsize = 12, weight = 'bold', color = 'purple')
-    try:
-        plt.figtext(1.01,0.85, f"{'{:.0f}'.format(SR05)} kt", fontsize = 12, weight = 'bold', color = 'purple')
-    except:
-        plt.figtext(1.01,0.85, f"{SR05} kt", fontsize = 12, weight = 'bold', color = 'purple')
-    try:
-        plt.figtext(1.055,0.85, f"{'{:.0f}'.format(swper05) } %", fontsize = 12, weight = 'bold', color = 'purple')
-    except:
-        plt.figtext(1.055,0.85, f"{swper05} %", fontsize = 12, weight = 'bold', color = 'purple')
-    try:
-        plt.figtext(1.11,0.85, f"{'{:.3f}'.format(swvort05)} ", fontsize = 12, weight = 'bold', color = 'purple')
-    except:
-        plt.figtext(1.11,0.85, f"{swvort05} ", fontsize = 12, weight = 'bold', color = 'purple')
+	    try:
+		plt.figtext(0.85,0.80, f" 0-1km: ", fontsize = 12, weight = 'bold', color = 'darkorchid')
+	    except:
+		plt.figtext(0.85,0.80, f" 0-1km: ", fontsize = 12, weight = 'bold', color = 'darkorchid')
+	    try:
+		plt.figtext(0.91,0.80, f"{'{:.0f}'.format(shr01)} kt", fontsize = 12, weight = 'bold', color = 'darkorchid')
+	    except:
+		plt.figtext(0.91,0.80, f"{shr01} kt", fontsize = 12, weight = 'bold', color = 'darkorchid')
+	    try:
+		plt.figtext(0.95,0.80, f"{'{:.0f}'.format(SRH1) * SRH_units:~P}", fontsize = 12, weight = 'bold', color = 'darkorchid')
+	    except:
+		plt.figtext(0.95,0.80, f"{SRH1 * SRH_units}", fontsize = 12, weight = 'bold', color = 'darkorchid')
+	    try:
+		plt.figtext(1.01,0.80, f"{'{:.0f}'.format(SR1) } kt", fontsize = 12, weight = 'bold', color = 'darkorchid')
+	    except:
+		plt.figtext(1.01,0.80, f"{SR1} kt", fontsize = 12, weight = 'bold', color = 'darkorchid')
+	    try:
+		plt.figtext(1.055,0.80, f"{'{:.0f}'.format(swper1) } %", fontsize = 12, weight = 'bold', color = 'darkorchid')
+	    except:
+		plt.figtext(1.055,0.80, f"{swper1} %", fontsize = 12, weight = 'bold', color = 'darkorchid')
+	    try:
+		plt.figtext(1.11,0.80, f"{'{:.3f}'.format(swvort1)} ", fontsize = 12, weight = 'bold', color = 'darkorchid')
+	    except:
+		plt.figtext(1.11,0.80, f"{swvort1} ", fontsize = 12, weight = 'bold', color = 'darkorchid')
 
-    try:
-        plt.figtext(0.85,0.80, f" 0-1km: ", fontsize = 12, weight = 'bold', color = 'darkorchid')
-    except:
-        plt.figtext(0.85,0.80, f" 0-1km: ", fontsize = 12, weight = 'bold', color = 'darkorchid')
-    try:
-        plt.figtext(0.91,0.80, f"{'{:.0f}'.format(shr01)} kt", fontsize = 12, weight = 'bold', color = 'darkorchid')
-    except:
-        plt.figtext(0.91,0.80, f"{shr01} kt", fontsize = 12, weight = 'bold', color = 'darkorchid')
-    try:
-        plt.figtext(0.95,0.80, f"{'{:.0f}'.format(SRH1) * SRH_units:~P}", fontsize = 12, weight = 'bold', color = 'darkorchid')
-    except:
-        plt.figtext(0.95,0.80, f"{SRH1 * SRH_units}", fontsize = 12, weight = 'bold', color = 'darkorchid')
-    try:
-        plt.figtext(1.01,0.80, f"{'{:.0f}'.format(SR1) } kt", fontsize = 12, weight = 'bold', color = 'darkorchid')
-    except:
-        plt.figtext(1.01,0.80, f"{SR1} kt", fontsize = 12, weight = 'bold', color = 'darkorchid')
-    try:
-        plt.figtext(1.055,0.80, f"{'{:.0f}'.format(swper1) } %", fontsize = 12, weight = 'bold', color = 'darkorchid')
-    except:
-        plt.figtext(1.055,0.80, f"{swper1} %", fontsize = 12, weight = 'bold', color = 'darkorchid')
-    try:
-        plt.figtext(1.11,0.80, f"{'{:.3f}'.format(swvort1)} ", fontsize = 12, weight = 'bold', color = 'darkorchid')
-    except:
-        plt.figtext(1.11,0.80, f"{swvort1} ", fontsize = 12, weight = 'bold', color = 'darkorchid')
+	    try:
+		plt.figtext(0.85,0.75, f" 0-3km: ", fontsize = 12, weight = 'bold', color = 'mediumslateblue')
+	    except:
+		plt.figtext(0.85,0.75, f" 0-3km: ", fontsize = 12, weight = 'bold', color = 'mediumslateblue')
+	    try:
+		plt.figtext(0.91,0.75, f"{'{:.0f}'.format(shr03)} kt", fontsize = 12, weight = 'bold', color = 'mediumslateblue')
+	    except:
+		plt.figtext(0.91,0.75, f"{shr03} kt", fontsize = 12, weight = 'bold', color = 'mediumslateblue')
+	    try:
+		plt.figtext(0.95,0.75, f"{'{:.0f}'.format(SRH3) * SRH_units:~P}", fontsize = 12, weight = 'bold', color = 'mediumslateblue')
+	    except:
+		plt.figtext(0.95,0.75, f"{SRH3 * SRH_units}", fontsize = 12, weight = 'bold', color = 'mediumslateblue')
+	    try:
+		plt.figtext(1.01,0.75, f"{'{:.0f}'.format(SR3) } kt", fontsize = 12, weight = 'bold', color = 'mediumslateblue')
+	    except:
+		plt.figtext(1.01,0.75, f"{SR3} kt", fontsize = 12, weight = 'bold', color = 'mediumslateblue')
+	    try:
+		plt.figtext(1.055,0.75, f"{'{:.0f}'.format(swper3) } %", fontsize = 12, weight = 'bold', color = 'mediumslateblue')
+	    except:
+		plt.figtext(1.055,0.75, f"{swper3} %", fontsize = 12, weight = 'bold', color = 'mediumslateblue')
+	    try:
+		plt.figtext(1.11,0.75, f"{'{:.3f}'.format(swvort3)} ", fontsize = 12, weight = 'bold', color = 'mediumslateblue')
+	    except:
+		plt.figtext(1.11,0.75, f"{swvort3} ", fontsize = 12, weight = 'bold', color = 'mediumslateblue')
 
-    try:
-        plt.figtext(0.85,0.75, f" 0-3km: ", fontsize = 12, weight = 'bold', color = 'mediumslateblue')
-    except:
-        plt.figtext(0.85,0.75, f" 0-3km: ", fontsize = 12, weight = 'bold', color = 'mediumslateblue')
-    try:
-        plt.figtext(0.91,0.75, f"{'{:.0f}'.format(shr03)} kt", fontsize = 12, weight = 'bold', color = 'mediumslateblue')
-    except:
-        plt.figtext(0.91,0.75, f"{shr03} kt", fontsize = 12, weight = 'bold', color = 'mediumslateblue')
-    try:
-        plt.figtext(0.95,0.75, f"{'{:.0f}'.format(SRH3) * SRH_units:~P}", fontsize = 12, weight = 'bold', color = 'mediumslateblue')
-    except:
-        plt.figtext(0.95,0.75, f"{SRH3 * SRH_units}", fontsize = 12, weight = 'bold', color = 'mediumslateblue')
-    try:
-        plt.figtext(1.01,0.75, f"{'{:.0f}'.format(SR3) } kt", fontsize = 12, weight = 'bold', color = 'mediumslateblue')
-    except:
-        plt.figtext(1.01,0.75, f"{SR3} kt", fontsize = 12, weight = 'bold', color = 'mediumslateblue')
-    try:
-        plt.figtext(1.055,0.75, f"{'{:.0f}'.format(swper3) } %", fontsize = 12, weight = 'bold', color = 'mediumslateblue')
-    except:
-        plt.figtext(1.055,0.75, f"{swper3} %", fontsize = 12, weight = 'bold', color = 'mediumslateblue')
-    try:
-        plt.figtext(1.11,0.75, f"{'{:.3f}'.format(swvort3)} ", fontsize = 12, weight = 'bold', color = 'mediumslateblue')
-    except:
-        plt.figtext(1.11,0.75, f"{swvort3} ", fontsize = 12, weight = 'bold', color = 'mediumslateblue')
+	    try:
+		plt.figtext(0.85,0.70, f" 0-6km: ", fontsize = 12, weight = 'bold', color = 'mediumblue')
+	    except:
+		plt.figtext(0.85,0.70, f" 0-6km: ", fontsize = 12, weight = 'bold', color = 'mediumblue')
+	    try:
+		plt.figtext(0.91,0.70, f"{'{:.0f}'.format(shr06)} kt", fontsize = 12, weight = 'bold', color = 'mediumblue')
+	    except:
+		plt.figtext(0.91,0.70, f"{shr06} kt", fontsize = 12, weight = 'bold', color = 'mediumblue')
+	    try:
+		plt.figtext(0.95,0.70, f"{'{:.0f}'.format(SRH6) * SRH_units:~P}", fontsize = 12, weight = 'bold', color = 'mediumblue')
+	    except:
+		plt.figtext(0.95,0.70, f"{SRH6 * SRH_units:~P}", fontsize = 12, weight = 'bold', color = 'mediumblue')
+	    try:
+		plt.figtext(1.01,0.70, f"{'{:.0f}'.format(SR6) } kt", fontsize = 12, weight = 'bold', color = 'mediumblue')
+	    except:
+		plt.figtext(1.01,0.70, f"{SR6} kt", fontsize = 12, weight = 'bold', color = 'mediumblue')
+	    try:
+		plt.figtext(1.055,0.70, f"{'{:.0f}'.format(swper6) } %", fontsize = 12, weight = 'bold', color = 'mediumblue')
+	    except:
+		plt.figtext(1.055,0.70, f"{swper6} %", fontsize = 12, weight = 'bold', color = 'mediumblue')
+	    try:
+		plt.figtext(1.11,0.70, f"{'{:.3f}'.format(swvort6)} ", fontsize = 12, weight = 'bold', color = 'mediumblue')
+	    except:
+		plt.figtext(1.11,0.70, f"{swvort6} ", fontsize = 12, weight = 'bold', color = 'mediumblue')
 
-    try:
-        plt.figtext(0.85,0.70, f" 0-6km: ", fontsize = 12, weight = 'bold', color = 'mediumblue')
-    except:
-        plt.figtext(0.85,0.70, f" 0-6km: ", fontsize = 12, weight = 'bold', color = 'mediumblue')
-    try:
-        plt.figtext(0.91,0.70, f"{'{:.0f}'.format(shr06)} kt", fontsize = 12, weight = 'bold', color = 'mediumblue')
-    except:
-        plt.figtext(0.91,0.70, f"{shr06} kt", fontsize = 12, weight = 'bold', color = 'mediumblue')
-    try:
-        plt.figtext(0.95,0.70, f"{'{:.0f}'.format(SRH6) * SRH_units:~P}", fontsize = 12, weight = 'bold', color = 'mediumblue')
-    except:
-        plt.figtext(0.95,0.70, f"{SRH6 * SRH_units:~P}", fontsize = 12, weight = 'bold', color = 'mediumblue')
-    try:
-        plt.figtext(1.01,0.70, f"{'{:.0f}'.format(SR6) } kt", fontsize = 12, weight = 'bold', color = 'mediumblue')
-    except:
-        plt.figtext(1.01,0.70, f"{SR6} kt", fontsize = 12, weight = 'bold', color = 'mediumblue')
-    try:
-        plt.figtext(1.055,0.70, f"{'{:.0f}'.format(swper6) } %", fontsize = 12, weight = 'bold', color = 'mediumblue')
-    except:
-        plt.figtext(1.055,0.70, f"{swper6} %", fontsize = 12, weight = 'bold', color = 'mediumblue')
-    try:
-        plt.figtext(1.11,0.70, f"{'{:.3f}'.format(swvort6)} ", fontsize = 12, weight = 'bold', color = 'mediumblue')
-    except:
-        plt.figtext(1.11,0.70, f"{swvort6} ", fontsize = 12, weight = 'bold', color = 'mediumblue')
+	    try:
+		plt.figtext(0.85,0.65, f" 0-8km: ", fontsize = 12, weight = 'bold', color = 'darkblue')
+	    except:
+		plt.figtext(0.85,0.65, f" 0-8km: ", fontsize = 12, weight = 'bold', color = 'darkblue')
+	    try:
+		plt.figtext(0.91,0.65, f"{'{:.0f}'.format(shr08)} kt", fontsize = 12, weight = 'bold', color = 'darkblue')
+	    except:
+		plt.figtext(0.91,0.65, f"{shr08} kt", fontsize = 12, weight = 'bold', color = 'darkblue')
+	    try:
+		plt.figtext(0.95,0.65, f"{'{:.0f}'.format(SRH8) * SRH_units:~P}", fontsize = 12, weight = 'bold', color = 'darkblue')
+	    except:
+		plt.figtext(0.95,0.65, f"{SRH8 * SRH_units:~P}", fontsize = 12, weight = 'bold', color = 'darkblue')
+	    try:
+		plt.figtext(1.01,0.65, f"{'{:.0f}'.format(SR8) } kt", fontsize = 12, weight = 'bold', color = 'darkblue')
+	    except:
+		plt.figtext(1.01,0.65, f"{SR8} kt", fontsize = 12, weight = 'bold', color = 'darkblue')
+	    try:
+		plt.figtext(1.055,0.65, f"{'{:.0f}'.format(swper8) } %", fontsize = 12, weight = 'bold', color = 'darkblue')
+	    except:
+		plt.figtext(1.055,0.65, f"{swper8} %", fontsize = 12, weight = 'bold', color = 'darkblue')
+	    try:
+		plt.figtext(1.11,0.65, f"{'{:.3f}'.format(swvort8)} ", fontsize = 12, weight = 'bold', color = 'darkblue')
+	    except:
+		plt.figtext(1.11,0.65, f"{swvort8} ", fontsize = 12, weight = 'bold', color = 'darkblue')
 
-    try:
-        plt.figtext(0.85,0.65, f" 0-8km: ", fontsize = 12, weight = 'bold', color = 'darkblue')
-    except:
-        plt.figtext(0.85,0.65, f" 0-8km: ", fontsize = 12, weight = 'bold', color = 'darkblue')
-    try:
-        plt.figtext(0.91,0.65, f"{'{:.0f}'.format(shr08)} kt", fontsize = 12, weight = 'bold', color = 'darkblue')
-    except:
-        plt.figtext(0.91,0.65, f"{shr08} kt", fontsize = 12, weight = 'bold', color = 'darkblue')
-    try:
-        plt.figtext(0.95,0.65, f"{'{:.0f}'.format(SRH8) * SRH_units:~P}", fontsize = 12, weight = 'bold', color = 'darkblue')
-    except:
-        plt.figtext(0.95,0.65, f"{SRH8 * SRH_units:~P}", fontsize = 12, weight = 'bold', color = 'darkblue')
-    try:
-        plt.figtext(1.01,0.65, f"{'{:.0f}'.format(SR8) } kt", fontsize = 12, weight = 'bold', color = 'darkblue')
-    except:
-        plt.figtext(1.01,0.65, f"{SR8} kt", fontsize = 12, weight = 'bold', color = 'darkblue')
-    try:
-        plt.figtext(1.055,0.65, f"{'{:.0f}'.format(swper8) } %", fontsize = 12, weight = 'bold', color = 'darkblue')
-    except:
-        plt.figtext(1.055,0.65, f"{swper8} %", fontsize = 12, weight = 'bold', color = 'darkblue')
-    try:
-        plt.figtext(1.11,0.65, f"{'{:.3f}'.format(swvort8)} ", fontsize = 12, weight = 'bold', color = 'darkblue')
-    except:
-        plt.figtext(1.11,0.65, f"{swvort8} ", fontsize = 12, weight = 'bold', color = 'darkblue')
+	    plt.figtext(0.90,0.60, "Storm Motion/Sfc Wind", fontsize = 14, weight = 'bold')
 
-    plt.figtext(0.90,0.60, "Storm Motion/Sfc Wind", fontsize = 14, weight = 'bold')
+	    plt.legend(loc = 'right', bbox_to_anchor=(1.885, 0.55), ncol=2, fancybox=True, 
+		    shadow=True, fontsize=11, facecolor='white', framealpha=1.0, labelcolor='k', borderpad=0.7)
+	    #rts = datetime.strftime(radar_time, "%Y-%m-%d %H:%M:%S")
+	    rts = datetime.strftime(shifted_time, "%Y-%m-%d %H:%M:%S")
+	    plt.title(f'SR Hodograph from {radar_label} Valid: {rts}', fontsize = 16, weight = 'bold')
 
-    plt.legend(loc = 'right', bbox_to_anchor=(1.885, 0.55), ncol=2, fancybox=True, 
-            shadow=True, fontsize=11, facecolor='white', framealpha=1.0, labelcolor='k', borderpad=0.7)
-    #rts = datetime.strftime(radar_time, "%Y-%m-%d %H:%M:%S")
-    rts = datetime.strftime(shifted_time, "%Y-%m-%d %H:%M:%S")
-    plt.title(f'SR Hodograph from {radar_label} Valid: {rts}', fontsize = 16, weight = 'bold')
+	    try:
+		#Plot SRW wrt Hgt
+		sr_plot = plt.axes((0.895, 0.10, 0.095, 0.32))
+		plt.figtext(0.94, 0.45, f'SR Wind (kts)', weight='bold', color='black', fontsize=12, ha='center')
+		sr_plot.set_ylim(0,3000)
+		sr_plot.set_xlim(sr_spd[0:31].min() -6,sr_spd[0:31].max() +6)
+		sr_plot.plot(sr_spd[0:11], zlevels[0:11], color = 'purple', linewidth = 3)
+		sr_plot.plot(sr_spd[10:31], zlevels[10:31], color = 'red', linewidth = 3)
+		plt.ylabel('Height Above Radar (m)')
+		plt.xlabel('SRW (kt)')
+		plt.grid(axis='y')
+	    except:
+		pass
 
-    try:
-        #Plot SRW wrt Hgt
-        sr_plot = plt.axes((0.895, 0.10, 0.095, 0.32))
-        plt.figtext(0.94, 0.45, f'SR Wind (kts)', weight='bold', color='black', fontsize=12, ha='center')
-        sr_plot.set_ylim(0,3000)
-        sr_plot.set_xlim(sr_spd[0:31].min() -6,sr_spd[0:31].max() +6)
-        sr_plot.plot(sr_spd[0:11], zlevels[0:11], color = 'purple', linewidth = 3)
-        sr_plot.plot(sr_spd[10:31], zlevels[10:31], color = 'red', linewidth = 3)
-        plt.ylabel('Height Above Radar (m)')
-        plt.xlabel('SRW (kt)')
-        plt.grid(axis='y')
-    except:
-        pass
+	    try:
+		#Plot SW Vort Perc wrt Hgt
+		swv_plot = plt.axes((1.05, 0.10, 0.095, 0.32))
+		plt.figtext(1.1, 0.45, f'SWζ%', weight='bold', color='black', fontsize=12, ha='center')
+		swv_plot.set_ylim(0,3000)
+		swv_plot.set_xlim(00,101)
+		swv_plot.plot(swvper[0:11], zlevels[0:11], color = 'purple', linewidth = 3)
+		swv_plot.plot(swvper[10:31], zlevels[10:31], color = 'red', linewidth = 3)
+		plt.ylabel('Height Above Radar (m)')
+		plt.xlabel('SWζ%')
+		plt.grid(axis='y')
+	    except:
+		pass
 
-    try:
-        #Plot SW Vort Perc wrt Hgt
-        swv_plot = plt.axes((1.05, 0.10, 0.095, 0.32))
-        plt.figtext(1.1, 0.45, f'SWζ%', weight='bold', color='black', fontsize=12, ha='center')
-        swv_plot.set_ylim(0,3000)
-        swv_plot.set_xlim(00,101)
-        swv_plot.plot(swvper[0:11], zlevels[0:11], color = 'purple', linewidth = 3)
-        swv_plot.plot(swvper[10:31], zlevels[10:31], color = 'red', linewidth = 3)
-        plt.ylabel('Height Above Radar (m)')
-        plt.xlabel('SWζ%')
-        plt.grid(axis='y')
-    except:
-        pass
+	    #Add Title and Legend and Save Figure
+	    del sfc_angle, sfc_u, sfc_v
+	    sr_hodo_fp = HODO_IMAGES / f'SR_Hodograph_{radar_label}_{r_date}_{r_time}.png'
+	    plt.savefig(sr_hodo_fp, bbox_inches='tight')
+	except:
+	    #Create Figure
+	    fig = plt.figure(figsize=(16,9), facecolor='white', edgecolor="black", linewidth = 6)
+	    ax=fig.add_subplot(1,1,1)
+	    if range_type == 'Dynamic':
+		#Determine Component Ring For Dynamic
+		magar = []
+		magar.append(speed.max())
+		magar.append(mean_mag)
+		magar.append(rmag)
+		magar.append(lmag)
+		magar.append(cor_d_mag)
+		magar.append(cor_u_mag)
+		magar.append(dtm_mag)
+		max2 = max(magar)
+		hodo_rang = round_up_nearest(max2+10)
+		h = Hodograph(ax, component_range = hodo_rang)
+	    if range_type == 'Static':
+		h = Hodograph(ax, component_range = static_value)
+	    h.add_grid(increment = 10)
 
-    #Add Title and Legend and Save Figure
-    del sfc_angle, sfc_u, sfc_v
-    sr_hodo_fp = HODO_IMAGES / f'SR_Hodograph_{radar_label}_{r_date}_{r_time}.png'
-    plt.savefig(sr_hodo_fp, bbox_inches='tight')
+	    #Create Colormap
+	    boundaries = np.array([0,1000,3000,6000,8000])
+	    colors = ['purple', 'red', 'green', 'gold']
+
+	    #Plot Hodograph and Winds
+	    l = h.plot_colormapped(u_avg, v_avg, zlevels, intervals = boundaries, colors = colors)
+	    try:
+		mw = ax.scatter(u_mean, v_mean, color = 'darkorange', marker = 's', label = f"0-6km MW: {'{:.0f}'.format(mean_dirmet)}°/{'{:.0f} kt'.format(mean_mag)}", s = 125)
+	    except:
+		mw = ax.scatter(u_mean, v_mean, color = 'darkorange', marker = 's', label = f"0-6km MW: {mean_dirmet}°/{mean_mag} kt", s = 125)
+	    try:
+		rm = ax.scatter(rmu, rmv, color = 'red', marker = 'o', label = f"Bunkers RM: {'{:.0f}'.format(rang)}°/{'{:.0f} kt'.format(rmag)}", s = 125)
+	    except:
+		rm = ax.scatter(rmu, rmv, color = 'red', marker = 'o', label = f"Bunkers RM: {rang}°/{rmag} kt", s = 125)
+	    try:
+		lm = ax.scatter(lmu, lmv, color = 'blue', marker = 'o', label = f"Bunkers LM: {'{:.0f}'.format(lang)}°/{'{:.0f} kt'.format(lmag)}", s = 125)
+	    except:
+		lm = ax.scatter(lmu, lmv, color = 'blue', marker = 'o', label = f"Bunkers LM: {f'{lang}'}°/{f'{lmag} kt'}", s = 125)
+	    try:
+		cd = ax.scatter(cvd_u, cvd_v, color = 'deeppink', marker = 'd', s = 125, label = f"Corfidi DS: {'{:.0f}'.format(down_adj)}°/{'{:.0f} kt'.format(cor_d_mag)}")
+	    except:
+		cd = ax.scatter(cvd_u, cvd_v, color = 'deeppink', marker = 'd', s = 125, label = f"Corfidi DS: {f'{down_adj}°/{cor_d_mag} kt'}")
+	    try:
+		cu = ax.scatter(cvu_u, cvu_v, color = 'green', marker = 'd', s = 125, label = f"Corfidi US: {'{:.0f}'.format(up_adj)}°/{'{:.0f} kt'.format(cor_u_mag)}")
+	    except:
+		cu = ax.scatter(cvu_u, cvu_v, color = 'green', marker = 'd', s = 125, label = f"Corfidi US: {f'{up_adj}°/{cor_u_mag} kt'}")
+	    try:
+		dtm = ax.scatter(dtm_u, dtm_v, color = 'black', marker = 'v', s = 125, label = f"DTM: {'{:.0f}'.format(dtm_dir_cor)}°/{'{:.0f} kt'.format(dtm_mag)} ")
+	    except:
+		dtm = ax.scatter(dtm_u, dtm_v, color = 'black', marker = 'v', s = 125, label = f"DTM: {f'{dtm_dir_cor}°/{dtm_mag} kt'} ")
+
+	    if storm_motion_method == 'User Selected':
+		us = ax.scatter(u_sm, v_sm, color = 'black', marker = 'x', label = f"User SM: {'{:.0f}'.format(sm_dir)}/{'{:.0f}'.format(sm_speed)}", s = 125)
+	    if sfc_status != 'None':
+		sfc = ax.scatter(sfc_u, sfc_v, color = 'purple', marker = 'x', s = 85, label = f"Sfc. Wind: {'{:.0f}'.format(sfc_dir)}°/{'{:.0f} kt'.format(sfc_spd)}")
+		plt.plot([sfc_u, u_avg[0]], [sfc_v, v_avg[0]], color="purple", linestyle = '--', linewidth = 2)
+
+	    #Add Colorbar and Fig Text
+	    CS = plt.colorbar(l, pad=0.00)
+	    CS.set_label('Meters Above Radar')
+
+	    plt.figtext(0.91, 0.9, "BS", fontsize = 14, weight = 'bold')
+	    plt.figtext(0.955, 0.9, "SRH", fontsize = 14, weight = 'bold')
+	    plt.figtext(1.01, 0.9, "SRW", fontsize = 14, weight = 'bold')
+	    plt.figtext(1.055, 0.9, "SWζ%", fontsize = 14, weight = 'bold')
+	    plt.figtext(1.11, 0.9, f"SWζ", fontsize = 14, weight = 'bold')
+
+	    try:
+		plt.figtext(0.85,0.85, f" 0-500m:", fontsize = 12, weight = 'bold', color = 'purple')
+	    except:
+		plt.figtext(0.85,0.85, f" 0-500m:", fontsize = 12, weight = 'bold', color = 'purple')
+	    try:
+		plt.figtext(0.91,0.85, f"{'{:.0f}'.format(shr005)} kt", fontsize = 12, weight = 'bold', color = 'purple')
+	    except:
+		plt.figtext(0.91,0.85, f"{shr005} kt", fontsize = 12, weight = 'bold', color = 'purple')
+	    try:
+		plt.figtext(0.95,0.85, f"{'{:.0f}'.format(SRH05) * SRH_units:~P}", fontsize = 12, weight = 'bold', color = 'purple')
+	    except:
+		plt.figtext(0.95,0.85, f"{SRH05 * SRH_units}", fontsize = 12, weight = 'bold', color = 'purple')
+	    try:
+		plt.figtext(1.01,0.85, f"{'{:.0f}'.format(SR05) } kt", fontsize = 12, weight = 'bold', color = 'purple')
+	    except:
+		plt.figtext(1.01,0.85, f"{SR05} kt", fontsize = 12, weight = 'bold', color = 'purple')
+	    try:
+		plt.figtext(1.055,0.85, f"{'{:.0f}'.format(swper05) } %", fontsize = 12, weight = 'bold', color = 'purple')
+	    except:
+		plt.figtext(1.055,0.85, f"{swper05} %", fontsize = 12, weight = 'bold', color = 'purple')
+	    try:
+		plt.figtext(1.11,0.85, f"{'{:.3f}'.format(swvort05)} ", fontsize = 12, weight = 'bold', color = 'purple')
+	    except:
+		plt.figtext(1.11,0.85, f"{swvort05} ", fontsize = 12, weight = 'bold', color = 'purple')
+
+	    try:
+		plt.figtext(0.85,0.80, f" 0-1km: ", fontsize = 12, weight = 'bold', color = 'darkorchid')
+	    except:
+		plt.figtext(0.85,0.80, f" 0-1km: ", fontsize = 12, weight = 'bold', color = 'darkorchid')
+	    try:
+		plt.figtext(0.91,0.80, f"{'{:.0f}'.format(shr01)} kt", fontsize = 12, weight = 'bold', color = 'darkorchid')
+	    except:
+		plt.figtext(0.91,0.80, f"{shr01} kt", fontsize = 12, weight = 'bold', color = 'darkorchid')
+	    try:
+		plt.figtext(0.95,0.80, f"{'{:.0f}'.format(SRH1) * SRH_units:~P}", fontsize = 12, weight = 'bold', color = 'darkorchid')
+	    except:
+		plt.figtext(0.95,0.80, f"{SRH1 * SRH_units:~P}", fontsize = 12, weight = 'bold', color = 'darkorchid')
+	    try:
+		plt.figtext(1.01,0.80, f"{'{:.0f}'.format(SR1) } kt", fontsize = 12, weight = 'bold', color = 'darkorchid')
+	    except:
+		plt.figtext(1.01,0.80, f"{SR1} kt", fontsize = 12, weight = 'bold', color = 'darkorchid')
+	    try:
+		plt.figtext(1.055,0.80, f"{'{:.0f}'.format(swper1) } %", fontsize = 12, weight = 'bold', color = 'darkorchid')
+	    except:
+		plt.figtext(1.055,0.80, f"{swper1} %", fontsize = 12, weight = 'bold', color = 'darkorchid')
+	    try:
+		plt.figtext(1.11,0.80, f"{'{:.3f}'.format(swvort1)} ", fontsize = 12, weight = 'bold', color = 'darkorchid')
+	    except:
+		plt.figtext(1.11,0.80, f"{swvort1} ", fontsize = 12, weight = 'bold', color = 'darkorchid')
+
+	    try:
+		plt.figtext(0.85,0.75, f" 0-3km: ", fontsize = 12, weight = 'bold', color = 'mediumslateblue')
+	    except:
+		plt.figtext(0.85,0.75, f" 0-3km: ", fontsize = 12, weight = 'bold', color = 'mediumslateblue')
+	    try:
+		plt.figtext(0.91,0.75, f"{'{:.0f}'.format(shr03)} kt", fontsize = 12, weight = 'bold', color = 'mediumslateblue')
+	    except:
+		plt.figtext(0.91,0.75, f"{shr03} kt", fontsize = 12, weight = 'bold', color = 'mediumslateblue')
+	    try:
+		plt.figtext(0.95,0.75, f"{'{:.0f}'.format(SRH3) * SRH_units:~P}", fontsize = 12, weight = 'bold', color = 'mediumslateblue')
+	    except:
+		plt.figtext(0.95,0.75, f"{SRH3 * SRH_units:~P}", fontsize = 12, weight = 'bold', color = 'mediumslateblue')
+	    try:
+		plt.figtext(1.01,0.75, f"{'{:.0f}'.format(SR3) } kt", fontsize = 12, weight = 'bold', color = 'mediumslateblue')
+	    except:
+		plt.figtext(1.01,0.75, f"{SR3} kt", fontsize = 12, weight = 'bold', color = 'mediumslateblue')
+	    try:
+		plt.figtext(1.055,0.75, f"{'{:.0f}'.format(swper3) } %", fontsize = 12, weight = 'bold', color = 'mediumslateblue')
+	    except:
+		plt.figtext(1.055,0.75, f"{swper3} %", fontsize = 12, weight = 'bold', color = 'mediumslateblue')
+	    try:
+		plt.figtext(1.11,0.75, f"{'{:.3f}'.format(swvort3)} ", fontsize = 12, weight = 'bold', color = 'mediumslateblue')
+	    except:
+		plt.figtext(1.11,0.75, f"{swvort3} ", fontsize = 12, weight = 'bold', color = 'mediumslateblue')
+
+	    try:
+		plt.figtext(0.85,0.70, f" 0-6km: ", fontsize = 12, weight = 'bold', color = 'mediumblue')
+	    except:
+		plt.figtext(0.85,0.70, f" 0-6km: ", fontsize = 12, weight = 'bold', color = 'mediumblue')
+	    try:
+		plt.figtext(0.91,0.70, f"{'{:.0f}'.format(shr06)} kt", fontsize = 12, weight = 'bold', color = 'mediumblue')
+	    except:
+		plt.figtext(0.91,0.70, f"{shr06} kt", fontsize = 12, weight = 'bold', color = 'mediumblue')
+	    try:
+		plt.figtext(0.95,0.70, f"{'{:.0f}'.format(SRH6) * SRH_units:~P}", fontsize = 12, weight = 'bold', color = 'mediumblue')
+	    except:
+		plt.figtext(0.95,0.70, f"{SRH6 * SRH_units:~P}", fontsize = 12, weight = 'bold', color = 'mediumblue')
+	    try:
+		plt.figtext(1.01,0.70, f"{'{:.0f}'.format(SR6) } kt", fontsize = 12, weight = 'bold', color = 'mediumblue')
+	    except:
+		plt.figtext(1.01,0.70, f"{SR6} kt", fontsize = 12, weight = 'bold', color = 'mediumblue')
+	    try:
+		plt.figtext(1.055,0.70, f"{'{:.0f}'.format(swper6) } %", fontsize = 12, weight = 'bold', color = 'mediumblue')
+	    except:
+		plt.figtext(1.055,0.70, f"{swper6} %", fontsize = 12, weight = 'bold', color = 'mediumblue')
+	    try:
+		plt.figtext(1.11,0.70, f"{'{:.3f}'.format(swvort6)} ", fontsize = 12, weight = 'bold', color = 'mediumblue')
+	    except:
+		plt.figtext(1.11,0.70, f"{swvort6} ", fontsize = 12, weight = 'bold', color = 'mediumblue')
+
+	    try:
+		plt.figtext(0.85,0.65, f" 0-8km: ", fontsize = 12, weight = 'bold', color = 'darkblue')
+	    except:
+		plt.figtext(0.85,0.65, f" 0-8km: ", fontsize = 12, weight = 'bold', color = 'darkblue')
+	    try:
+		plt.figtext(0.91,0.65, f"{'{:.0f}'.format(shr08)} kt", fontsize = 12, weight = 'bold', color = 'darkblue')
+	    except:
+		plt.figtext(0.91,0.65, f"{shr08} kt", fontsize = 12, weight = 'bold', color = 'darkblue')
+	    try:
+		plt.figtext(0.95,0.65, f"{'{:.0f}'.format(SRH8) * SRH_units:~P}", fontsize = 12, weight = 'bold', color = 'darkblue')
+	    except:
+		plt.figtext(0.95,0.65, f"{SRH8 * SRH_units:~P}", fontsize = 12, weight = 'bold', color = 'darkblue')
+	    try:
+		plt.figtext(1.01,0.65, f"{'{:.0f}'.format(SR8) } kt", fontsize = 12, weight = 'bold', color = 'darkblue')
+	    except:
+		plt.figtext(1.01,0.65, f"{SR8} kt", fontsize = 12, weight = 'bold', color = 'darkblue')
+	    try:
+		plt.figtext(1.055,0.65, f"{'{:.0f}'.format(swper8) } %", fontsize = 12, weight = 'bold', color = 'darkblue')
+	    except:
+		plt.figtext(1.055,0.65, f"{swper8} %", fontsize = 12, weight = 'bold', color = 'darkblue')
+	    try:
+		plt.figtext(1.11,0.65, f"{'{:.3f}'.format(swvort8)} ", fontsize = 12, weight = 'bold', color = 'darkblue')
+	    except:
+		plt.figtext(1.11,0.65, f"{swvort8} ", fontsize = 12, weight = 'bold', color = 'darkblue')
+
+	    plt.figtext(0.90,0.60, "Storm Motion/Sfc Wind", fontsize = 14, weight = 'bold')
+
+	    plt.legend(loc = 'right', bbox_to_anchor=(1.885, 0.55),
+		    ncol=2, fancybox=True, shadow=True, fontsize=11, facecolor='white', framealpha=1.0,
+		        labelcolor='k', borderpad=0.7)
+	    #rts = datetime.strftime(radar_time, "%Y-%m-%d %H:%M:%S")
+	    rts = datetime.strftime(shifted_time, "%Y-%m-%d %H:%M:%S")
+	    hodo_title = f'Hodograph from {radar_label} Valid {rts} UTC'
+	    plt.title(hodo_title, fontsize = 16, weight = 'bold')
+            plt.figtext(0.55, 0.75, f'SR Hodograph Unavailable \n Due to Poor Data Quality', weight='bold', color='red', fontsize=24, ha='center')
+	    try:
+		#Plot SRW wrt Hgt
+		sr_plot = plt.axes((0.895, 0.10, 0.095, 0.32))
+		plt.figtext(0.94, 0.45, f'SR Wind (kts)', weight='bold', color='black', fontsize=12, ha='center')
+		sr_plot.set_ylim(0,3000)
+		sr_plot.set_xlim(sr_spd[0:31].min() -6,sr_spd[0:31].max() +6)
+		sr_plot.plot(sr_spd[0:11], zlevels[0:11], color = 'purple', linewidth = 3)
+		sr_plot.plot(sr_spd[10:31], zlevels[10:31], color = 'red', linewidth = 3)
+		plt.ylabel('Height Above Radar (m)')
+		plt.xlabel('SRW (kt)')
+		plt.grid(axis='y')
+	    except:
+		pass
+
+	    try:
+		#Plot SW Vort Perc wrt Hgt
+		swv_plot = plt.axes((1.05, 0.10, 0.095, 0.32))
+		plt.figtext(1.1, 0.45, f'SWζ%', weight='bold', color='black', fontsize=12, ha='center')
+		swv_plot.set_ylim(0,3000)
+		swv_plot.set_xlim(00,101)
+		swv_plot.plot(swvper[0:11], zlevels[0:11], color = 'purple', linewidth = 3)
+		swv_plot.plot(swvper[10:31], zlevels[10:31], color = 'red', linewidth = 3)
+		plt.ylabel('Height Above Radar (m)')
+		plt.xlabel('SWζ%')
+		plt.grid(axis='y')
+	    except:
+		pass
+	    #Add Title and Legend and Save Figure
+	        
 
 def execute_multiprocessing():
     # Limited to 8 processes on the AWS instance
