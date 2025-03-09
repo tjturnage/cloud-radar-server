@@ -143,8 +143,8 @@ def setup_paths_and_dirs(n_intervals, session_id):
 
 # Names (without extensions) of various pre-processing scripts. Needed for script
 # monitoring and/or cancelling.
-scripts_list = ["Nexrad", "munger", "obs_placefile", "nse", "wgrib2",
-                "get_data", "process", "hodo_plot"]
+scripts_list = ["Nexrad", "munger", "lsrs", "obs_placefile", "ProbSevere", "probsevere_placefile", 
+                "nse", "wgrib2", "get_data", "process", "hodo_plot"]
 
 # Names of surface placefiles for monitoring script
 surface_placefiles = [
