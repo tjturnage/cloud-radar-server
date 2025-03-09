@@ -7,10 +7,9 @@
 from __future__ import print_function
 import sys
 from datetime import datetime
-import pytz
 from pathlib import Path
-#from config import POLLING_DIR
 
+import pytz
 
 class UpdateDirList():
     """
@@ -72,7 +71,6 @@ class UpdateDirList():
         output = ''
         for file in self.filelist[0:3]:
             line = f'{file.stat().st_size} {file.parts[-1]}\n'
-            #print(line)
             output = output + line
         with open(self.dirlist_file, mode='w', encoding='utf-8') as f:
             f.write(output)
@@ -85,12 +83,11 @@ class UpdateDirList():
         """
         output = ''
         for file in self.filelist:
-            #print(file.parts[-1])
             file_timestamp = self.datetime_object_from_timestring(file.parts[-1])
             if file_timestamp < self.current_playback_time:
-                print(f'file: {file_timestamp} is older than {self.current_playback_time}')
+                #print(f'file: {file_timestamp} is older than {self.current_playback_time}')
                 line = f'{file.stat().st_size} {file.parts[-1]}'
-                print(f'adding: {line}')
+                #print(f'adding: {line}')
                 output = output + line+"\n"
         with open(self.dirlist_file, mode='w', encoding='utf-8') as f:
             f.write(output)
