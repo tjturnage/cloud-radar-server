@@ -101,9 +101,10 @@ class Munger():
                 # unsure if ungzip'ed file needs to be passed to debz.py
                 # Edit 6/28: keep original compressed file used for radar status tracking.
                 filename_str = filename_str[:-3]
-                cp_command_str = f'cp {filename_str} {self.user_downloads_dir}/{filename_str}'
-                print(cp_command_str)
-                os.system(cp_command_str)
+                # The following commands were erroring out (no .gz extension specified). 
+                # Not needed anymore, since copying is handled in app.py.
+                #cp_command_str = f'cp {filename_str} {self.user_downloads_dir}/{filename_str}'
+                #os.system(cp_command_str)
                 new_filename = f'{filename_str}.uncompressed'
                 command_string = f'gunzip -c {filename_str} > {new_filename}'
                 os.system(command_string)

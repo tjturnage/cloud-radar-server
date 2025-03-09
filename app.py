@@ -251,6 +251,12 @@ def remove_files_and_dirs(cfg) -> None:
             for name in dirs:
                 os.rmdir(os.path.join(root, name))
 
+    # Remove the original file_times.txt file. This will get re-created by munger.py
+    try:
+        os.remove(f"{cfg['ASSETS_DIR']}/file_times.txt")
+    except FileNotFoundError:
+        pass
+
 
 def remove_munged_radar_files(cfg) -> None:
     """
@@ -262,7 +268,9 @@ def remove_munged_radar_files(cfg) -> None:
     downloaded by the user if desired.
     """
     regex_pattern = r'^(.{4})(\d{8})_(\d{6})$'
-    raw_pattern = r'^(.{4})(\d{8})_(\d{6})_(V\d{2})$'
+    #raw_pattern = r'^(.{4})(\d{8})_(\d{6})_(V\d{2})$'
+    # Searches for filenames with either Vxx or .gz. Older radar files are gzipped.
+    raw_pattern = r'^.{4}\d{8}_\d{6}(_V\d{2}|\.gz)$'
     for root, _, files in os.walk(cfg['RADAR_DIR']):
         if Path(root).name == 'downloads':
             for name in files:
@@ -783,14 +791,6 @@ def run_with_cancel_button(cfg, sim_times, radar_info):
     This version of the script-launcher trying to work in cancel button
     """
     UpdateHodoHTML('None', cfg['HODOGRAPHS_DIR'], cfg['HODOGRAPHS_PAGE'])
-    # writes a black event_times.txt file to the assets directory
-    args = [str(sim_times['simulation_seconds_shift']), 'None', cfg['RADAR_DIR'],
-            cfg['EVENTS_HTML_PAGE'], cfg['EVENTS_TEXT_FILE']]
-    res = call_function(utils.exec_script, Path(cfg['EVENT_TIMES_SCRIPT_PATH']), args,
-                        cfg['SESSION_ID'])
-    if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
-        return
-
 
     # based on list of selected radars, create a dictionary of radar metadata
     try:
@@ -984,7 +984,8 @@ def run_with_cancel_button(cfg, sim_times, radar_info):
 
 
 @app.callback(
-    Output('show_script_progress', 'children', allow_duplicate=True),
+    #Output('show_script_progress', 'children', allow_duplicate=True),
+    Output('sim_times', 'data', allow_duplicate=True),
     [Input('run_scripts_btn', 'n_clicks'),
      State('configs', 'data'),
      State('sim_times', 'data'),
@@ -1002,9 +1003,9 @@ def run_with_cancel_button(cfg, sim_times, radar_info):
         (Output('new_radar_selection', 'disabled'), True, False),
         (Output('run_scripts_btn', 'disabled'), True, False),
         # (Output('playback_clock_store', 'disabled'), True, False),
-        (Output('confirm_radars_btn', 'disabled'),
-         True, False),  # added radar confirm btn
+        (Output('confirm_radars_btn', 'disabled'), True, False),  # added radar confirm btn
         (Output('playback_btn', 'disabled'), True, False),  # add start sim btn
+        (Output('playback_btn', 'children'), 'Launch Simulation', 'Launch Simulation'), 
         (Output('refresh_polling_btn', 'disabled'), True, False),
         (Output('pause_resume_playback_btn', 'disabled'), True, True), # add pause/resume btn
         # wait to enable change time dropdown
@@ -1016,6 +1017,11 @@ def launch_simulation(n_clicks, configs, sim_times, radar_info):
     This function is called when the "Run Scripts" button is clicked. It will execute the
     necessary scripts to simulate radar operations, create hodographs, and transpose placefiles.
     """
+    # Update the simulation times. 
+    event_dt = datetime.strptime(sim_times['event_start_str'], '%Y-%m-%d %H:%M')
+    event_dt = pytz.utc.localize(event_dt)
+    sim_times = make_simulation_times(event_dt, sim_times['event_duration'])
+
     if n_clicks == 0:
         raise PreventUpdate
     else:
@@ -1030,6 +1036,8 @@ def launch_simulation(n_clicks, configs, sim_times, radar_info):
             #     print(f"Failed to send email: {e}")
             remove_files_and_dirs(configs)
             run_with_cancel_button(configs, sim_times, radar_info)
+    
+    return sim_times
 
 ################################################################################################
 # ----------------------------- Monitoring and reporting script status  ------------------------
@@ -1195,6 +1203,7 @@ def run_transpose_script(PLACEFILES_DIR, sim_times, radar_info) -> None:
     Output('speed_dropdown', 'disabled'),
     Output('playback_specs', 'data', allow_duplicate=True),
     Output('refresh_polling_btn', 'disabled', allow_duplicate=True),
+    Output('run_scripts_btn', 'disabled', allow_duplicate=True),
     [Input('playback_btn', 'n_clicks'),
      State('playback_speed_store', 'data'),
      State('configs', 'data'),
@@ -1240,11 +1249,13 @@ def initiate_playback(_nclick, playback_speed, cfg, sim_times, radar_info):
                     radar, sim_times['playback_clock_str'], cfg['POLLING_DIR'])
 
     refresh_polling_btn_disabled = False
+    run_scripts_btn_disabled = False
     if playback_running:
         refresh_polling_btn_disabled = True
+        run_scripts_btn_disabled = True
 
     return (btn_text, btn_disabled, False, playback_running, start, style, end, style, options,
-            False, playback_specs, refresh_polling_btn_disabled)
+            False, playback_specs, refresh_polling_btn_disabled, run_scripts_btn_disabled)
 
 
 @app.callback(
@@ -1256,6 +1267,7 @@ def initiate_playback(_nclick, playback_speed, cfg, sim_times, radar_info):
     Output('current_readout', 'style'),
     Output('playback_specs', 'data', allow_duplicate=True),
     Output('refresh_polling_btn', 'disabled', allow_duplicate=True),
+    Output('run_scripts_btn', 'disabled', allow_duplicate=True),
     [Input('pause_resume_playback_btn', 'n_clicks'),
      Input('playback_timer', 'n_intervals'),
      Input('change_time', 'value'),
@@ -1390,11 +1402,13 @@ def manage_clock_(nclicks, _n_intervals, new_time, _playback_running, playback_s
     specs['style'] = style
 
     refresh_polling_btn_disabled = True
+    run_scripts_btn_disabled = True
     if playback_paused:
         refresh_polling_btn_disabled = False
+        run_scripts_btn_disabled = False
     return (specs['interval_disabled'], specs['status'], specs['style'],
             specs['playback_btn_text'], readout_time, style, specs,
-            refresh_polling_btn_disabled)
+            refresh_polling_btn_disabled, run_scripts_btn_disabled)
 
 ################################################################################################
 # ----------------------------- Playback Speed Callbacks  --------------------------------------
@@ -1507,6 +1521,14 @@ def refresh_polling(n_clicks, cfg, sim_times, radar_info):
         os.remove(f"{cfg['ASSETS_DIR']}/file_times.txt")
     except FileNotFoundError:
         pass
+
+    # Delete the uncompressed/munged radar files from the data directory. Needed if a user
+    # canceled a previous refresh before mungering finishes, leaving orphaned .uncompressed
+    # files in the radar data directory.
+    try:
+        remove_munged_radar_files(cfg)
+    except KeyError as e:
+        logging.exception("Error removing munged radar files ", exc_info=True)
 
     # --------- Munger ---------------------------------------------------------
     # This for loop removes the now-stale munged radar files. We do this in a 
@@ -1684,7 +1706,7 @@ def make_events_placefile(contents, filename, cfg):
     """
     This function creates the Event Notification placefile for the radar simulation
     """
-    top_section = 'Refresh: 1\
+    top_section = 'RefreshSeconds: 5\
     \nThreshold: 999\
     \nTitle: Event Notifications -- for radar simulation\
     \nColor: 255 200 255\
