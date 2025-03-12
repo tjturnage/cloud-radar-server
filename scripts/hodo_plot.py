@@ -1197,7 +1197,7 @@ def create_hodos(filename):
         try:
             plt.figtext(0.85,0.80, f" 0-1km: ", fontsize = 12, weight = 'bold', color = 'darkorchid')
         except:
-                plt.figtext(0.85,0.80, f" 0-1km: ", fontsize = 12, weight = 'bold', color = 'darkorchid')
+            plt.figtext(0.85,0.80, f" 0-1km: ", fontsize = 12, weight = 'bold', color = 'darkorchid')
         try:
             plt.figtext(0.91,0.80, f"{'{:.0f}'.format(shr01)} kt", fontsize = 12, weight = 'bold', color = 'darkorchid')
         except:
@@ -1267,7 +1267,7 @@ def create_hodos(filename):
         try:
             plt.figtext(1.11,0.70, f"{'{:.3f}'.format(swvort6)} ", fontsize = 12, weight = 'bold', color = 'mediumblue')
         except:
-                plt.figtext(1.11,0.70, f"{swvort6} ", fontsize = 12, weight = 'bold', color = 'mediumblue')
+            plt.figtext(1.11,0.70, f"{swvort6} ", fontsize = 12, weight = 'bold', color = 'mediumblue')
 
         try:
             plt.figtext(0.85,0.65, f" 0-8km: ", fontsize = 12, weight = 'bold', color = 'darkblue')
@@ -1276,7 +1276,7 @@ def create_hodos(filename):
         try:
             plt.figtext(0.91,0.65, f"{'{:.0f}'.format(shr08)} kt", fontsize = 12, weight = 'bold', color = 'darkblue')
         except:
-                plt.figtext(0.91,0.65, f"{shr08} kt", fontsize = 12, weight = 'bold', color = 'darkblue')
+            plt.figtext(0.91,0.65, f"{shr08} kt", fontsize = 12, weight = 'bold', color = 'darkblue')
         try:
             plt.figtext(0.95,0.65, f"{'{:.0f}'.format(SRH8) * SRH_units:~P}", fontsize = 12, weight = 'bold', color = 'darkblue')
         except:
