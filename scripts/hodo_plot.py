@@ -1118,8 +1118,8 @@ def create_hodos(filename):
             max2 = max(magar)
             hodo_rang = round_up_nearest(max2+10)
             h = Hodograph(ax, component_range = hodo_rang)
-            if range_type == 'Static':
-                h = Hodograph(ax, component_range = static_value)
+        if range_type == 'Static':
+            h = Hodograph(ax, component_range = static_value)
         h.add_grid(increment = 10)
 
         #Create Colormap
