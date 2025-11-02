@@ -1,11 +1,10 @@
-import os, sys
+import sys
 import argparse
 import numpy as np
 from glob import glob
 from datetime import datetime, timedelta, timezone
 import pytz
-from time import time
-import re
+import logging
 
 import calc.compute as compute
 import calc.filtering as filtering
@@ -22,8 +21,9 @@ from utils.cmd import execute
 from utils.logs import logfile
 from pathlib import Path
 
-script_path = os.path.dirname(os.path.realpath(__file__))
-log = logfile("nse", f"{Path(__file__).parents[2]}/data/logs")
+# Global logger placeholder
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())  # prevents "No handler found" warnings
 
 def import_for_testing(testfile):
     import pickle
@@ -209,6 +209,9 @@ def main():
     ap.add_argument('-outputpath', dest='output_path', help='Where to output placefiles.')
     ap.add_argument('-logfilepath', dest='logfile_path', help='Where to store log files.')
     args = ap.parse_args()
+
+    global log 
+    log = logfile("nse", f"{Path(args.data_path).parent}/logs")
     log.info("============================== process.py ==============================\n")
     log.info(args)
     parse_logic(args)   # Set and QC user inputs. Pass for downloading

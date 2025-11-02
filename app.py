@@ -52,7 +52,7 @@ def create_logfile(LOG_DIR):
     Generate the main logfile for the download and processing scripts. 
     """
     logging.basicConfig(
-        filename=f'{LOG_DIR}/scripts.txt',  # Log file location
+        filename=f'{LOG_DIR}/app.log',  # Log file location
         # Log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
         level=logging.INFO,
         format='%(levelname)s %(asctime)s :: %(message)s',

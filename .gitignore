@@ -172,3 +172,11 @@ flask/assets/placefiles/
 cache 
 file_system_backend
 cache_dir
+
+# Ignore output folders /assets/ and /data/
+assets/[0-9]*/
+data/[0-9]*/
+
+# Maintain other named folders like /assets/docs/ or /assets/iconfiles/
+!assets/docs/
+!assets/iconfiles/
