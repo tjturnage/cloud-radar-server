@@ -45,7 +45,7 @@ mimetypes.add_type("text/plain", ".list", True)
 # Stops flask from writing "POST /_dash-update-component HTTP/1.1" 200 to logs
 log = logging.getLogger('werkzeug')  # 'werkzeug' is the logger used by Flask
 log.setLevel(logging.WARNING)  # You can set it to ERROR or CRITICAL as well
-
+logging.Formatter.converter = time.gmtime  # Global change to UTC
 
 def create_logfile(LOG_DIR):
     """
@@ -515,7 +515,7 @@ def run_scripts(scripts_to_run, sim_times, configs, radar_info, lsr_delay):
 )
 def enable_disable_outputs(output_options, output_selections):
     """
-    If user selections "Original radar only" from the output checklist, disable hodograph
+    If user selects "Original radar only" from the output checklist, disable hodograph
     generation and lsr delay. Placefile generation is still ok and is left unchanged. 
 
     LSR delay is also disabled if surface placefiles are turned off.
@@ -709,6 +709,10 @@ def update_sim_times(n_clicks_run_scripts, n_clicks_refresh_polling, yr, mo, dy,
     Update the sim_times dictionary and send to dcc.Store object when either the
     Run Scripts button or the Refresh Polling button is clicked. This logic
     ensures sim_times is updated immediately after either button is clicked.
+     
+    This is a **CRITICAL** component of the application workflow, ensuring the sim 
+    time specifications are always updated and available to all callbacks that need them,
+    even if a user leaves the application idle. 
     """
     triggered = ctx.triggered_id
     if triggered == 'run_scripts_btn':
@@ -753,6 +757,7 @@ def update_sim_times(n_clicks_run_scripts, n_clicks_refresh_polling, yr, mo, dy,
     Output('playback_btn', 'children', allow_duplicate=True),
     Output('change_time', 'disabled', allow_duplicate=True),
     Output('speed_dropdown', 'disabled', allow_duplicate=True),
+    Output('upload-data', 'disabled', allow_duplicate=True),
     Output('download_radar_link', 'disabled'),
     Output('download_placefile_link', 'disabled'),
     # Time and output selections
@@ -806,7 +811,8 @@ def button_control(_n, configs, radar_info, output_selections, playback_status,
     cancel_scripts_disabled,
     playback_btn_children,
     change_time_disabled,
-    change_speed_disabled
+    change_speed_disabled,
+    upload_data_disabled,
     ) = _update_button_states(script_status, disable_sim_flag)
 
     # If scripts previously completed, allow polling refresh.
@@ -846,9 +852,9 @@ def button_control(_n, configs, radar_info, output_selections, playback_status,
     confirm_radars_btn_disabled, new_radar_selection_disabled, output_selection_display
     ) = _update_ui_status(playback_status, script_status)
     
-    return (run_scripts_btn_disabled, playback_btn_disabled, 
-            refresh_polling_btn_disabled, pause_resume_playback_btn_disabled, 
-            cancel_scripts_disabled, playback_btn_children, change_time_disabled, change_speed_disabled,
+    return (run_scripts_btn_disabled, playback_btn_disabled, refresh_polling_btn_disabled, 
+            pause_resume_playback_btn_disabled, cancel_scripts_disabled, playback_btn_children, 
+            change_time_disabled, change_speed_disabled, upload_data_disabled, 
             dl_radar_link_disabled, dl_placefile_link_disabled, year_disabled, 
             month_disabled, day_disabled, hour_disabled, minute_disabled, 
             duration_disabled, output_selection_display, radar_quantity_disabled, 
@@ -926,7 +932,8 @@ def _update_button_states(script_status, disable_sim_flag):
         'cancel_scripts_disabled': no_update,
         'playback_btn_children': no_update,
         'change_time_disabled': no_update,
-        'change_speed_disabled': no_update
+        'change_speed_disabled': no_update,
+        'upload_data_disabled': no_update,
     }
 
     # Mapping of script_status to specific updates
@@ -938,6 +945,7 @@ def _update_button_states(script_status, disable_sim_flag):
             'pause_resume_playback_btn_disabled': True,
             'cancel_scripts_disabled': False,
             'playback_btn_children': 'Launch Simulation',
+            'upload_data_disabled': True,
         },
         'completed': {
             'run_scripts_btn_disabled': False,
@@ -946,6 +954,7 @@ def _update_button_states(script_status, disable_sim_flag):
             'pause_resume_playback_btn_disabled': True,
             'cancel_scripts_disabled': True,
             'playback_btn_children': 'Launch Simulation',
+            'upload_data_disabled': False,
         },
         'cancelled': {
             'run_scripts_btn_disabled': False,
@@ -954,9 +963,11 @@ def _update_button_states(script_status, disable_sim_flag):
             'pause_resume_playback_btn_disabled': True,
             'cancel_scripts_disabled': True,
             'playback_btn_children': 'Launch Simulation',
+            'upload_data_disabled': False,
         },
         'sim launched': {
-            'change_time_disabled': False
+            'change_time_disabled': False,
+            'upload_data_disabled': True,
         }
     }
 
@@ -981,7 +992,8 @@ def _update_button_states(script_status, disable_sim_flag):
         state['cancel_scripts_disabled'],
         state['playback_btn_children'],
         state['change_time_disabled'],
-        state['change_speed_disabled']
+        state['change_speed_disabled'],
+        state['upload_data_disabled'],
     )
 ################################################################################################
 # ----------------------------- Monitoring and reporting script status  ------------------------
@@ -1007,15 +1019,19 @@ def _update_button_states(script_status, disable_sim_flag):
 def raise_modal_alert(yr, mo, dy, hr, mn, dur, outputs, num_radars, graph_click, 
                       new_radar, configs, modal_count):
     """
-    If user makes a change to any of the inputs following completion of processing 
+    If the user makes a change to any of the inputs following completion of processing 
     scripts, serve an alert modal indicating that all simulation clock buttons will be
     disabled until processing scripts are run again. Function sets disable_sim_flag to 
     True, which is then picked up by the button monitoring interval to make the changes
     to the clock/sim playback buttons.
 
-    This only happens if original_radar_only is not selected and if the simulation hasn't
-    already been launched. In this latter case, all of the simulation-dependent items 
-    seem to be stored in the local playback_specs store object.
+    Exceptions:
+    -----------
+    This only happens if original_radar_only is NOT selected and if the simulation hasn't
+    already been launched. In this latter case: (1) all of the simulation-dependent items 
+    seem to be stored in the local playback_specs store object, and (2) we don't want to
+    force a user to re-run the pre-processing scripts in the middle of a sim due to an 
+    inadvertent input change. 
 
     This modal will appear once between each run scripts/refresh polling click. 
     """
