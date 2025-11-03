@@ -4,7 +4,7 @@ This avoids having to recompile everything in the first normal run of process.py
 significantly speeding up the initial run time of the operational scripts.
 """
 
-import pickle
+import pickle, lzma
 from numba import set_num_threads
 from calc import derived
 from sharptab.winds import vec2comp
@@ -17,8 +17,8 @@ from time import time
 
 if __name__ == '__main__':
     set_num_threads(4)
-    fname = '../../tests/standard.pickle'
-    with open(fname, 'rb') as f: data = pickle.load(f)
+    fname = '../../tests/standard.xz'
+    with lzma.open(fname, 'rb') as f: data = pickle.load(f)
 
     pres = data['pres']
     tmpc = data['tmpc']
