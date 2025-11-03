@@ -1,3 +1,9 @@
+"""
+Script to cache jitted functions following a change to compute and/or derived code.
+This avoids having to recompile everything in the first normal run of process.py, thus 
+significantly speeding up the initial run time of the operational scripts.
+"""
+
 import pickle
 from numba import set_num_threads
 from calc import derived
@@ -20,6 +26,7 @@ if __name__ == '__main__':
     wspd = data['wspd']
     wdir = data['wdir']
     hght = data['hght']
+    vvel = data['vvel']
     lons = data['lons']
     lats = data['lats']
 
@@ -28,10 +35,12 @@ if __name__ == '__main__':
     vort = derived.vorticity(u, v, lons, lats)
 
     t1 = time()
-    results = worker(pres, tmpc, hght, dwpc, wspd, wdir, vort, 
+    print("Entering slow compilation loop")
+    results = worker(pres, tmpc, hght, dwpc, wspd, wdir, vvel, vort, 
                      List(SCALAR_PARAMS.keys()), List(VECTOR_PARAMS.keys()))
     t2 = time()
-    results = worker(pres, tmpc, hght, dwpc, wspd, wdir, vort,
+    print("Entering fast loop")
+    results = worker(pres, tmpc, hght, dwpc, wspd, wdir, vvel, vort,
                      List(SCALAR_PARAMS.keys()), List(VECTOR_PARAMS.keys()))
     t3 = time()
 

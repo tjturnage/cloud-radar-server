@@ -57,7 +57,7 @@ THREDDS_CONFIGS = {
     'RUC': 'model-ruc130anl'
 }
 
-vars = ':(HGT|TMP|SPFH|UGRD|VGRD|PRES):'
+vars = ':(HGT|TMP|SPFH|UGRD|VGRD|PRES|VVEL):'
 # 13-km CONUS
 #grid_info = 'lambert:262.5:38.5 -120:360:13545.000000 23:215:13545.000000'
 

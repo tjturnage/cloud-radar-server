@@ -6,12 +6,17 @@ from numba import njit
 import numpy as np
 
 from sharptab.constants import MS2KTS, KTS2MS
+from metpy.constants import Rd, g
 import sharptab.interp as interp
 import sharptab.winds as winds
 import sharptab.utils as utils
 import sharptab.params as params
 import sharptab.thermo as thermo
 from calc.vector import transform
+
+import metpy.calc as mpcalc
+from metpy.units import units
+from metpy.interpolate import interpolate_to_isosurface
 
 @njit
 def hail_parms(prof, mupcl):
@@ -67,7 +72,9 @@ def snsq(prof):
     
     # Seems like the snowsquall parameter is capped online. 
     snsq = np.clip(snsq, 0, 5.4)
-    return snsq
+    sfc_tw = (1.8 * tw) + 32.
+
+    return snsq, sfc_tw
 
 @njit
 def nst(cape3km, mlcin, vort, prof):
@@ -319,3 +326,87 @@ def dcape(prof):
     #drtemp = tp2 # Downrush temp in Celsius
 
     return tote
+
+##########################################################################################
+# Winter parameters
+##########################################################################################
+@njit
+def dgz(prof):
+    # Should we use wetbulb here instead of air temp? Since SPC uses the later, stick with 
+    # air temp for now, but something to consider. 
+    p_bottom = params.temp_lvl(prof, -12, wetbulb=False)
+    p_top = params.temp_lvl(prof, -17, wetbulb=False)
+    height_bot = interp.hght(prof, p_bottom)
+    height_top = interp.hght(prof, p_top)
+    depth = height_top - height_bot
+
+    dp = -1
+    p = np.arange(p_bottom, p_top+dp, dp)
+    rh = interp.generic_interp_pres(np.log10(p), prof.logp[::-1], prof.relh[::-1])
+    # to microbars/s (<0 is upwards)
+    omega = interp.generic_interp_pres(np.log10(p), prof.logp[::-1], prof.omeg[::-1]) * 10
+    mean_rh = utils.weighted_average(rh, p)
+    mean_omega = utils.weighted_average(omega, p)
+    dwpt = interp.generic_interp_pres(np.log10(p), prof.logp[::-1], prof.dwpc[::-1])
+    w = thermo.mixratio(p, dwpt)
+    pwat = (((w[:-1]*w[1:])/2 * (p[:-1]-p[1:])) * 0.00040173).sum()
+    oprh = mean_omega * pwat * (mean_rh/100.)
+
+    # Mask out values where RH is less than 60%
+    depth = np.where(mean_rh > 60, depth, 0)
+    mean_omega = np.where(mean_rh > 60, mean_omega, 0)
+    oprh = np.where(mean_rh > 60, oprh, 0)
+
+    return depth, mean_omega, oprh
+
+def frontogenesis(tmpc, dwpc, pres, wspd, wdir, dx, dy, level=850):
+    tmpc = tmpc * units.degC
+    dwpc = dwpc * units.degC
+    pres = pres * units.hPa
+    wspd = (wspd * KTS2MS) * units('m/s')
+    wdir = wdir * units.degrees
+    level = level * units.hPa
+
+    #temperature = interpolate_to_isosurface(pres, tmpc, level)
+    temperature = extrapolate_to_isobaric(tmpc, dwpc, pres, level)
+    theta = mpcalc.potential_temperature(level, temperature)
+
+    u, v = mpcalc.wind_components(wspd, wdir)
+    u_lev = interpolate_to_isosurface(pres, u, level)
+    v_lev = interpolate_to_isosurface(pres, v, level)
+
+    # Convert from K / m / s to K / 100km / 3hr
+    fgen = mpcalc.frontogenesis(theta, u_lev, v_lev, dx, dy) * 1080000000
+    fgen = np.nan_to_num(fgen) # Added to avoid "holes" in data with nans
+    return fgen.magnitude, temperature.magnitude
+
+def extrapolate_to_isobaric(tmpc, dwpc, pres, p_target):
+    """
+    Places temperature data onto a specified isobaric surface, extrapolating values that 
+    are below the ground via the hypsometric equation and the surface virtual temperature, 
+    and interpolating values above the ground. 
+    """
+
+    t_plev = interpolate_to_isosurface(pres, tmpc, p_target)
+    p0 = pres[0, :, :]
+    below_ground_mask = p_target > p0 
+    #t0 = np.mean(tmpc[0:3, :,:], axis=0)
+    #td0 = np.mean(dwpc[0:3, :,:], axis=0)
+    t0 = tmpc[0, :, :]
+    td0 = dwpc[0, :, :]
+    tv0 = mpcalc.virtual_temperature_from_dewpoint(p0, t0, td0)
+
+    L = 6.5 * units('kelvin / kilometer')
+    H = (Rd * tv0 / g).to('meter')
+
+    # Height difference using hydrostatic relation
+    delta_z = H * np.log(p0 / (p_target))
+
+    # Apply lapse-rate-based extrapolation
+    t_extrap = t0.to('K') - (L * delta_z.to('kilometer'))
+
+    # Fill in the extrapolated values
+    t_plev[below_ground_mask] = t_extrap[below_ground_mask].to('degC')
+    return t_plev
+
+

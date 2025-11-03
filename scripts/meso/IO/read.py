@@ -80,6 +80,7 @@ def read_data(filename):
         heights = grb.select(name='Geopotential height', typeOfLevel=level_type)
         pressure = grb.select(name='Pressure', typeOfLevel=level_type)
         specific_humidity = grb.select(name='Specific humidity', typeOfLevel=level_type)
+        omega = grb.select(name='Vertical velocity', typeOfLevel=level_type)
 
     # If this is isobaric data, we need to "drop in" the surface fields and mask out
     # data that's below the ground. Additionally, we need to check if the data is stored
@@ -92,6 +93,7 @@ def read_data(filename):
         t2m = grb.select(name='2 metre temperature')[0].values
         u10m = grb.select(name='10 metre U wind component')[0].values
         v10m = grb.select(name='10 metre V wind component')[0].values
+        omega = grb.select(name='Vertical velocity', typeOfLevel=level_type)
 
         try:
             rh = grb.select(name='Relative humidity', typeOfLevel=level_type)
@@ -128,6 +130,7 @@ def read_data(filename):
     dwpc = np.full_like(hght, 0)
     wdir = np.full_like(hght, 0)
     wspd = np.full_like(hght, 0)
+    vvel = np.full_like(hght, 0)
 
     # First build the height array. Do this in order, starting with the surface level
     # Note that array will still be flipped if order = -1, we'll take care of that later.
@@ -141,12 +144,14 @@ def read_data(filename):
                 tmpc[lev] = t2m - ZEROCNK
                 dwpc[lev] = td2m - ZEROCNK
                 wdir[lev], wspd[lev] = winds.wind_vecs(u10m, v10m)
+                vvel[lev] == np.zeros_like(psfc)
             else:
                 pres[lev] = np.full_like(heights[0].values, heights[lev-delta].level)
                 tmpc[lev] = temperatures[lev-delta].values - 273.15
                 wdir[lev], wspd[lev] = winds.wind_vecs(uwind[lev-delta].values,
                                                        vwind[lev-delta].values)
                 hght[lev] = heights[lev-delta].values
+                vvel[lev] = omega[lev-delta].values
                 try:
                     dwpc[lev] = thermo.dewpoint_from_rh(temperatures[lev-delta].values,
                                                         rh[lev-delta].values/100)
@@ -172,6 +177,7 @@ def read_data(filename):
     wdir = np.array(wdir[::order], dtype='float64')
     wspd = np.array(wspd[::order], dtype='float64') * MS2KTS
     pres = np.array(pres[::order], dtype='float64')
+    vvel = np.array(vvel[::order], dtype='float64')
 
     model = 'HRRR'
     if 'rap' in filename:
@@ -184,6 +190,7 @@ def read_data(filename):
         'wdir': wdir,
         'wspd': wspd,
         'pres': pres,
+        'vvel': vvel,
         'lons': lons,
         'lats': lats,
         'cycle_time': sfc.analDate,

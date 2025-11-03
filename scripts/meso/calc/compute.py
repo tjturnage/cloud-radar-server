@@ -16,10 +16,12 @@ from sharptab.constants import KTS2MS
 from calc import derived
 from utils.timing import timeit
 
+import metpy.calc as mpcalc
+
 float_array = types.float64[:,:] # No type expressions allowed in jitted functions
 @timeit
 @njit(parallel=True, cache=True)
-def worker(pres, tmpc, hght, dwpc, wspd, wdir, vort, SCALARS, VECTORS):
+def worker(pres, tmpc, hght, dwpc, wspd, wdir, vvel, vort, SCALARS, VECTORS):
     """
     While numba massively speeds up our computations, we're limited in how we store and
     process our data. A dictionary registry of parameter calculations doesn't work, so
@@ -52,6 +54,7 @@ def worker(pres, tmpc, hght, dwpc, wspd, wdir, vort, SCALARS, VECTORS):
     --------
     d : Numba typed Dictionary
         Dictionary containing the derived values. [Key,j,i]
+
     """
 
     # Declare 'jit-able' dictionary and fill it with empty arrays
@@ -64,12 +67,13 @@ def worker(pres, tmpc, hght, dwpc, wspd, wdir, vort, SCALARS, VECTORS):
     for vector in VECTORS:
         d[vector+'_u'] = np.zeros((tmpc.shape[1], tmpc.shape[2]), dtype='float64')
         d[vector+'_v'] = np.zeros((tmpc.shape[1], tmpc.shape[2]), dtype='float64')
-        
+
     for j in prange(tmpc.shape[1]):
         for i in prange(tmpc.shape[2]):
             prof = profile.create_profile(pres=pres[:,j,i], tmpc=tmpc[:,j,i],
                                           hght=hght[:,j,i], dwpc=dwpc[:,j,i],
-                                          wspd=wspd[:,j,i], wdir=wdir[:,j,i])
+                                          wspd=wspd[:,j,i], wdir=wdir[:,j,i],
+                                          omeg=vvel[:,j,i])
 
             # Compile the big jitted methods. This will slow down the very 1st iteration.
             mlpcl = params.parcelx(prof, flag=4)
@@ -99,10 +103,12 @@ def worker(pres, tmpc, hght, dwpc, wspd, wdir, vort, SCALARS, VECTORS):
                 d['lr03km'][j,i] = derived.lapse_rate(prof, lower=0, upper=3000)
             if 'mllcl' in SCALARS:
                 d['mllcl'][j,i] = mlpcl.lclhght
-            if 'snsq' in SCALARS:
-                d['snsq'][j,i] = derived.snsq(prof)
             if 'dcape' in SCALARS:
                 d['dcape'][j,i] = derived.dcape(prof) 
+            
+            # Winter parameters
+            if 'snsq' in SCALARS:
+                d['snsq'][j,i], d['sfctw'][j,i] = derived.snsq(prof)
 
             # Vectors: returned as (u, v) tuples
             if 'ebwd' in VECTORS:
@@ -134,6 +140,22 @@ def worker(pres, tmpc, hght, dwpc, wspd, wdir, vort, SCALARS, VECTORS):
             if 'nst' in SCALARS: d['nst'][j,i] = derived.nst(d['cape3km'][j,i],
                                                              d['mlcin'][j,i], vort[j,i],
                                                              prof)
+                
+    # Embedding calls to derived.dgz within the main loop above results in bad data 
+    # in the effective inflow calculations. For some reason, the values of pbot and ptop 
+    # which are stored in variable eff_inflow get messed up. Can't figure out what the 
+    # issue is, as any references to these should only be local within their corresponding
+    # function's scope. Moving derived.dgz into a separate loop here seems to solve the 
+    # issue. Suspect the issue is with numba itself, but unsure. 
+    for j in prange(tmpc.shape[1]):
+        for i in prange(tmpc.shape[2]):
+            prof = profile.create_profile(pres=pres[:,j,i], tmpc=tmpc[:,j,i],
+                                          hght=hght[:,j,i], dwpc=dwpc[:,j,i],
+                                          wspd=wspd[:,j,i], wdir=wdir[:,j,i],
+                                          omeg=vvel[:,j,i])
+            if 'dgzdepth' in SCALARS:
+                d['dgzdepth'][j,i], d['dgzomega'][j,i], d['oprh'][j,i] = derived.dgz(prof)
+
     return d
 
 def sharppy_calcs(**kwargs):
@@ -150,6 +172,7 @@ def sharppy_calcs(**kwargs):
     wdir = kwargs.get('wdir')
     wspd = kwargs.get('wspd')
     pres = kwargs.get('pres')
+    vvel = kwargs.get('vvel')
     lons = kwargs.get('lons')
     lats = kwargs.get('lats')
 
@@ -158,8 +181,14 @@ def sharppy_calcs(**kwargs):
     vort = derived.vorticity(u, v, lons, lats)
 
     # Convert list of dictionary keys to numba typed list.
-    ret = worker(pres, tmpc, hght, dwpc, wspd, wdir, vort, List(SCALAR_PARAMS.keys()),
+    ret = worker(pres, tmpc, hght, dwpc, wspd, wdir, vvel, vort, List(SCALAR_PARAMS.keys()),
                  List(VECTOR_PARAMS.keys()))
+
+    if '925fgen' in SCALAR_PARAMS:
+        dx, dy = mpcalc.lat_lon_grid_deltas(lons, lats)
+        ret['850fgen'], ret['850T'] = derived.frontogenesis(tmpc, dwpc, pres, wspd, wdir, dx, dy, level=850)
+        ret['700fgen'], ret['700T'] = derived.frontogenesis(tmpc, dwpc, pres, wspd, wdir, dx, dy, level=700)
+        ret['925fgen'], ret['925T'] = derived.frontogenesis(tmpc, dwpc, pres, wspd, wdir, dx, dy, level=925)
 
     # Converison back to a 'normal' Python dictionary
     output = {}
