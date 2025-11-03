@@ -1,11 +1,10 @@
-import os, sys
+import sys
 import argparse
 import numpy as np
 from glob import glob
 from datetime import datetime, timedelta, timezone
 import pytz
-from time import time
-import re
+import logging
 
 import calc.compute as compute
 import calc.filtering as filtering
@@ -22,8 +21,9 @@ from utils.cmd import execute
 from utils.logs import logfile
 from pathlib import Path
 
-script_path = os.path.dirname(os.path.realpath(__file__))
-log = logfile("nse", f"{Path(__file__).parents[2]}/data/logs")
+# Global logger placeholder
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())  # prevents "No handler found" warnings
 
 def import_for_testing(testfile):
     import pickle
@@ -75,10 +75,9 @@ def create_placefiles(data, output_path, realtime=False):
     plot_arrays = []
     for i in range(len(data)):
         arr = data[i]
-        prof_data = {'pres':arr['pres'], 'tmpc':arr['tmpc'],
-                     'dwpc':arr['dwpc'], 'hght':arr['hght'],
-                     'wdir':arr['wdir'], 'wspd':arr['wspd'],
-                     'lons':arr['lons'], 'lats':arr['lats']}
+        prof_data = {'pres':arr['pres'], 'tmpc':arr['tmpc'], 'dwpc':arr['dwpc'], 
+                     'hght':arr['hght'], 'wdir':arr['wdir'], 'wspd':arr['wspd'], 
+                     'vvel':arr['vvel'], 'lons':arr['lons'], 'lats':arr['lats']}
         plot_arrays.append(compute.sharppy_calcs(**prof_data))
 
     # Add the model run metadata
@@ -209,6 +208,9 @@ def main():
     ap.add_argument('-outputpath', dest='output_path', help='Where to output placefiles.')
     ap.add_argument('-logfilepath', dest='logfile_path', help='Where to store log files.')
     args = ap.parse_args()
+
+    global log 
+    log = logfile("nse", f"{Path(args.data_path).parent}/logs")
     log.info("============================== process.py ==============================\n")
     log.info(args)
     parse_logic(args)   # Set and QC user inputs. Pass for downloading

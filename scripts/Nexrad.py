@@ -41,7 +41,7 @@ class NexradDownloader:
         self.download = download
         self.radar_files_dict = {}
         self.bucket = boto3.resource('s3', config=Config(signature_version=botocore.UNSIGNED,
-                                        user_agent_extra='Resource')).Bucket('noaa-nexrad-level2')
+                                        user_agent_extra='Resource')).Bucket('unidata-nexrad-level2')
 
         self.prefix_day_one, self.prefix_day_two = self.make_prefix()
         self.download_directory = Path(f"{RADAR_DIR}/{self.radar_id}/downloads")

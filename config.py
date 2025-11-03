@@ -18,6 +18,14 @@ BASE_DIR = Path('/data/cloud-radar-server')
 LINK_BASE = "https://rssic.nws.noaa.gov/assets"
 CLOUD = True
 PLATFORM = 'AWS'
+parts = Path.cwd().parts
+# For any directories running from within /data/dev, utilize the rssic-dev page
+if 'dev' in parts:
+    idx = parts.index('cloud-radar-server')
+    BASE_DIR = Path(*parts[0:idx+1])
+    LINK_BASE = "https://rssic-dev.nws.noaa.gov/assets"
+    CLOUD = False
+    PLATFORM = 'CLOUD_DEV'
 # In order to get this work on my dev and work laptop
 if sys.platform.startswith('darwin'):
     parts = Path.cwd().parts
@@ -26,13 +34,6 @@ if sys.platform.startswith('darwin'):
     LINK_BASE = "http://localhost:8051/assets"
     CLOUD = False
     PLATFORM = 'DARWIN'
-if os.getlogin() == 'lee.carlaw':
-    parts = Path.cwd().parts
-    idx = parts.index('cloud-radar-server')
-    BASE_DIR = Path(*parts[0:idx+1])
-    LINK_BASE = "https://rssic-dev.nws.noaa.gov/assets"
-    CLOUD = False
-    PLATFORM = 'CLOUD_DEV'
 if sys.platform.startswith('win'):
     parts = Path.cwd().parts
     idx = parts.index('cloud-radar-server')
@@ -111,7 +112,7 @@ def setup_paths_and_dirs(n_intervals, session_id):
         dirs['MODEL_DIR'] = f"{dirs['DATA_DIR']}/model_data"
         dirs['RADAR_DIR'] = f"{dirs['DATA_DIR']}/radar"
         dirs['PROBSEVERE_DIR'] = f"{dirs['DATA_DIR']}/probsevere"
-        dirs['LOG_DIR'] = f"{dirs['BASE_DIR']}/data/logs"
+        dirs['LOG_DIR'] = f"{dirs['DATA_DIR']}/logs"
 
         # Need to be updated
         dirs['LINK_BASE'] = f"{LINK_BASE}/{session_id}"

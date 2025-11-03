@@ -1,6 +1,8 @@
 import os
 import logging
+import time 
 #from configs import LOG_DIR
+logging.Formatter.converter = time.gmtime  # Global change to UTC
 
 def logfile(logname, log_dir):
     """

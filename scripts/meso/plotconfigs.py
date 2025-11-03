@@ -16,11 +16,27 @@ SCALAR_PARAMS = {
     'mllcl': 'Mixed-Layer LCL (m)',
     'nst': 'Non-Supercell Tornado Parameter',
     'deviance': 'Perceived Tornado Deviance',
-    'snsq': 'Snow Squall Parameter',
-    'dcape': 'Downdraft CAPE (J/kg)',
     #'fzl-lfc-diff': 'Freezing Level - MU LFC thickness (m)',
     #'el-lfc-diff': 'MU Parcel EL - LFC thickness (m)',
     #'mu-el': 'MU Parcel Equilibrium Level (m)',
+    'dcape': 'Downdraft CAPE (J/kg)',
+
+    # Winter parameters
+    'snsq': 'Snow Squall Parameter',
+    'sfctw': 'Surface Wetbulb Temperature (F)', # auto-generated during snsq step
+
+    # dgzdepth, dgzomega, and oprh are masked if the mean RH in the DGZ is < 60%. 
+    # Additionally masked if the surface tw is >= 40 F (see below).
+    'dgzdepth': 'Dendritic Growth Layer Depth (m)',
+    'dgzomega': 'Dendritic Growth Layer Omega (-microbars/sec)',
+    'oprh': 'DGZ Omega, RH, and PWAT',
+    
+    '925fgen': '925 mb frontogenesis (K/100 km/3 hr)',
+    '925T': '925 mb temperature (C)',
+    '850fgen': '850 mb frontogenesis (K/100 km/3 hr)',
+    '850T': '850 mb temperature (C)',
+    '700fgen': '700 mb frontogenesis (K/100 km/3 hr)',
+    '700T': '700 mb temperature (C)',
 }
 
 VECTOR_PARAMS = {
@@ -39,6 +55,9 @@ BUNDLES = {
 #    'ML CAPE-CIN': ['mlcin_cf', 'mlcin', 'mlcape'],
 #    'bundle_1': ['cape3km', 'shr3'],
 #    'low-level-lapse-rates': ['lr03km', 'lr03km_cf']
+    '925MB': ['925T', '925fgen'],
+    '850MB': ['850T', '850fgen'],
+    '700MB': ['700T', '700fgen'],
 }
 
 ##########################################################################################
@@ -48,6 +67,20 @@ BUNDLES = {
 # Specifying either the `fill_levels` or `fill_colors` keywords will cause a separate
 # contour-filled placefile to be output. These will have `_cf` appended to the filename.
 ##########################################################################################
+
+# Configurations for isobaric temperature plots
+temperature_levels = [-40, -38, -36, -34, -32, -30, -28, -26, -24, -22, -20, -18, -16, -14,
+                      -12, -10, -8, -6, -4, -2, 0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20]
+temperature_cols = ['#4595f8', '#4595f8', '#4595f8', '#4595f8', '#4595f8', '#4595f8',
+                    '#4595f8', '#4595f8', '#4595f8', '#4595f8', '#4595f8', '#4595f8',
+                    '#4595f8', '#4595f8', '#4595f8', '#4595f8', '#4595f8', '#4595f8', 
+                    '#4595f8', '#4595f8', '#4595f8', '#ed6257', '#ed6257', '#ed6257', 
+                    '#ed6257', '#ed6257', '#ed6257', '#ed6257', '#ed6257', '#ed6257',
+                    '#ed6257', '#ed6257']
+idx = temperature_levels.index(0)
+temperature_lws = [1] * len(temperature_cols)
+temperature_lws[idx] = 2
+
 PLOTCONFIGS = {
     'mllcl': {
         'colors': ['#438a2d','#438a2d','#71d054','#71d054','#000000','#000000','#000000',
@@ -158,6 +191,75 @@ PLOTCONFIGS = {
         'linewidths': [1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2]
     },
 
+    # Winter parameters
+    'snsq': {
+        'levels': [0.1, 0.5, 1, 1.5, 2, 2.5, 3, 4, 5, 6],
+        'linewidths': [1, 1, 1, 1, 2, 2, 2, 2, 2, 2],
+        'colors': ['#244e83', '#458ff7', '#50b0eb', '#6be8e9', '#8467c6', '#8835e2',
+                   '#7a1681', '#ea33f7', '#f3b0b9']
+    },
+    
+    'sfctw': {
+        'levels': [26, 28, 30, 32, 34, 36, 38],
+        'colors': ['#5fa3f6', '#5fa3f6', '#5fa3f6', '#9956ec', '#ed5f54', '#ed5f54', 
+                   '#ed5f54', '#ed5f54'],
+        'linewidths': [1, 1, 1, 2, 1, 1, 1],
+    }, 
+
+    'dgzdepth': {
+        'levels': [800, 1000, 1400, 1800, 2200, 2600, 3000],
+        'colors': ['#9956ec'],
+        'linewidths': [1, 2, 2, 2, 2, 2, 2],
+    },
+
+    'dgzomega': {
+        'levels': [-32, -28, -24, -20, -16, -14, -10, -8, -6, -4, -2, -1],
+        'colors': ['#9956ec'],
+        'linewidths': [2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1],
+    },
+
+    'oprh': {
+        'levels': [-2, -1, -0.5],
+        'colors': ['#f3b0b9', '#ea33f7', '#50b0eb'],
+        'linewidths': [3, 2, 1],
+    },
+
+    '925fgen': {
+        'levels': [1, 2, 3, 4, 6, 8, 10],
+        'colors': ['#7a1681'],
+        'linewidths': [1],
+    },
+
+    '850fgen': {
+        'levels': [1, 2, 3, 4, 6, 8, 10],
+        'colors': ['#7a1681'],
+        'linewidths': [1],
+    },
+
+    '700fgen': {
+        'levels': [1, 2, 3, 4, 6, 8, 10],
+        'colors': ['#7a1681'],
+        'linewidths': [1],
+    },
+
+    '925T': {
+        'levels': temperature_levels,
+        'colors': temperature_cols,
+        'linewidths': temperature_lws
+    },
+
+    '850T': {
+        'levels': temperature_levels,
+        'colors': temperature_cols,
+        'linewidths': temperature_lws
+    },
+
+    '700T': {
+        'levels': temperature_levels,
+        'colors': temperature_cols,
+        'linewidths': temperature_lws
+    },
+
     # Vectors/barbs
     'rm5': {
         'skip': 2
@@ -181,13 +283,6 @@ PLOTCONFIGS = {
         'linewidths': [1, 1, 2, 2, 3, 3, 3],
         'colors': ['#ec904a', '#e94639', '#841f18', '#957cca', '#e951f5', 
                    '#e951f5', '#e951f5', '#e951f5']
-    },
-
-    'snsq': {
-        'levels': [0.1, 0.5, 1, 1.5, 2, 2.5, 3, 4, 5, 6],
-        'linewidths': [0.5, 0.5, 1, 1, 2, 2, 2, 3, 3, 3],
-        'colors': ['#244e83', '#458ff7', '#50b0eb', '#6be8e9', '#8467c6', '#8835e2',
-                   '#7a1681', '#ea33f7', '#f3b0b9']
     },
 
 }
@@ -214,6 +309,18 @@ contourconfigs = {
 # Filtering specifications
 ##########################################################################################
 FILTER_SPECS = {
+    'oprh':{
+        'sfctw': ['<', 40]
+    },
+
+    'dgzomega':{
+        'sfctw': ['<', 40]
+    },
+    
+    'dgzdepth':{
+        'sfctw': ['<', 40]
+    },
+
     'mlcin': {
         'mlcape': ['>', 5],
     },

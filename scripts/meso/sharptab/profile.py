@@ -25,8 +25,8 @@ from .constants import *
 ########################################################################################
 
 @njit
-def create_profile(pres, tmpc, dwpc, wspd, wdir, hght):
-    return Profile(pres, tmpc, dwpc, wspd, wdir, hght)
+def create_profile(pres, tmpc, dwpc, wspd, wdir, hght, omeg):
+    return Profile(pres, tmpc, dwpc, wspd, wdir, hght, omeg)
 
 spec = [
     ("pres", float64[:]),
@@ -35,6 +35,7 @@ spec = [
     ("wspd", float64[:]),
     ("wdir", float64[:]),
     ("hght", float64[:]),
+    ("omeg", float64[:]),
     ("logp", float64[:]),
     ("vtmp", float64[:]),
     ("sfc", int32),
@@ -51,7 +52,7 @@ spec = [
 @jitclass(spec)
 
 class Profile(object):
-    def __init__(self, pres, tmpc, dwpc, wspd, wdir, hght):
+    def __init__(self, pres, tmpc, dwpc, wspd, wdir, hght, omeg):
         # def __init__(self, pres):
         ## get the data and turn them into arrays
         self.pres = pres
@@ -60,6 +61,7 @@ class Profile(object):
         self.dwpc = dwpc
         self.wdir = wdir
         self.wspd = wspd
+        self.omeg = omeg
 
         self.u, self.v = utils.vec2comp(self.wdir, self.wspd)
 
