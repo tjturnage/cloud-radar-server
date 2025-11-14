@@ -3,7 +3,7 @@
     Returns:
         _type_: _description_
 """
-from __future__ import print_function
+#from __future__ import print_function
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -39,7 +39,7 @@ class UpdatePlacefiles():
             extracts first time string from TimeRange line in placefile
             Example: TimeRange: 2019-03-06T23:14:39Z 2019-03-06T23:16:29Z 
         - returns: time --> float
-            timestamp associated with first time string plus 5 minutes
+            timestamp associated with first time string
             Example: 2019-03-06T23:16:39Z --> 1551900879.0
 '
         """
@@ -77,31 +77,59 @@ class UpdatePlacefiles():
             new_filename = f"{source_file[0:source_file.index('_shifted.txt')]}_updated.txt"
             destination_path = os.path.join(self.placefiles_directory, new_filename)
             fout_path = open(destination_path, 'w', encoding='utf-8')
-            data = self.extract_placefile_lines(source_file)
-            line_num = len(data)
-            for i, line in enumerate(data):
-                if "TimeRange" in line:
-                    line_timestamp = self.timerange_to_timestamp(line)
-                    if line_timestamp > self.playback_timestamp:
-                        line_num = i
-                        break
+
             try:
+                data = self.extract_placefile_lines(source_file)
+                line_num = len(data)
+
+                # Identify valid and invalid TimeRange blocks
+                tr_indices = [i for i, line in enumerate(data) if "TimeRange" in line]
+                valid_tr_indices = []
+                for i in tr_indices:
+                    line = data[i]
+                    line_timestamp = self.timerange_to_timestamp(line)
+                    if line_timestamp <= self.playback_timestamp:
+                        valid_tr_indices.append(i)
+
+                header_end_index = tr_indices[0] if tr_indices else len(data)
+                header_lines = data[:header_end_index]
+                trimmed_lines = header_lines # Start the output with the header
+
                 # Find entries that should be visible based on the current simulation time. Roll
                 # the "end" time forward 10 minutes from real time. 
                 # This gets around a bug in GR where the last polled volume scan is presumed to be
-                # real world time, even if the scan time is old. Is the latest TimeRange going to 
-                # always be at the end of the file? 
-                trimmed_lines = data[:line_num]
-                idx = [i for i, line in enumerate(trimmed_lines) if "TimeRange" in line]
-                for line in idx:
-                    tr_string = trimmed_lines[line]
-                    end_valid_time = tr_string.split(' ')[2]
-                    end_valid_dt = datetime.strptime(end_valid_time, '%Y-%m-%dT%H:%M:%SZ\n')
-                    end_valid_dt = end_valid_dt.replace(tzinfo=pytz.UTC).timestamp()
-                    if end_valid_dt > self.playback_timestamp:
-                        new_tr = tr_string.replace(end_valid_time, 
-                                                   now.strftime('%Y-%m-%dT%H:%M:%SZ\n'))
-                        trimmed_lines[line] = new_tr
+                # real world time, even if the scan time is old. 
+                for i, tr_index in enumerate(tr_indices):
+                    is_valid = tr_index in valid_tr_indices
+                        
+                    if is_valid:
+                        # Define the block boundaries
+                        block_start = tr_index
+                        
+                        # Block ends right before the next TimeRange line, or at EOF
+                        if i + 1 < len(tr_indices):
+                            block_end = tr_indices[i+1] 
+                        else:
+                            block_end = len(data) # End of file
+                            
+                        block_lines = data[block_start:block_end]
+                        tr_string = block_lines[0]
+                        tr_parts = tr_string.split(' ')
+                        end_valid_time = tr_parts[2].strip() 
+                        
+                        # Get timestamp of end time
+                        end_valid_dt = datetime.strptime(end_valid_time, '%Y-%m-%dT%H:%M:%SZ')
+                        end_valid_dt = end_valid_dt.replace(tzinfo=pytz.UTC).timestamp()
+
+                        # Replace the end time with 'now' timestamp -- this is the most 
+                        # recent valid time range. 'now' is rolled 10 minutes forward 
+                        # from real time. 
+                        if end_valid_dt > self.playback_timestamp:
+                            new_end_time = now.strftime('%Y-%m-%dT%H:%M:%SZ')
+                            new_tr = f"{tr_parts[0]} {tr_parts[1]} {new_end_time}\n"
+                            block_lines[0] = new_tr
+                        trimmed_lines.extend(block_lines)
+
                 fout_path.writelines(trimmed_lines)
                 fout_path.close()
 
