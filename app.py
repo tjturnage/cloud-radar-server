@@ -819,7 +819,7 @@ def button_control(_n, configs, radar_info, output_selections, playback_status,
     with handling button release during long-running callbacks.
 
     Note: disable_sim_flag is set by raise_modal_alert. It's reset to False when
-    either run scripts or refresh polling are clicked. This is mean to inhibit a user 
+    either run scripts or refresh polling are clicked. This is meant to inhibit a user 
     from trying to run a sim with changed inputs, which could cause issues on the backend
     that aren't broadcast to the user.
     """
@@ -1283,6 +1283,10 @@ def initiate_playback(_nclick, playback_speed, cfg, sim_times, radar_info):
     # Report out the size of the dir.list files in the polling directory. This is done
     # following UpdateDirList call. 
     dir_list_sizes = utils.check_dirlist_sizes(cfg['POLLING_DIR'])
+    status_map = {
+        True: "Disabled",
+        False: "Enabled"
+    }
     log_string = (
         f"\n"
         f"*************************Playback Launched**************************\n"
@@ -1290,10 +1294,9 @@ def initiate_playback(_nclick, playback_speed, cfg, sim_times, radar_info):
         f"dir.list sizes (in bytes): {dir_list_sizes}\n"
         f"Start: {sim_times['playback_start_str']}, End: {sim_times['playback_end_str']}\n"
         f"Start dt: {sim_times['playback_start']}, End dt: {sim_times['playback_end']}\n"
-        f"Launch Simulation Button Disabled?: {btn_disabled}\n"
-        f"Pause Playback Button Disabled?: {False}\n"
-        f"Refresh Polling Button Disabled?: {refresh_polling_btn_disabled}\n"
-        f"********************************************************************\n"
+        f"Launch Simulation Button: {status_map[btn_disabled]}\n"
+        f"Pause Playback Button: Enabled\n"
+        f"Refresh Polling Button: {status_map[refresh_polling_btn_disabled]}\n"
     )
     logger = SESSION_LOGGERS[cfg['SESSION_ID']]
     logger.info(log_string)
@@ -1326,7 +1329,8 @@ def manage_clock_(nclicks, _n_intervals, new_time, _playback_running, playback_s
     This function manages the playback clock. It is called by the dcc.Interval component
     """
     triggered_id = ctx.triggered_id
-
+    logger = SESSION_LOGGERS[cfg['SESSION_ID']]
+        
     specs['playback_speed'] = playback_speed
     interval_disabled = False
     status = 'Running'
@@ -1449,6 +1453,25 @@ def manage_clock_(nclicks, _n_intervals, new_time, _playback_running, playback_s
     if playback_paused:
         refresh_polling_btn_disabled = False
         run_scripts_btn_disabled = False
+
+    # Write monitoring information to the logfile if user clicks playback buttons 
+    # (ignores playback timer triggers).  
+    if triggered_id not in ['playback_running_store', 'playback_timer']:
+        dir_list_sizes = utils.check_dirlist_sizes(cfg['POLLING_DIR'])
+        status_map = {
+            True: "Disabled",
+            False: "Enabled"
+        }
+        log_string = (
+            f"{triggered_id} triggered\n"
+            f"Simulation Current Time: {specs['playback_clock']}\n"
+            f"dir.list sizes (in bytes): {dir_list_sizes}\n"
+            f"Playback Speed: {specs['playback_speed']}\n"
+            f"Playback Status: {specs['status']}\n"
+            f"Refresh Polling Button: {status_map[refresh_polling_btn_disabled]}\n"
+        )
+        logger.info(log_string)
+
     return (specs['interval_disabled'], specs['status'], specs['style'],
             specs['playback_btn_text'], readout_time, style, specs,
             refresh_polling_btn_disabled, run_scripts_btn_disabled)
