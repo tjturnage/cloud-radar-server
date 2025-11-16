@@ -46,18 +46,30 @@ mimetypes.add_type("text/plain", ".list", True)
 log = logging.getLogger('werkzeug')  # 'werkzeug' is the logger used by Flask
 log.setLevel(logging.WARNING)  # You can set it to ERROR or CRITICAL as well
 logging.Formatter.converter = time.gmtime  # Global change to UTC
+from log_registry import SESSION_LOGGERS # Global store for per-session loggers
 
-def create_logfile(LOG_DIR):
+def create_logfile(LOG_DIR, SESSION_ID):
     """
-    Generate the main logfile for the download and processing scripts. 
+    Generate the main logfile for the application. 
     """
-    logging.basicConfig(
-        filename=f'{LOG_DIR}/app.log',  # Log file location
-        # Log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
-        level=logging.INFO,
-        format='%(levelname)s %(asctime)s :: %(message)s',
-        datefmt="%Y-%m-%d %H:%M:%S"
-    )
+    logfile = os.path.join(LOG_DIR, "app.log")
+    logger = logging.getLogger(f"session_{SESSION_ID}")
+
+    # Avoid adding handlers multiple times if the function runs again
+    if not logger.handlers:
+        logger.setLevel(logging.INFO)
+        
+        handler = logging.FileHandler(logfile)
+        formatter = logging.Formatter(
+            "%(levelname)s %(asctime)s :: %(message)s",
+            "%Y-%m-%d %H:%M:%S"
+        )
+        handler.setFormatter(formatter)
+        logger.addHandler(handler)
+
+    # Prevent logs from going to the root handler (terminal)
+    logger.propagate = False
+    return logger
 
 
 def create_radar_dict(sa) -> dict:
@@ -303,7 +315,17 @@ def generate_layout(layout_has_initialized, children, configs):
         children.append(new_items)
 
         layout_has_initialized['added'] = True
-        create_logfile(configs['LOG_DIR'])
+
+        # Generate the per-session logfile
+        session_id = configs['SESSION_ID']
+        SESSION_LOGGERS[session_id] = create_logfile(configs['LOG_DIR'], session_id)
+        logger = SESSION_LOGGERS[session_id]
+        logger.info(
+            f'\n******************************************************************\n'
+            f'Application layout initialized for SESSION: {session_id}.\n'
+            f'******************************************************************\n'
+        )
+        
         return children, layout_has_initialized
 
     return children, layout_has_initialized
@@ -467,42 +489,43 @@ def run_scripts(scripts_to_run, sim_times, configs, radar_info, lsr_delay):
     """
     status = 'running'
     create_radar_dict(radar_info)
+    logger = SESSION_LOGGERS[configs['SESSION_ID']]
     if scripts_to_run['query_and_download_radar']:
-        logging.info(f"Radar download status: {status}")
+        logger.info(f"Radar download status: {status}")
         status = processing.query_and_download_radars(radar_info, configs, sim_times)
 
     if scripts_to_run['munger_radar'] and status == 'running':
-        logging.info(f"Radar mungering status: {status}")
+        logger.info(f"Radar mungering status: {status}")
         status = processing.munger_radar(radar_info, configs, sim_times)
 
     if scripts_to_run['placefiles'] and status == 'running':
-        logging.info(f"Surface placefile status: {status}")
+        logger.info(f"Surface placefile status: {status}")
         status = processing.generate_fast_placefiles(radar_info, configs, sim_times, 
                                                      lsr_delay)
 
     # The events files are always updated
     if status == 'running':
-        logging.info(f"Event files status: {status}")
+        logger.info(f"Event files status: {status}")
         status = processing.generate_events_files(configs, sim_times)
 
     if scripts_to_run['nse_placefiles'] and status == 'running':
-        logging.info(f"NSE placefile status: {status}")
+        logger.info(f"NSE placefile status: {status}")
         status = processing.generate_nse_placefiles(configs, sim_times)
 
     # There always is a timeshift with a simulation, so this script needs to
     # execute every time, even if a user doesn't select a radar to transpose to.
     if status == 'running':
-        logging.info("Entering function run_transpose_script")
+        logger.info("Entering function run_transpose_script")
         run_transpose_script(configs['PLACEFILES_DIR'], sim_times, radar_info)
 
         # Zip placefiles up, even if user bypassed the nse placefile generation step.
         try:
             placefiles.zip_original_placefiles(configs)
         except Exception as e:
-            logging.exception("Error zipping original placefiles ", exc_info=True)
+            logger.exception("Error zipping original placefiles ", exc_info=True)
 
     if scripts_to_run['hodographs'] and status == 'running':
-        logging.info(f"Hodograph status: {status}")
+        logger.info(f"Hodograph status: {status}")
         status = processing.generate_hodographs(radar_info, configs, sim_times)
         
     return status
@@ -562,6 +585,7 @@ def coordinate_processing_scripts(sim_times, configs, radar_info, output_selecti
     create hodographs, and transpose placefiles, and importantly, coordinates which 
     processing scripts are run based on the button clicked.
     """
+    logger = SESSION_LOGGERS[configs['SESSION_ID']]
     if not sim_times:
         raise PreventUpdate
     
@@ -618,7 +642,7 @@ def coordinate_processing_scripts(sim_times, configs, radar_info, output_selecti
         prep_refresh_polling(configs)
     
     else:
-        logging.warning(f"Unrecognized button source: {sim_times.get('source')}")
+        logger.warning(f"Unrecognized button source: {sim_times.get('source')}")
         raise PreventUpdate
     
     utils.write_status_file('running', f"{configs['DATA_DIR']}/script_status.txt")
@@ -631,7 +655,7 @@ def coordinate_processing_scripts(sim_times, configs, radar_info, output_selecti
         f"Scripts settings: {scripts_to_run}\n"
         f"====================================================================\n"
     )
-    logging.info(log_string)
+    logger.info(log_string)
 
     # Run the processing scripts
     status = run_scripts(scripts_to_run, sim_times, configs, radar_info, lsr_delay)
@@ -648,7 +672,7 @@ def coordinate_processing_scripts(sim_times, configs, radar_info, output_selecti
         # If we're here, scripts ran to completion (were not cancelled)
         utils.write_status_file('completed', f"{configs['DATA_DIR']}/script_status.txt")
         utils.write_status_file('', f"{configs['DATA_DIR']}/completed.txt")
-        logging.info(log_string)
+        logger.info(log_string)
 
     return no_update
 
@@ -657,6 +681,7 @@ def prep_refresh_polling(configs):
     """
     Handle initial file removal prior to re-running of pertinent processing script
     """
+    logger = SESSION_LOGGERS[configs['SESSION_ID']]
     # Remove the original file_times.txt file. This will get re-created by munger.py
     try:
         os.remove(f"{configs['ASSETS_DIR']}/file_times.txt")
@@ -669,13 +694,13 @@ def prep_refresh_polling(configs):
     try:
         processing.remove_munged_radar_files(configs)
     except KeyError as e:
-        logging.exception("Error removing munged radar files ", exc_info=True)
+        logger.exception("Error removing munged radar files ", exc_info=True)
 
     # Remove old mungered files 
     for root, _, files in os.walk(configs['POLLING_DIR']):
         for name in files:
             if name not in ['grlevel2.cfg']:
-                logging.info(f"Deleting {name}")
+                logger.info(f"Deleting {name}")
                 os.remove(os.path.join(root, name))
 
     # Remove original hodograph images
@@ -684,7 +709,7 @@ def prep_refresh_polling(configs):
         try:
             os.remove(image)
         except:
-            logging.exception(f"Error removing: {image}")
+            logger.exception(f"Error removing: {image}")
 
 
 @app.callback(
@@ -701,10 +726,11 @@ def prep_refresh_polling(configs):
      State('start_minute', 'value'),
      State('duration', 'value'),
      State('sim_times', 'data')],  # Get the current sim_times (needed for refresh_polling)
+     State('configs', 'data'),
     prevent_initial_call=True,
 )
 def update_sim_times(n_clicks_run_scripts, n_clicks_refresh_polling, yr, mo, dy, hr, mn,
-                     dur, current_sim_times):
+                     dur, current_sim_times, configs):
     """
     Update the sim_times dictionary and send to dcc.Store object when either the
     Run Scripts button or the Refresh Polling button is clicked. This logic
@@ -714,6 +740,7 @@ def update_sim_times(n_clicks_run_scripts, n_clicks_refresh_polling, yr, mo, dy,
     time specifications are always updated and available to all callbacks that need them,
     even if a user leaves the application idle. 
     """
+    logger = SESSION_LOGGERS[configs['SESSION_ID']]
     triggered = ctx.triggered_id
     if triggered == 'run_scripts_btn':
         dt = datetime(yr, mo, dy, hr, mn, second=0, tzinfo=timezone.utc)
@@ -735,7 +762,7 @@ def update_sim_times(n_clicks_run_scripts, n_clicks_refresh_polling, yr, mo, dy,
         f"\n"
         f"====================================================================\n"
     )
-    logging.info(log_string)
+    logger.info(log_string)
 
     # Always reset this flag, which could be True due to user changing input(s) after 
     # processing scripts completed. See raise_modal_alert. 
@@ -792,7 +819,7 @@ def button_control(_n, configs, radar_info, output_selections, playback_status,
     with handling button release during long-running callbacks.
 
     Note: disable_sim_flag is set by raise_modal_alert. It's reset to False when
-    either run scripts or refresh polling are clicked. This is mean to inhibit a user 
+    either run scripts or refresh polling are clicked. This is meant to inhibit a user 
     from trying to run a sim with changed inputs, which could cause issues on the backend
     that aren't broadcast to the user.
     """
@@ -1256,6 +1283,10 @@ def initiate_playback(_nclick, playback_speed, cfg, sim_times, radar_info):
     # Report out the size of the dir.list files in the polling directory. This is done
     # following UpdateDirList call. 
     dir_list_sizes = utils.check_dirlist_sizes(cfg['POLLING_DIR'])
+    status_map = {
+        True: "Disabled",
+        False: "Enabled"
+    }
     log_string = (
         f"\n"
         f"*************************Playback Launched**************************\n"
@@ -1263,12 +1294,12 @@ def initiate_playback(_nclick, playback_speed, cfg, sim_times, radar_info):
         f"dir.list sizes (in bytes): {dir_list_sizes}\n"
         f"Start: {sim_times['playback_start_str']}, End: {sim_times['playback_end_str']}\n"
         f"Start dt: {sim_times['playback_start']}, End dt: {sim_times['playback_end']}\n"
-        f"Launch Simulation Button Disabled?: {btn_disabled}\n"
-        f"Pause Playback Button Disabled?: {False}\n"
-        f"Refresh Polling Button Disabled?: {refresh_polling_btn_disabled}\n"
-        f"********************************************************************\n"
+        f"Launch Simulation Button: {status_map[btn_disabled]}\n"
+        f"Pause Playback Button: Enabled\n"
+        f"Refresh Polling Button: {status_map[refresh_polling_btn_disabled]}\n"
     )
-    logging.info(log_string)
+    logger = SESSION_LOGGERS[cfg['SESSION_ID']]
+    logger.info(log_string)
     utils.write_status_file('sim launched', f"{cfg['DATA_DIR']}/script_status.txt")
     return (btn_text, btn_disabled, False, playback_running, start, style, end, style, options,
             False, playback_specs, refresh_polling_btn_disabled, run_scripts_btn_disabled)
@@ -1298,7 +1329,8 @@ def manage_clock_(nclicks, _n_intervals, new_time, _playback_running, playback_s
     This function manages the playback clock. It is called by the dcc.Interval component
     """
     triggered_id = ctx.triggered_id
-
+    logger = SESSION_LOGGERS[cfg['SESSION_ID']]
+        
     specs['playback_speed'] = playback_speed
     interval_disabled = False
     status = 'Running'
@@ -1421,6 +1453,25 @@ def manage_clock_(nclicks, _n_intervals, new_time, _playback_running, playback_s
     if playback_paused:
         refresh_polling_btn_disabled = False
         run_scripts_btn_disabled = False
+
+    # Write monitoring information to the logfile if user clicks playback buttons 
+    # (ignores playback timer triggers).  
+    if triggered_id not in ['playback_running_store', 'playback_timer']:
+        dir_list_sizes = utils.check_dirlist_sizes(cfg['POLLING_DIR'])
+        status_map = {
+            True: "Disabled",
+            False: "Enabled"
+        }
+        log_string = (
+            f"{triggered_id} triggered\n"
+            f"Simulation Current Time: {specs['playback_clock']}\n"
+            f"dir.list sizes (in bytes): {dir_list_sizes}\n"
+            f"Playback Speed: {specs['playback_speed']}\n"
+            f"Playback Status: {specs['status']}\n"
+            f"Refresh Polling Button: {status_map[refresh_polling_btn_disabled]}\n"
+        )
+        logger.info(log_string)
+
     return (specs['interval_disabled'], specs['status'], specs['style'],
             specs['playback_btn_text'], readout_time, style, specs,
             refresh_polling_btn_disabled, run_scripts_btn_disabled)

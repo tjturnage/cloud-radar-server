@@ -162,8 +162,33 @@ h4 {
         <div class="p-2"><a class="nse" href="[address]/placefiles/devtor_updated.txt" target="_blank">Deviant Tornado Motion</a></div>
         <div class="p-2"><a class="nse" href="[address]/placefiles/deviance_updated.txt" target="_blank">Perceived Tornado Deviance</a></div>
     </div>
+    <br>
+    <h4>Winter</h4>    
     <div class="d-flex flex-wrap">
-        <div class="p-2"><a class="nse" href="[address]/placefiles/snsq_updated.txt" target="_blank">Snow Squall Parameter</a></div>
+        <div class="p-2"><a class="nse" href="[address]/placefiles/700MB_updated.txt" target="_blank">700MB Bundle</a></div>
+        <div class="p-2"><a class="nse" href="[address]/placefiles/700fgen_updated.txt" target="_blank">700MB Frontogenesis</a></div>
+        <div class="p-2"><a class="nse" href="[address]/placefiles/700T_updated.txt" target="_blank">700MB Temperature</a></div>
+    </div>
+    <div class="d-flex flex-wrap">
+        <div class="p-2"><a class="nse" href="[address]/placefiles/850MB_updated.txt" target="_blank">850MB Bundle</a></div>
+        <div class="p-2"><a class="nse" href="[address]/placefiles/850fgen_updated.txt" target="_blank">850MB Frontogenesis</a></div>
+        <div class="p-2"><a class="nse" href="[address]/placefiles/850T_updated.txt" target="_blank">850MB Temperature</a></div>
+    </div>
+    <div class="d-flex flex-wrap">
+        <div class="p-2"><a class="nse" href="[address]/placefiles/925MB_updated.txt" target="_blank">925MB Bundle</a></div>
+        <div class="p-2"><a class="nse" href="[address]/placefiles/925fgen_updated.txt" target="_blank">925MB Frontogenesis</a></div>
+        <div class="p-2"><a class="nse" href="[address]/placefiles/925T_updated.txt" target="_blank">925MB Temperature</a></div>
+   </div>        
+   <div class="d-flex flex-wrap">
+        <div class="p-2"><a class="nse" href="[address]/placefiles/dgzdepth_updated.txt" target="_blank">DGZ Depth</a></div> 
+        <div class="p-2"><a class="nse" href="[address]/placefiles/dgzomega_updated.txt" target="_blank">DGZ Omega</a></div>      
+        <div class="p-2"><a class="nse" href="[address]/placefiles/oprh_updated.txt" target="_blank">DGZ Omega, RH, and PWAT</a></div> 
+    </div>
+   <div class="d-flex flex-wrap">
+        <div class="p-2"><a class="nse" href="[address]/placefiles/sfctw_updated.txt" target="_blank">Surface Wet Bulb Temperature</a></div>
+    </div>
+   <div class="d-flex flex-wrap">
+        <div class="p-2"><a class="nse" href="[address]/placefiles/snsq_updated.txt" target="_blank">Snow Squall Parameter</a></div> 
     </div>
     </div></div>
 </div>

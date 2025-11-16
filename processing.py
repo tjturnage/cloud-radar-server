@@ -5,12 +5,12 @@ import shutil
 import os 
 import re 
 import zipfile
-import logging
 import json
 
 from scripts.update_dir_list import UpdateDirList
 from scripts.update_hodo_page import UpdateHodoHTML
 from utils import call_function, write_status_file
+from log_registry import SESSION_LOGGERS
 
 def remove_files_and_dirs(cfg) -> None:
     """
@@ -100,6 +100,7 @@ def query_radar_files(cfg, radar_info, sim_times):
     # Need to reset the expected files dictionary with each call. Otherwise, if a user
     # cancels a request, the previously-requested files will still be in the dictionary.
     # radar_files_dict = {}
+    logger = SESSION_LOGGERS[cfg['SESSION_ID']]
     radar_info['radar_files_dict'] = {}
     for _r, radar in enumerate(radar_info['radar_list']):
         radar = radar.upper()
@@ -108,12 +109,12 @@ def query_radar_files(cfg, radar_info, sim_times):
         results = utils.exec_script(
             Path(cfg['NEXRAD_SCRIPT_PATH']), args, cfg['SESSION_ID'])
         if results['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
-            logging.warning(
+            logger.warning(
                 f"{cfg['SESSION_ID']} :: User cancelled query_radar_files()")
             break
 
         json_data = results['stdout'].decode('utf-8')
-        logging.info(
+        logger.info(
             f"{cfg['SESSION_ID']} :: Nexrad.py returned with {json_data}")
         radar_info['radar_files_dict'].update(json.loads(json_data))
 
@@ -131,10 +132,11 @@ def query_and_download_radars(radar_info, configs, sim_times):
     file for this sim, initializes links.html page, and zips original radar data for 
     user download.
     """
+    logger = SESSION_LOGGERS[configs['SESSION_ID']]
     try:
         copy_grlevel2_cfg_file(configs)
     except (IOError, ValueError, KeyError) as e:
-        logging.exception("Error creating radar dict or cfg file: %s",e,exc_info=True)
+        logger.exception("Error creating radar dict or cfg file: %s",e,exc_info=True)
 
     radar_list = radar_info.get('radar_list', [])
     session_id = configs['SESSION_ID']
@@ -143,49 +145,51 @@ def query_and_download_radars(radar_info, configs, sim_times):
     # Write the links html page. 
     try:
         args = [configs['LINK_BASE'], configs['LINKS_HTML_PAGE']]
-        res = call_function(utils.exec_script, Path(configs['LINKS_PAGE_SCRIPT_PATH']),
+        res = call_function(utils.exec_script, session_id, 
+                            Path(configs['LINKS_PAGE_SCRIPT_PATH']),
                             args, session_id)
         if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
             write_status_file(status, f"{configs['DATA_DIR']}/script_status.txt")
             return status
     except Exception as e:
-        logging.exception("Error creating links.html page")
+        logger.exception("Error creating links.html page")
         write_status_file(status, f"{configs['DATA_DIR']}/script_status.txt")
         return status
 
     # Query all radar files
     try:
-        res = call_function(query_radar_files, configs, radar_info, sim_times)
+        res = call_function(query_radar_files, session_id, configs, radar_info, sim_times)
         if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
-            logging.warning("Query radar files was cancelled.")
+            logger.warning("Query radar files was cancelled.")
             write_status_file(status, f"{configs['DATA_DIR']}/script_status.txt")
             return status
     except Exception as e:
-        logging.exception("Radar file query failed.")
+        logger.exception("Radar file query failed.")
 
     # Download all radar files
     for radar in radar_list:
         radar = radar.upper()
-        logging.info(f"Downloading radar: {radar}")
+        logger.info(f"Downloading radar: {radar}")
         args = [radar, str(sim_times['event_start_str']),
                 str(sim_times['event_duration']), str(True), configs['RADAR_DIR']]
         try:
-            res = call_function(utils.exec_script, Path(configs['NEXRAD_SCRIPT_PATH']), 
+            res = call_function(utils.exec_script, session_id, 
+                                Path(configs['NEXRAD_SCRIPT_PATH']), 
                                 args, session_id)
             if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
-                logging.warning(f"Radar download for {radar} was cancelled.")
+                logger.warning(f"Radar download for {radar} was cancelled.")
                 write_status_file(status, f"{configs['DATA_DIR']}/script_status.txt")
                 return status
         except Exception as e:
-            logging.exception(f"Radar download failed for {radar}")
+            logger.exception(f"Radar download failed for {radar}")
 
     # Now that all radar files are in assets/{}/downloads dir, zip them up
     try:
         zip_downloadable_radar_files(configs)
     except KeyError as e:
-        logging.exception("Error zipping radar files ", exc_info=True)
+        logger.exception("Error zipping radar files ", exc_info=True)
 
-    logging.info(f"Downloads completed for radars: {radar_list}")
+    logger.info(f"Downloads completed for radars: {radar_list}")
     status = 'running'
     write_status_file(status, f"{configs['DATA_DIR']}/script_status.txt")
     return status
@@ -195,6 +199,7 @@ def munger_radar(radar_info, configs, sim_times):
     """
     Transposes radar in time and/or space. Creates initial dir.list file(s). 
     """
+    logger = SESSION_LOGGERS[configs['SESSION_ID']]
     status = 'cancelled'
     radar_list = radar_info.get('radar_list', [])
     for radar in radar_list:
@@ -205,7 +210,7 @@ def munger_radar(radar_info, configs, sim_times):
             else:
                 new_radar = radar_info['new_radar'].upper()
         except (IOError, ValueError, KeyError) as e:
-            logging.exception("Error defining new radar: %s",e,exc_info=True)
+            logger.exception("Error defining new radar: %s",e,exc_info=True)
 
         args = [radar, str(sim_times['playback_start_str']), 
                 str(sim_times['event_duration']),
@@ -213,10 +218,11 @@ def munger_radar(radar_info, configs, sim_times):
                 configs['POLLING_DIR'], configs['USER_DOWNLOADS_DIR'], 
                 configs['L2MUNGER_FILEPATH'], configs['DEBZ_FILEPATH'],
                 new_radar]
-        res = call_function(utils.exec_script, Path(configs['MUNGER_SCRIPT_FILEPATH']),
+        res = call_function(utils.exec_script, configs['SESSION_ID'], 
+                            Path(configs['MUNGER_SCRIPT_FILEPATH']),
                             args, configs['SESSION_ID'])
         if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
-            logging.warning(f"Munging for {radar} was cancelled.")
+            logger.warning(f"Munging for {radar} was cancelled.")
             write_status_file(status, f"{configs['DATA_DIR']}/script_status.txt")
             return status
         
@@ -225,13 +231,13 @@ def munger_radar(radar_info, configs, sim_times):
             UpdateDirList(new_radar, 'None', configs['POLLING_DIR'], initialize=True)
         except (IOError, ValueError, KeyError) as e:
             print(f"Error with UpdateDirList: {e}")
-            logging.exception("Error with UpdateDirList: %s",e, exc_info=True)
+            logger.exception("Error with UpdateDirList: %s",e, exc_info=True)
         
     # Delete the uncompressed/munged radar files from the data directory
     try:
         remove_munged_radar_files(configs)
     except KeyError as e:
-        logging.exception("Error removing munged radar files ", exc_info=True)
+        logger.exception("Error removing munged radar files ", exc_info=True)
 
     status = 'running'
     write_status_file(status, f"{configs['DATA_DIR']}/script_status.txt")
@@ -242,15 +248,16 @@ def generate_fast_placefiles(radar_info, configs, sim_times, lsr_delay):
     """
     Handles processing of the fast placefiles
     """
+    logger = SESSION_LOGGERS[configs['SESSION_ID']]
     status = 'cancelled'
     # --------- LSRs ----------------------------------------------------------------
     args = [str(radar_info['lat']), str(radar_info['lon']),
             str(sim_times['event_start_str']), str(sim_times['event_duration']),
             configs['DATA_DIR'], configs['PLACEFILES_DIR'], str(lsr_delay)]
-    res = call_function(utils.exec_script, Path(configs['LSR_SCRIPT_PATH']), args,
-                        configs['SESSION_ID'])
+    res = call_function(utils.exec_script, configs['SESSION_ID'], 
+                        Path(configs['LSR_SCRIPT_PATH']), args, configs['SESSION_ID'])
     if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
-        logging.warning("LSR placefile generation was cancelled.")
+        logger.warning("LSR placefile generation was cancelled.")
         write_status_file(status, f"{configs['DATA_DIR']}/script_status.txt")
         return status
 
@@ -258,32 +265,32 @@ def generate_fast_placefiles(radar_info, configs, sim_times, lsr_delay):
     args = [str(radar_info['lat']), str(radar_info['lon']),
             sim_times['event_start_str'], str(sim_times['event_duration']),
             configs['PLACEFILES_DIR']]
-    res = call_function(utils.exec_script, Path(configs['OBS_SCRIPT_PATH']), args,
-                        configs['SESSION_ID'])
+    res = call_function(utils.exec_script, configs['SESSION_ID'], 
+                        Path(configs['OBS_SCRIPT_PATH']), args, configs['SESSION_ID'])
     if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
-        logging.warning("Surface observations placefile generation was cancelled.")
+        logger.warning("Surface observations placefile generation was cancelled.")
         write_status_file(status, f"{configs['DATA_DIR']}/script_status.txt")
         return status
     
     # --------- ProbSevere download -------------------------------------------------
     args = [str(sim_times['event_start_str']), str(sim_times['event_duration']),
             configs['PROBSEVERE_DIR']]
-    res = call_function(utils.exec_script, 
+    res = call_function(utils.exec_script, configs['SESSION_ID'],
                         Path(configs['PROBSEVERE_DOWNLOAD_SCRIPT_PATH']),
                         args, configs['SESSION_ID'])
     if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
-        logging.warning("ProbSevere download was cancelled.")
+        logger.warning("ProbSevere download was cancelled.")
         write_status_file(status, f"{configs['DATA_DIR']}/script_status.txt")
         return status
     
     # --------- ProbSevere placefiles -----------------------------------------------
     args = [str(radar_info['lat']), str(radar_info['lon']), configs['PROBSEVERE_DIR'],
             configs['PLACEFILES_DIR']]
-    res = call_function(utils.exec_script, 
+    res = call_function(utils.exec_script, configs['SESSION_ID'],
                         Path(configs['PROBSEVERE_PLACEFILE_SCRIPT_PATH']),
                         args, configs['SESSION_ID'])
     if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
-        logging.warning("ProbSevere placefile generation was cancelled.")
+        logger.warning("ProbSevere placefile generation was cancelled.")
         write_status_file(status, f"{configs['DATA_DIR']}/script_status.txt")
         return status
     
@@ -296,14 +303,16 @@ def generate_events_files(configs, sim_times):
     """
     Creates the events.html and events.txt reference files. 
     """
+    logger = SESSION_LOGGERS[configs['SESSION_ID']]
     # Always write an event times placefile, and events.txt and events.html output.
     args = [str(sim_times['simulation_seconds_shift']), configs['DATA_DIR'], 
             configs['RADAR_DIR'], configs['EVENTS_HTML_PAGE'], 
             configs['EVENTS_TEXT_FILE']]
-    res = call_function(utils.exec_script, Path(configs['EVENT_TIMES_SCRIPT_PATH']), 
+    res = call_function(utils.exec_script, configs['SESSION_ID'], 
+                        Path(configs['EVENT_TIMES_SCRIPT_PATH']), 
                         args, configs['SESSION_ID'])
     if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
-        logging.warning("Events placefile generation was cancelled.")
+        logger.warning("Events placefile generation was cancelled.")
         write_status_file('cancelled', f"{configs['DATA_DIR']}/script_status.txt")
         return 'cancelled'
     
@@ -319,7 +328,8 @@ def generate_nse_placefiles(configs, sim_times):
     status = 'cancelled'
     args = [str(sim_times['event_start_str']), str(sim_times['event_duration']),
             configs['SCRIPTS_DIR'], configs['DATA_DIR'], configs['PLACEFILES_DIR']]
-    res = call_function(utils.exec_script, Path(configs['NSE_SCRIPT_PATH']), args,
+    res = call_function(utils.exec_script, configs['SESSION_ID'], 
+                        Path(configs['NSE_SCRIPT_PATH']), args,
                         configs['SESSION_ID'])
     if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
         write_status_file(status, f"{configs['DATA_DIR']}/script_status.txt")
@@ -334,19 +344,21 @@ def generate_hodographs(radar_info, configs, sim_times):
     """
     Handles hodograph plot generation
     """
+    logger = SESSION_LOGGERS[configs['SESSION_ID']]
     status = 'cancelled'
     for radar, data in radar_info['radar_dict'].items():
         try:
             asos_one = data['asos_one']
             asos_two = data['asos_two']
         except KeyError as e:
-            logging.exception("Error getting radar metadata: ", exc_info=True)
+            logger.exception("Error getting radar metadata: ", exc_info=True)
 
         # Execute hodograph script
         args = [radar, radar_info['new_radar'], asos_one, asos_two,
                 str(sim_times['simulation_seconds_shift']), configs['RADAR_DIR'],
                 configs['HODOGRAPHS_DIR']]
-        res = call_function(utils.exec_script, Path(configs['HODO_SCRIPT_PATH']), 
+        res = call_function(utils.exec_script, configs['SESSION_ID'], 
+                            Path(configs['HODO_SCRIPT_PATH']), 
                             args, configs['SESSION_ID'])
         if res['returncode'] in [signal.SIGTERM, -1*signal.SIGTERM]:
             write_status_file(status, f"{configs['DATA_DIR']}/script_status.txt")
@@ -356,7 +368,7 @@ def generate_hodographs(radar_info, configs, sim_times):
             UpdateHodoHTML('None', configs['HODOGRAPHS_DIR'], configs['HODOGRAPHS_PAGE'])
         except (IOError, ValueError, KeyError) as e:
             print("Error updating hodo html: ", e)
-            logging.exception("Error updating hodo html: %s",e, exc_info=True)
+            logger.exception("Error updating hodo html: %s",e, exc_info=True)
 
     status = 'running'
     write_status_file(status, f"{configs['DATA_DIR']}/script_status.txt")

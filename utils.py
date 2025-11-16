@@ -7,7 +7,7 @@ import psutil
 import pandas as pd
 import config
 import json
-import logging
+from log_registry import SESSION_LOGGERS
 
 def exec_script(script_path, args, session_id):
     """
@@ -39,17 +39,17 @@ def exec_script(script_path, args, session_id):
 
     return output
 
-def call_function(func, *args, **kwargs):
-    # For the main script calls
+def call_function(func, session_id, *args, **kwargs):
+    logger = SESSION_LOGGERS[session_id]
     if len(args) > 2 and func.__name__ != 'query_radar_files':
-        logging.info(f"Sending {args[1]} to {args[0]}")
+        logger.info(f"Sending {args[1]} to {args[0]}")
 
     result = func(*args, **kwargs)
 
     if len(result['stderr']) > 0:
-        logging.error(result['stderr'].decode('utf-8'))
+        logger.error(result['stderr'].decode('utf-8'))
     if 'exception' in result:
-        logging.error(f"Exception {result['exception']} occurred in {
+        logger.error(f"Exception {result['exception']} occurred in {
                       func.__name__}"
         )
     return result
@@ -81,6 +81,7 @@ def cancel_all(session_id):
 
     Updated to only kill processes associated with this unique session id
     """
+    logger = SESSION_LOGGERS[session_id]
     processes = get_app_processes()
 
     # ******************************************************************************
@@ -100,11 +101,11 @@ def cancel_all(session_id):
             if process['name'] == 'wgrib2': name = 'wgrib2'
 
             if name in config.scripts_list:
-                logging.info(f"Killing process: {name} with pid: {process['pid']}") 
+                logger.info(f"Killing process: {name} with pid: {process['pid']}") 
                 os.kill(process['pid'], signal.SIGTERM)
             
             if len(process['cmdline']) >= 3 and 'multiprocessing' in process['cmdline'][2]:
-                logging.info(f"Killing spawned multi-process with pid: {process['pid']}") 
+                logger.info(f"Killing spawned multi-process with pid: {process['pid']}") 
                 os.kill(process['pid'], signal.SIGTERM)
 
 
