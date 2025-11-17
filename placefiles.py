@@ -1,13 +1,17 @@
+"""
+Creates and shifts events placefiles for radar simulation.
+This is dictated by a csv upload from the user.
+"""
 from glob import glob
-import re 
-import os 
+import re
+import os
 import zipfile
 import math
-from datetime import datetime, timedelta 
+from datetime import datetime, timedelta
 
-import pandas as pd 
 import io
 import base64
+import pandas as pd
 
 # Earth radius (km)
 R = 6_378_137
